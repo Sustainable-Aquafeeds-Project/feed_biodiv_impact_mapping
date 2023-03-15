@@ -1,0 +1,161 @@
+ingredient,item,area,iso3c,mean_value,cf,X7
+faba beans,"Broad beans, horse beans, dry","China, mainland",CHN,1698146.6,0.89,adjusted for wet weight equivalents (11% water in raw mature beans) https://onlinelibrary.wiley.com/doi/full/10.1002/leg3.129
+faba beans,"Broad beans, horse beans, dry",Ethiopia,ETH,940411,0.89,adjusted for wet weight equivalents (11% water in raw mature beans) https://onlinelibrary.wiley.com/doi/full/10.1002/leg3.130
+faba beans,"Broad beans, horse beans, dry",United Kingdom of Great Britain and Northern Ireland,GBR,567047.4,0.89,adjusted for wet weight equivalents (11% water in raw mature beans) https://onlinelibrary.wiley.com/doi/full/10.1002/leg3.131
+faba beans,"Broad beans, horse beans, dry",Australia,AUS,367982.6,0.89,adjusted for wet weight equivalents (11% water in raw mature beans) https://onlinelibrary.wiley.com/doi/full/10.1002/leg3.132
+faba beans,"Broad beans, horse beans, dry",France,FRA,193958.4,0.89,adjusted for wet weight equivalents (11% water in raw mature beans) https://onlinelibrary.wiley.com/doi/full/10.1002/leg3.133
+faba beans,"Broad beans, horse beans, dry",Germany,DEU,159200,0.89,adjusted for wet weight equivalents (11% water in raw mature beans) https://onlinelibrary.wiley.com/doi/full/10.1002/leg3.134
+faba beans,"Broad beans, horse beans, dry",Sudan,SDN,139287,0.89,adjusted for wet weight equivalents (11% water in raw mature beans) https://onlinelibrary.wiley.com/doi/full/10.1002/leg3.135
+faba beans,"Broad beans, horse beans, dry",Egypt,EGY,125229.4,0.89,adjusted for wet weight equivalents (11% water in raw mature beans) https://onlinelibrary.wiley.com/doi/full/10.1002/leg3.136
+faba beans,"Broad beans, horse beans, dry",Italy,ITA,104060.4,0.89,adjusted for wet weight equivalents (11% water in raw mature beans) https://onlinelibrary.wiley.com/doi/full/10.1002/leg3.137
+faba beans,"Broad beans, horse beans, dry",Morocco,MAR,86345.4,0.89,adjusted for wet weight equivalents (11% water in raw mature beans) https://onlinelibrary.wiley.com/doi/full/10.1002/leg3.138
+tapioca starch,Cassava,Nigeria,NGA,57926447.83,0.25,Used median of other values as item missing from FAO 1972
+tapioca starch,Cassava,Democratic Republic of the Congo,COD,38011345.67,0.25,Used median of other values as item missing from FAO 1972
+tapioca starch,Cassava,Thailand,THA,30576867.33,0.25,http://countrystat.org/resources/documents/tcf.pdf
+tapioca starch,Cassava,Brazil,BRA,19378855.33,0.25,http://countrystat.org/resources/documents/tcf.pdf
+tapioca starch,Cassava,Ghana,GHA,19340875.83,0.25,http://countrystat.org/resources/documents/tcf.pdf
+tapioca starch,Cassava,Indonesia,IDN,18647809.67,0.2,http://countrystat.org/resources/documents/tcf.pdf
+tapioca starch,Cassava,Viet Nam,VNM,10404515.67,0.25,Used median of other values as item missing from FAO 1972
+tapioca starch,Cassava,Angola,AGO,8414693.167,0.25,http://countrystat.org/resources/documents/tcf.pdf
+tapioca starch,Cassava,Cambodia,KHM,7527250.833,0.25,Used median of other values as item missing from FAO 1972
+tapioca starch,Cassava,United Republic of Tanzania,TZA,6536557.5,0.25,Used median of other values as item missing from FAO 1972
+linseed oil,Linseed,Kazakhstan,KAZ,789253.6667,0.35,http://countrystat.org/resources/documents/tcf.pdf
+linseed oil,Linseed,Russian Federation,RUS,635435,0.35,http://countrystat.org/resources/documents/tcf.pdf
+linseed oil,Linseed,Canada,CAN,599350,0.34,http://countrystat.org/resources/documents/tcf.pdf
+linseed oil,Linseed,"China, mainland",CHN,361193.5,0.35,http://countrystat.org/resources/documents/tcf.pdf
+linseed oil,Linseed,United States of America,USA,165141.6667,0.36,http://countrystat.org/resources/documents/tcf.pdf
+linseed oil,Linseed,India,IND,143013.3333,0.32,http://countrystat.org/resources/documents/tcf.pdf
+linseed oil,Linseed,Ethiopia,ETH,88428.5,0.34,http://countrystat.org/resources/documents/tcf.pdf
+linseed oil,Linseed,Ukraine,UKR,48539.83333,0.32,http://countrystat.org/resources/documents/tcf.pdf
+linseed oil,Linseed,France,FRA,44965,0.35,http://countrystat.org/resources/documents/tcf.pdf
+linseed oil,Linseed,United Kingdom of Great Britain and Northern Ireland,GBR,41666.66667,0.35,http://countrystat.org/resources/documents/tcf.pdf
+lupins,Lupins,Australia,AUS,749070.8,0.976,flat rate from https://www.sciencedirect.com/science/article/pii/B978012802778300010X#s0045 after dehulling see - https://www.feedipedia.org/node/23099
+lupins,Lupins,Poland,POL,186759.4,0.976,https://www.sciencedirect.com/science/article/pii/B978012802778300010X#s0045
+lupins,Lupins,Russian Federation,RUS,164609.6,0.976,https://www.sciencedirect.com/science/article/pii/B978012802778300010X#s0046
+lupins,Lupins,Morocco,MAR,56632.2,0.976,https://www.sciencedirect.com/science/article/pii/B978012802778300010X#s0047
+lupins,Lupins,Germany,DEU,37800,0.976,https://www.sciencedirect.com/science/article/pii/B978012802778300010X#s0048
+lupins,Lupins,Chile,CHL,36912.8,0.976,https://www.sciencedirect.com/science/article/pii/B978012802778300010X#s0049
+lupins,Lupins,Ukraine,UKR,21270,0.976,https://www.sciencedirect.com/science/article/pii/B978012802778300010X#s0050
+lupins,Lupins,Greece,GRC,14843.6,0.976,https://www.sciencedirect.com/science/article/pii/B978012802778300010X#s0051
+lupins,Lupins,Peru,PER,13923.8,0.976,https://www.sciencedirect.com/science/article/pii/B978012802778300010X#s0052
+lupins,Lupins,France,FRA,12155.6,0.976,https://www.sciencedirect.com/science/article/pii/B978012802778300010X#s0053
+corn starch,Maize,United States of America,USA,367813762,0.62,http://countrystat.org/resources/documents/tcf.pdf
+corn starch,Maize,"China, mainland",CHN,261125760,0.7,http://countrystat.org/resources/documents/tcf.pdf
+corn starch,Maize,Brazil,BRA,86174997.2,0.85,http://countrystat.org/resources/documents/tcf.pdf
+corn starch,Maize,Argentina,ARG,44681904,0.85,http://countrystat.org/resources/documents/tcf.pdf
+corn starch,Maize,Ukraine,UKR,29550406,0.6,http://countrystat.org/resources/documents/tcf.pdf
+corn starch,Maize,Mexico,MEX,27021010.2,0.8,http://countrystat.org/resources/documents/tcf.pdf
+corn starch,Maize,India,IND,26167570,0.8,http://countrystat.org/resources/documents/tcf.pdf
+corn starch,Maize,Indonesia,IDN,24990960.2,0.8,Used median of other values as item missing from Indonesia in FAO 1972
+corn starch,Maize,Romania,ROU,14038009.4,0.8,Used median of other values as item missing from Indonesia in FAO 1972
+corn starch,Maize,Canada,CAN,13790540,0.85,http://countrystat.org/resources/documents/tcf.pdf
+corn gluten meal,Maize,United States of America,USA,367813762,0.06,http://countrystat.org/resources/documents/tcf.pdf
+corn gluten meal,Maize,"China, mainland",CHN,261125760,0.1,http://countrystat.org/resources/documents/tcf.pdf
+corn gluten meal,Maize,Brazil,BRA,86174997.2,0.15,http://countrystat.org/resources/documents/tcf.pdf
+corn gluten meal,Maize,Argentina,ARG,44681904,0.12,http://countrystat.org/resources/documents/tcf.pdf
+corn gluten meal,Maize,Ukraine,UKR,29550406,0.15,http://countrystat.org/resources/documents/tcf.pdf
+corn gluten meal,Maize,Mexico,MEX,27021010.2,0.15,http://countrystat.org/resources/documents/tcf.pdf
+corn gluten meal,Maize,India,IND,26167570,0.1,http://countrystat.org/resources/documents/tcf.pdf
+corn gluten meal,Maize,Indonesia,IDN,24990960.2,0.11,Used median of other values as item missing from Indonesia in FAO 1972
+corn gluten meal,Maize,Romania,ROU,14038009.4,0.11,Used median of other values as item missing from Indonesia in FAO 1972
+corn gluten meal,Maize,Canada,CAN,13790540,0.1,http://countrystat.org/resources/documents/tcf.pdf
+pea starch,"Peas, dry",Canada,CAN,3993200,0.75,https://onlinelibrary-wiley-com.ezproxy.library.uq.edu.au/doi/pdf/10.1002/1521-379X%28200206%2954%3A6%3C217%3A%3AAID-STAR217%3E3.0.CO%3B2-R
+pea starch,"Peas, dry",Russian Federation,RUS,2374679,0.75,https://onlinelibrary-wiley-com.ezproxy.library.uq.edu.au/doi/pdf/10.1002/1521-379X%28200206%2954%3A6%3C217%3A%3AAID-STAR217%3E3.0.CO%3B2-R
+pea starch,"Peas, dry","China, mainland",CHN,1426146.2,0.75,https://onlinelibrary-wiley-com.ezproxy.library.uq.edu.au/doi/pdf/10.1002/1521-379X%28200206%2954%3A6%3C217%3A%3AAID-STAR217%3E3.0.CO%3B2-R
+pea starch,"Peas, dry",United States of America,USA,893714.6,0.75,https://onlinelibrary-wiley-com.ezproxy.library.uq.edu.au/doi/pdf/10.1002/1521-379X%28200206%2954%3A6%3C217%3A%3AAID-STAR217%3E3.0.CO%3B2-R
+pea starch,"Peas, dry",India,IND,889426,0.75,https://onlinelibrary-wiley-com.ezproxy.library.uq.edu.au/doi/pdf/10.1002/1521-379X%28200206%2954%3A6%3C217%3A%3AAID-STAR217%3E3.0.CO%3B2-R
+pea starch,"Peas, dry",Ukraine,UKR,714132,0.75,https://onlinelibrary-wiley-com.ezproxy.library.uq.edu.au/doi/pdf/10.1002/1521-379X%28200206%2954%3A6%3C217%3A%3AAID-STAR217%3E3.0.CO%3B2-R
+pea starch,"Peas, dry",France,FRA,665158.2,0.75,https://onlinelibrary-wiley-com.ezproxy.library.uq.edu.au/doi/pdf/10.1002/1521-379X%28200206%2954%3A6%3C217%3A%3AAID-STAR217%3E3.0.CO%3B2-R
+pea starch,"Peas, dry",Ethiopia,ETH,369238.8,0.75,https://onlinelibrary-wiley-com.ezproxy.library.uq.edu.au/doi/pdf/10.1002/1521-379X%28200206%2954%3A6%3C217%3A%3AAID-STAR217%3E3.0.CO%3B2-R
+pea starch,"Peas, dry",Lithuania,LTU,289089.2,0.75,https://onlinelibrary-wiley-com.ezproxy.library.uq.edu.au/doi/pdf/10.1002/1521-379X%28200206%2954%3A6%3C217%3A%3AAID-STAR217%3E3.0.CO%3B2-R
+pea starch,"Peas, dry",Australia,AUS,277370.2,0.75,https://onlinelibrary-wiley-com.ezproxy.library.uq.edu.au/doi/pdf/10.1002/1521-379X%28200206%2954%3A6%3C217%3A%3AAID-STAR217%3E3.0.CO%3B2-R
+pea protein concentrate,"Peas, dry",Canada,CAN,3993200,0.23,blanket value from https://link.springer.com/article/10.1007/BF01091191
+pea protein concentrate,"Peas, dry",Russian Federation,RUS,2374679,0.23,blanket value from https://link.springer.com/article/10.1007/BF01091192
+pea protein concentrate,"Peas, dry","China, mainland",CHN,1426146.2,0.23,blanket value from https://link.springer.com/article/10.1007/BF01091193
+pea protein concentrate,"Peas, dry",United States of America,USA,893714.6,0.23,blanket value from https://link.springer.com/article/10.1007/BF01091194
+pea protein concentrate,"Peas, dry",India,IND,889426,0.23,blanket value from https://link.springer.com/article/10.1007/BF01091195
+pea protein concentrate,"Peas, dry",Ukraine,UKR,714132,0.23,blanket value from https://link.springer.com/article/10.1007/BF01091196
+pea protein concentrate,"Peas, dry",France,FRA,665158.2,0.23,blanket value from https://link.springer.com/article/10.1007/BF01091197
+pea protein concentrate,"Peas, dry",Ethiopia,ETH,369238.8,0.23,blanket value from https://link.springer.com/article/10.1007/BF01091198
+pea protein concentrate,"Peas, dry",Lithuania,LTU,289089.2,0.23,blanket value from https://link.springer.com/article/10.1007/BF01091199
+pea protein concentrate,"Peas, dry",Australia,AUS,277370.2,0.23,blanket value from https://link.springer.com/article/10.1007/BF01091200
+guar meal,Pulses nes,India,IND,959858.6,0.58,guar is ~half endosperm which yield 42% gum - the remaining byproduct is meal https://www.cambridge.org/core/journals/world-s-poultry-science-journal/article/feeding-value-of-guar-meal-and-the-application-of-enzymes-in-improving-nutritive-value-for-broilers/25A35A7C5F735647D3B08C37C1211EAF
+guar meal,Pulses nes,Kenya,KEN,122352.4,0.58,guar is ~half endosperm which yield 42% gum - the remaining byproduct is meal https://www.cambridge.org/core/journals/world-s-poultry-science-journal/article/feeding-value-of-guar-meal-and-the-application-of-enzymes-in-improving-nutritive-value-for-broilers/25A35A7C5F735647D3B08C37C1211EAF
+guar meal,Pulses nes,Ethiopia,ETH,111388,0.58,guar is ~half endosperm which yield 42% gum - the remaining byproduct is meal https://www.cambridge.org/core/journals/world-s-poultry-science-journal/article/feeding-value-of-guar-meal-and-the-application-of-enzymes-in-improving-nutritive-value-for-broilers/25A35A7C5F735647D3B08C37C1211EAF
+guar meal,Pulses nes,United Republic of Tanzania,TZA,105882.6,0.58,guar is ~half endosperm which yield 42% gum - the remaining byproduct is meal https://www.cambridge.org/core/journals/world-s-poultry-science-journal/article/feeding-value-of-guar-meal-and-the-application-of-enzymes-in-improving-nutritive-value-for-broilers/25A35A7C5F735647D3B08C37C1211EAF
+guar meal,Pulses nes,Sudan,SDN,90451,0.58,guar is ~half endosperm which yield 42% gum - the remaining byproduct is meal https://www.cambridge.org/core/journals/world-s-poultry-science-journal/article/feeding-value-of-guar-meal-and-the-application-of-enzymes-in-improving-nutritive-value-for-broilers/25A35A7C5F735647D3B08C37C1211EAF
+guar meal,Pulses nes,Sierra Leone,SLE,77381.8,0.58,guar is ~half endosperm which yield 42% gum - the remaining byproduct is meal https://www.cambridge.org/core/journals/world-s-poultry-science-journal/article/feeding-value-of-guar-meal-and-the-application-of-enzymes-in-improving-nutritive-value-for-broilers/25A35A7C5F735647D3B08C37C1211EAF
+guar meal,Pulses nes,Nigeria,NGA,65753.8,0.58,guar is ~half endosperm which yield 42% gum - the remaining byproduct is meal https://www.cambridge.org/core/journals/world-s-poultry-science-journal/article/feeding-value-of-guar-meal-and-the-application-of-enzymes-in-improving-nutritive-value-for-broilers/25A35A7C5F735647D3B08C37C1211EAF
+guar meal,Pulses nes,Pakistan,PAK,63128.6,0.58,guar is ~half endosperm which yield 42% gum - the remaining byproduct is meal https://www.cambridge.org/core/journals/world-s-poultry-science-journal/article/feeding-value-of-guar-meal-and-the-application-of-enzymes-in-improving-nutritive-value-for-broilers/25A35A7C5F735647D3B08C37C1211EAF
+guar meal,Pulses nes,Guinea,GIN,57544.8,0.58,guar is ~half endosperm which yield 42% gum - the remaining byproduct is meal https://www.cambridge.org/core/journals/world-s-poultry-science-journal/article/feeding-value-of-guar-meal-and-the-application-of-enzymes-in-improving-nutritive-value-for-broilers/25A35A7C5F735647D3B08C37C1211EAF
+guar meal,Pulses nes,Central African Republic,CAF,46728.6,0.58,guar is ~half endosperm which yield 42% gum - the remaining byproduct is meal https://www.cambridge.org/core/journals/world-s-poultry-science-journal/article/feeding-value-of-guar-meal-and-the-application-of-enzymes-in-improving-nutritive-value-for-broilers/25A35A7C5F735647D3B08C37C1211EAF
+canola/camelina oil,Rapeseed,Canada,CAN,19911740,0.41,http://countrystat.org/resources/documents/tcf.pdf
+canola/camelina oil,Rapeseed,"China, mainland",CHN,13405400,0.35,http://countrystat.org/resources/documents/tcf.pdf
+canola/camelina oil,Rapeseed,India,IND,7736348,0.35,http://countrystat.org/resources/documents/tcf.pdf
+canola/camelina oil,Rapeseed,France,FRA,4779711.2,0.42,http://countrystat.org/resources/documents/tcf.pdf
+canola/camelina oil,Rapeseed,Germany,DEU,4074440,0.41,http://countrystat.org/resources/documents/tcf.pdf
+canola/camelina oil,Rapeseed,Australia,AUS,3377528,0.45,http://countrystat.org/resources/documents/tcf.pdf
+canola/camelina oil,Rapeseed,Poland,POL,2398354.2,0.39,http://countrystat.org/resources/documents/tcf.pdf
+canola/camelina oil,Rapeseed,Ukraine,UKR,2223444,0.38,http://countrystat.org/resources/documents/tcf.pdf
+canola/camelina oil,Rapeseed,United Kingdom of Great Britain and Northern Ireland,GBR,2049600,0.41,http://countrystat.org/resources/documents/tcf.pdf
+canola/camelina oil,Rapeseed,Russian Federation,RUS,1514474.8,0.37,http://countrystat.org/resources/documents/tcf.pdf
+soy oil,Soybeans,United States of America,USA,112226398,0.19,http://countrystat.org/resources/documents/tcf.pdf
+soy oil,Soybeans,Brazil,BRA,108164227,0.18,http://countrystat.org/resources/documents/tcf.pdf
+soy oil,Soybeans,Argentina,ARG,53653851.6,0.17,http://countrystat.org/resources/documents/tcf.pdf
+soy oil,Soybeans,"China, mainland",CHN,14784698.8,0.15,http://countrystat.org/resources/documents/tcf.pdf
+soy oil,Soybeans,India,IND,11817644,0.18,http://countrystat.org/resources/documents/tcf.pdf
+soy oil,Soybeans,Paraguay,PRY,9612730.6,0.19,http://countrystat.org/resources/documents/tcf.pdf
+soy oil,Soybeans,Canada,CAN,6866200,0.17,http://countrystat.org/resources/documents/tcf.pdf
+soy oil,Soybeans,Ukraine,UKR,4053288,0.17,http://countrystat.org/resources/documents/tcf.pdf
+soy oil,Soybeans,Russian Federation,RUS,3571876.2,0.17,http://countrystat.org/resources/documents/tcf.pdf
+soy oil,Soybeans,Bolivia (Plurinational State of),BOL,2982790.4,0.2,http://countrystat.org/resources/documents/tcf.pdf
+soy protein concentrate,Soybeans,United States of America,USA,112226398,0.33,https://ussec.org/resources/conversion-table/
+soy protein concentrate,Soybeans,Brazil,BRA,108164227,0.32,used the ratio of SPC to SBM at ussec.org and multiplied by the SBM values for each country
+soy protein concentrate,Soybeans,Argentina,ARG,53653851.6,0.34,used the ratio of SPC to SBM at ussec.org and multiplied by the SBM values for each country
+soy protein concentrate,Soybeans,"China, mainland",CHN,14784698.8,0.34,used the ratio of SPC to SBM at ussec.org and multiplied by the SBM values for each country
+soy protein concentrate,Soybeans,India,IND,11817644,0.34,used the ratio of SPC to SBM at ussec.org and multiplied by the SBM values for each country
+soy protein concentrate,Soybeans,Paraguay,PRY,9612730.6,0.33,used the ratio of SPC to SBM at ussec.org and multiplied by the SBM values for each country
+soy protein concentrate,Soybeans,Canada,CAN,6866200,0.32,used the ratio of SPC to SBM at ussec.org and multiplied by the SBM values for each country
+soy protein concentrate,Soybeans,Ukraine,UKR,4053288,0.32,used the ratio of SPC to SBM at ussec.org and multiplied by the SBM values for each country
+soy protein concentrate,Soybeans,Russian Federation,RUS,3571876.2,0.32,used the ratio of SPC to SBM at ussec.org and multiplied by the SBM values for each country
+soy protein concentrate,Soybeans,Bolivia (Plurinational State of),BOL,2982790.4,0.33,used the ratio of SPC to SBM at ussec.org and multiplied by the SBM values for each country
+soybean meal,Soybeans,United States of America,USA,112226398,0.8,http://countrystat.org/resources/documents/tcf.pdf
+soybean meal,Soybeans,Brazil,BRA,108164227,0.77,http://countrystat.org/resources/documents/tcf.pdf
+soybean meal,Soybeans,Argentina,ARG,53653851.6,0.8,http://countrystat.org/resources/documents/tcf.pdf
+soybean meal,Soybeans,"China, mainland",CHN,14784698.8,0.82,http://countrystat.org/resources/documents/tcf.pdf
+soybean meal,Soybeans,India,IND,11817644,0.8,http://countrystat.org/resources/documents/tcf.pdf
+soybean meal,Soybeans,Paraguay,PRY,9612730.6,0.79,http://countrystat.org/resources/documents/tcf.pdf
+soybean meal,Soybeans,Canada,CAN,6866200,0.76,http://countrystat.org/resources/documents/tcf.pdf
+soybean meal,Soybeans,Ukraine,UKR,4053288,0.76,http://countrystat.org/resources/documents/tcf.pdf
+soybean meal,Soybeans,Russian Federation,RUS,3571876.2,0.76,http://countrystat.org/resources/documents/tcf.pdf
+soybean meal,Soybeans,Bolivia (Plurinational State of),BOL,2982790.4,0.78,http://countrystat.org/resources/documents/tcf.pdf
+sunflower meal,Sunflower seed,Ukraine,UKR,13292564,0.45,http://countrystat.org/resources/documents/tcf.pdf
+sunflower meal,Sunflower seed,Russian Federation,RUS,11782275,0.48,http://countrystat.org/resources/documents/tcf.pdf
+sunflower meal,Sunflower seed,Argentina,ARG,3413731.8,0.42,http://countrystat.org/resources/documents/tcf.pdf
+sunflower meal,Sunflower seed,"China, mainland",CHN,2674342.6,0.5,http://countrystat.org/resources/documents/tcf.pdf
+sunflower meal,Sunflower seed,Romania,ROU,2672538.8,0.48,Used median of other values as item missing from Romania in FAO 1972
+sunflower meal,Sunflower seed,Bulgaria,BGR,1902216.4,0.48,Used median of other values as item missing from Romania in FAO 1972
+sunflower meal,Sunflower seed,Turkey,TUR,1873006,0.45,http://countrystat.org/resources/documents/tcf.pdf
+sunflower meal,Sunflower seed,Hungary,HUN,1798370,0.47,http://countrystat.org/resources/documents/tcf.pdf
+sunflower meal,Sunflower seed,France,FRA,1299103.2,0.55,http://countrystat.org/resources/documents/tcf.pdf
+sunflower meal,Sunflower seed,United States of America,USA,1068318,0.5,http://countrystat.org/resources/documents/tcf.pdf
+wheat,Wheat,"China, mainland",CHN,133239683.3,1,"10% of the world wheat grain production was used for feed in 2009 and wheat ranks third among cereals used for animal feeding - Heuzé V., Tran G., 2015. Wheat (general). Feedipedia, a programme by INRAE, CIRAD, AFZ and FAO. https://www.feedipedia.org/node/6435 Last updated on June 11, 2015, 16:45"
+wheat,Wheat,India,IND,98064328.33,1,"10% of the world wheat grain production was used for feed in 2009 and wheat ranks third among cereals used for animal feeding - Heuzé V., Tran G., 2015. Wheat (general). Feedipedia, a programme by INRAE, CIRAD, AFZ and FAO. https://www.feedipedia.org/node/6435 Last updated on June 11, 2015, 16:46"
+wheat,Wheat,Russian Federation,RUS,75603197.83,1,"10% of the world wheat grain production was used for feed in 2009 and wheat ranks third among cereals used for animal feeding - Heuzé V., Tran G., 2015. Wheat (general). Feedipedia, a programme by INRAE, CIRAD, AFZ and FAO. https://www.feedipedia.org/node/6435 Last updated on June 11, 2015, 16:47"
+wheat,Wheat,United States of America,USA,53271327.83,1,"10% of the world wheat grain production was used for feed in 2009 and wheat ranks third among cereals used for animal feeding - Heuzé V., Tran G., 2015. Wheat (general). Feedipedia, a programme by INRAE, CIRAD, AFZ and FAO. https://www.feedipedia.org/node/6435 Last updated on June 11, 2015, 16:48"
+wheat,Wheat,France,FRA,36152910.67,1,"10% of the world wheat grain production was used for feed in 2009 and wheat ranks third among cereals used for animal feeding - Heuzé V., Tran G., 2015. Wheat (general). Feedipedia, a programme by INRAE, CIRAD, AFZ and FAO. https://www.feedipedia.org/node/6435 Last updated on June 11, 2015, 16:49"
+wheat,Wheat,Canada,CAN,31728205.83,1,"10% of the world wheat grain production was used for feed in 2009 and wheat ranks third among cereals used for animal feeding - Heuzé V., Tran G., 2015. Wheat (general). Feedipedia, a programme by INRAE, CIRAD, AFZ and FAO. https://www.feedipedia.org/node/6435 Last updated on June 11, 2015, 16:50"
+wheat,Wheat,Ukraine,UKR,26129230,1,"10% of the world wheat grain production was used for feed in 2009 and wheat ranks third among cereals used for animal feeding - Heuzé V., Tran G., 2015. Wheat (general). Feedipedia, a programme by INRAE, CIRAD, AFZ and FAO. https://www.feedipedia.org/node/6435 Last updated on June 11, 2015, 16:51"
+wheat,Wheat,Pakistan,PAK,25344258,1,"10% of the world wheat grain production was used for feed in 2009 and wheat ranks third among cereals used for animal feeding - Heuzé V., Tran G., 2015. Wheat (general). Feedipedia, a programme by INRAE, CIRAD, AFZ and FAO. https://www.feedipedia.org/node/6435 Last updated on June 11, 2015, 16:52"
+wheat,Wheat,Germany,DEU,23498850,1,"10% of the world wheat grain production was used for feed in 2009 and wheat ranks third among cereals used for animal feeding - Heuzé V., Tran G., 2015. Wheat (general). Feedipedia, a programme by INRAE, CIRAD, AFZ and FAO. https://www.feedipedia.org/node/6435 Last updated on June 11, 2015, 16:53"
+wheat,Wheat,Australia,AUS,21809121.67,1,"10% of the world wheat grain production was used for feed in 2009 and wheat ranks third among cereals used for animal feeding - Heuzé V., Tran G., 2015. Wheat (general). Feedipedia, a programme by INRAE, CIRAD, AFZ and FAO. https://www.feedipedia.org/node/6435 Last updated on June 11, 2015, 16:54"
+wheat gluten,Wheat,"China, mainland",CHN,133239683.3,0.08,http://countrystat.org/resources/documents/tcf.pdf
+wheat gluten,Wheat,India,IND,98064328.33,0.1,Used median of other values as item missing from India in FAO 1972
+wheat gluten,Wheat,Russian Federation,RUS,75603197.83,0.1,Used median of other values as item missing from Russia in FAO 1973
+wheat gluten,Wheat,United States of America,USA,53271327.83,0.1,Used median of other values as item missing from France in FAO 1974
+wheat gluten,Wheat,France,FRA,36152910.67,0.1,http://countrystat.org/resources/documents/tcf.pdf
+wheat gluten,Wheat,Canada,CAN,31728205.83,0.08,http://countrystat.org/resources/documents/tcf.pdf
+wheat gluten,Wheat,Ukraine,UKR,26129230,0.08,http://countrystat.org/resources/documents/tcf.pdf
+wheat gluten,Wheat,Pakistan,PAK,25344258,0.1,http://countrystat.org/resources/documents/tcf.pdf
+wheat gluten,Wheat,Germany,DEU,23498850,0.43,http://countrystat.org/resources/documents/tcf.pdf
+wheat gluten,Wheat,Australia,AUS,21809121.67,0.15,http://countrystat.org/resources/documents/tcf.pdf

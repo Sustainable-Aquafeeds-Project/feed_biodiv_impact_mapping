@@ -1,0 +1,121 @@
+---
+title: "Explore raw material origins using trade data"
+author: "Gage Clawson"
+date: "14/03/2022"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+
+```{r}
+library(tidyverse)
+library(here)
+library(janitor)
+library(countrycode)
+library(tidytext)
+library(knitr)
+
+source(here("src/directories.R"))
+
+select <- dplyr::select
+
+```
+
+
+Explore Jessica Gephart's data from the [Food Trade EJ](https://github.com/jagephart/food_trade_ej/blob/main/ms_draft.Rmd) project at NCEAS. 
+ 
+ - It appears they have data that describes how much of each feed crop was going to each animal system in each animal producing country.
+ - Unclear if they have the trade for FMFO species.
+
+```{r}
+## read in data taken from their project
+
+animal_feed_matrix <- read.csv(file.path(rdsi_raw_data_dir, "gephart_trade_data/animal_feed_trade_matrix_w_pressures.csv"))
+
+test <- animal_feed_matrix %>% distinct(feed_category, animal_product)
+
+aquaculture_feed_matrix <- animal_feed_matrix %>%
+  filter(!(animal_product %in% c("chickens_meat", "cows_meat", "goats_meat", "milk", "pigs_meat", "sheep_meat"))) %>%
+  filter(animal_product %in% c("salmonids_aquaculture", "Salmons, trouts, smelts")
+        )
+
+
+test <- aquaculture_feed_matrix %>% distinct(feed_category, animal_product)
+
+test <- aquaculture_feed_matrix %>%
+  filter(feed_producing_country == "NOR",
+         feed_category == "grain")
+
+producing_countries <- aquaculture_feed_matrix %>%
+  group_by(feed_producing_country, feed_category) %>%
+  summarise(sum_tonnes = sum(sum_trade, na.rm = TRUE)) %>%
+  ungroup() %>%
+  group_by(feed_category) %>%
+  slice_max(order_by = sum_tonnes, n = 15) %>%
+  ungroup() %>%
+  filter(sum_tonnes > 1000)
+
+
+ggplot(producing_countries, aes(x = sum_tonnes, y = reorder_within(feed_producing_country, sum_tonnes, feed_category))) + 
+  geom_bar(stat = "identity") + 
+  facet_wrap(~feed_category, scales = "free") + 
+  labs(x = "Tonnes of feed produced", y = "Country") + 
+  theme_bw()
+
+
+kable(producing_countries %>% filter(feed_category == "soybean"))
+  
+
+
+```
+
+Lets compare the above crop producing countries to the plant-diet demand from Rich's data (with ge_allocation)
+
+```{r}
+
+
+feed_prod_raw_mats <- readRDS(("../feed_pressure_mapping/data/tidy_data/demand/sourcing_countries_crops.rds")) %>%
+  filter(diet == "plant_diet",
+         allocation_method == "ge_allocation") %>%
+  group_by(groups, ingredients, FAOSTAT_name, map_spam_code) %>%
+  summarise(mean_crop_demand = mean(total_crop_demand)) %>%
+  ungroup() %>%
+  mutate(feed_category = case_when(
+    FAOSTAT_name %in% c("Maize", "Wheat") ~ "grain", 
+    FAOSTAT_name  %in% c("Peas, dry", "Broad beans, horse beans, dry") ~ "pulse", 
+    FAOSTAT_name %in% c("Soybeans") ~ "soybean", 
+    FAOSTAT_name %in% c("Rapeseed", "Linseed", "Sunflower seed") ~ "oilcrop"
+  )) %>%
+  group_by(feed_category) %>%
+  summarise(crop_demand = sum(mean_crop_demand)) %>%
+  ungroup()
+
+unique(feed_prod_raw_mats$FAOSTAT_name)
+
+global_producing_feed <- producing_countries %>%
+  group_by(feed_category) %>%
+  summarise(sum_tonnes = sum(sum_tonnes)) %>%
+  ungroup()
+
+unique(global_producing_feed$feed_category)
+
+
+join_prod_demand <- global_producing_feed %>%
+  left_join(feed_prod_raw_mats)
+
+## ok well there were bound to be some differences due to the resolution of the data, but it is actually pretty similar! Good to see that on a global level the estimates from Rich's paper are in the same ballpark. Good validation for both projects... 
+
+  
+```
+
+
+
+```{r}
+test <- rast("../../feed_pressure_mapping/data/spatial/crop-layers-raw/spam2010V2r0_global_A_SOYB_A.tif")
+
+plot(test)
+```
+
+
+

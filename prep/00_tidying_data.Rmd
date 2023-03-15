@@ -1,0 +1,260 @@
+---
+title: "Tidying data"
+author: "Rich Cottrell"
+date: "15/02/2022"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+library(parallel)
+library(janitor)
+library(here)
+library(countrycode)
+library(rredlist)
+library(terra)
+
+source(here("src/directories.R"))
+source(here("src/spatial.R"))
+
+```
+
+
+This is the code to unzip and adjust the extents of the mapspam rasters (-180, 180, -90, 90) - DO NOT RUN IN PROJECT - here as a backup to scripts in the raw data files
+
+```{r}
+
+
+mapspam_zip_files <- list.files(path = mapspam_dir, pattern = "\\.zip$")
+
+
+lapply(X=mapspam_zip_files, FUN = unzip)
+
+
+#Adjust the extent of rasters to full lon lat coveragge
+
+#test
+banana <- raster(file.path(mapspam_dir, "spam2010V2r0_global_H_BANA_H.tif"))
+banana
+
+#this should be the new extent for all
+new_extent <- c(-180, 180, -90, 90)
+
+extent(banana) <- new_extent
+
+#apply new extents to all files
+
+tifs <- list.files(mapspam_dir, pattern = "\\.tif", full.names = TRUE)
+
+adjust_extent <- \(this_filename){
+  
+  this_file <- basename(this_filename)
+  message(paste("processing", which(tifs==this_file), "of", length(tifs)))
+  this_raster <- rast(this_filename)
+  ext(this_raster) <- new_extent
+  writeRaster(x=this_raster, filename = file.path("/mnt/rdsi/raw_data/MAPSPAM/new-extents", this_file), overwrite = TRUE)
+}
+
+#run over mutliple cores to speed things up - pointer error but all files ran.
+parallel::mclapply(X = tifs, FUN = adjust_extent, mc.cores = detectCores()-2)
+
+
+```
+
+
+
+This is the code to unzip the gridded livestock of the world rasters - DO NOT RUN IN PROJECT - here as a backup to scripts in the raw data files
+
+```{r}
+
+dir <- "/mnt/rdsi/raw_data/gridded-livestock-of-the-world"
+
+setwd(dir)
+
+library(tidyverse)
+library(parallel)
+library(raster)
+
+glw_zip_files <- list.files(dir, pattern = "\\.zip$")
+
+unzip_raw_data <- function(this_file){
+  this_file_name <- file.path(dir, this_file)
+  unzip(this_file_name)
+  
+}
+
+
+lapply(X = glw_zip_files, FUN = unzip_raw_data)
+
+
+
+```
+
+
+Tidy global aquaculture production data
+
+```{r}
+
+(aqua_prod_raw <- 
+   read_csv(file.path(fishstat_dir, "aqua-prod-raw.csv")) %>% 
+  clean_names() %>% 
+  rename(country= country_name,
+         species = asfis_species_name,
+         area = fao_major_fishing_area_name,
+         environment = environment_name) %>% 
+   dplyr::select(-unit_name) %>% 
+   filter(!country %in% c("Totals - Tonnes - live weight", "FAO. 2021. Fishery and Aquaculture Statistics. Global aquaculture production 1950-2019 (FishstatJ). In: FAO Fisheries Division [online]. Rome. Updated 2021. www.fao.org/fishery/statistics/software/fishstatj/en"))
+)
+
+
+flags <- aqua_prod_raw %>% 
+  dplyr::select(-starts_with("x")) %>% 
+  pivot_longer(names_to = "flag", values_to = "symbol", -c(country, species, area, environment, unit)) %>% 
+  mutate(flag = case_when(symbol == "..." ~ "No data",
+                           symbol == " " ~ "Data not separately available",
+                           symbol == "-" ~ "Nil or zero",
+                           symbol == "0 0" ~ "0<x<0.5",
+                           symbol == "E" ~ "estimate",
+                           is.na(symbol) ~ "Reported")) %>% 
+  dplyr::select(-symbol)
+
+
+#sorts country coding to deal with non-UTF characters that country code depends on
+Encoding(aqua_prod_raw$country) <- "latin1" #deals with the non-UTF
+aqua_prod_raw$country <- iconv(aqua_prod_raw$country, "latin1", "UTF-8",sub='')
+
+
+
+aquaculture_prod <- 
+  
+  bind_cols(
+    aqua_prod_raw %>%
+      dplyr::select(-c(starts_with("s_"))) %>% 
+      pivot_longer(names_to = "year", values_to = "value", cols = -c(country, species, area, environment, unit)) %>% 
+      mutate(iso_3c = countrycode(country, origin = "country.name", destination = "iso3c", warn = TRUE)) %>%
+      mutate(iso_3c = case_when(country == "Zanzibar" ~ "TZA",
+                                TRUE ~ iso_3c)) %>%
+      mutate(year = gsub("x", "", year) %>% 
+               as.numeric),
+    
+    flags %>% dplyr::select(flag)
+  ) %>% 
+  drop_na(iso_3c)
+
+
+
+saveRDS(object = aquaculture_prod, file = here("data", "tidy_data", "aquaculture_production_tidy.rds"))
+
+
+
+```
+
+Unzip FAOSTAT Production data
+```{r}
+unzip(list.files(path=file.path(rdsi_dir, "raw_data/fao/FAOSTAT_2023"), pattern = "Production_Crops", full.names = TRUE), exdir = file.path(rdsi_dir, "raw_data/fao/FAOSTAT_2023"))
+
+```
+
+Tidy FAOSTAT Production data
+```{r}
+
+production_raw <- read_csv(file.path(rdsi_dir, "raw_data/fao/FAOSTAT_2023/Production_Crops_Livestock_E_All_Data_(Normalized).csv"))
+
+production_flags <- read_csv(file.path(rdsi_dir, "raw_data/fao/FAOSTAT_2023/Production_Crops_Livestock_E_Flags.csv"))
+
+production_raw <- production_raw |> 
+  left_join(production_flags) |> 
+  mutate(Description = if_else(is.na(Description), true = "Official data", false = Description)) |> 
+  mutate(Sector = case_when(grepl("Milk|milk|Meat|meat|Fat|fat|Chicken|Buffaloes|Cattle|cattle|Camel|ffal|Pigs|abbit|worm|odent|urkey|oghurt|Wool|Sheep|Goat|Egg|egg|Asses|Beeh|Bees|Ducks|Cream|Geese|Horses|Honey|Lard|Mules|Birds|Skins|Butter|Cheese|Snail", Item) ~ "Livestock",
+                            TRUE ~ "Crops"))
+
+Encoding(production_raw$Area) <- "latin1" #deals with the non-UTF
+production_raw$Area <- iconv(production_raw$Area, "latin1", "UTF-8",sub='')
+
+
+#separate by sector
+production_sector_list <- 
+  production_raw  |> 
+  clean_names()  |>  
+  mutate(iso3c = countrycode(area, origin = "country.name", destination = "iso3c", warn = TRUE)) |> 
+  group_split(sector)
+
+#save
+map(.x = production_sector_list, .f = function(this_element){
+  saveRDS(object = this_element, file = sprintf(here("data/tidy_data/production-data/%s_production_tidy.rds"), tolower(unique(this_element$sector))))
+})
+  
+
+
+
+```
+Create a base raster
+```{r}
+
+base_raster <- rast()
+values(base_raster) <- 1:ncell(base_raster)
+base_raster_ea <- project(base_raster, equal_area_gp_proj)
+res(base_raster_ea) <- 10000
+values(base_raster_ea) <- 1:ncell(base_raster_ea) 
+
+writeRaster(x = base_raster_ea, file = here("data/spatial/base_raster_gall_peters.tif"), overwrite=TRUE)
+
+
+
+
+```
+
+IUCN threats of interest to feeds
+
+```{r}
+
+threats <- readRDS(file.path(iucn_dir, "threat_info/1_all_threats.rds")) |> 
+  drop_na(id) |>
+  janitor::clean_names()
+
+unique(threats$result_timing)
+
+current_severe_threats <- 
+  threats |> 
+  filter(result_timing %in% c("Ongoing", "Past, Likely to Return", "Past, Unlikely to Return", "Future") &
+        result_severity %in% c( "Rapid Declines", "Slow, Significant Declines", "Causing/Could cause fluctuations", "Very Rapid Declines"))
+
+threats_reduced <- 
+  current_severe_threats |> 
+  filter(!grepl("Invasive|invasive|Named species|named species|Problematic", result_title)) |> 
+  pull(result_title) |> 
+  unique()
+
+
+threats_of_interest <- current_severe_threats |> 
+  filter(result_title %in% threats_reduced) |> 
+  filter(result_title %in% c("Fishing & harvesting aquatic resources",
+  "Annual & perennial non-timber crops" ,
+  "Agro-industry farming",
+  "Livestock farming & ranching",
+  "Agro-industry grazing, ranching or farming" ,
+  "Agricultural & forestry effluents",
+  "Herbicides and pesticides",
+  "Nutrient loads",
+  "Herbicides and pesticides",
+  "Shifting agriculture",
+  "Small-holder farming",
+  "Small-holder grazing, ranching or farming",
+  "Abstraction of ground water (agricultural use)",
+  "Abstraction of surface water (agricultural use)",
+  "Agro-industry plantations",
+  "Small-holder plantations",
+  "Marine & freshwater aquaculture",
+  "Subsistence/artisinal aquaculture",
+  "Industrial aquaculture")) |> pull(result_title) |>  
+  unique() 
+
+current_severe_threats_of_interest <- 
+  current_severe_threats |> 
+  filter(result_title %in% threats_of_interest)
+
+write_csv(x = current_severe_threats_of_interest, file = here("data/tidy_data/iucn/current_severe_threats_of_interest.csv"))
+
+
+```
+
