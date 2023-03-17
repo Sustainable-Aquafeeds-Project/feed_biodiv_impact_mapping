@@ -7,8 +7,8 @@ editor_options:
 
 # Script Description
 
-1. Map crop production coefficients from 2010 to 2021.
-2. Produce maps scaled to 2021 for each crop category 
+1. Map crop production coefficients from early period (2009, 2010, 2011) to late period (2019, 2020, 2021).
+2. Produce maps scaled to mean of 2019, 2020, 2021 for each crop category 
 3. Calculate how much of the crop's production is allocated to each cell.
 
 # Data information
@@ -92,7 +92,7 @@ scale_from_2010_to_2021 <- function(crop, prod_system) {
   
 }
 
-plan(multisession, workers = 4)
+plan(multisession, workers = 8)
 
 options <- furrr_options(seed = 54232)
 
@@ -174,7 +174,7 @@ plot(coef_test)
 plot(log(coef_test + 1))
 
 # Scaled maps
-scaled_test <- raster(file.path(mapspam_dir, "/scaled_maps_2021/crop_cnut_A_scaled.tif"))
+scaled_test <- raster(file.path(mapspam_dir, "/scaled_maps_2021/crop_soyb_A_scaled.tif"))
 plot(scaled_test)
 plot(log(scaled_test + 1))
 

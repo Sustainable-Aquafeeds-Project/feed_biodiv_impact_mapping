@@ -11,7 +11,7 @@ Rescale MapSPAM data to year 2021.
 
 # Data information
 
-We do this using FAOSTAT crop production data trends between year 2010 and 2021.
+We do this using FAOSTAT crop production data trends between year 2010 and 2021. Consider using 3 year mean? I.e. 2009, 2010, 2011, for early years; 2019, 2020, 2021 for later years?
 
 # Setup
 ```{r setup, include = FALSE}
@@ -45,19 +45,23 @@ scaling_coef_tidy <-
   dplyr::select(area_code, item_code, year, value) %>% 
   rename(tonnes = value) %>% 
   na.omit() %>%
-  filter(item_code %in% crops$item_code)
+  filter(item_code %in% crops$item_code) %>%
+  mutate(era = ifelse(year %in% c(2009:2011), "early", "late"))
+
+test <- scaling_coef_tidy %>%
+  filter(area_code %in% c(276, 277))
 ```
 
 ## Special Sudanese case
 
-Sudan was split into two countries in 2010, so now we need to scale the difference from 2010 to 2021. To do this, I am extracting production data for SPAM's 2010 map as opposed to splitting FAO data.
+Sudan wasn't split into two countries in 2010, so now we need to scale the difference from 2010 to 2021. To do this, I am extracting production data for SPAM's 2010 map as opposed to splitting FAO data.
 
 ```{r}
 SDN_SSD_2010 <- 
   vroom::vroom(here("prep/01_crops_mapspam/data/prod_crop_rgns_2010.csv")) %>% 
   filter(iso3c %in% c("SSD", "SDN")) %>% 
   group_by(iso3c, SPAM_short_name) %>% 
-  summarize(`2010` = sum(production)) %>% 
+  summarize(`early` = sum(production)) %>% 
   ungroup() 
 
 SDN_SSD_2021 <- 
@@ -66,15 +70,19 @@ SDN_SSD_2021 <-
   left_join(crops) %>%   
   left_join(read_csv(here("data/spatial/output/FAO_rgn_codes.csv")), 
             by = "area_code") %>% # Add iso3c
-  group_by(SPAM_short_name, iso3c) %>% 
-  summarise(`2021` = sum(tonnes, na.rm = TRUE)) %>% 
+  group_by(SPAM_short_name, iso3c, year, era) %>% 
+  summarise(sum_tonnes = sum(tonnes, na.rm = TRUE)) %>% 
   ungroup() %>% 
-  na.omit()
+  group_by(SPAM_short_name, iso3c, era) %>%
+  summarise(late = mean(sum_tonnes, na.rm = TRUE)) %>%
+  ungroup() %>%
+  na.omit() %>%
+  dplyr::select(-era)
 
 sudan_coef <- 
   full_join(SDN_SSD_2010, SDN_SSD_2021) %>% 
   mutate_all(~replace(., is.na(.), 0)) %>% 
-  mutate(coef = `2021` / `2010`) %>% 
+  mutate(coef = `late` / `early`) %>% 
   dplyr::select(!contains("tonnes")) %>%
   mutate_all(~replace(., is.na(.), 0)) %>% 
   mutate(coef = ifelse(coef == Inf, 0, coef))
@@ -92,7 +100,7 @@ scaling_coef_tidy <-
   left_join(read_csv(here("data/spatial/output/FAO_rgn_codes.csv")), 
             by = "area_code") %>% # Add iso3c
   left_join(crops) %>% # Add SPAM_short_name
-  dplyr::select(year, tonnes, iso3c, SPAM_short_name) %>% 
+  dplyr::select(year, tonnes, iso3c, SPAM_short_name, era) %>% 
   na.omit() # Remove NA created by milled rice.
 
 # Distinct area_codes
@@ -103,34 +111,34 @@ missing_rgns
 food_rgns %>% filter(iso3c %in% missing_rgns) # Nothing unusual, all small islands.
 ```
 
-# Calculate scaling from 2010 to 2021 for all crops and countries.
+# Calculate scaling from 2010 to 2021 for all crops and countries using 3 year means.
 ```{r}
 scaling_coef <- 
   scaling_coef_tidy %>% 
-  group_by(SPAM_short_name, year, iso3c) %>%
-  summarize(tonnes = mean(tonnes)) %>% # Calculate mean tonnes for each crop, year and country.
+  group_by(SPAM_short_name, era, iso3c) %>%
+  summarize(tonnes = mean(tonnes, na.rm = TRUE)) %>% # Calculate mean tonnes for each crop, year and country.
   ungroup() %>% 
-  spread(., year, tonnes) %>% 
+  spread(., era, tonnes) %>% 
   filter(!iso3c %in% c("SDN", "SSD")) %>% # Replace Sudan values
   mutate_all(~replace(., is.na(.), 0)) %>% 
-  group_by(SPAM_short_name, iso3c, `2021`, `2010`) %>%
-  summarize(coef = `2021` / `2010`, .groups = "keep") %>% 
+  group_by(SPAM_short_name, iso3c, `late`, `early`) %>%
+  summarize(coef = `late` / `early`, .groups = "keep") %>% 
   ungroup() %>% 
   bind_rows(sudan_coef)
 
 # Make sure that countries with more than 0 production in SPAM 2010 but
 # no data in 2021 have 0 value for 2021.
-scaling_coef$coef[scaling_coef$`2010` > 0 & scaling_coef$`2021` == 0] <- 0
+scaling_coef$coef[scaling_coef$`early` > 0 & scaling_coef$`late` == 0] <- 0
 
 # Some countries will have data in 2017, according to the FAO, but none in 2010. We need to make sure that we manually insert these values in the scaled maps.
 
 inf_values <- 
   scaling_coef %>% 
-  filter(`2010` == 0 & `2021` > 0) %>% 
-  dplyr::select(SPAM_short_name, iso3c, tonnes = `2021`)
+  filter(`early` == 0 & `late` > 0) %>% 
+  dplyr::select(SPAM_short_name, iso3c, tonnes = `late`)
 inf_values
 
-scaling_coef$coef[scaling_coef$`2010` == 0 & scaling_coef$`2021` > 0] <- 0
+scaling_coef$coef[scaling_coef$`early` == 0 & scaling_coef$`late` > 0] <- 0
 
 # All infinite numbers assigned a coef of 1.
 scaling_coef$coef[which(!is.finite(scaling_coef$coef))] <- 0

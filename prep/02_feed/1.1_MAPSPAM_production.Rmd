@@ -96,19 +96,22 @@ fao_translate <- vroom::vroom(here("prep/01_crops_mapspam/data/crop_codes.csv"))
   unique()
 
 fao <- read_csv(here("prep/01_crops_mapspam/data/FAOSTAT_crop_production_2010_2021.csv")) %>% 
-  filter(year == 2021) %>%
+  filter(year %in% c(2019, 2020, 2021)) %>%
   filter(area != "China",
          area_code < 5000) %>%
-  dplyr::select(area, item_code, value) %>%
-  left_join(fao_translate, by="item_code") %>%
+  dplyr::select(area, item_code, value, year) %>%
+  left_join(fao_translate, by="item_code") %>% 
+  group_by(SPAM_super, year) %>%
+  summarise(total = sum(value, na.rm = TRUE)) %>%
+  ungroup() %>%
   group_by(SPAM_super) %>%
-  summarize(total = sum(value, na.rm=TRUE)) %>%
+  summarize(total = mean(total, na.rm=TRUE)) %>%
   ungroup()
   
 compare <- check %>% left_join(fao, by="SPAM_super") %>%
   mutate(prop = our_tonnes/total)
 compare
-sum(compare$our_tonnes, na.rm=TRUE)/sum(compare$total) # teas and rest categories are problematic... everything else looks ok though. 
+sum(compare$our_tonnes, na.rm=TRUE)/sum(compare$total, na.rm = TRUE) # teas and rest categories are problematic... everything else looks ok though... I'm gonna be filtering out those anyway... (I think)
 
 write_csv(crop_production_df, here("prep/02_feed/data/MAPSPAMcrop_production.csv"))
 

@@ -119,7 +119,7 @@ fao_crop_prod_raw <- readRDS(here("data/tidy_data/production-data/crops_producti
 
 fao_crop_prod_2010_2021 <- fao_crop_prod_raw %>%
   dplyr::filter(element_code == 5510,
-                year_code %in% c(2010, 2021)) %>%
+                year_code %in% c(2009, 2010, 2011, 2019, 2020, 2021)) %>%
   dplyr::select(sector, area_code, area, element_code, element, item_code, item, year_code, year, value)
 
 write.csv(fao_crop_prod_2010_2021, here("prep/01_crops_mapspam/data/FAOSTAT_crop_production_2010_2021.csv"), row.names = FALSE)
@@ -148,7 +148,7 @@ dsfdsf <- vroom::vroom(here("prep/01_crops_mapspam/data/FAO_crop_definitions.csv
 crop_codes <- 
   vroom::vroom(here("prep/01_crops_mapspam/data/MapSPAM_names.csv")) %>% 
   dplyr::select(SPAM_short_name, SPAM_full_name, item_code) %>% 
-  left_join(vroom::vroom(here("prep/feed/data/MapSPAM_crop_info.csv"), 
+  left_join(vroom::vroom(here("prep/02_feed/data/MapSPAM_crop_info.csv"), 
                          col_select = c("SPAM_short_name", "SPAM_super")))
 
 str(crop_codes)
