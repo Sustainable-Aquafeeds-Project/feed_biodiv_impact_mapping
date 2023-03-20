@@ -3,6 +3,7 @@
 library(rredlist)
 library(here)
 library(terra)
+library(tidyverse)
 
 
 source(here("src/directories.R"))
@@ -111,6 +112,9 @@ get_threat_api_casey <- function(this_spp_id){
 
 
 
+## Common functions+packages
+select <- dplyr::select
+summarise <- dplyr::summarise
 
 
 

@@ -2,6 +2,7 @@ product,crop,FAO_Item_Code,FAO_Item_Code_NFB,SPAM_long_name,SPAM_short_name
 soybean,soybean,236,2555,soybean,soyb
 soy protein concentrate,soybean,238,2555,soybean,soyb
 soy other,soybean,238,2555,soybean,soyb
+guar protein,pea,187,2547,other pulses,opul
 pea protein,pea,187,2547,other pulses,opul
 pea other,pea,187,2547,other pulses,opul
 pea,pea,187,2547,other pulses,opul

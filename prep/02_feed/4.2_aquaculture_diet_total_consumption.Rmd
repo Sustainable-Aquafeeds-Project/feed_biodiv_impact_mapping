@@ -1,89 +1,125 @@
 ---
 title: "Calculating aquaculture diet consumption in tonnes"
-author: "Juliette"
-date: "10/21/2020"
+author: "Gage"
+date: "03/20/2023"
 output: html_document
 editor_options: 
   chunk_output_type: console
 ---
 
 Use following data to calculate tonnes of each feedstuff item consumed by each aquaculture system in each country:
-* Tonnes of production
-* Diet composition 
-* feed conversion ratio
+
+* Tonnes of production: From FAOSTAT
+* Diet composition: From Aas et al. 2022
+* feed conversion ratio: From Tacon & Metian 2008
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+
 
 library(here)
 library(stringi)
 library(countrycode)
 
-scenario_year <- 2017
+scenario_year <- 2020
 
+source(here("src/fxns.R"))
 ```
 
 
 ```{r}
 
-production <- read_csv(here("aquaculture/marine/STEP1_species_groups/int/tonnes_per_country_group.csv")) %>%
-  filter(!(aq_group %in% "bivalves")) %>%
-  mutate(aq_group = ifelse(aq_group=="marine_fish_general", "marine-fish-general", aq_group),
-         aq_group = ifelse(aq_group=="salmonids", "salmon", aq_group),
-         aq_group = ifelse(aq_group=="shrimps_prawns", "shrimp", aq_group)) %>%
-  select(country, species = aq_group, tonnes=total_tonnes)
+production <- readRDS(here("data/tidy_data/production-data/aquaculture_production_tidy.rds")) 
 
-production$iso3c <- countrycode(production$country, origin="country.name", destination = "iso3c")
-summary(production)
-table(production$iso3c)
+test <- production %>%
+  filter(str_detect(species, "salmon|Salmon")) %>%
+  filter(species != "Atlantic salmon",
+         year == 2020, 
+         value > 0)
 
-diet <- read_csv(here("feed/data/aquaculture_diet_composition.csv"))
+salmon_production <- production %>%
+  filter(species == "Atlantic salmon" & year == scenario_year,
+         value > 0) %>%
+  mutate(species = "salmon")
 
-fcr <- read_csv(here("feed/data/feed_conversion_aquaculture.csv")) %>%
-  select(species, fcr=value)
+
+
+diet <- read_csv(here("prep/02_feed/data/aquaculture_diet_composition.csv"))
+
+# fcr <- read_csv(here("prep/02_feed/data/feed_conversion_aquaculture.csv")) %>%
+#   select(species, fcr=value)
+
+fcrs <- read.csv(here("data/raw_data/FCR.csv")) %>%
+  mutate(species = "salmon")
 
 ```
 
+Import the feed conversion ratios and join to production. 
 
-Calculate total of each product for each country based on production.
+Feed conversion ratios were sourced from Tacon and Metian 2008 which has country specific information for salmon feed conversion ratios.
+
+Where country information from tacon and metian is not available use global average for that country. And get absolute feed demand. To do this we use the min eFCR given the Tacon and Metian data is old and there is a general upward trend in feed efficiency through time. However, for countries where no specific fcr data is provided, give the mean Global FCR.
+
+
+```{r}
+feed_demand <- 
+  salmon_production %>%
+  left_join(fcrs, by = c("country", "species")) %>%
+  mutate(eFCR_min = if_else(is.na(eFCR_min), true = fcrs %>% filter(country=="Globe") %>% pull(eFCR_mean), false = eFCR_min),
+         eFCR_max = if_else(is.na(eFCR_max), true = fcrs %>% filter(country=="Globe") %>% pull(eFCR_mean), false = eFCR_max),
+         eFCR_mean = if_else(is.na(eFCR_mean), true = fcrs %>% filter(country=="Globe") %>% pull(eFCR_mean), false = eFCR_mean)) %>% 
+  mutate(feed_demand = value*eFCR_min)
+
+saveRDS(feed_demand, here("prep/02_feed/data/demand/global_feed_demand.rds"))
+```
+
+
+Now calculate ingredient demand per diet (just modern diet for now) and for each salmon producing country. While we are not really interested in this project in the country-specific data, global demand is affected by the among country differences in FCR.
 
 ```{r}
 
-tonnes_consumption <- left_join(production, fcr, by="species") %>%
-  left_join(diet, by=c("iso3c", "species")) %>%
-  mutate(tonnes_feedstuff = tonnes * fcr * prop_diet) %>%
+tonnes_consumption <- feed_demand %>%
+  left_join( diet, by=c("iso3c", "species")) %>%
+  mutate(ingredient_demand = feed_demand * prop_diet) %>%
   mutate(product = "meat") %>%
-  dplyr::select(iso3c, animal= species, system = production_system, product, feedstuff = raw_name, tonnes_feedstuff) 
+  dplyr::select(iso3c, animal= species, system = production_system, product, ingredient = raw_name, ingredient_demand) 
 
-write_csv(tonnes_consumption, here("feed/data/total_aquaculture_feedstuff_consumption.csv")) 
+write_csv(tonnes_consumption, here("prep/02_feed/data/demand/total_aquaculture_ingredient_demand.csv")) 
+
+tonnes_consumption %>%
+  group_by(ingredient) %>%
+  summarise(total_ingredient_demand = sum(ingredient_demand, na.rm = TRUE)) %>%
+  ungroup() %>%
+  write.csv(here("prep/02_feed/data/demand/total_global_ingredient_demand.csv"), row.names = FALSE)
 
 ```
 
 Unlike the chickens, the calculated values are very close to those from Halley et al. 2018.  
 But, here we make them match Froehlich et al.  2018.
 
-
 Check that fishoil/fishmeal matches Froehlich data.
 Specifically matching to Fig.3 in paper, data here: https://knb.ecoinformatics.org/view/doi:10.5063/F1T43R7N
 (New_Current_Taxon_Fig.csv (for figures))
+
 ```{r}
 
-combine_feedstuff <- read_csv(here("feed/data/total_aquaculture_feedstuff_consumption.csv"))    
+combine_demand <- read_csv(here("prep/02_feed/data/demand/total_aquaculture_ingredient_demand.csv"))    
 
-halley_tonnes <- read.csv(here("feed/data/msleckman.45.1_fofm_consumption.csv")) %>%
+halley_tonnes <- read.csv(here("prep/02_feed/data/msleckman.45.1_fofm_consumption.csv")) %>%
   filter(!is.na(animal)) %>%
   group_by(animal) %>%
   summarize(true_tonnes_fish = sum(Current_Mean)) %>%
-  mutate(true_tonnes_fofm = true_tonnes_fish*0.28)  # 0.28 converts tonnes fish to fofm
+  mutate(true_tonnes_fofm = true_tonnes_fish*0.28) %>%  # 0.28 converts tonnes fish to fofm
+  filter(animal == "salmon")
 
-fofm <- combine_feedstuff %>%
-    filter(feedstuff == "fofm" | feedstuff == "marine oil, forage fish" |feedstuff == "marine protein sources, forage fish" ) %>%
+fofm <- combine_demand %>%
+    filter(ingredient == "fish meal, forage fish" | ingredient == "fish oil, forage fish" | ingredient == "fish meal, cut offs" | ingredient == "fish oil, cut offs") %>%
     group_by(animal) %>%
-  summarize(tonnes_fofm=sum(tonnes_feedstuff, na.rm=TRUE)) %>%   
+  summarize(tonnes_fofm=sum(ingredient_demand, na.rm=TRUE)) %>%   
   left_join(halley_tonnes) %>%
   mutate(correction = true_tonnes_fofm/tonnes_fofm)
 
-write_csv(fofm, here("feed/data/fofm_aquaculture_corrected_consumption.csv"))
+write_csv(fofm, here("prep/02_feed/data/demand/fofm_aquaculture_corrected_consumption.csv"))
 
 ```
 
@@ -91,32 +127,41 @@ write_csv(fofm, here("feed/data/fofm_aquaculture_corrected_consumption.csv"))
 
 ```{r}
 
-combine_feedstuff_corrected <- combine_feedstuff %>%
+combine_feedstuff_corrected <- combine_demand %>%
  left_join(fofm) %>%
-  mutate(correction = ifelse(feedstuff %in% c("fofm", "marine oil, forage fish", "marine protein sources, forage fish" ) , correction, 1)) %>%
-  mutate(tonnes_feedstuff_fofm_correct = tonnes_feedstuff*correction) %>%
-  select(iso3c, animal, system, product, feedstuff, tonnes_feedstuff=tonnes_feedstuff_fofm_correct)
+  mutate(correction = ifelse(ingredient %in% c("fish meal, forage fish", "fish oil, forage fish", "fish oil, cut offs", "fish meal, cut offs" ) , correction, 1)) %>%
+  mutate(tonnes_feedstuff_fofm_correct = ingredient_demand*correction) %>%
+  dplyr::select(iso3c, animal, system, product, ingredient, ingredient_demand=tonnes_feedstuff_fofm_correct)
 
-write_csv(combine_feedstuff_corrected, here("feed/data/total_aquaculture_feedstuff_consumption.csv"))    
+write_csv(combine_feedstuff_corrected, here("prep/02_feed/data/demand/total_aquaculture_ingredient_demand_corrected.csv"))    
 
 # check; Halley values and ours should be similar (tonnes)
 combine_feedstuff_corrected %>%
-  filter(feedstuff == "FISHMEAL" | feedstuff == "fofm" | feedstuff == "marine oil, forage fish" |feedstuff == "marine protein sources, forage fish" ) %>%
+  filter(ingredient == "fish meal, forage fish" | ingredient == "fish oil, forage fish" | ingredient == "fish meal, cut offs" | ingredient == "fish oil, cut offs" ) %>%
       group_by(animal) %>%
-  summarize(total=sum(tonnes_feedstuff, na.rm=TRUE)) %>%    #
+  summarize(total=sum(ingredient_demand, na.rm=TRUE)) %>%    #
   left_join(halley_tonnes)
 
 # check that these are still the same
 combine_feedstuff_corrected %>%
-    group_by(animal, feedstuff) %>%
-  summarize(total=sum(tonnes_feedstuff, na.rm=TRUE)) %>%    #
-  filter(feedstuff == "wheat") 
-combine_feedstuff %>%
-    group_by(animal, feedstuff) %>%
-  summarize(total=sum(tonnes_feedstuff, na.rm=TRUE)) %>%    #
-  filter(feedstuff == "wheat") 
+    group_by(animal, ingredient) %>%
+  summarize(total=sum(ingredient_demand, na.rm=TRUE)) %>%    #
+  filter(ingredient == "wheat") 
+
+combine_demand %>%
+    group_by(animal, ingredient) %>%
+  summarize(total=sum(ingredient_demand, na.rm=TRUE)) %>%    #
+  filter(ingredient == "wheat") 
 
 
 ```
 
+
+Check Rich diet data and compare to what I have: 
+
+
+```{r}
+both_diets <- read_csv(here("../feed_pressure_mapping/data/raw_data/feed_composition_pressures.csv")) |> select(-X5) |> 
+  mutate(ingredients = if_else(condition = ingredients== "canola/camelina oil", true = "canola oil", false = ingredients))
+```
 

@@ -572,5 +572,7 @@ data.frame(dplyr::filter(check, total!=1))
 
 write_csv(trade_data, here("prep/02_feed/data/FAO_MAPSPAMcrop_trade_data.csv"))
 
+test <- read.csv(here("prep/02_feed/data/FAO_MAPSPAMcrop_trade_data.csv"))
+
 ```
 

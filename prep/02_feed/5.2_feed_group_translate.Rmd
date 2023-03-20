@@ -5,47 +5,22 @@ editor_options:
   chunk_output_type: console
 ---
 
+
+STOPPED HERE MARCH 20
+
 This script divides consumption into fofm, fodder, and crop categories.
 
 ```{r setup, include=FALSE}
 
 library(here)
-source(here("_workflow/common.R"))
 library(stringi)
 
-feedstuff <- read_csv(here("feed/data/total_feedstuff_consumption.csv")) %>%
+source(here("src/fxns.R"))
+
+demand <- read_csv(here("prep/02_feed/data/demand/total_aquaculture_ingredient_demand_corrected.csv")) %>%
   mutate(animal_system = paste(animal, system, product, sep="_")) %>%
-  rename(source_feedname = feedstuff) %>%
-  select(iso3c, animal_system, source_feedname, tonnes_feedstuff)
-table(feedstuff$animal_system)
-
-```
-
-## cow check
-check to make sure cows make sense.  Mixed should have no fresh grass or leaves.  Grassland shouldn't have hay/fodder.
-```{r}
-
-filter(feedstuff, animal_system=="cows_mixed_meat") %>%
-  group_by(source_feedname) %>%
-  summarize(total=sum(tonnes_feedstuff)) %>%
-  arrange(total) %>%
-  data.frame()
-
-filter(feedstuff, animal_system=="cows_grassland_meat") %>%
-  group_by(source_feedname) %>%
-  summarize(total=sum(tonnes_feedstuff)) %>%
-  arrange(total) %>%
-  data.frame()
-
-filter(feedstuff, animal_system=="cows_feedlot_meat") %>%
-  group_by(source_feedname) %>%
-  summarize(total=sum(tonnes_feedstuff)) %>%
-  arrange(total) %>%
-  data.frame()
-
-filter(feedstuff, animal_system=="cows_feedlot_meat") %>%
-  filter(source_feedname == "Fresh grass") %>%
-  data.frame()
+  rename(source_ingredient = ingredient) %>%
+  select(iso3c, animal_system, source_ingredient, ingredient_demand)
 
 ```
 
@@ -53,16 +28,17 @@ filter(feedstuff, animal_system=="cows_feedlot_meat") %>%
 
 ```{r}
 
-feed_cats <- read_csv(here("feed/data/feed_category_table.csv")) %>%
+feed_cats <- read_csv(here("prep/02_feed/data/feed_category_table.csv")) %>% ## this table was created manually. It matches our ingredient names from Aas et al. 2022 to mapspam names. Must also update product_to_fao_spam.csv. 
   select(-notes) 
 
 # make sure all feed is categorized...if not update the feed_category_table.csv
-setdiff(feedstuff$source_feedname, feed_cats$source_feedname)
+setdiff(demand$source_ingredient, feed_cats$source_feedname)
+
 # make sure no duplicates, if there are: correct them:
 feed_cats[duplicated(feed_cats$source_feedname),]
 
-feedstuff_cats <- feedstuff %>%
-  left_join(feed_cats, by="source_feedname") 
+feedstuff_cats <- demand %>%
+  left_join(feed_cats, by= c("source_ingredient" = "source_feedname")) 
 filter(feedstuff_cats, is.na(included_source)) # should be no NA values
 
 crop_feed <- feedstuff_cats %>%
@@ -70,8 +46,8 @@ crop_feed <- feedstuff_cats %>%
 
 # see whats there, should be no blank data!
 crop_feed %>%
-  filter(tonnes_feedstuff > 0) %>%
-  select(source_feedname, product) %>%
+  filter(ingredient_demand > 0) %>%
+  select(source_ingredient, product) %>%
   unique() %>%
   data.frame()
 
@@ -146,40 +122,6 @@ Separate here, and continue on:
 
 ```
 
-## Livestock: substitute FAO feed data from FBS
-Substitute the GLEAM consumption with the FAO FBS feed estimates:
-1. Estimate the total tonnes per country of MAPSPAM feed
-2. Multiply this value by the percents estimating using feed FAO Food Balance Sheet data
-3. Then in subsequent steps we will estimate where this feed originates
-
-```{r}
-
-#crop_feed_tonnes <- crop_feed_livestock %>%
-#  group_by(iso3c, animal_system) %>%
-#  summarize(tonnes_mapspam = sum(tonnes_product)) %>%
-#  ungroup()
-
-# fao_feed <- read_csv(here("feed/data/feed_percents_FAO_fbs_update.csv"))
-
-#crop_feed_update <- crop_feed_tonnes %>%
-#  left_join(fao_feed, by="iso3c") %>%
-#  mutate(tonnes_product = tonnes_mapspam*percent) %>%
-#  select(iso3c, animal_system, SPAM_super, tonnes_product)
-
-# outputs should be the same
-#tmp <- filter(crop_feed_tonnes, iso3c=="USA", animal_system=="chickens_industrial_meat")
-#tmp
-#tmp <- filter(crop_feed_update, iso3c=="USA", animal_system=="chickens_industrial_meat")
-#sum(tmp$tonnes_product)
-```
-
-Combine aquaculture and livestock back together
-```{r}
-
-#mapspam_consumption <- rbind(crop_feed_update, crop_feed_aquaculture)
-#write_csv(mapspam_consumption, here("feed/data/system_country_mapspam_tonnes_consumption.csv"))
-
-```
 
 ## Calculate tonnes consumption from FOFM categories of feed
 

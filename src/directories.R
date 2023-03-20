@@ -31,7 +31,7 @@ iucn_dir <- "/mnt/rdsi/raw_data/iucn"
 
 fao_dir <- "/mnt/rdsi/raw_data/fao"
 
-fishstat_dir <- "/mnt/rdsi/raw_data/fao/FAO_fishstat_2019"
+fishstat_dir <- "/mnt/rdsi/raw_data/fao/FAO_fishstat_2020"
 
 
 #Global fishing watch

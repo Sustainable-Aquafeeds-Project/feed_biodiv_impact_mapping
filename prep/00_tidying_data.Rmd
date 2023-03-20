@@ -95,16 +95,16 @@ Tidy global aquaculture production data
 
 ```{r}
 
-(aqua_prod_raw <- 
-   read_csv(file.path(fishstat_dir, "aqua-prod-raw.csv")) %>% 
+aqua_prod_raw <- 
+   read_csv(file.path(fishstat_dir, "global_aquaculture_production_1950_2020.csv")) %>% 
   clean_names() %>% 
   rename(country= country_name,
-         species = asfis_species_name,
+         species = asfis_species_name_2,
          area = fao_major_fishing_area_name,
          environment = environment_name) %>% 
-   dplyr::select(-unit_name) %>% 
-   filter(!country %in% c("Totals - Tonnes - live weight", "FAO. 2021. Fishery and Aquaculture Statistics. Global aquaculture production 1950-2019 (FishstatJ). In: FAO Fisheries Division [online]. Rome. Updated 2021. www.fao.org/fishery/statistics/software/fishstatj/en"))
-)
+   dplyr::select(-unit_name, -asfis_species_name_3, -fao_major_fishing_area_code) %>% 
+   filter(!country %in% c("Totals - Tonnes - live weight", "FAO. 2022. Fishery and Aquaculture Statistics. Global aquaculture production 1950-2020 (FishStatJ). In: FAO Fisheries and Aquaculture Division [online]. Rome. Updated 2022. www.fao.org/fishery/statistics/software/fishstatj/en"))
+
 
 
 flags <- aqua_prod_raw %>% 
@@ -131,19 +131,24 @@ aquaculture_prod <-
     aqua_prod_raw %>%
       dplyr::select(-c(starts_with("s_"))) %>% 
       pivot_longer(names_to = "year", values_to = "value", cols = -c(country, species, area, environment, unit)) %>% 
-      mutate(iso_3c = countrycode(country, origin = "country.name", destination = "iso3c", warn = TRUE)) %>%
-      mutate(iso_3c = case_when(country == "Zanzibar" ~ "TZA",
-                                TRUE ~ iso_3c)) %>%
+      mutate(iso3c = countrycode(country, origin = "country.name", destination = "iso3c", warn = TRUE)) %>%
+      mutate(iso3c = case_when(country == "Zanzibar" ~ "TZA",
+                               country == "CuraÃ§ao" ~ "CUW",
+                               country == "RÃ©union" ~ "REU", 
+                               country == "TÃ¼rkiye" ~ "TUR",
+                                TRUE ~ iso3c)) %>%
       mutate(year = gsub("x", "", year) %>% 
                as.numeric),
     
     flags %>% dplyr::select(flag)
   ) %>% 
-  drop_na(iso_3c)
+  drop_na(iso3c)
 
 
+# test <- aquaculture_prod %>% filter(is.na(iso3c)) %>% distinct(country)
 
-saveRDS(object = aquaculture_prod, file = here("data", "tidy_data", "aquaculture_production_tidy.rds"))
+
+saveRDS(object = aquaculture_prod, file = here("data", "tidy_data", "production-data", "aquaculture_production_tidy.rds"))
 
 
 
