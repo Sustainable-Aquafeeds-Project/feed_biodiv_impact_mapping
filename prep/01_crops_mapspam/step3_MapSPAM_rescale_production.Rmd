@@ -27,6 +27,7 @@ library(vroom)
 
 # Distinct crop names and production systems to cycle through
 prod_system   <- c("_A","_H","_S","_I","_L")
+prod_system <- "_P"
 scaling_coef  <- vroom::vroom(here("prep/01_crops_mapspam/data/scaling_coef.csv"))
 distinct_vars <- expand.grid(prod_system, 
                              unique(scaling_coef$SPAM_short_name))
