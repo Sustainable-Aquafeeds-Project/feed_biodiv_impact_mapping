@@ -28,19 +28,19 @@ chic	chickpea	191	xpul
 cowp	cowpea	195	xpul
 pige	pigeonpea	197	xpul
 lent	lentil	201	xpul
-opul	other pulses	181	xpul
-opul	other pulses	187	xpul
-opul	other pulses	203	xpul
-opul	other pulses	205	xpul
-opul	other pulses	210	xpul
-opul	other pulses	211	xpul
+opul	other pulses	181	opul
+opul	other pulses	187	opul
+opul	other pulses	203	opul
+opul	other pulses	205	opul
+opul	other pulses	210	opul
+opul	other pulses	211	opul
 soyb	soybean	236	soyb
 grou	groundnut	242	xoil
 cnut	coconut	249	cnut
 oilp	oilpalm	254	oilp
-sunf	sunflower	267	xoil
-rape	rapeseed	270	xoil
-rape	rapeseed	292	xoil
+sunf	sunflower	267	sunf
+rape	rapeseed	270	rape
+rape	rapeseed	292	rape
 sesa	sesameseed	289	xoil
 sugc	sugarcane	156	sugc
 sugb	sugarbeet	157	sugb
@@ -56,80 +56,80 @@ temf	temperate fruit	592	xfru
 temf	temperate fruit	619	xfru
 rest	rest of crops	161	NA
 rest	rest of crops	671	NA
-ooil	other oil crops	260	xoil
-ooil	other oil crops	261	xoil
-ooil	other oil crops	262	xoil
-ooil	other oil crops	263	xoil
-ooil	other oil crops	264	xoil
-ooil	other oil crops	265	xoil
-ooil	other oil crops	266	xoil
-ooil	other oil crops	268	xoil
-ooil	other oil crops	269	xoil
-ooil	other oil crops	271	xoil
-ooil	other oil crops	272	xoil
-ooil	other oil crops	273	xoil
-ooil	other oil crops	274	xoil
-ooil	other oil crops	275	xoil
-ooil	other oil crops	276	xoil
-ooil	other oil crops	277	xoil
-ooil	other oil crops	278	xoil
-ooil	other oil crops	279	xoil
-ooil	other oil crops	280	xoil
-ooil	other oil crops	281	xoil
-ooil	other oil crops	282	xoil
-ooil	other oil crops	283	xoil
-ooil	other oil crops	284	xoil
-ooil	other oil crops	285	xoil
-ooil	other oil crops	286	xoil
-ooil	other oil crops	287	xoil
-ooil	other oil crops	288	xoil
-ooil	other oil crops	290	xoil
-ooil	other oil crops	291	xoil
-ooil	other oil crops	293	xoil
-ooil	other oil crops	294	xoil
-ooil	other oil crops	295	xoil
-ooil	other oil crops	296	xoil
-ooil	other oil crops	297	xoil
-ooil	other oil crops	298	xoil
-ooil	other oil crops	299	xoil
-ooil	other oil crops	300	xoil
-ooil	other oil crops	301	xoil
-ooil	other oil crops	302	xoil
-ooil	other oil crops	303	xoil
-ooil	other oil crops	304	xoil
-ooil	other oil crops	305	xoil
-ooil	other oil crops	306	xoil
-ooil	other oil crops	307	xoil
-ooil	other oil crops	308	xoil
-ooil	other oil crops	309	xoil
-ooil	other oil crops	310	xoil
-ooil	other oil crops	312	xoil
-ooil	other oil crops	313	xoil
-ooil	other oil crops	314	xoil
-ooil	other oil crops	315	xoil
-ooil	other oil crops	316	xoil
-ooil	other oil crops	317	xoil
-ooil	other oil crops	318	xoil
-ooil	other oil crops	319	xoil
-ooil	other oil crops	320	xoil
-ooil	other oil crops	321	xoil
-ooil	other oil crops	322	xoil
-ooil	other oil crops	323	xoil
-ooil	other oil crops	324	xoil
-ooil	other oil crops	325	xoil
-ooil	other oil crops	326	xoil
-ooil	other oil crops	327	xoil
-ooil	other oil crops	329	xoil
-ooil	other oil crops	330	xoil
-ooil	other oil crops	331	xoil
-ooil	other oil crops	332	xoil
-ooil	other oil crops	333	xoil
-ooil	other oil crops	334	xoil
-ooil	other oil crops	335	xoil
-ooil	other oil crops	336	xoil
-ooil	other oil crops	337	xoil
-ooil	other oil crops	338	xoil
-ooil	other oil crops	339	xoil
+ooil	other oil crops	260	ooil
+ooil	other oil crops	261	ooil
+ooil	other oil crops	262	ooil
+ooil	other oil crops	263	ooil
+ooil	other oil crops	264	ooil
+ooil	other oil crops	265	ooil
+ooil	other oil crops	266	ooil
+ooil	other oil crops	268	ooil
+ooil	other oil crops	269	ooil
+ooil	other oil crops	271	ooil
+ooil	other oil crops	272	ooil
+ooil	other oil crops	273	ooil
+ooil	other oil crops	274	ooil
+ooil	other oil crops	275	ooil
+ooil	other oil crops	276	ooil
+ooil	other oil crops	277	ooil
+ooil	other oil crops	278	ooil
+ooil	other oil crops	279	ooil
+ooil	other oil crops	280	ooil
+ooil	other oil crops	281	ooil
+ooil	other oil crops	282	ooil
+ooil	other oil crops	283	ooil
+ooil	other oil crops	284	ooil
+ooil	other oil crops	285	ooil
+ooil	other oil crops	286	ooil
+ooil	other oil crops	287	ooil
+ooil	other oil crops	288	ooil
+ooil	other oil crops	290	ooil
+ooil	other oil crops	291	ooil
+ooil	other oil crops	293	ooil
+ooil	other oil crops	294	ooil
+ooil	other oil crops	295	ooil
+ooil	other oil crops	296	ooil
+ooil	other oil crops	297	ooil
+ooil	other oil crops	298	ooil
+ooil	other oil crops	299	ooil
+ooil	other oil crops	300	ooil
+ooil	other oil crops	301	ooil
+ooil	other oil crops	302	ooil
+ooil	other oil crops	303	ooil
+ooil	other oil crops	304	ooil
+ooil	other oil crops	305	ooil
+ooil	other oil crops	306	ooil
+ooil	other oil crops	307	ooil
+ooil	other oil crops	308	ooil
+ooil	other oil crops	309	ooil
+ooil	other oil crops	310	ooil
+ooil	other oil crops	312	ooil
+ooil	other oil crops	313	ooil
+ooil	other oil crops	314	ooil
+ooil	other oil crops	315	ooil
+ooil	other oil crops	316	ooil
+ooil	other oil crops	317	ooil
+ooil	other oil crops	318	ooil
+ooil	other oil crops	319	ooil
+ooil	other oil crops	320	ooil
+ooil	other oil crops	321	ooil
+ooil	other oil crops	322	ooil
+ooil	other oil crops	323	ooil
+ooil	other oil crops	324	ooil
+ooil	other oil crops	325	ooil
+ooil	other oil crops	326	ooil
+ooil	other oil crops	327	ooil
+ooil	other oil crops	329	ooil
+ooil	other oil crops	330	ooil
+ooil	other oil crops	331	ooil
+ooil	other oil crops	332	ooil
+ooil	other oil crops	333	ooil
+ooil	other oil crops	334	ooil
+ooil	other oil crops	335	ooil
+ooil	other oil crops	336	ooil
+ooil	other oil crops	337	ooil
+ooil	other oil crops	338	ooil
+ooil	other oil crops	339	ooil
 ofib	other fibre crops	773	ofib
 ofib	other fibre crops	774	ofib
 ofib	other fibre crops	775	ofib

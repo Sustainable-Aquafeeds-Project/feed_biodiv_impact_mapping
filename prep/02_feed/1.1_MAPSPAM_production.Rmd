@@ -37,7 +37,11 @@ focus_year = 2021
 ## quick check to make sure categories are aligned
 mapspam_crops <- read_csv(file.path(feed_folder, "data/MapSPAM_crop_info.csv")) %>% ## this data is from MapSPAM website
   dplyr::select(SPAM_short_name, SPAM_super) %>%
-  unique() 
+  unique() %>%
+  mutate(SPAM_super = case_when(
+    SPAM_short_name %in% c("sunf", "ooil", "rape", "opul") ~ SPAM_short_name, 
+    TRUE ~ SPAM_super
+  ))
 
 
 ```
@@ -111,7 +115,7 @@ fao <- read_csv(here("prep/01_crops_mapspam/data/FAOSTAT_crop_production_2010_20
 compare <- check %>% left_join(fao, by="SPAM_super") %>%
   mutate(prop = our_tonnes/total)
 compare
-sum(compare$our_tonnes, na.rm=TRUE)/sum(compare$total, na.rm = TRUE) # teas and rest categories are problematic... everything else looks ok though... I'm gonna be filtering out those anyway... (I think)
+sum(compare$our_tonnes, na.rm=TRUE)/sum(compare$total, na.rm = TRUE) # ooil looks problematic... everything else looks ok though...
 
 write_csv(crop_production_df, here("prep/02_feed/data/MAPSPAMcrop_production.csv"))
 

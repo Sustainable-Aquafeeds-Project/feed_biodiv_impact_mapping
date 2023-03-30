@@ -1,183 +1,379 @@
-iso3c,animal_system,SPAM_super,product,tonnes_product
-ARE,salmon_aquaculture_meat,cnut,oil of coconuts,1.8571428571428572
-ARE,salmon_aquaculture_meat,maiz,maize gluten,3.25
-ARE,salmon_aquaculture_meat,soyb,oil of soya bean,1.6082474226804124
-ARE,salmon_aquaculture_meat,soyb,soy protein concentrate,92.62499999999999
-ARE,salmon_aquaculture_meat,whea,wheat,25.35
-ARE,salmon_aquaculture_meat,whea,wheat gluten,38.60606060606061
-ARE,salmon_aquaculture_meat,xoil,cake of sunflower seed,15.06818181818182
-ARE,salmon_aquaculture_meat,xoil,oil of linseed,5.173469387755102
-ARE,salmon_aquaculture_meat,xoil,oil of rapeseed,73.22448979591837
-ARE,salmon_aquaculture_meat,xpul,faba bean,14.04
-ARE,salmon_aquaculture_meat,xpul,guar protein,19.056818181818183
-ARE,salmon_aquaculture_meat,xpul,pea other,11.079545454545455
-ARE,salmon_aquaculture_meat,xpul,pea protein,6.204545454545454
-AUS,salmon_aquaculture_meat,cnut,oil of coconuts,446.1232666666666
-AUS,salmon_aquaculture_meat,maiz,maize gluten,780.7157166666667
-AUS,salmon_aquaculture_meat,soyb,oil of soya bean,386.33355051546386
-AUS,salmon_aquaculture_meat,soyb,soy protein concentrate,22250.397925
-AUS,salmon_aquaculture_meat,whea,wheat,6089.58259
-AUS,salmon_aquaculture_meat,whea,wheat gluten,9273.956391919193
-AUS,salmon_aquaculture_meat,xoil,cake of sunflower seed,3619.681959090909
-AUS,salmon_aquaculture_meat,xoil,oil of linseed,1242.771957142857
-AUS,salmon_aquaculture_meat,xoil,oil of rapeseed,17590.003085714285
-AUS,salmon_aquaculture_meat,xpul,faba bean,3372.691896
-AUS,salmon_aquaculture_meat,xpul,guar protein,4577.83306590909
-AUS,salmon_aquaculture_meat,xpul,pea other,2661.530852272727
-AUS,salmon_aquaculture_meat,xpul,pea protein,1490.4572772727274
-CAN,salmon_aquaculture_meat,cnut,oil of coconuts,745.5004761904762
-CAN,salmon_aquaculture_meat,maiz,maize gluten,1304.6258333333335
-CAN,salmon_aquaculture_meat,soyb,oil of soya bean,645.5880412371133
-CAN,salmon_aquaculture_meat,soyb,soy protein concentrate,37181.83625
-CAN,salmon_aquaculture_meat,whea,wheat,10176.0815
-CAN,salmon_aquaculture_meat,whea,wheat gluten,15497.373535353538
-CAN,salmon_aquaculture_meat,xoil,cake of sunflower seed,6048.719772727274
-CAN,salmon_aquaculture_meat,xoil,oil of linseed,2076.751326530612
-CAN,salmon_aquaculture_meat,xoil,oil of rapeseed,29394.01877551021
-CAN,salmon_aquaculture_meat,xpul,faba bean,5635.9836000000005
-CAN,salmon_aquaculture_meat,xpul,guar protein,7649.851477272728
-CAN,salmon_aquaculture_meat,xpul,pea other,4447.588068181818
-CAN,salmon_aquaculture_meat,xpul,pea protein,2490.649318181818
-CHE,salmon_aquaculture_meat,cnut,oil of coconuts,0.986761904761905
-CHE,salmon_aquaculture_meat,maiz,maize gluten,1.7268333333333337
-CHE,salmon_aquaculture_meat,soyb,oil of soya bean,0.854515463917526
-CHE,salmon_aquaculture_meat,soyb,soy protein concentrate,49.21475
-CHE,salmon_aquaculture_meat,whea,wheat,13.469300000000002
-CHE,salmon_aquaculture_meat,whea,wheat gluten,20.512686868686867
-CHE,salmon_aquaculture_meat,xoil,cake of sunflower seed,8.006227272727275
-CHE,salmon_aquaculture_meat,xoil,oil of linseed,2.748836734693878
-CHE,salmon_aquaculture_meat,xoil,oil of rapeseed,38.906612244897964
-CHE,salmon_aquaculture_meat,xpul,faba bean,7.45992
-CHE,salmon_aquaculture_meat,xpul,guar protein,10.125522727272728
-CHE,salmon_aquaculture_meat,xpul,pea other,5.886931818181819
-CHE,salmon_aquaculture_meat,xpul,pea protein,3.2966818181818187
-CHL,salmon_aquaculture_meat,cnut,oil of coconuts,5247.54
-CHL,salmon_aquaculture_meat,maiz,maize gluten,9183.195000000002
-CHL,salmon_aquaculture_meat,soyb,oil of soya bean,4544.2614432989685
-CHL,salmon_aquaculture_meat,soyb,soy protein concentrate,261721.0575
-CHL,salmon_aquaculture_meat,whea,wheat,71628.921
-CHL,salmon_aquaculture_meat,whea,wheat gluten,109085.22545454545
-CHL,salmon_aquaculture_meat,xoil,cake of sunflower seed,42576.63136363636
-CHL,salmon_aquaculture_meat,xoil,oil of linseed,14618.147142857142
-CHL,salmon_aquaculture_meat,xoil,oil of rapeseed,206903.0057142857
-CHL,salmon_aquaculture_meat,xpul,faba bean,39671.40239999999
-CHL,salmon_aquaculture_meat,xpul,guar protein,53846.91613636364
-CHL,salmon_aquaculture_meat,xpul,pea other,31306.346590909096
-CHL,salmon_aquaculture_meat,xpul,pea protein,17531.554090909092
-DNK,salmon_aquaculture_meat,cnut,oil of coconuts,12.00952380952381
-DNK,salmon_aquaculture_meat,maiz,maize gluten,21.01666666666667
-DNK,salmon_aquaculture_meat,soyb,oil of soya bean,10.4
-DNK,salmon_aquaculture_meat,soyb,soy protein concentrate,598.9749999999999
-DNK,salmon_aquaculture_meat,whea,wheat,163.93
-DNK,salmon_aquaculture_meat,whea,wheat gluten,249.65252525252527
-DNK,salmon_aquaculture_meat,xoil,cake of sunflower seed,97.4409090909091
-DNK,salmon_aquaculture_meat,xoil,oil of linseed,33.45510204081633
-DNK,salmon_aquaculture_meat,xoil,oil of rapeseed,473.5183673469388
-DNK,salmon_aquaculture_meat,xpul,faba bean,90.792
-DNK,salmon_aquaculture_meat,xpul,guar protein,123.23409090909091
-DNK,salmon_aquaculture_meat,xpul,pea other,71.64772727272727
-DNK,salmon_aquaculture_meat,xpul,pea protein,40.122727272727275
-FRO,salmon_aquaculture_meat,cnut,oil of coconuts,550.6428571428571
-FRO,salmon_aquaculture_meat,maiz,maize gluten,963.625
-FRO,salmon_aquaculture_meat,soyb,oil of soya bean,476.8453608247423
-FRO,salmon_aquaculture_meat,soyb,soy protein concentrate,27463.3125
-FRO,salmon_aquaculture_meat,whea,wheat,7516.275
-FRO,salmon_aquaculture_meat,whea,wheat gluten,11446.69696969697
-FRO,salmon_aquaculture_meat,xoil,cake of sunflower seed,4467.715909090909
-FRO,salmon_aquaculture_meat,xoil,oil of linseed,1533.9336734693877
-FRO,salmon_aquaculture_meat,xoil,oil of rapeseed,21711.061224489797
-FRO,salmon_aquaculture_meat,xpul,faba bean,4162.86
-FRO,salmon_aquaculture_meat,xpul,guar protein,5650.34659090909
-FRO,salmon_aquaculture_meat,xpul,pea other,3285.0852272727275
-FRO,salmon_aquaculture_meat,xpul,pea protein,1839.6477272727273
-GBR,salmon_aquaculture_meat,cnut,oil of coconuts,1102.857142857143
-GBR,salmon_aquaculture_meat,maiz,maize gluten,1930
-GBR,salmon_aquaculture_meat,soyb,oil of soya bean,955.0515463917526
-GBR,salmon_aquaculture_meat,soyb,soy protein concentrate,55005
-GBR,salmon_aquaculture_meat,whea,wheat,15054
-GBR,salmon_aquaculture_meat,whea,wheat gluten,22926.060606060608
-GBR,salmon_aquaculture_meat,xoil,cake of sunflower seed,8948.181818181818
-GBR,salmon_aquaculture_meat,xoil,oil of linseed,3072.2448979591836
-GBR,salmon_aquaculture_meat,xoil,oil of rapeseed,43484.08163265306
-GBR,salmon_aquaculture_meat,xpul,faba bean,8337.599999999999
-GBR,salmon_aquaculture_meat,xpul,guar protein,11316.81818181818
-GBR,salmon_aquaculture_meat,xpul,pea other,6579.545454545455
-GBR,salmon_aquaculture_meat,xpul,pea protein,3684.5454545454545
-IRL,salmon_aquaculture_meat,cnut,oil of coconuts,79.67142857142858
-IRL,salmon_aquaculture_meat,maiz,maize gluten,139.425
-IRL,salmon_aquaculture_meat,soyb,oil of soya bean,68.9938144329897
-IRL,salmon_aquaculture_meat,soyb,soy protein concentrate,3973.6125
-IRL,salmon_aquaculture_meat,whea,wheat,1087.515
-IRL,salmon_aquaculture_meat,whea,wheat gluten,1656.1999999999998
-IRL,salmon_aquaculture_meat,xoil,cake of sunflower seed,646.4250000000001
-IRL,salmon_aquaculture_meat,xoil,oil of linseed,221.94183673469388
-IRL,salmon_aquaculture_meat,xoil,oil of rapeseed,3141.3306122448976
-IRL,salmon_aquaculture_meat,xpul,faba bean,602.3159999999999
-IRL,salmon_aquaculture_meat,xpul,guar protein,817.5375
-IRL,salmon_aquaculture_meat,xpul,pea other,475.3125
-IRL,salmon_aquaculture_meat,xpul,pea protein,266.175
-ISL,salmon_aquaculture_meat,cnut,oil of coconuts,212.58714285714285
-ISL,salmon_aquaculture_meat,maiz,maize gluten,372.02750000000003
-ISL,salmon_aquaculture_meat,soyb,oil of soya bean,184.0960824742268
-ISL,salmon_aquaculture_meat,soyb,soy protein concentrate,10602.78375
-ISL,salmon_aquaculture_meat,whea,wheat,2901.814500000001
-ISL,salmon_aquaculture_meat,whea,wheat gluten,4419.235757575758
-ISL,salmon_aquaculture_meat,xoil,cake of sunflower seed,1724.854772727273
-ISL,salmon_aquaculture_meat,xoil,oil of linseed,592.2070408163264
-ISL,salmon_aquaculture_meat,xoil,oil of rapeseed,8382.007346938777
-ISL,salmon_aquaculture_meat,xpul,faba bean,1607.1588000000002
-ISL,salmon_aquaculture_meat,xpul,guar protein,2181.433977272727
-ISL,salmon_aquaculture_meat,xpul,pea other,1268.2755681818182
-ISL,salmon_aquaculture_meat,xpul,pea protein,710.2343181818183
-NOR,salmon_aquaculture_meat,cnut,oil of coconuts,8595.066628571429
-NOR,salmon_aquaculture_meat,maiz,maize gluten,15041.3666
-NOR,salmon_aquaculture_meat,soyb,oil of soya bean,7443.150482474228
-NOR,salmon_aquaculture_meat,soyb,soy protein concentrate,428678.9480999999
-NOR,salmon_aquaculture_meat,whea,wheat,117322.65948
-NOR,salmon_aquaculture_meat,whea,wheat gluten,178673.20324848488
-NOR,salmon_aquaculture_meat,xoil,cake of sunflower seed,69737.24514545455
-NOR,salmon_aquaculture_meat,xoil,oil of linseed,23943.39989387755
-NOR,salmon_aquaculture_meat,xoil,oil of rapeseed,338891.1984979592
-NOR,salmon_aquaculture_meat,xpul,faba bean,64978.703712
-NOR,salmon_aquaculture_meat,xpul,guar protein,88197.10415454546
-NOR,salmon_aquaculture_meat,xpul,pea other,51277.38613636364
-NOR,salmon_aquaculture_meat,xpul,pea protein,28715.336236363637
-PRK,salmon_aquaculture_meat,cnut,oil of coconuts,0.37142857142857144
-PRK,salmon_aquaculture_meat,maiz,maize gluten,0.65
-PRK,salmon_aquaculture_meat,soyb,oil of soya bean,0.32164948453608244
-PRK,salmon_aquaculture_meat,soyb,soy protein concentrate,18.525000000000002
-PRK,salmon_aquaculture_meat,whea,wheat,5.07
-PRK,salmon_aquaculture_meat,whea,wheat gluten,7.721212121212121
-PRK,salmon_aquaculture_meat,xoil,cake of sunflower seed,3.0136363636363637
-PRK,salmon_aquaculture_meat,xoil,oil of linseed,1.0346938775510204
-PRK,salmon_aquaculture_meat,xoil,oil of rapeseed,14.644897959183673
-PRK,salmon_aquaculture_meat,xpul,faba bean,2.8079999999999994
-PRK,salmon_aquaculture_meat,xpul,guar protein,3.811363636363636
-PRK,salmon_aquaculture_meat,xpul,pea other,2.215909090909091
-PRK,salmon_aquaculture_meat,xpul,pea protein,1.240909090909091
-RUS,salmon_aquaculture_meat,cnut,oil of coconuts,67.19761904761904
-RUS,salmon_aquaculture_meat,maiz,maize gluten,117.59583333333335
-RUS,salmon_aquaculture_meat,soyb,oil of soya bean,58.19175257731958
-RUS,salmon_aquaculture_meat,soyb,soy protein concentrate,3351.48125
-RUS,salmon_aquaculture_meat,whea,wheat,917.2475
-RUS,salmon_aquaculture_meat,whea,wheat gluten,1396.8959595959593
-RUS,salmon_aquaculture_meat,xoil,cake of sunflower seed,545.2170454545455
-RUS,salmon_aquaculture_meat,xoil,oil of linseed,187.19336734693877
-RUS,salmon_aquaculture_meat,xoil,oil of rapeseed,2649.5061224489796
-RUS,salmon_aquaculture_meat,xpul,faba bean,508.0139999999999
-RUS,salmon_aquaculture_meat,xpul,guar protein,689.5392045454545
-RUS,salmon_aquaculture_meat,xpul,pea other,400.8948863636364
-RUS,salmon_aquaculture_meat,xpul,pea protein,224.5011363636364
-USA,salmon_aquaculture_meat,cnut,oil of coconuts,102.08417142857144
-USA,salmon_aquaculture_meat,maiz,maize gluten,178.64730000000003
-USA,salmon_aquaculture_meat,soyb,oil of soya bean,88.40278762886598
-USA,salmon_aquaculture_meat,soyb,soy protein concentrate,5091.448050000001
-USA,salmon_aquaculture_meat,whea,wheat,1393.4489400000002
-USA,salmon_aquaculture_meat,whea,wheat gluten,2122.113381818183
-USA,salmon_aquaculture_meat,xoil,cake of sunflower seed,828.2738454545456
-USA,salmon_aquaculture_meat,xoil,oil of linseed,284.3773346938776
-USA,salmon_aquaculture_meat,xoil,oil of rapeseed,4025.0330448979603
-USA,salmon_aquaculture_meat,xpul,faba bean,771.756336
-USA,salmon_aquaculture_meat,xpul,guar protein,1047.5228045454546
-USA,salmon_aquaculture_meat,xpul,pea other,609.0248863636366
-USA,salmon_aquaculture_meat,xpul,pea protein,341.0539363636364
+iso3c,diet,animal_system,SPAM_super,product,tonnes_product
+ARE,fish-dominant,salmon_aquaculture_meat,cnut,oil of coconuts,0
+ARE,fish-dominant,salmon_aquaculture_meat,maiz,maize gluten,18.571428571428573
+ARE,fish-dominant,salmon_aquaculture_meat,soyb,oil of soya bean,0
+ARE,fish-dominant,salmon_aquaculture_meat,soyb,soy protein concentrate,0
+ARE,fish-dominant,salmon_aquaculture_meat,soyb,soybean meal,75.34090909090911
+ARE,fish-dominant,salmon_aquaculture_meat,whea,wheat,27.300000000000004
+ARE,fish-dominant,salmon_aquaculture_meat,whea,wheat gluten,51.21212121212121
+ARE,fish-dominant,salmon_aquaculture_meat,xoil,cake of sunflower seed,0
+ARE,fish-dominant,salmon_aquaculture_meat,xoil,oil of linseed,0
+ARE,fish-dominant,salmon_aquaculture_meat,xoil,oil of rapeseed,0
+ARE,fish-dominant,salmon_aquaculture_meat,xpul,faba bean,7.8
+ARE,fish-dominant,salmon_aquaculture_meat,xpul,guar protein,0
+ARE,fish-dominant,salmon_aquaculture_meat,xpul,pea other,0
+ARE,fish-dominant,salmon_aquaculture_meat,xpul,pea protein,0
+ARE,plant-dominant,salmon_aquaculture_meat,cnut,oil of coconuts,1.8571428571428572
+ARE,plant-dominant,salmon_aquaculture_meat,maiz,maize gluten,3.25
+ARE,plant-dominant,salmon_aquaculture_meat,soyb,oil of soya bean,1.6082474226804124
+ARE,plant-dominant,salmon_aquaculture_meat,soyb,soy protein concentrate,92.62499999999999
+ARE,plant-dominant,salmon_aquaculture_meat,whea,wheat,25.35
+ARE,plant-dominant,salmon_aquaculture_meat,whea,wheat gluten,38.60606060606061
+ARE,plant-dominant,salmon_aquaculture_meat,xoil,cake of sunflower seed,15.06818181818182
+ARE,plant-dominant,salmon_aquaculture_meat,xoil,oil of linseed,5.173469387755102
+ARE,plant-dominant,salmon_aquaculture_meat,xoil,oil of rapeseed,73.22448979591837
+ARE,plant-dominant,salmon_aquaculture_meat,xpul,faba bean,14.04
+ARE,plant-dominant,salmon_aquaculture_meat,xpul,guar protein,19.056818181818183
+ARE,plant-dominant,salmon_aquaculture_meat,xpul,pea other,11.079545454545455
+ARE,plant-dominant,salmon_aquaculture_meat,xpul,pea protein,6.204545454545454
+AUS,fish-dominant,salmon_aquaculture_meat,cnut,oil of coconuts,0
+AUS,fish-dominant,salmon_aquaculture_meat,maiz,maize gluten,4461.232666666667
+AUS,fish-dominant,salmon_aquaculture_meat,soyb,oil of soya bean,0
+AUS,fish-dominant,salmon_aquaculture_meat,soyb,soy protein concentrate,0
+AUS,fish-dominant,salmon_aquaculture_meat,soyb,soybean meal,18098.409795454543
+AUS,fish-dominant,salmon_aquaculture_meat,whea,wheat,6558.01202
+AUS,fish-dominant,salmon_aquaculture_meat,whea,wheat gluten,12302.18705050505
+AUS,fish-dominant,salmon_aquaculture_meat,xoil,cake of sunflower seed,0
+AUS,fish-dominant,salmon_aquaculture_meat,xoil,oil of linseed,0
+AUS,fish-dominant,salmon_aquaculture_meat,xoil,oil of rapeseed,0
+AUS,fish-dominant,salmon_aquaculture_meat,xpul,faba bean,1873.7177199999999
+AUS,fish-dominant,salmon_aquaculture_meat,xpul,guar protein,0
+AUS,fish-dominant,salmon_aquaculture_meat,xpul,pea other,0
+AUS,fish-dominant,salmon_aquaculture_meat,xpul,pea protein,0
+AUS,plant-dominant,salmon_aquaculture_meat,cnut,oil of coconuts,446.1232666666666
+AUS,plant-dominant,salmon_aquaculture_meat,maiz,maize gluten,780.7157166666667
+AUS,plant-dominant,salmon_aquaculture_meat,soyb,oil of soya bean,386.33355051546386
+AUS,plant-dominant,salmon_aquaculture_meat,soyb,soy protein concentrate,22250.397925
+AUS,plant-dominant,salmon_aquaculture_meat,whea,wheat,6089.58259
+AUS,plant-dominant,salmon_aquaculture_meat,whea,wheat gluten,9273.956391919193
+AUS,plant-dominant,salmon_aquaculture_meat,xoil,cake of sunflower seed,3619.681959090909
+AUS,plant-dominant,salmon_aquaculture_meat,xoil,oil of linseed,1242.771957142857
+AUS,plant-dominant,salmon_aquaculture_meat,xoil,oil of rapeseed,17590.003085714285
+AUS,plant-dominant,salmon_aquaculture_meat,xpul,faba bean,3372.691896
+AUS,plant-dominant,salmon_aquaculture_meat,xpul,guar protein,4577.83306590909
+AUS,plant-dominant,salmon_aquaculture_meat,xpul,pea other,2661.530852272727
+AUS,plant-dominant,salmon_aquaculture_meat,xpul,pea protein,1490.4572772727274
+CAN,fish-dominant,salmon_aquaculture_meat,cnut,oil of coconuts,0
+CAN,fish-dominant,salmon_aquaculture_meat,maiz,maize gluten,7455.004761904763
+CAN,fish-dominant,salmon_aquaculture_meat,soyb,oil of soya bean,0
+CAN,fish-dominant,salmon_aquaculture_meat,soyb,soy protein concentrate,0
+CAN,fish-dominant,salmon_aquaculture_meat,soyb,soybean meal,30243.598863636365
+CAN,fish-dominant,salmon_aquaculture_meat,whea,wheat,10958.857000000004
+CAN,fish-dominant,salmon_aquaculture_meat,whea,wheat gluten,20557.740404040404
+CAN,fish-dominant,salmon_aquaculture_meat,xoil,cake of sunflower seed,0
+CAN,fish-dominant,salmon_aquaculture_meat,xoil,oil of linseed,0
+CAN,fish-dominant,salmon_aquaculture_meat,xoil,oil of rapeseed,0
+CAN,fish-dominant,salmon_aquaculture_meat,xpul,faba bean,3131.1020000000003
+CAN,fish-dominant,salmon_aquaculture_meat,xpul,guar protein,0
+CAN,fish-dominant,salmon_aquaculture_meat,xpul,pea other,0
+CAN,fish-dominant,salmon_aquaculture_meat,xpul,pea protein,0
+CAN,plant-dominant,salmon_aquaculture_meat,cnut,oil of coconuts,745.5004761904762
+CAN,plant-dominant,salmon_aquaculture_meat,maiz,maize gluten,1304.6258333333335
+CAN,plant-dominant,salmon_aquaculture_meat,soyb,oil of soya bean,645.5880412371133
+CAN,plant-dominant,salmon_aquaculture_meat,soyb,soy protein concentrate,37181.83625
+CAN,plant-dominant,salmon_aquaculture_meat,whea,wheat,10176.0815
+CAN,plant-dominant,salmon_aquaculture_meat,whea,wheat gluten,15497.373535353538
+CAN,plant-dominant,salmon_aquaculture_meat,xoil,cake of sunflower seed,6048.719772727274
+CAN,plant-dominant,salmon_aquaculture_meat,xoil,oil of linseed,2076.751326530612
+CAN,plant-dominant,salmon_aquaculture_meat,xoil,oil of rapeseed,29394.01877551021
+CAN,plant-dominant,salmon_aquaculture_meat,xpul,faba bean,5635.9836000000005
+CAN,plant-dominant,salmon_aquaculture_meat,xpul,guar protein,7649.851477272728
+CAN,plant-dominant,salmon_aquaculture_meat,xpul,pea other,4447.588068181818
+CAN,plant-dominant,salmon_aquaculture_meat,xpul,pea protein,2490.649318181818
+CHE,fish-dominant,salmon_aquaculture_meat,cnut,oil of coconuts,0
+CHE,fish-dominant,salmon_aquaculture_meat,maiz,maize gluten,9.86761904761905
+CHE,fish-dominant,salmon_aquaculture_meat,soyb,oil of soya bean,0
+CHE,fish-dominant,salmon_aquaculture_meat,soyb,soy protein concentrate,0
+CHE,fish-dominant,salmon_aquaculture_meat,soyb,soybean meal,40.03113636363638
+CHE,fish-dominant,salmon_aquaculture_meat,whea,wheat,14.505400000000003
+CHE,fish-dominant,salmon_aquaculture_meat,whea,wheat gluten,27.210707070707077
+CHE,fish-dominant,salmon_aquaculture_meat,xoil,cake of sunflower seed,0
+CHE,fish-dominant,salmon_aquaculture_meat,xoil,oil of linseed,0
+CHE,fish-dominant,salmon_aquaculture_meat,xoil,oil of rapeseed,0
+CHE,fish-dominant,salmon_aquaculture_meat,xpul,faba bean,4.144400000000001
+CHE,fish-dominant,salmon_aquaculture_meat,xpul,guar protein,0
+CHE,fish-dominant,salmon_aquaculture_meat,xpul,pea other,0
+CHE,fish-dominant,salmon_aquaculture_meat,xpul,pea protein,0
+CHE,plant-dominant,salmon_aquaculture_meat,cnut,oil of coconuts,0.986761904761905
+CHE,plant-dominant,salmon_aquaculture_meat,maiz,maize gluten,1.7268333333333337
+CHE,plant-dominant,salmon_aquaculture_meat,soyb,oil of soya bean,0.854515463917526
+CHE,plant-dominant,salmon_aquaculture_meat,soyb,soy protein concentrate,49.21475
+CHE,plant-dominant,salmon_aquaculture_meat,whea,wheat,13.469300000000002
+CHE,plant-dominant,salmon_aquaculture_meat,whea,wheat gluten,20.512686868686867
+CHE,plant-dominant,salmon_aquaculture_meat,xoil,cake of sunflower seed,8.006227272727275
+CHE,plant-dominant,salmon_aquaculture_meat,xoil,oil of linseed,2.748836734693878
+CHE,plant-dominant,salmon_aquaculture_meat,xoil,oil of rapeseed,38.906612244897964
+CHE,plant-dominant,salmon_aquaculture_meat,xpul,faba bean,7.45992
+CHE,plant-dominant,salmon_aquaculture_meat,xpul,guar protein,10.125522727272728
+CHE,plant-dominant,salmon_aquaculture_meat,xpul,pea other,5.886931818181819
+CHE,plant-dominant,salmon_aquaculture_meat,xpul,pea protein,3.2966818181818187
+CHL,fish-dominant,salmon_aquaculture_meat,cnut,oil of coconuts,0
+CHL,fish-dominant,salmon_aquaculture_meat,maiz,maize gluten,52475.4
+CHL,fish-dominant,salmon_aquaculture_meat,soyb,oil of soya bean,0
+CHL,fish-dominant,salmon_aquaculture_meat,soyb,soy protein concentrate,0
+CHL,fish-dominant,salmon_aquaculture_meat,soyb,soybean meal,212883.15681818183
+CHL,fish-dominant,salmon_aquaculture_meat,whea,wheat,77138.838
+CHL,fish-dominant,salmon_aquaculture_meat,whea,wheat gluten,144704.8909090909
+CHL,fish-dominant,salmon_aquaculture_meat,xoil,cake of sunflower seed,0
+CHL,fish-dominant,salmon_aquaculture_meat,xoil,oil of linseed,0
+CHL,fish-dominant,salmon_aquaculture_meat,xoil,oil of rapeseed,0
+CHL,fish-dominant,salmon_aquaculture_meat,xpul,faba bean,22039.668
+CHL,fish-dominant,salmon_aquaculture_meat,xpul,guar protein,0
+CHL,fish-dominant,salmon_aquaculture_meat,xpul,pea other,0
+CHL,fish-dominant,salmon_aquaculture_meat,xpul,pea protein,0
+CHL,plant-dominant,salmon_aquaculture_meat,cnut,oil of coconuts,5247.54
+CHL,plant-dominant,salmon_aquaculture_meat,maiz,maize gluten,9183.195000000002
+CHL,plant-dominant,salmon_aquaculture_meat,soyb,oil of soya bean,4544.2614432989685
+CHL,plant-dominant,salmon_aquaculture_meat,soyb,soy protein concentrate,261721.0575
+CHL,plant-dominant,salmon_aquaculture_meat,whea,wheat,71628.921
+CHL,plant-dominant,salmon_aquaculture_meat,whea,wheat gluten,109085.22545454545
+CHL,plant-dominant,salmon_aquaculture_meat,xoil,cake of sunflower seed,42576.63136363636
+CHL,plant-dominant,salmon_aquaculture_meat,xoil,oil of linseed,14618.147142857142
+CHL,plant-dominant,salmon_aquaculture_meat,xoil,oil of rapeseed,206903.0057142857
+CHL,plant-dominant,salmon_aquaculture_meat,xpul,faba bean,39671.40239999999
+CHL,plant-dominant,salmon_aquaculture_meat,xpul,guar protein,53846.91613636364
+CHL,plant-dominant,salmon_aquaculture_meat,xpul,pea other,31306.346590909096
+CHL,plant-dominant,salmon_aquaculture_meat,xpul,pea protein,17531.554090909092
+DNK,fish-dominant,salmon_aquaculture_meat,cnut,oil of coconuts,0
+DNK,fish-dominant,salmon_aquaculture_meat,maiz,maize gluten,120.0952380952381
+DNK,fish-dominant,salmon_aquaculture_meat,soyb,oil of soya bean,0
+DNK,fish-dominant,salmon_aquaculture_meat,soyb,soy protein concentrate,0
+DNK,fish-dominant,salmon_aquaculture_meat,soyb,soybean meal,487.20454545454544
+DNK,fish-dominant,salmon_aquaculture_meat,whea,wheat,176.54000000000005
+DNK,fish-dominant,salmon_aquaculture_meat,whea,wheat gluten,331.17171717171715
+DNK,fish-dominant,salmon_aquaculture_meat,xoil,cake of sunflower seed,0
+DNK,fish-dominant,salmon_aquaculture_meat,xoil,oil of linseed,0
+DNK,fish-dominant,salmon_aquaculture_meat,xoil,oil of rapeseed,0
+DNK,fish-dominant,salmon_aquaculture_meat,xpul,faba bean,50.44
+DNK,fish-dominant,salmon_aquaculture_meat,xpul,guar protein,0
+DNK,fish-dominant,salmon_aquaculture_meat,xpul,pea other,0
+DNK,fish-dominant,salmon_aquaculture_meat,xpul,pea protein,0
+DNK,plant-dominant,salmon_aquaculture_meat,cnut,oil of coconuts,12.00952380952381
+DNK,plant-dominant,salmon_aquaculture_meat,maiz,maize gluten,21.01666666666667
+DNK,plant-dominant,salmon_aquaculture_meat,soyb,oil of soya bean,10.4
+DNK,plant-dominant,salmon_aquaculture_meat,soyb,soy protein concentrate,598.9749999999999
+DNK,plant-dominant,salmon_aquaculture_meat,whea,wheat,163.93
+DNK,plant-dominant,salmon_aquaculture_meat,whea,wheat gluten,249.65252525252527
+DNK,plant-dominant,salmon_aquaculture_meat,xoil,cake of sunflower seed,97.4409090909091
+DNK,plant-dominant,salmon_aquaculture_meat,xoil,oil of linseed,33.45510204081633
+DNK,plant-dominant,salmon_aquaculture_meat,xoil,oil of rapeseed,473.5183673469388
+DNK,plant-dominant,salmon_aquaculture_meat,xpul,faba bean,90.792
+DNK,plant-dominant,salmon_aquaculture_meat,xpul,guar protein,123.23409090909091
+DNK,plant-dominant,salmon_aquaculture_meat,xpul,pea other,71.64772727272727
+DNK,plant-dominant,salmon_aquaculture_meat,xpul,pea protein,40.122727272727275
+FRO,fish-dominant,salmon_aquaculture_meat,cnut,oil of coconuts,0
+FRO,fish-dominant,salmon_aquaculture_meat,maiz,maize gluten,5506.4285714285725
+FRO,fish-dominant,salmon_aquaculture_meat,soyb,oil of soya bean,0
+FRO,fish-dominant,salmon_aquaculture_meat,soyb,soy protein concentrate,0
+FRO,fish-dominant,salmon_aquaculture_meat,soyb,soybean meal,22338.579545454544
+FRO,fish-dominant,salmon_aquaculture_meat,whea,wheat,8094.450000000001
+FRO,fish-dominant,salmon_aquaculture_meat,whea,wheat gluten,15184.39393939394
+FRO,fish-dominant,salmon_aquaculture_meat,xoil,cake of sunflower seed,0
+FRO,fish-dominant,salmon_aquaculture_meat,xoil,oil of linseed,0
+FRO,fish-dominant,salmon_aquaculture_meat,xoil,oil of rapeseed,0
+FRO,fish-dominant,salmon_aquaculture_meat,xpul,faba bean,2312.7000000000003
+FRO,fish-dominant,salmon_aquaculture_meat,xpul,guar protein,0
+FRO,fish-dominant,salmon_aquaculture_meat,xpul,pea other,0
+FRO,fish-dominant,salmon_aquaculture_meat,xpul,pea protein,0
+FRO,plant-dominant,salmon_aquaculture_meat,cnut,oil of coconuts,550.6428571428571
+FRO,plant-dominant,salmon_aquaculture_meat,maiz,maize gluten,963.625
+FRO,plant-dominant,salmon_aquaculture_meat,soyb,oil of soya bean,476.8453608247423
+FRO,plant-dominant,salmon_aquaculture_meat,soyb,soy protein concentrate,27463.3125
+FRO,plant-dominant,salmon_aquaculture_meat,whea,wheat,7516.275
+FRO,plant-dominant,salmon_aquaculture_meat,whea,wheat gluten,11446.69696969697
+FRO,plant-dominant,salmon_aquaculture_meat,xoil,cake of sunflower seed,4467.715909090909
+FRO,plant-dominant,salmon_aquaculture_meat,xoil,oil of linseed,1533.9336734693877
+FRO,plant-dominant,salmon_aquaculture_meat,xoil,oil of rapeseed,21711.061224489797
+FRO,plant-dominant,salmon_aquaculture_meat,xpul,faba bean,4162.86
+FRO,plant-dominant,salmon_aquaculture_meat,xpul,guar protein,5650.34659090909
+FRO,plant-dominant,salmon_aquaculture_meat,xpul,pea other,3285.0852272727275
+FRO,plant-dominant,salmon_aquaculture_meat,xpul,pea protein,1839.6477272727273
+GBR,fish-dominant,salmon_aquaculture_meat,cnut,oil of coconuts,0
+GBR,fish-dominant,salmon_aquaculture_meat,maiz,maize gluten,11028.57142857143
+GBR,fish-dominant,salmon_aquaculture_meat,soyb,oil of soya bean,0
+GBR,fish-dominant,salmon_aquaculture_meat,soyb,soy protein concentrate,0
+GBR,fish-dominant,salmon_aquaculture_meat,soyb,soybean meal,44740.90909090909
+GBR,fish-dominant,salmon_aquaculture_meat,whea,wheat,16212.000000000002
+GBR,fish-dominant,salmon_aquaculture_meat,whea,wheat gluten,30412.121212121212
+GBR,fish-dominant,salmon_aquaculture_meat,xoil,cake of sunflower seed,0
+GBR,fish-dominant,salmon_aquaculture_meat,xoil,oil of linseed,0
+GBR,fish-dominant,salmon_aquaculture_meat,xoil,oil of rapeseed,0
+GBR,fish-dominant,salmon_aquaculture_meat,xpul,faba bean,4632
+GBR,fish-dominant,salmon_aquaculture_meat,xpul,guar protein,0
+GBR,fish-dominant,salmon_aquaculture_meat,xpul,pea other,0
+GBR,fish-dominant,salmon_aquaculture_meat,xpul,pea protein,0
+GBR,plant-dominant,salmon_aquaculture_meat,cnut,oil of coconuts,1102.857142857143
+GBR,plant-dominant,salmon_aquaculture_meat,maiz,maize gluten,1930
+GBR,plant-dominant,salmon_aquaculture_meat,soyb,oil of soya bean,955.0515463917526
+GBR,plant-dominant,salmon_aquaculture_meat,soyb,soy protein concentrate,55005
+GBR,plant-dominant,salmon_aquaculture_meat,whea,wheat,15054
+GBR,plant-dominant,salmon_aquaculture_meat,whea,wheat gluten,22926.060606060608
+GBR,plant-dominant,salmon_aquaculture_meat,xoil,cake of sunflower seed,8948.181818181818
+GBR,plant-dominant,salmon_aquaculture_meat,xoil,oil of linseed,3072.2448979591836
+GBR,plant-dominant,salmon_aquaculture_meat,xoil,oil of rapeseed,43484.08163265306
+GBR,plant-dominant,salmon_aquaculture_meat,xpul,faba bean,8337.599999999999
+GBR,plant-dominant,salmon_aquaculture_meat,xpul,guar protein,11316.81818181818
+GBR,plant-dominant,salmon_aquaculture_meat,xpul,pea other,6579.545454545455
+GBR,plant-dominant,salmon_aquaculture_meat,xpul,pea protein,3684.5454545454545
+IRL,fish-dominant,salmon_aquaculture_meat,cnut,oil of coconuts,0
+IRL,fish-dominant,salmon_aquaculture_meat,maiz,maize gluten,796.7142857142857
+IRL,fish-dominant,salmon_aquaculture_meat,soyb,oil of soya bean,0
+IRL,fish-dominant,salmon_aquaculture_meat,soyb,soy protein concentrate,0
+IRL,fish-dominant,salmon_aquaculture_meat,soyb,soybean meal,3232.125
+IRL,fish-dominant,salmon_aquaculture_meat,whea,wheat,1171.17
+IRL,fish-dominant,salmon_aquaculture_meat,whea,wheat gluten,2197.0000000000005
+IRL,fish-dominant,salmon_aquaculture_meat,xoil,cake of sunflower seed,0
+IRL,fish-dominant,salmon_aquaculture_meat,xoil,oil of linseed,0
+IRL,fish-dominant,salmon_aquaculture_meat,xoil,oil of rapeseed,0
+IRL,fish-dominant,salmon_aquaculture_meat,xpul,faba bean,334.62
+IRL,fish-dominant,salmon_aquaculture_meat,xpul,guar protein,0
+IRL,fish-dominant,salmon_aquaculture_meat,xpul,pea other,0
+IRL,fish-dominant,salmon_aquaculture_meat,xpul,pea protein,0
+IRL,plant-dominant,salmon_aquaculture_meat,cnut,oil of coconuts,79.67142857142858
+IRL,plant-dominant,salmon_aquaculture_meat,maiz,maize gluten,139.425
+IRL,plant-dominant,salmon_aquaculture_meat,soyb,oil of soya bean,68.9938144329897
+IRL,plant-dominant,salmon_aquaculture_meat,soyb,soy protein concentrate,3973.6125
+IRL,plant-dominant,salmon_aquaculture_meat,whea,wheat,1087.515
+IRL,plant-dominant,salmon_aquaculture_meat,whea,wheat gluten,1656.1999999999998
+IRL,plant-dominant,salmon_aquaculture_meat,xoil,cake of sunflower seed,646.4250000000001
+IRL,plant-dominant,salmon_aquaculture_meat,xoil,oil of linseed,221.94183673469388
+IRL,plant-dominant,salmon_aquaculture_meat,xoil,oil of rapeseed,3141.3306122448976
+IRL,plant-dominant,salmon_aquaculture_meat,xpul,faba bean,602.3159999999999
+IRL,plant-dominant,salmon_aquaculture_meat,xpul,guar protein,817.5375
+IRL,plant-dominant,salmon_aquaculture_meat,xpul,pea other,475.3125
+IRL,plant-dominant,salmon_aquaculture_meat,xpul,pea protein,266.175
+ISL,fish-dominant,salmon_aquaculture_meat,cnut,oil of coconuts,0
+ISL,fish-dominant,salmon_aquaculture_meat,maiz,maize gluten,2125.8714285714286
+ISL,fish-dominant,salmon_aquaculture_meat,soyb,oil of soya bean,0
+ISL,fish-dominant,salmon_aquaculture_meat,soyb,soy protein concentrate,0
+ISL,fish-dominant,salmon_aquaculture_meat,soyb,soybean meal,8624.273863636365
+ISL,fish-dominant,salmon_aquaculture_meat,whea,wheat,3125.0310000000004
+ISL,fish-dominant,salmon_aquaculture_meat,whea,wheat gluten,5862.251515151516
+ISL,fish-dominant,salmon_aquaculture_meat,xoil,cake of sunflower seed,0
+ISL,fish-dominant,salmon_aquaculture_meat,xoil,oil of linseed,0
+ISL,fish-dominant,salmon_aquaculture_meat,xoil,oil of rapeseed,0
+ISL,fish-dominant,salmon_aquaculture_meat,xpul,faba bean,892.8660000000001
+ISL,fish-dominant,salmon_aquaculture_meat,xpul,guar protein,0
+ISL,fish-dominant,salmon_aquaculture_meat,xpul,pea other,0
+ISL,fish-dominant,salmon_aquaculture_meat,xpul,pea protein,0
+ISL,plant-dominant,salmon_aquaculture_meat,cnut,oil of coconuts,212.58714285714285
+ISL,plant-dominant,salmon_aquaculture_meat,maiz,maize gluten,372.02750000000003
+ISL,plant-dominant,salmon_aquaculture_meat,soyb,oil of soya bean,184.0960824742268
+ISL,plant-dominant,salmon_aquaculture_meat,soyb,soy protein concentrate,10602.78375
+ISL,plant-dominant,salmon_aquaculture_meat,whea,wheat,2901.814500000001
+ISL,plant-dominant,salmon_aquaculture_meat,whea,wheat gluten,4419.235757575758
+ISL,plant-dominant,salmon_aquaculture_meat,xoil,cake of sunflower seed,1724.854772727273
+ISL,plant-dominant,salmon_aquaculture_meat,xoil,oil of linseed,592.2070408163264
+ISL,plant-dominant,salmon_aquaculture_meat,xoil,oil of rapeseed,8382.007346938777
+ISL,plant-dominant,salmon_aquaculture_meat,xpul,faba bean,1607.1588000000002
+ISL,plant-dominant,salmon_aquaculture_meat,xpul,guar protein,2181.433977272727
+ISL,plant-dominant,salmon_aquaculture_meat,xpul,pea other,1268.2755681818182
+ISL,plant-dominant,salmon_aquaculture_meat,xpul,pea protein,710.2343181818183
+NOR,fish-dominant,salmon_aquaculture_meat,cnut,oil of coconuts,0
+NOR,fish-dominant,salmon_aquaculture_meat,maiz,maize gluten,85950.6662857143
+NOR,fish-dominant,salmon_aquaculture_meat,soyb,oil of soya bean,0
+NOR,fish-dominant,salmon_aquaculture_meat,soyb,soy protein concentrate,0
+NOR,fish-dominant,salmon_aquaculture_meat,soyb,soybean meal,348686.22572727274
+NOR,fish-dominant,salmon_aquaculture_meat,whea,wheat,126347.47944000002
+NOR,fish-dominant,salmon_aquaculture_meat,whea,wheat gluten,237015.4736969697
+NOR,fish-dominant,salmon_aquaculture_meat,xoil,cake of sunflower seed,0
+NOR,fish-dominant,salmon_aquaculture_meat,xoil,oil of linseed,0
+NOR,fish-dominant,salmon_aquaculture_meat,xoil,oil of rapeseed,0
+NOR,fish-dominant,salmon_aquaculture_meat,xpul,faba bean,36099.27984
+NOR,fish-dominant,salmon_aquaculture_meat,xpul,guar protein,0
+NOR,fish-dominant,salmon_aquaculture_meat,xpul,pea other,0
+NOR,fish-dominant,salmon_aquaculture_meat,xpul,pea protein,0
+NOR,plant-dominant,salmon_aquaculture_meat,cnut,oil of coconuts,8595.066628571429
+NOR,plant-dominant,salmon_aquaculture_meat,maiz,maize gluten,15041.3666
+NOR,plant-dominant,salmon_aquaculture_meat,soyb,oil of soya bean,7443.150482474228
+NOR,plant-dominant,salmon_aquaculture_meat,soyb,soy protein concentrate,428678.9480999999
+NOR,plant-dominant,salmon_aquaculture_meat,whea,wheat,117322.65948
+NOR,plant-dominant,salmon_aquaculture_meat,whea,wheat gluten,178673.20324848488
+NOR,plant-dominant,salmon_aquaculture_meat,xoil,cake of sunflower seed,69737.24514545455
+NOR,plant-dominant,salmon_aquaculture_meat,xoil,oil of linseed,23943.39989387755
+NOR,plant-dominant,salmon_aquaculture_meat,xoil,oil of rapeseed,338891.1984979592
+NOR,plant-dominant,salmon_aquaculture_meat,xpul,faba bean,64978.703712
+NOR,plant-dominant,salmon_aquaculture_meat,xpul,guar protein,88197.10415454546
+NOR,plant-dominant,salmon_aquaculture_meat,xpul,pea other,51277.38613636364
+NOR,plant-dominant,salmon_aquaculture_meat,xpul,pea protein,28715.336236363637
+PRK,fish-dominant,salmon_aquaculture_meat,cnut,oil of coconuts,0
+PRK,fish-dominant,salmon_aquaculture_meat,maiz,maize gluten,3.7142857142857144
+PRK,fish-dominant,salmon_aquaculture_meat,soyb,oil of soya bean,0
+PRK,fish-dominant,salmon_aquaculture_meat,soyb,soy protein concentrate,0
+PRK,fish-dominant,salmon_aquaculture_meat,soyb,soybean meal,15.06818181818182
+PRK,fish-dominant,salmon_aquaculture_meat,whea,wheat,5.460000000000001
+PRK,fish-dominant,salmon_aquaculture_meat,whea,wheat gluten,10.242424242424242
+PRK,fish-dominant,salmon_aquaculture_meat,xoil,cake of sunflower seed,0
+PRK,fish-dominant,salmon_aquaculture_meat,xoil,oil of linseed,0
+PRK,fish-dominant,salmon_aquaculture_meat,xoil,oil of rapeseed,0
+PRK,fish-dominant,salmon_aquaculture_meat,xpul,faba bean,1.56
+PRK,fish-dominant,salmon_aquaculture_meat,xpul,guar protein,0
+PRK,fish-dominant,salmon_aquaculture_meat,xpul,pea other,0
+PRK,fish-dominant,salmon_aquaculture_meat,xpul,pea protein,0
+PRK,plant-dominant,salmon_aquaculture_meat,cnut,oil of coconuts,0.37142857142857144
+PRK,plant-dominant,salmon_aquaculture_meat,maiz,maize gluten,0.65
+PRK,plant-dominant,salmon_aquaculture_meat,soyb,oil of soya bean,0.32164948453608244
+PRK,plant-dominant,salmon_aquaculture_meat,soyb,soy protein concentrate,18.525000000000002
+PRK,plant-dominant,salmon_aquaculture_meat,whea,wheat,5.07
+PRK,plant-dominant,salmon_aquaculture_meat,whea,wheat gluten,7.721212121212121
+PRK,plant-dominant,salmon_aquaculture_meat,xoil,cake of sunflower seed,3.0136363636363637
+PRK,plant-dominant,salmon_aquaculture_meat,xoil,oil of linseed,1.0346938775510204
+PRK,plant-dominant,salmon_aquaculture_meat,xoil,oil of rapeseed,14.644897959183673
+PRK,plant-dominant,salmon_aquaculture_meat,xpul,faba bean,2.8079999999999994
+PRK,plant-dominant,salmon_aquaculture_meat,xpul,guar protein,3.811363636363636
+PRK,plant-dominant,salmon_aquaculture_meat,xpul,pea other,2.215909090909091
+PRK,plant-dominant,salmon_aquaculture_meat,xpul,pea protein,1.240909090909091
+RUS,fish-dominant,salmon_aquaculture_meat,cnut,oil of coconuts,0
+RUS,fish-dominant,salmon_aquaculture_meat,maiz,maize gluten,671.9761904761905
+RUS,fish-dominant,salmon_aquaculture_meat,soyb,oil of soya bean,0
+RUS,fish-dominant,salmon_aquaculture_meat,soyb,soy protein concentrate,0
+RUS,fish-dominant,salmon_aquaculture_meat,soyb,soybean meal,2726.0852272727275
+RUS,fish-dominant,salmon_aquaculture_meat,whea,wheat,987.805
+RUS,fish-dominant,salmon_aquaculture_meat,whea,wheat gluten,1853.0252525252524
+RUS,fish-dominant,salmon_aquaculture_meat,xoil,cake of sunflower seed,0
+RUS,fish-dominant,salmon_aquaculture_meat,xoil,oil of linseed,0
+RUS,fish-dominant,salmon_aquaculture_meat,xoil,oil of rapeseed,0
+RUS,fish-dominant,salmon_aquaculture_meat,xpul,faba bean,282.23
+RUS,fish-dominant,salmon_aquaculture_meat,xpul,guar protein,0
+RUS,fish-dominant,salmon_aquaculture_meat,xpul,pea other,0
+RUS,fish-dominant,salmon_aquaculture_meat,xpul,pea protein,0
+RUS,plant-dominant,salmon_aquaculture_meat,cnut,oil of coconuts,67.19761904761904
+RUS,plant-dominant,salmon_aquaculture_meat,maiz,maize gluten,117.59583333333335
+RUS,plant-dominant,salmon_aquaculture_meat,soyb,oil of soya bean,58.19175257731958
+RUS,plant-dominant,salmon_aquaculture_meat,soyb,soy protein concentrate,3351.48125
+RUS,plant-dominant,salmon_aquaculture_meat,whea,wheat,917.2475
+RUS,plant-dominant,salmon_aquaculture_meat,whea,wheat gluten,1396.8959595959593
+RUS,plant-dominant,salmon_aquaculture_meat,xoil,cake of sunflower seed,545.2170454545455
+RUS,plant-dominant,salmon_aquaculture_meat,xoil,oil of linseed,187.19336734693877
+RUS,plant-dominant,salmon_aquaculture_meat,xoil,oil of rapeseed,2649.5061224489796
+RUS,plant-dominant,salmon_aquaculture_meat,xpul,faba bean,508.0139999999999
+RUS,plant-dominant,salmon_aquaculture_meat,xpul,guar protein,689.5392045454545
+RUS,plant-dominant,salmon_aquaculture_meat,xpul,pea other,400.8948863636364
+RUS,plant-dominant,salmon_aquaculture_meat,xpul,pea protein,224.5011363636364
+USA,fish-dominant,salmon_aquaculture_meat,cnut,oil of coconuts,0
+USA,fish-dominant,salmon_aquaculture_meat,maiz,maize gluten,1020.8417142857145
+USA,fish-dominant,salmon_aquaculture_meat,soyb,oil of soya bean,0
+USA,fish-dominant,salmon_aquaculture_meat,soyb,soy protein concentrate,0
+USA,fish-dominant,salmon_aquaculture_meat,soyb,soybean meal,4141.3692272727285
+USA,fish-dominant,salmon_aquaculture_meat,whea,wheat,1500.6373200000005
+USA,fish-dominant,salmon_aquaculture_meat,whea,wheat gluten,2815.0483636363642
+USA,fish-dominant,salmon_aquaculture_meat,xoil,cake of sunflower seed,0
+USA,fish-dominant,salmon_aquaculture_meat,xoil,oil of linseed,0
+USA,fish-dominant,salmon_aquaculture_meat,xoil,oil of rapeseed,0
+USA,fish-dominant,salmon_aquaculture_meat,xpul,faba bean,428.75352000000004
+USA,fish-dominant,salmon_aquaculture_meat,xpul,guar protein,0
+USA,fish-dominant,salmon_aquaculture_meat,xpul,pea other,0
+USA,fish-dominant,salmon_aquaculture_meat,xpul,pea protein,0
+USA,plant-dominant,salmon_aquaculture_meat,cnut,oil of coconuts,102.08417142857144
+USA,plant-dominant,salmon_aquaculture_meat,maiz,maize gluten,178.64730000000003
+USA,plant-dominant,salmon_aquaculture_meat,soyb,oil of soya bean,88.40278762886598
+USA,plant-dominant,salmon_aquaculture_meat,soyb,soy protein concentrate,5091.448050000001
+USA,plant-dominant,salmon_aquaculture_meat,whea,wheat,1393.4489400000002
+USA,plant-dominant,salmon_aquaculture_meat,whea,wheat gluten,2122.113381818183
+USA,plant-dominant,salmon_aquaculture_meat,xoil,cake of sunflower seed,828.2738454545456
+USA,plant-dominant,salmon_aquaculture_meat,xoil,oil of linseed,284.3773346938776
+USA,plant-dominant,salmon_aquaculture_meat,xoil,oil of rapeseed,4025.0330448979603
+USA,plant-dominant,salmon_aquaculture_meat,xpul,faba bean,771.756336
+USA,plant-dominant,salmon_aquaculture_meat,xpul,guar protein,1047.5228045454546
+USA,plant-dominant,salmon_aquaculture_meat,xpul,pea other,609.0248863636366
+USA,plant-dominant,salmon_aquaculture_meat,xpul,pea protein,341.0539363636364

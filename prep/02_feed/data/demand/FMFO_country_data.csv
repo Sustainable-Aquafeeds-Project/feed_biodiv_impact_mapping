@@ -1,33 +1,65 @@
-iso3c,Country,system,feed_item,tonnes
-AUS,Australia,salmon_aquaculture_meat,forage fish,28732.003240500257
-AUS,Australia,salmon_aquaculture_meat,forage fish,27099.503056380927
-CAN,Canada,salmon_aquaculture_meat,forage fish,11410.102488242894
-CAN,Canada,salmon_aquaculture_meat,forage fish,10761.801210501819
-CAN,Canada,salmon_aquaculture_meat,forage fish,36602.91027780857
-CAN,Canada,salmon_aquaculture_meat,forage fish,34523.199466569444
-CHL,Chile,salmon_aquaculture_meat,forage fish,97.0349559942709
-CHL,Chile,salmon_aquaculture_meat,forage fish,91.52160622186916
-CHL,Chile,salmon_aquaculture_meat,forage fish,337864.12410031754
-CHL,Chile,salmon_aquaculture_meat,forage fish,318667.298867345
-DNK,Denmark,salmon_aquaculture_meat,forage fish,773.4581511300609
-DNK,Denmark,salmon_aquaculture_meat,forage fish,729.5116652703982
-FRO,Faroe Islands,salmon_aquaculture_meat,forage fish,35463.454919081916
-FRO,Faroe Islands,salmon_aquaculture_meat,forage fish,33448.48588958862
-ISL,Iceland,salmon_aquaculture_meat,forage fish,13691.405344307948
-ISL,Iceland,salmon_aquaculture_meat,forage fish,12913.484586108636
-IRL,Ireland,salmon_aquaculture_meat,forage fish,5131.137322187568
-IRL,Ireland,salmon_aquaculture_meat,forage fish,4839.595428881458
-PRK,North Korea,salmon_aquaculture_meat,forage fish,23.92138611742456
-PRK,North Korea,salmon_aquaculture_meat,forage fish,22.562216451661804
-NOR,Norway,salmon_aquaculture_meat,forage fish,553554.3664189746
-NOR,Norway,salmon_aquaculture_meat,forage fish,522102.4137815331
-RUS,Russia,salmon_aquaculture_meat,forage fish,4327.777438410727
-RUS,Russia,salmon_aquaculture_meat,forage fish,4081.8809930464813
-CHE,Switzerland,salmon_aquaculture_meat,forage fish,63.551149118624586
-CHE,Switzerland,salmon_aquaculture_meat,forage fish,59.94028837324821
-ARE,United Arab Emirates,salmon_aquaculture_meat,forage fish,119.60693058712282
-ARE,United Arab Emirates,salmon_aquaculture_meat,forage fish,112.81108225830903
-GBR,United Kingdom,salmon_aquaculture_meat,forage fish,71028.11570250677
-GBR,United Kingdom,salmon_aquaculture_meat,forage fish,66992.42731031889
-USA,United States,salmon_aquaculture_meat,forage fish,6574.601603285201
-USA,United States,salmon_aquaculture_meat,forage fish,6201.044694007635
+iso3c,Country,diet,system,feed_item,tonnes
+AUS,Australia,plant-dominant,salmon_aquaculture_meat,forage fish,29444.1356
+AUS,Australia,plant-dominant,salmon_aquaculture_meat,forage fish,27771.17335
+AUS,Australia,fish-dominant,salmon_aquaculture_meat,forage fish,107069.584
+AUS,Australia,fish-dominant,salmon_aquaculture_meat,forage fish,76956.2635
+CAN,Canada,plant-dominant,salmon_aquaculture_meat,forage fish,11692.905714285716
+CAN,Canada,plant-dominant,salmon_aquaculture_meat,forage fish,11028.536071428574
+CAN,Canada,fish-dominant,salmon_aquaculture_meat,forage fish,42519.65714285715
+CAN,Canada,fish-dominant,salmon_aquaculture_meat,forage fish,30561.00357142858
+CAN,Canada,plant-dominant,salmon_aquaculture_meat,forage fish,37510.125714285714
+CAN,Canada,plant-dominant,salmon_aquaculture_meat,forage fish,35378.86857142857
+CAN,Canada,fish-dominant,salmon_aquaculture_meat,forage fish,136400.45714285714
+CAN,Canada,fish-dominant,salmon_aquaculture_meat,forage fish,98037.82857142857
+CHL,Chile,plant-dominant,salmon_aquaculture_meat,forage fish,99.43999999999998
+CHL,Chile,plant-dominant,salmon_aquaculture_meat,forage fish,93.78999999999999
+CHL,Chile,fish-dominant,salmon_aquaculture_meat,forage fish,361.6
+CHL,Chile,fish-dominant,salmon_aquaculture_meat,forage fish,259.9
+CHL,Chile,plant-dominant,salmon_aquaculture_meat,forage fish,346238.2
+CHL,Chile,plant-dominant,salmon_aquaculture_meat,forage fish,326565.575
+CHL,Chile,fish-dominant,salmon_aquaculture_meat,forage fish,1259048
+CHL,Chile,fish-dominant,salmon_aquaculture_meat,forage fish,904940.75
+DNK,Denmark,plant-dominant,salmon_aquaculture_meat,forage fish,792.6285714285715
+DNK,Denmark,plant-dominant,salmon_aquaculture_meat,forage fish,747.592857142857
+DNK,Denmark,fish-dominant,salmon_aquaculture_meat,forage fish,2882.285714285714
+DNK,Denmark,fish-dominant,salmon_aquaculture_meat,forage fish,2071.6428571428573
+FRO,Faroe Islands,plant-dominant,salmon_aquaculture_meat,forage fish,36342.428571428565
+FRO,Faroe Islands,plant-dominant,salmon_aquaculture_meat,forage fish,34277.517857142855
+FRO,Faroe Islands,fish-dominant,salmon_aquaculture_meat,forage fish,132154.2857142857
+FRO,Faroe Islands,fish-dominant,salmon_aquaculture_meat,forage fish,94985.89285714287
+ISL,Iceland,plant-dominant,salmon_aquaculture_meat,forage fish,14030.751428571428
+ISL,Iceland,plant-dominant,salmon_aquaculture_meat,forage fish,13233.549642857146
+ISL,Iceland,fish-dominant,salmon_aquaculture_meat,forage fish,51020.91428571429
+ISL,Iceland,fish-dominant,salmon_aquaculture_meat,forage fish,36671.28214285714
+IRL,Ireland,plant-dominant,salmon_aquaculture_meat,forage fish,5258.314285714286
+IRL,Ireland,plant-dominant,salmon_aquaculture_meat,forage fish,4959.546428571428
+IRL,Ireland,fish-dominant,salmon_aquaculture_meat,forage fish,19121.14285714286
+IRL,Ireland,fish-dominant,salmon_aquaculture_meat,forage fish,13743.32142857143
+PRK,North Korea,plant-dominant,salmon_aquaculture_meat,forage fish,24.514285714285712
+PRK,North Korea,plant-dominant,salmon_aquaculture_meat,forage fish,23.12142857142857
+PRK,North Korea,fish-dominant,salmon_aquaculture_meat,forage fish,89.14285714285714
+PRK,North Korea,fish-dominant,salmon_aquaculture_meat,forage fish,64.07142857142858
+NOR,Norway,plant-dominant,salmon_aquaculture_meat,forage fish,567274.3974857143
+NOR,Norway,plant-dominant,salmon_aquaculture_meat,forage fish,535042.8976285716
+NOR,Norway,fish-dominant,salmon_aquaculture_meat,forage fish,2062815.990857143
+NOR,Norway,fish-dominant,salmon_aquaculture_meat,forage fish,1482648.9934285716
+RUS,Russia,plant-dominant,salmon_aquaculture_meat,forage fish,4435.0428571428565
+RUS,Russia,plant-dominant,salmon_aquaculture_meat,forage fish,4183.051785714286
+RUS,Russia,fish-dominant,salmon_aquaculture_meat,forage fish,16127.42857142857
+RUS,Russia,fish-dominant,salmon_aquaculture_meat,forage fish,11591.589285714286
+CHE,Switzerland,plant-dominant,salmon_aquaculture_meat,forage fish,65.12628571428571
+CHE,Switzerland,plant-dominant,salmon_aquaculture_meat,forage fish,61.42592857142858
+CHE,Switzerland,fish-dominant,salmon_aquaculture_meat,forage fish,236.8228571428572
+CHE,Switzerland,fish-dominant,salmon_aquaculture_meat,forage fish,170.21642857142862
+ARE,United Arab Emirates,plant-dominant,salmon_aquaculture_meat,forage fish,122.57142857142857
+ARE,United Arab Emirates,plant-dominant,salmon_aquaculture_meat,forage fish,115.60714285714288
+ARE,United Arab Emirates,fish-dominant,salmon_aquaculture_meat,forage fish,445.7142857142857
+ARE,United Arab Emirates,fish-dominant,salmon_aquaculture_meat,forage fish,320.35714285714283
+GBR,United Kingdom,plant-dominant,salmon_aquaculture_meat,forage fish,72788.57142857143
+GBR,United Kingdom,plant-dominant,salmon_aquaculture_meat,forage fish,68652.85714285714
+GBR,United Kingdom,fish-dominant,salmon_aquaculture_meat,forage fish,264685.71428571426
+GBR,United Kingdom,fish-dominant,salmon_aquaculture_meat,forage fish,190242.85714285713
+USA,United States,plant-dominant,salmon_aquaculture_meat,forage fish,6737.555314285714
+USA,United States,plant-dominant,salmon_aquaculture_meat,forage fish,6354.739671428572
+USA,United States,fish-dominant,salmon_aquaculture_meat,forage fish,24500.201142857146
+USA,United States,fish-dominant,salmon_aquaculture_meat,forage fish,17609.519571428573

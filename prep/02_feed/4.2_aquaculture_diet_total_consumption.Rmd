@@ -1,6 +1,6 @@
 ---
 title: "Calculating aquaculture diet consumption in tonnes"
-author: "Gage"
+author: "Gage Clawson"
 date: "03/20/2023"
 output: html_document
 editor_options: 
@@ -24,6 +24,7 @@ library(countrycode)
 scenario_year <- 2020
 
 source(here("src/fxns.R"))
+source(here("src/directories.R"))
 ```
 
 
@@ -74,28 +75,25 @@ saveRDS(feed_demand, here("prep/02_feed/data/demand/global_feed_demand.rds"))
 ```
 
 
-Now calculate ingredient demand per diet (just modern diet for now) and for each salmon producing country. While we are not really interested in this project in the country-specific data, global demand is affected by the among country differences in FCR.
+Now calculate ingredient demand per diet and for each salmon producing country. Global demand is affected by the among country differences in FCR.
 
 ```{r}
 
 tonnes_consumption <- feed_demand %>%
-  left_join( diet, by=c("iso3c", "species")) %>%
+  left_join(diet, by=c("iso3c", "species")) %>%
   mutate(ingredient_demand = feed_demand * prop_diet) %>%
   mutate(product = "meat") %>%
-  dplyr::select(iso3c, animal= species, system = production_system, product, ingredient = raw_name, ingredient_demand) 
+  dplyr::select(iso3c, animal= species, system = production_system, product, ingredient = raw_name, ingredient_demand, diet) 
 
 write_csv(tonnes_consumption, here("prep/02_feed/data/demand/total_aquaculture_ingredient_demand.csv")) 
 
 tonnes_consumption %>%
-  group_by(ingredient) %>%
+  group_by(ingredient, diet) %>%
   summarise(total_ingredient_demand = sum(ingredient_demand, na.rm = TRUE)) %>%
   ungroup() %>%
   write.csv(here("prep/02_feed/data/demand/total_global_ingredient_demand.csv"), row.names = FALSE)
 
 ```
-
-Unlike the chickens, the calculated values are very close to those from Halley et al. 2018.  
-But, here we make them match Froehlich et al.  2018.
 
 Check that fishoil/fishmeal matches Froehlich data.
 Specifically matching to Fig.3 in paper, data here: https://knb.ecoinformatics.org/view/doi:10.5063/F1T43R7N
@@ -114,7 +112,7 @@ halley_tonnes <- read.csv(here("prep/02_feed/data/msleckman.45.1_fofm_consumptio
 
 fofm <- combine_demand %>%
     filter(ingredient == "fish meal, forage fish" | ingredient == "fish oil, forage fish" | ingredient == "fish meal, cut offs" | ingredient == "fish oil, cut offs") %>%
-    group_by(animal) %>%
+    group_by(animal, diet) %>%
   summarize(tonnes_fofm=sum(ingredient_demand, na.rm=TRUE)) %>%   
   left_join(halley_tonnes) %>%
   mutate(correction = true_tonnes_fofm/tonnes_fofm)
@@ -124,32 +122,38 @@ write_csv(fofm, here("prep/02_feed/data/demand/fofm_aquaculture_corrected_consum
 ```
 
 
-
 ```{r}
+
+## I actually don't think we should correct this? 
 
 combine_feedstuff_corrected <- combine_demand %>%
  left_join(fofm) %>%
   mutate(correction = ifelse(ingredient %in% c("fish meal, forage fish", "fish oil, forage fish", "fish oil, cut offs", "fish meal, cut offs" ) , correction, 1)) %>%
-  mutate(tonnes_feedstuff_fofm_correct = ingredient_demand*correction) %>%
-  dplyr::select(iso3c, animal, system, product, ingredient, ingredient_demand=tonnes_feedstuff_fofm_correct)
+ # mutate(tonnes_feedstuff_fofm_correct = ingredient_demand*correction) %>%
+# dplyr::select(iso3c, animal, system, product, ingredient, ingredient_demand=tonnes_feedstuff_fofm_correct, diet)
+dplyr::select(iso3c, animal, system, product, ingredient, ingredient_demand, diet)
+
+test <- combine_feedstuff_corrected %>%
+  group_by( diet, ingredient) %>%
+  summarise(sum = sum(ingredient_demand, na.rm = TRUE))
 
 write_csv(combine_feedstuff_corrected, here("prep/02_feed/data/demand/total_aquaculture_ingredient_demand_corrected.csv"))    
 
-# check; Halley values and ours should be similar (tonnes)
+# check
 combine_feedstuff_corrected %>%
   filter(ingredient == "fish meal, forage fish" | ingredient == "fish oil, forage fish" | ingredient == "fish meal, cut offs" | ingredient == "fish oil, cut offs" ) %>%
-      group_by(animal) %>%
+      group_by(animal, diet) %>%
   summarize(total=sum(ingredient_demand, na.rm=TRUE)) %>%    #
   left_join(halley_tonnes)
 
 # check that these are still the same
 combine_feedstuff_corrected %>%
-    group_by(animal, ingredient) %>%
+    group_by(animal, ingredient, diet) %>%
   summarize(total=sum(ingredient_demand, na.rm=TRUE)) %>%    #
   filter(ingredient == "wheat") 
 
 combine_demand %>%
-    group_by(animal, ingredient) %>%
+    group_by(animal, ingredient, diet) %>%
   summarize(total=sum(ingredient_demand, na.rm=TRUE)) %>%    #
   filter(ingredient == "wheat") 
 

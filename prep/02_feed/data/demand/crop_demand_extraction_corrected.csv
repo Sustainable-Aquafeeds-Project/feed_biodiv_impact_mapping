@@ -1,209 +1,433 @@
-"iso3c","animal_system","source_ingredient","ingredient_demand","source","product","included_source","ext_rate","crop","crop_loss","tonnes_product"
-"AUS","salmon_aquaculture_meat","coconut oil",93.685886,"salmon","oil of coconuts","mapspam",13,"coconut",79,446.123266666667
-"AUS","salmon_aquaculture_meat","corn gluten",655.801202,"salmon","maize gluten","mapspam",10,"maize",16,780.715716666667
-"AUS","salmon_aquaculture_meat","faba beans",3372.691896,"salmon","faba bean","mapspam",100,"faba bean",0,3372.691896
-"AUS","salmon_aquaculture_meat","guar protein",4028.493098,"salmon","guar protein","mapspam",25,"pea",12,4577.83306590909
-"AUS","salmon_aquaculture_meat","linseed oil",1217.916518,"salmon","oil of linseed","mapspam",35,"linseed",2,1242.77195714286
-"AUS","salmon_aquaculture_meat","pea flour",2342.14715,"salmon","pea other","mapspam",63,"pea",12,2661.53085227273
-"AUS","salmon_aquaculture_meat","pea protein",1311.602404,"salmon","pea protein","mapspam",25,"pea",12,1490.45727727273
-"AUS","salmon_aquaculture_meat","rapeseed and camelina oil",17238.203024,"salmon","oil of rapeseed","mapspam",38,"rapeseed",2,17590.0030857143
-"AUS","salmon_aquaculture_meat","soy protein concentrate",19580.350174,"salmon","soy protein concentrate","mapspam",33,"soybean",12,22250.397925
-"AUS","salmon_aquaculture_meat","soybean oil",374.743544,"salmon","oil of soya bean","mapspam",18,"soybean",3,386.333550515464
-"AUS","salmon_aquaculture_meat","sunflower",3185.320124,"salmon","cake of sunflower seed","mapspam",47,"sunflower seed",12,3619.68195909091
-"AUS","salmon_aquaculture_meat","wheat",6089.58259,"salmon","wheat","mapspam",100,"wheat",0,6089.58259
-"AUS","salmon_aquaculture_meat","wheat gluten",9181.216828,"salmon","wheat gluten","mapspam",15,"wheat",1,9273.95639191919
-"CAN","salmon_aquaculture_meat","coconut oil",37.2047,"salmon","oil of coconuts","mapspam",13,"coconut",79,177.165238095238
-"CAN","salmon_aquaculture_meat","corn gluten",260.4329,"salmon","maize gluten","mapspam",10,"maize",16,310.039166666667
-"CAN","salmon_aquaculture_meat","faba beans",1339.3692,"salmon","faba bean","mapspam",100,"faba bean",0,1339.3692
-"CAN","salmon_aquaculture_meat","guar protein",1599.8021,"salmon","guar protein","mapspam",25,"pea",12,1817.95693181818
-"CAN","salmon_aquaculture_meat","linseed oil",483.6611,"salmon","oil of linseed","mapspam",35,"linseed",2,493.531734693878
-"CAN","salmon_aquaculture_meat","pea flour",930.1175,"salmon","pea other","mapspam",63,"pea",12,1056.95170454545
-"CAN","salmon_aquaculture_meat","pea protein",520.8658,"salmon","pea protein","mapspam",25,"pea",12,591.892954545455
-"CAN","salmon_aquaculture_meat","rapeseed and camelina oil",6845.6648,"salmon","oil of rapeseed","mapspam",38,"rapeseed",2,6985.37224489796
-"CAN","salmon_aquaculture_meat","soy protein concentrate",7775.7823,"salmon","soy protein concentrate","mapspam",33,"soybean",12,8836.11625
-"CAN","salmon_aquaculture_meat","soybean oil",148.8188,"salmon","oil of soya bean","mapspam",18,"soybean",3,153.421443298969
-"CAN","salmon_aquaculture_meat","sunflower",1264.9598,"salmon","cake of sunflower seed","mapspam",47,"sunflower seed",12,1437.45431818182
-"CAN","salmon_aquaculture_meat","wheat",2418.3055,"salmon","wheat","mapspam",100,"wheat",0,2418.3055
-"CAN","salmon_aquaculture_meat","wheat gluten",3646.0606,"salmon","wheat gluten","mapspam",15,"wheat",1,3682.8894949495
-"CAN","salmon_aquaculture_meat","coconut oil",119.3504,"salmon","oil of coconuts","mapspam",13,"coconut",79,568.335238095238
-"CAN","salmon_aquaculture_meat","corn gluten",835.4528,"salmon","maize gluten","mapspam",10,"maize",16,994.586666666667
-"CAN","salmon_aquaculture_meat","faba beans",4296.6144,"salmon","faba bean","mapspam",100,"faba bean",0,4296.6144
-"CAN","salmon_aquaculture_meat","guar protein",5132.0672,"salmon","guar protein","mapspam",25,"pea",12,5831.89454545455
-"CAN","salmon_aquaculture_meat","linseed oil",1551.5552,"salmon","oil of linseed","mapspam",35,"linseed",2,1583.21959183673
-"CAN","salmon_aquaculture_meat","pea flour",2983.76,"salmon","pea other","mapspam",63,"pea",12,3390.63636363636
-"CAN","salmon_aquaculture_meat","pea protein",1670.9056,"salmon","pea protein","mapspam",25,"pea",12,1898.75636363636
-"CAN","salmon_aquaculture_meat","rapeseed and camelina oil",21960.4736,"salmon","oil of rapeseed","mapspam",38,"rapeseed",2,22408.6465306122
-"CAN","salmon_aquaculture_meat","soy protein concentrate",24944.2336,"salmon","soy protein concentrate","mapspam",33,"soybean",12,28345.72
-"CAN","salmon_aquaculture_meat","soybean oil",477.4016,"salmon","oil of soya bean","mapspam",18,"soybean",3,492.166597938144
-"CAN","salmon_aquaculture_meat","sunflower",4057.9136,"salmon","cake of sunflower seed","mapspam",47,"sunflower seed",12,4611.26545454546
-"CAN","salmon_aquaculture_meat","wheat",7757.776,"salmon","wheat","mapspam",100,"wheat",0,7757.776
-"CAN","salmon_aquaculture_meat","wheat gluten",11696.3392,"salmon","wheat gluten","mapspam",15,"wheat",1,11814.484040404
-"CHL","salmon_aquaculture_meat","coconut oil",0.3164,"salmon","oil of coconuts","mapspam",13,"coconut",79,1.50666666666667
-"CHL","salmon_aquaculture_meat","corn gluten",2.2148,"salmon","maize gluten","mapspam",10,"maize",16,2.63666666666667
-"CHL","salmon_aquaculture_meat","faba beans",11.3904,"salmon","faba bean","mapspam",100,"faba bean",0,11.3904
-"CHL","salmon_aquaculture_meat","guar protein",13.6052,"salmon","guar protein","mapspam",25,"pea",12,15.4604545454545
-"CHL","salmon_aquaculture_meat","linseed oil",4.1132,"salmon","oil of linseed","mapspam",35,"linseed",2,4.19714285714286
-"CHL","salmon_aquaculture_meat","pea flour",7.91,"salmon","pea other","mapspam",63,"pea",12,8.98863636363636
-"CHL","salmon_aquaculture_meat","pea protein",4.4296,"salmon","pea protein","mapspam",25,"pea",12,5.03363636363636
-"CHL","salmon_aquaculture_meat","rapeseed and camelina oil",58.2176,"salmon","oil of rapeseed","mapspam",38,"rapeseed",2,59.4057142857143
-"CHL","salmon_aquaculture_meat","soy protein concentrate",66.1276,"salmon","soy protein concentrate","mapspam",33,"soybean",12,75.145
-"CHL","salmon_aquaculture_meat","soybean oil",1.2656,"salmon","oil of soya bean","mapspam",18,"soybean",3,1.30474226804124
-"CHL","salmon_aquaculture_meat","sunflower",10.7576,"salmon","cake of sunflower seed","mapspam",47,"sunflower seed",12,12.2245454545455
-"CHL","salmon_aquaculture_meat","wheat",20.566,"salmon","wheat","mapspam",100,"wheat",0,20.566
-"CHL","salmon_aquaculture_meat","wheat gluten",31.0072,"salmon","wheat gluten","mapspam",15,"wheat",1,31.320404040404
-"CHL","salmon_aquaculture_meat","coconut oil",1101.667,"salmon","oil of coconuts","mapspam",13,"coconut",79,5246.03333333333
-"CHL","salmon_aquaculture_meat","corn gluten",7711.669,"salmon","maize gluten","mapspam",10,"maize",16,9180.55833333333
-"CHL","salmon_aquaculture_meat","faba beans",39660.012,"salmon","faba bean","mapspam",100,"faba bean",0,39660.012
-"CHL","salmon_aquaculture_meat","guar protein",47371.681,"salmon","guar protein","mapspam",25,"pea",12,53831.4556818182
-"CHL","salmon_aquaculture_meat","linseed oil",14321.671,"salmon","oil of linseed","mapspam",35,"linseed",2,14613.95
-"CHL","salmon_aquaculture_meat","pea flour",27541.675,"salmon","pea other","mapspam",63,"pea",12,31297.3579545455
-"CHL","salmon_aquaculture_meat","pea protein",15423.338,"salmon","pea protein","mapspam",25,"pea",12,17526.5204545455
-"CHL","salmon_aquaculture_meat","rapeseed and camelina oil",202706.728,"salmon","oil of rapeseed","mapspam",38,"rapeseed",2,206843.6
-"CHL","salmon_aquaculture_meat","soy protein concentrate",230248.403,"salmon","soy protein concentrate","mapspam",33,"soybean",12,261645.9125
-"CHL","salmon_aquaculture_meat","soybean oil",4406.668,"salmon","oil of soya bean","mapspam",18,"soybean",3,4542.95670103093
-"CHL","salmon_aquaculture_meat","sunflower",37456.678,"salmon","cake of sunflower seed","mapspam",47,"sunflower seed",12,42564.4068181818
-"CHL","salmon_aquaculture_meat","wheat",71608.355,"salmon","wheat","mapspam",100,"wheat",0,71608.355
-"CHL","salmon_aquaculture_meat","wheat gluten",107963.366,"salmon","wheat gluten","mapspam",15,"wheat",1,109053.905050505
-"DNK","salmon_aquaculture_meat","coconut oil",2.522,"salmon","oil of coconuts","mapspam",13,"coconut",79,12.0095238095238
-"DNK","salmon_aquaculture_meat","corn gluten",17.654,"salmon","maize gluten","mapspam",10,"maize",16,21.0166666666667
-"DNK","salmon_aquaculture_meat","faba beans",90.792,"salmon","faba bean","mapspam",100,"faba bean",0,90.792
-"DNK","salmon_aquaculture_meat","guar protein",108.446,"salmon","guar protein","mapspam",25,"pea",12,123.234090909091
-"DNK","salmon_aquaculture_meat","linseed oil",32.786,"salmon","oil of linseed","mapspam",35,"linseed",2,33.4551020408163
-"DNK","salmon_aquaculture_meat","pea flour",63.05,"salmon","pea other","mapspam",63,"pea",12,71.6477272727273
-"DNK","salmon_aquaculture_meat","pea protein",35.308,"salmon","pea protein","mapspam",25,"pea",12,40.1227272727273
-"DNK","salmon_aquaculture_meat","rapeseed and camelina oil",464.048,"salmon","oil of rapeseed","mapspam",38,"rapeseed",2,473.518367346939
-"DNK","salmon_aquaculture_meat","soy protein concentrate",527.098,"salmon","soy protein concentrate","mapspam",33,"soybean",12,598.975
-"DNK","salmon_aquaculture_meat","soybean oil",10.088,"salmon","oil of soya bean","mapspam",18,"soybean",3,10.4
-"DNK","salmon_aquaculture_meat","sunflower",85.748,"salmon","cake of sunflower seed","mapspam",47,"sunflower seed",12,97.4409090909091
-"DNK","salmon_aquaculture_meat","wheat",163.93,"salmon","wheat","mapspam",100,"wheat",0,163.93
-"DNK","salmon_aquaculture_meat","wheat gluten",247.156,"salmon","wheat gluten","mapspam",15,"wheat",1,249.652525252525
-"FRO","salmon_aquaculture_meat","coconut oil",115.635,"salmon","oil of coconuts","mapspam",13,"coconut",79,550.642857142857
-"FRO","salmon_aquaculture_meat","corn gluten",809.445,"salmon","maize gluten","mapspam",10,"maize",16,963.625
-"FRO","salmon_aquaculture_meat","faba beans",4162.86,"salmon","faba bean","mapspam",100,"faba bean",0,4162.86
-"FRO","salmon_aquaculture_meat","guar protein",4972.305,"salmon","guar protein","mapspam",25,"pea",12,5650.34659090909
-"FRO","salmon_aquaculture_meat","linseed oil",1503.255,"salmon","oil of linseed","mapspam",35,"linseed",2,1533.93367346939
-"FRO","salmon_aquaculture_meat","pea flour",2890.875,"salmon","pea other","mapspam",63,"pea",12,3285.08522727273
-"FRO","salmon_aquaculture_meat","pea protein",1618.89,"salmon","pea protein","mapspam",25,"pea",12,1839.64772727273
-"FRO","salmon_aquaculture_meat","rapeseed and camelina oil",21276.84,"salmon","oil of rapeseed","mapspam",38,"rapeseed",2,21711.0612244898
-"FRO","salmon_aquaculture_meat","soy protein concentrate",24167.715,"salmon","soy protein concentrate","mapspam",33,"soybean",12,27463.3125
-"FRO","salmon_aquaculture_meat","soybean oil",462.54,"salmon","oil of soya bean","mapspam",18,"soybean",3,476.845360824742
-"FRO","salmon_aquaculture_meat","sunflower",3931.59,"salmon","cake of sunflower seed","mapspam",47,"sunflower seed",12,4467.71590909091
-"FRO","salmon_aquaculture_meat","wheat",7516.275,"salmon","wheat","mapspam",100,"wheat",0,7516.275
-"FRO","salmon_aquaculture_meat","wheat gluten",11332.23,"salmon","wheat gluten","mapspam",15,"wheat",1,11446.696969697
-"ISL","salmon_aquaculture_meat","coconut oil",44.6433,"salmon","oil of coconuts","mapspam",13,"coconut",79,212.587142857143
-"ISL","salmon_aquaculture_meat","corn gluten",312.5031,"salmon","maize gluten","mapspam",10,"maize",16,372.0275
-"ISL","salmon_aquaculture_meat","faba beans",1607.1588,"salmon","faba bean","mapspam",100,"faba bean",0,1607.1588
-"ISL","salmon_aquaculture_meat","guar protein",1919.6619,"salmon","guar protein","mapspam",25,"pea",12,2181.43397727273
-"ISL","salmon_aquaculture_meat","linseed oil",580.3629,"salmon","oil of linseed","mapspam",35,"linseed",2,592.207040816326
-"ISL","salmon_aquaculture_meat","pea flour",1116.0825,"salmon","pea other","mapspam",63,"pea",12,1268.27556818182
-"ISL","salmon_aquaculture_meat","pea protein",625.0062,"salmon","pea protein","mapspam",25,"pea",12,710.234318181818
-"ISL","salmon_aquaculture_meat","rapeseed and camelina oil",8214.3672,"salmon","oil of rapeseed","mapspam",38,"rapeseed",2,8382.00734693878
-"ISL","salmon_aquaculture_meat","soy protein concentrate",9330.4497,"salmon","soy protein concentrate","mapspam",33,"soybean",12,10602.78375
-"ISL","salmon_aquaculture_meat","soybean oil",178.5732,"salmon","oil of soya bean","mapspam",18,"soybean",3,184.096082474227
-"ISL","salmon_aquaculture_meat","sunflower",1517.8722,"salmon","cake of sunflower seed","mapspam",47,"sunflower seed",12,1724.85477272727
-"ISL","salmon_aquaculture_meat","wheat",2901.8145,"salmon","wheat","mapspam",100,"wheat",0,2901.8145
-"ISL","salmon_aquaculture_meat","wheat gluten",4375.0434,"salmon","wheat gluten","mapspam",15,"wheat",1,4419.23575757576
-"IRL","salmon_aquaculture_meat","coconut oil",16.731,"salmon","oil of coconuts","mapspam",13,"coconut",79,79.6714285714286
-"IRL","salmon_aquaculture_meat","corn gluten",117.117,"salmon","maize gluten","mapspam",10,"maize",16,139.425
-"IRL","salmon_aquaculture_meat","faba beans",602.316,"salmon","faba bean","mapspam",100,"faba bean",0,602.316
-"IRL","salmon_aquaculture_meat","guar protein",719.433,"salmon","guar protein","mapspam",25,"pea",12,817.5375
-"IRL","salmon_aquaculture_meat","linseed oil",217.503,"salmon","oil of linseed","mapspam",35,"linseed",2,221.941836734694
-"IRL","salmon_aquaculture_meat","pea flour",418.275,"salmon","pea other","mapspam",63,"pea",12,475.3125
-"IRL","salmon_aquaculture_meat","pea protein",234.234,"salmon","pea protein","mapspam",25,"pea",12,266.175
-"IRL","salmon_aquaculture_meat","rapeseed and camelina oil",3078.504,"salmon","oil of rapeseed","mapspam",38,"rapeseed",2,3141.3306122449
-"IRL","salmon_aquaculture_meat","soy protein concentrate",3496.779,"salmon","soy protein concentrate","mapspam",33,"soybean",12,3973.6125
-"IRL","salmon_aquaculture_meat","soybean oil",66.924,"salmon","oil of soya bean","mapspam",18,"soybean",3,68.9938144329897
-"IRL","salmon_aquaculture_meat","sunflower",568.854,"salmon","cake of sunflower seed","mapspam",47,"sunflower seed",12,646.425
-"IRL","salmon_aquaculture_meat","wheat",1087.515,"salmon","wheat","mapspam",100,"wheat",0,1087.515
-"IRL","salmon_aquaculture_meat","wheat gluten",1639.638,"salmon","wheat gluten","mapspam",15,"wheat",1,1656.2
-"PRK","salmon_aquaculture_meat","coconut oil",0.078,"salmon","oil of coconuts","mapspam",13,"coconut",79,0.371428571428571
-"PRK","salmon_aquaculture_meat","corn gluten",0.546,"salmon","maize gluten","mapspam",10,"maize",16,0.65
-"PRK","salmon_aquaculture_meat","faba beans",2.808,"salmon","faba bean","mapspam",100,"faba bean",0,2.808
-"PRK","salmon_aquaculture_meat","guar protein",3.354,"salmon","guar protein","mapspam",25,"pea",12,3.81136363636364
-"PRK","salmon_aquaculture_meat","linseed oil",1.014,"salmon","oil of linseed","mapspam",35,"linseed",2,1.03469387755102
-"PRK","salmon_aquaculture_meat","pea flour",1.95,"salmon","pea other","mapspam",63,"pea",12,2.21590909090909
-"PRK","salmon_aquaculture_meat","pea protein",1.092,"salmon","pea protein","mapspam",25,"pea",12,1.24090909090909
-"PRK","salmon_aquaculture_meat","rapeseed and camelina oil",14.352,"salmon","oil of rapeseed","mapspam",38,"rapeseed",2,14.6448979591837
-"PRK","salmon_aquaculture_meat","soy protein concentrate",16.302,"salmon","soy protein concentrate","mapspam",33,"soybean",12,18.525
-"PRK","salmon_aquaculture_meat","soybean oil",0.312,"salmon","oil of soya bean","mapspam",18,"soybean",3,0.321649484536082
-"PRK","salmon_aquaculture_meat","sunflower",2.652,"salmon","cake of sunflower seed","mapspam",47,"sunflower seed",12,3.01363636363636
-"PRK","salmon_aquaculture_meat","wheat",5.07,"salmon","wheat","mapspam",100,"wheat",0,5.07
-"PRK","salmon_aquaculture_meat","wheat gluten",7.644,"salmon","wheat gluten","mapspam",15,"wheat",1,7.72121212121212
-"NOR","salmon_aquaculture_meat","coconut oil",1804.963992,"salmon","oil of coconuts","mapspam",13,"coconut",79,8595.06662857143
-"NOR","salmon_aquaculture_meat","corn gluten",12634.747944,"salmon","maize gluten","mapspam",10,"maize",16,15041.3666
-"NOR","salmon_aquaculture_meat","faba beans",64978.703712,"salmon","faba bean","mapspam",100,"faba bean",0,64978.703712
-"NOR","salmon_aquaculture_meat","guar protein",77613.451656,"salmon","guar protein","mapspam",25,"pea",12,88197.1041545455
-"NOR","salmon_aquaculture_meat","linseed oil",23464.531896,"salmon","oil of linseed","mapspam",35,"linseed",2,23943.3998938776
-"NOR","salmon_aquaculture_meat","pea flour",45124.0998,"salmon","pea other","mapspam",63,"pea",12,51277.3861363636
-"NOR","salmon_aquaculture_meat","pea protein",25269.495888,"salmon","pea protein","mapspam",25,"pea",12,28715.3362363636
-"NOR","salmon_aquaculture_meat","rapeseed and camelina oil",332113.374528,"salmon","oil of rapeseed","mapspam",38,"rapeseed",2,338891.198497959
-"NOR","salmon_aquaculture_meat","soy protein concentrate",377237.474328,"salmon","soy protein concentrate","mapspam",33,"soybean",12,428678.9481
-"NOR","salmon_aquaculture_meat","soybean oil",7219.855968,"salmon","oil of soya bean","mapspam",18,"soybean",3,7443.15048247423
-"NOR","salmon_aquaculture_meat","sunflower",61368.775728,"salmon","cake of sunflower seed","mapspam",47,"sunflower seed",12,69737.2451454546
-"NOR","salmon_aquaculture_meat","wheat",117322.65948,"salmon","wheat","mapspam",100,"wheat",0,117322.65948
-"NOR","salmon_aquaculture_meat","wheat gluten",176886.471216,"salmon","wheat gluten","mapspam",15,"wheat",1,178673.203248485
-"RUS","salmon_aquaculture_meat","coconut oil",14.1115,"salmon","oil of coconuts","mapspam",13,"coconut",79,67.197619047619
-"RUS","salmon_aquaculture_meat","corn gluten",98.7805,"salmon","maize gluten","mapspam",10,"maize",16,117.595833333333
-"RUS","salmon_aquaculture_meat","faba beans",508.014,"salmon","faba bean","mapspam",100,"faba bean",0,508.014
-"RUS","salmon_aquaculture_meat","guar protein",606.7945,"salmon","guar protein","mapspam",25,"pea",12,689.539204545454
-"RUS","salmon_aquaculture_meat","linseed oil",183.4495,"salmon","oil of linseed","mapspam",35,"linseed",2,187.193367346939
-"RUS","salmon_aquaculture_meat","pea flour",352.7875,"salmon","pea other","mapspam",63,"pea",12,400.894886363636
-"RUS","salmon_aquaculture_meat","pea protein",197.561,"salmon","pea protein","mapspam",25,"pea",12,224.501136363636
-"RUS","salmon_aquaculture_meat","rapeseed and camelina oil",2596.516,"salmon","oil of rapeseed","mapspam",38,"rapeseed",2,2649.50612244898
-"RUS","salmon_aquaculture_meat","soy protein concentrate",2949.3035,"salmon","soy protein concentrate","mapspam",33,"soybean",12,3351.48125
-"RUS","salmon_aquaculture_meat","soybean oil",56.446,"salmon","oil of soya bean","mapspam",18,"soybean",3,58.1917525773196
-"RUS","salmon_aquaculture_meat","sunflower",479.791,"salmon","cake of sunflower seed","mapspam",47,"sunflower seed",12,545.217045454546
-"RUS","salmon_aquaculture_meat","wheat",917.2475,"salmon","wheat","mapspam",100,"wheat",0,917.2475
-"RUS","salmon_aquaculture_meat","wheat gluten",1382.927,"salmon","wheat gluten","mapspam",15,"wheat",1,1396.89595959596
-"CHE","salmon_aquaculture_meat","coconut oil",0.20722,"salmon","oil of coconuts","mapspam",13,"coconut",79,0.986761904761905
-"CHE","salmon_aquaculture_meat","corn gluten",1.45054,"salmon","maize gluten","mapspam",10,"maize",16,1.72683333333333
-"CHE","salmon_aquaculture_meat","faba beans",7.45992,"salmon","faba bean","mapspam",100,"faba bean",0,7.45992
-"CHE","salmon_aquaculture_meat","guar protein",8.91046,"salmon","guar protein","mapspam",25,"pea",12,10.1255227272727
-"CHE","salmon_aquaculture_meat","linseed oil",2.69386,"salmon","oil of linseed","mapspam",35,"linseed",2,2.74883673469388
-"CHE","salmon_aquaculture_meat","pea flour",5.1805,"salmon","pea other","mapspam",63,"pea",12,5.88693181818182
-"CHE","salmon_aquaculture_meat","pea protein",2.90108,"salmon","pea protein","mapspam",25,"pea",12,3.29668181818182
-"CHE","salmon_aquaculture_meat","rapeseed and camelina oil",38.12848,"salmon","oil of rapeseed","mapspam",38,"rapeseed",2,38.906612244898
-"CHE","salmon_aquaculture_meat","soy protein concentrate",43.30898,"salmon","soy protein concentrate","mapspam",33,"soybean",12,49.21475
-"CHE","salmon_aquaculture_meat","soybean oil",0.82888,"salmon","oil of soya bean","mapspam",18,"soybean",3,0.854515463917526
-"CHE","salmon_aquaculture_meat","sunflower",7.04548,"salmon","cake of sunflower seed","mapspam",47,"sunflower seed",12,8.00622727272727
-"CHE","salmon_aquaculture_meat","wheat",13.4693,"salmon","wheat","mapspam",100,"wheat",0,13.4693
-"CHE","salmon_aquaculture_meat","wheat gluten",20.30756,"salmon","wheat gluten","mapspam",15,"wheat",1,20.5126868686869
-"ARE","salmon_aquaculture_meat","coconut oil",0.39,"salmon","oil of coconuts","mapspam",13,"coconut",79,1.85714285714286
-"ARE","salmon_aquaculture_meat","corn gluten",2.73,"salmon","maize gluten","mapspam",10,"maize",16,3.25
-"ARE","salmon_aquaculture_meat","faba beans",14.04,"salmon","faba bean","mapspam",100,"faba bean",0,14.04
-"ARE","salmon_aquaculture_meat","guar protein",16.77,"salmon","guar protein","mapspam",25,"pea",12,19.0568181818182
-"ARE","salmon_aquaculture_meat","linseed oil",5.07,"salmon","oil of linseed","mapspam",35,"linseed",2,5.1734693877551
-"ARE","salmon_aquaculture_meat","pea flour",9.75,"salmon","pea other","mapspam",63,"pea",12,11.0795454545455
-"ARE","salmon_aquaculture_meat","pea protein",5.46,"salmon","pea protein","mapspam",25,"pea",12,6.20454545454545
-"ARE","salmon_aquaculture_meat","rapeseed and camelina oil",71.76,"salmon","oil of rapeseed","mapspam",38,"rapeseed",2,73.2244897959184
-"ARE","salmon_aquaculture_meat","soy protein concentrate",81.51,"salmon","soy protein concentrate","mapspam",33,"soybean",12,92.625
-"ARE","salmon_aquaculture_meat","soybean oil",1.56,"salmon","oil of soya bean","mapspam",18,"soybean",3,1.60824742268041
-"ARE","salmon_aquaculture_meat","sunflower",13.26,"salmon","cake of sunflower seed","mapspam",47,"sunflower seed",12,15.0681818181818
-"ARE","salmon_aquaculture_meat","wheat",25.35,"salmon","wheat","mapspam",100,"wheat",0,25.35
-"ARE","salmon_aquaculture_meat","wheat gluten",38.22,"salmon","wheat gluten","mapspam",15,"wheat",1,38.6060606060606
-"GBR","salmon_aquaculture_meat","coconut oil",231.6,"salmon","oil of coconuts","mapspam",13,"coconut",79,1102.85714285714
-"GBR","salmon_aquaculture_meat","corn gluten",1621.2,"salmon","maize gluten","mapspam",10,"maize",16,1930
-"GBR","salmon_aquaculture_meat","faba beans",8337.6,"salmon","faba bean","mapspam",100,"faba bean",0,8337.6
-"GBR","salmon_aquaculture_meat","guar protein",9958.8,"salmon","guar protein","mapspam",25,"pea",12,11316.8181818182
-"GBR","salmon_aquaculture_meat","linseed oil",3010.8,"salmon","oil of linseed","mapspam",35,"linseed",2,3072.24489795918
-"GBR","salmon_aquaculture_meat","pea flour",5790,"salmon","pea other","mapspam",63,"pea",12,6579.54545454545
-"GBR","salmon_aquaculture_meat","pea protein",3242.4,"salmon","pea protein","mapspam",25,"pea",12,3684.54545454545
-"GBR","salmon_aquaculture_meat","rapeseed and camelina oil",42614.4,"salmon","oil of rapeseed","mapspam",38,"rapeseed",2,43484.0816326531
-"GBR","salmon_aquaculture_meat","soy protein concentrate",48404.4,"salmon","soy protein concentrate","mapspam",33,"soybean",12,55005
-"GBR","salmon_aquaculture_meat","soybean oil",926.4,"salmon","oil of soya bean","mapspam",18,"soybean",3,955.051546391753
-"GBR","salmon_aquaculture_meat","sunflower",7874.4,"salmon","cake of sunflower seed","mapspam",47,"sunflower seed",12,8948.18181818182
-"GBR","salmon_aquaculture_meat","wheat",15054,"salmon","wheat","mapspam",100,"wheat",0,15054
-"GBR","salmon_aquaculture_meat","wheat gluten",22696.8,"salmon","wheat gluten","mapspam",15,"wheat",1,22926.0606060606
-"USA","salmon_aquaculture_meat","coconut oil",21.437676,"salmon","oil of coconuts","mapspam",13,"coconut",79,102.084171428571
-"USA","salmon_aquaculture_meat","corn gluten",150.063732,"salmon","maize gluten","mapspam",10,"maize",16,178.6473
-"USA","salmon_aquaculture_meat","faba beans",771.756336,"salmon","faba bean","mapspam",100,"faba bean",0,771.756336
-"USA","salmon_aquaculture_meat","guar protein",921.820068,"salmon","guar protein","mapspam",25,"pea",12,1047.52280454545
-"USA","salmon_aquaculture_meat","linseed oil",278.689788,"salmon","oil of linseed","mapspam",35,"linseed",2,284.377334693878
-"USA","salmon_aquaculture_meat","pea flour",535.9419,"salmon","pea other","mapspam",63,"pea",12,609.024886363637
-"USA","salmon_aquaculture_meat","pea protein",300.127464,"salmon","pea protein","mapspam",25,"pea",12,341.053936363636
-"USA","salmon_aquaculture_meat","rapeseed and camelina oil",3944.532384,"salmon","oil of rapeseed","mapspam",38,"rapeseed",2,4025.03304489796
-"USA","salmon_aquaculture_meat","soy protein concentrate",4480.474284,"salmon","soy protein concentrate","mapspam",33,"soybean",12,5091.44805
-"USA","salmon_aquaculture_meat","soybean oil",85.750704,"salmon","oil of soya bean","mapspam",18,"soybean",3,88.402787628866
-"USA","salmon_aquaculture_meat","sunflower",728.880984,"salmon","cake of sunflower seed","mapspam",47,"sunflower seed",12,828.273845454546
-"USA","salmon_aquaculture_meat","wheat",1393.44894,"salmon","wheat","mapspam",100,"wheat",0,1393.44894
-"USA","salmon_aquaculture_meat","wheat gluten",2100.892248,"salmon","wheat gluten","mapspam",15,"wheat",1,2122.11338181818
+"iso3c","animal_system","diet","source_ingredient","ingredient_demand","source","product","included_source","ext_rate","crop","crop_loss","tonnes_product"
+"AUS","salmon_aquaculture_meat","plant-dominant","coconut oil",93.685886,"salmon","oil of coconuts","mapspam",13,"coconut",79,446.123266666667
+"AUS","salmon_aquaculture_meat","plant-dominant","corn gluten",655.801202,"salmon","maize gluten","mapspam",10,"maize",16,780.715716666667
+"AUS","salmon_aquaculture_meat","plant-dominant","faba beans",3372.691896,"salmon","faba bean","mapspam",100,"faba bean",0,3372.691896
+"AUS","salmon_aquaculture_meat","plant-dominant","guar protein",4028.493098,"salmon","guar protein","mapspam",25,"pea",12,4577.83306590909
+"AUS","salmon_aquaculture_meat","plant-dominant","linseed oil",1217.916518,"salmon","oil of linseed","mapspam",35,"linseed",2,1242.77195714286
+"AUS","salmon_aquaculture_meat","plant-dominant","pea flour",2342.14715,"salmon","pea other","mapspam",63,"pea",12,2661.53085227273
+"AUS","salmon_aquaculture_meat","plant-dominant","pea protein",1311.602404,"salmon","pea protein","mapspam",25,"pea",12,1490.45727727273
+"AUS","salmon_aquaculture_meat","plant-dominant","rapeseed and camelina oil",17238.203024,"salmon","oil of rapeseed","mapspam",38,"rapeseed",2,17590.0030857143
+"AUS","salmon_aquaculture_meat","plant-dominant","soy protein concentrate",19580.350174,"salmon","soy protein concentrate","mapspam",33,"soybean",12,22250.397925
+"AUS","salmon_aquaculture_meat","plant-dominant","soybean oil",374.743544,"salmon","oil of soya bean","mapspam",18,"soybean",3,386.333550515464
+"AUS","salmon_aquaculture_meat","plant-dominant","sunflower",3185.320124,"salmon","cake of sunflower seed","mapspam",47,"sunflower seed",12,3619.68195909091
+"AUS","salmon_aquaculture_meat","plant-dominant","wheat",6089.58259,"salmon","wheat","mapspam",100,"wheat",0,6089.58259
+"AUS","salmon_aquaculture_meat","plant-dominant","wheat gluten",9181.216828,"salmon","wheat gluten","mapspam",15,"wheat",1,9273.95639191919
+"AUS","salmon_aquaculture_meat","fish-dominant","coconut oil",0,"salmon","oil of coconuts","mapspam",13,"coconut",79,0
+"AUS","salmon_aquaculture_meat","fish-dominant","corn gluten",3747.43544,"salmon","maize gluten","mapspam",10,"maize",16,4461.23266666667
+"AUS","salmon_aquaculture_meat","fish-dominant","faba beans",1873.71772,"salmon","faba bean","mapspam",100,"faba bean",0,1873.71772
+"AUS","salmon_aquaculture_meat","fish-dominant","guar protein",0,"salmon","guar protein","mapspam",25,"pea",12,0
+"AUS","salmon_aquaculture_meat","fish-dominant","linseed oil",0,"salmon","oil of linseed","mapspam",35,"linseed",2,0
+"AUS","salmon_aquaculture_meat","fish-dominant","pea flour",0,"salmon","pea other","mapspam",63,"pea",12,0
+"AUS","salmon_aquaculture_meat","fish-dominant","pea protein",0,"salmon","pea protein","mapspam",25,"pea",12,0
+"AUS","salmon_aquaculture_meat","fish-dominant","rapeseed and camelina oil",0,"salmon","oil of rapeseed","mapspam",38,"rapeseed",2,0
+"AUS","salmon_aquaculture_meat","fish-dominant","soy protein concentrate",0,"salmon","soy protein concentrate","mapspam",33,"soybean",12,0
+"AUS","salmon_aquaculture_meat","fish-dominant","soybean meal",15926.60062,"salmon","soybean meal","mapspam",46,"soybean",12,18098.4097954545
+"AUS","salmon_aquaculture_meat","fish-dominant","soybean oil",0,"salmon","oil of soya bean","mapspam",18,"soybean",3,0
+"AUS","salmon_aquaculture_meat","fish-dominant","sunflower",0,"salmon","cake of sunflower seed","mapspam",47,"sunflower seed",12,0
+"AUS","salmon_aquaculture_meat","fish-dominant","wheat",6558.01202,"salmon","wheat","mapspam",100,"wheat",0,6558.01202
+"AUS","salmon_aquaculture_meat","fish-dominant","wheat gluten",12179.16518,"salmon","wheat gluten","mapspam",15,"wheat",1,12302.1870505051
+"CAN","salmon_aquaculture_meat","plant-dominant","coconut oil",37.2047,"salmon","oil of coconuts","mapspam",13,"coconut",79,177.165238095238
+"CAN","salmon_aquaculture_meat","plant-dominant","corn gluten",260.4329,"salmon","maize gluten","mapspam",10,"maize",16,310.039166666667
+"CAN","salmon_aquaculture_meat","plant-dominant","faba beans",1339.3692,"salmon","faba bean","mapspam",100,"faba bean",0,1339.3692
+"CAN","salmon_aquaculture_meat","plant-dominant","guar protein",1599.8021,"salmon","guar protein","mapspam",25,"pea",12,1817.95693181818
+"CAN","salmon_aquaculture_meat","plant-dominant","linseed oil",483.6611,"salmon","oil of linseed","mapspam",35,"linseed",2,493.531734693878
+"CAN","salmon_aquaculture_meat","plant-dominant","pea flour",930.1175,"salmon","pea other","mapspam",63,"pea",12,1056.95170454545
+"CAN","salmon_aquaculture_meat","plant-dominant","pea protein",520.8658,"salmon","pea protein","mapspam",25,"pea",12,591.892954545455
+"CAN","salmon_aquaculture_meat","plant-dominant","rapeseed and camelina oil",6845.6648,"salmon","oil of rapeseed","mapspam",38,"rapeseed",2,6985.37224489796
+"CAN","salmon_aquaculture_meat","plant-dominant","soy protein concentrate",7775.7823,"salmon","soy protein concentrate","mapspam",33,"soybean",12,8836.11625
+"CAN","salmon_aquaculture_meat","plant-dominant","soybean oil",148.8188,"salmon","oil of soya bean","mapspam",18,"soybean",3,153.421443298969
+"CAN","salmon_aquaculture_meat","plant-dominant","sunflower",1264.9598,"salmon","cake of sunflower seed","mapspam",47,"sunflower seed",12,1437.45431818182
+"CAN","salmon_aquaculture_meat","plant-dominant","wheat",2418.3055,"salmon","wheat","mapspam",100,"wheat",0,2418.3055
+"CAN","salmon_aquaculture_meat","plant-dominant","wheat gluten",3646.0606,"salmon","wheat gluten","mapspam",15,"wheat",1,3682.8894949495
+"CAN","salmon_aquaculture_meat","fish-dominant","coconut oil",0,"salmon","oil of coconuts","mapspam",13,"coconut",79,0
+"CAN","salmon_aquaculture_meat","fish-dominant","corn gluten",1488.188,"salmon","maize gluten","mapspam",10,"maize",16,1771.65238095238
+"CAN","salmon_aquaculture_meat","fish-dominant","faba beans",744.094,"salmon","faba bean","mapspam",100,"faba bean",0,744.094
+"CAN","salmon_aquaculture_meat","fish-dominant","guar protein",0,"salmon","guar protein","mapspam",25,"pea",12,0
+"CAN","salmon_aquaculture_meat","fish-dominant","linseed oil",0,"salmon","oil of linseed","mapspam",35,"linseed",2,0
+"CAN","salmon_aquaculture_meat","fish-dominant","pea flour",0,"salmon","pea other","mapspam",63,"pea",12,0
+"CAN","salmon_aquaculture_meat","fish-dominant","pea protein",0,"salmon","pea protein","mapspam",25,"pea",12,0
+"CAN","salmon_aquaculture_meat","fish-dominant","rapeseed and camelina oil",0,"salmon","oil of rapeseed","mapspam",38,"rapeseed",2,0
+"CAN","salmon_aquaculture_meat","fish-dominant","soy protein concentrate",0,"salmon","soy protein concentrate","mapspam",33,"soybean",12,0
+"CAN","salmon_aquaculture_meat","fish-dominant","soybean meal",6324.799,"salmon","soybean meal","mapspam",46,"soybean",12,7187.27159090909
+"CAN","salmon_aquaculture_meat","fish-dominant","soybean oil",0,"salmon","oil of soya bean","mapspam",18,"soybean",3,0
+"CAN","salmon_aquaculture_meat","fish-dominant","sunflower",0,"salmon","cake of sunflower seed","mapspam",47,"sunflower seed",12,0
+"CAN","salmon_aquaculture_meat","fish-dominant","wheat",2604.329,"salmon","wheat","mapspam",100,"wheat",0,2604.329
+"CAN","salmon_aquaculture_meat","fish-dominant","wheat gluten",4836.611,"salmon","wheat gluten","mapspam",15,"wheat",1,4885.46565656566
+"CAN","salmon_aquaculture_meat","plant-dominant","coconut oil",119.3504,"salmon","oil of coconuts","mapspam",13,"coconut",79,568.335238095238
+"CAN","salmon_aquaculture_meat","plant-dominant","corn gluten",835.4528,"salmon","maize gluten","mapspam",10,"maize",16,994.586666666667
+"CAN","salmon_aquaculture_meat","plant-dominant","faba beans",4296.6144,"salmon","faba bean","mapspam",100,"faba bean",0,4296.6144
+"CAN","salmon_aquaculture_meat","plant-dominant","guar protein",5132.0672,"salmon","guar protein","mapspam",25,"pea",12,5831.89454545455
+"CAN","salmon_aquaculture_meat","plant-dominant","linseed oil",1551.5552,"salmon","oil of linseed","mapspam",35,"linseed",2,1583.21959183673
+"CAN","salmon_aquaculture_meat","plant-dominant","pea flour",2983.76,"salmon","pea other","mapspam",63,"pea",12,3390.63636363636
+"CAN","salmon_aquaculture_meat","plant-dominant","pea protein",1670.9056,"salmon","pea protein","mapspam",25,"pea",12,1898.75636363636
+"CAN","salmon_aquaculture_meat","plant-dominant","rapeseed and camelina oil",21960.4736,"salmon","oil of rapeseed","mapspam",38,"rapeseed",2,22408.6465306122
+"CAN","salmon_aquaculture_meat","plant-dominant","soy protein concentrate",24944.2336,"salmon","soy protein concentrate","mapspam",33,"soybean",12,28345.72
+"CAN","salmon_aquaculture_meat","plant-dominant","soybean oil",477.4016,"salmon","oil of soya bean","mapspam",18,"soybean",3,492.166597938144
+"CAN","salmon_aquaculture_meat","plant-dominant","sunflower",4057.9136,"salmon","cake of sunflower seed","mapspam",47,"sunflower seed",12,4611.26545454546
+"CAN","salmon_aquaculture_meat","plant-dominant","wheat",7757.776,"salmon","wheat","mapspam",100,"wheat",0,7757.776
+"CAN","salmon_aquaculture_meat","plant-dominant","wheat gluten",11696.3392,"salmon","wheat gluten","mapspam",15,"wheat",1,11814.484040404
+"CAN","salmon_aquaculture_meat","fish-dominant","coconut oil",0,"salmon","oil of coconuts","mapspam",13,"coconut",79,0
+"CAN","salmon_aquaculture_meat","fish-dominant","corn gluten",4774.016,"salmon","maize gluten","mapspam",10,"maize",16,5683.35238095238
+"CAN","salmon_aquaculture_meat","fish-dominant","faba beans",2387.008,"salmon","faba bean","mapspam",100,"faba bean",0,2387.008
+"CAN","salmon_aquaculture_meat","fish-dominant","guar protein",0,"salmon","guar protein","mapspam",25,"pea",12,0
+"CAN","salmon_aquaculture_meat","fish-dominant","linseed oil",0,"salmon","oil of linseed","mapspam",35,"linseed",2,0
+"CAN","salmon_aquaculture_meat","fish-dominant","pea flour",0,"salmon","pea other","mapspam",63,"pea",12,0
+"CAN","salmon_aquaculture_meat","fish-dominant","pea protein",0,"salmon","pea protein","mapspam",25,"pea",12,0
+"CAN","salmon_aquaculture_meat","fish-dominant","rapeseed and camelina oil",0,"salmon","oil of rapeseed","mapspam",38,"rapeseed",2,0
+"CAN","salmon_aquaculture_meat","fish-dominant","soy protein concentrate",0,"salmon","soy protein concentrate","mapspam",33,"soybean",12,0
+"CAN","salmon_aquaculture_meat","fish-dominant","soybean meal",20289.568,"salmon","soybean meal","mapspam",46,"soybean",12,23056.3272727273
+"CAN","salmon_aquaculture_meat","fish-dominant","soybean oil",0,"salmon","oil of soya bean","mapspam",18,"soybean",3,0
+"CAN","salmon_aquaculture_meat","fish-dominant","sunflower",0,"salmon","cake of sunflower seed","mapspam",47,"sunflower seed",12,0
+"CAN","salmon_aquaculture_meat","fish-dominant","wheat",8354.528,"salmon","wheat","mapspam",100,"wheat",0,8354.528
+"CAN","salmon_aquaculture_meat","fish-dominant","wheat gluten",15515.552,"salmon","wheat gluten","mapspam",15,"wheat",1,15672.2747474747
+"CHL","salmon_aquaculture_meat","plant-dominant","coconut oil",0.3164,"salmon","oil of coconuts","mapspam",13,"coconut",79,1.50666666666667
+"CHL","salmon_aquaculture_meat","plant-dominant","corn gluten",2.2148,"salmon","maize gluten","mapspam",10,"maize",16,2.63666666666667
+"CHL","salmon_aquaculture_meat","plant-dominant","faba beans",11.3904,"salmon","faba bean","mapspam",100,"faba bean",0,11.3904
+"CHL","salmon_aquaculture_meat","plant-dominant","guar protein",13.6052,"salmon","guar protein","mapspam",25,"pea",12,15.4604545454545
+"CHL","salmon_aquaculture_meat","plant-dominant","linseed oil",4.1132,"salmon","oil of linseed","mapspam",35,"linseed",2,4.19714285714286
+"CHL","salmon_aquaculture_meat","plant-dominant","pea flour",7.91,"salmon","pea other","mapspam",63,"pea",12,8.98863636363636
+"CHL","salmon_aquaculture_meat","plant-dominant","pea protein",4.4296,"salmon","pea protein","mapspam",25,"pea",12,5.03363636363636
+"CHL","salmon_aquaculture_meat","plant-dominant","rapeseed and camelina oil",58.2176,"salmon","oil of rapeseed","mapspam",38,"rapeseed",2,59.4057142857143
+"CHL","salmon_aquaculture_meat","plant-dominant","soy protein concentrate",66.1276,"salmon","soy protein concentrate","mapspam",33,"soybean",12,75.145
+"CHL","salmon_aquaculture_meat","plant-dominant","soybean oil",1.2656,"salmon","oil of soya bean","mapspam",18,"soybean",3,1.30474226804124
+"CHL","salmon_aquaculture_meat","plant-dominant","sunflower",10.7576,"salmon","cake of sunflower seed","mapspam",47,"sunflower seed",12,12.2245454545455
+"CHL","salmon_aquaculture_meat","plant-dominant","wheat",20.566,"salmon","wheat","mapspam",100,"wheat",0,20.566
+"CHL","salmon_aquaculture_meat","plant-dominant","wheat gluten",31.0072,"salmon","wheat gluten","mapspam",15,"wheat",1,31.320404040404
+"CHL","salmon_aquaculture_meat","fish-dominant","coconut oil",0,"salmon","oil of coconuts","mapspam",13,"coconut",79,0
+"CHL","salmon_aquaculture_meat","fish-dominant","corn gluten",12.656,"salmon","maize gluten","mapspam",10,"maize",16,15.0666666666667
+"CHL","salmon_aquaculture_meat","fish-dominant","faba beans",6.328,"salmon","faba bean","mapspam",100,"faba bean",0,6.328
+"CHL","salmon_aquaculture_meat","fish-dominant","guar protein",0,"salmon","guar protein","mapspam",25,"pea",12,0
+"CHL","salmon_aquaculture_meat","fish-dominant","linseed oil",0,"salmon","oil of linseed","mapspam",35,"linseed",2,0
+"CHL","salmon_aquaculture_meat","fish-dominant","pea flour",0,"salmon","pea other","mapspam",63,"pea",12,0
+"CHL","salmon_aquaculture_meat","fish-dominant","pea protein",0,"salmon","pea protein","mapspam",25,"pea",12,0
+"CHL","salmon_aquaculture_meat","fish-dominant","rapeseed and camelina oil",0,"salmon","oil of rapeseed","mapspam",38,"rapeseed",2,0
+"CHL","salmon_aquaculture_meat","fish-dominant","soy protein concentrate",0,"salmon","soy protein concentrate","mapspam",33,"soybean",12,0
+"CHL","salmon_aquaculture_meat","fish-dominant","soybean meal",53.788,"salmon","soybean meal","mapspam",46,"soybean",12,61.1227272727273
+"CHL","salmon_aquaculture_meat","fish-dominant","soybean oil",0,"salmon","oil of soya bean","mapspam",18,"soybean",3,0
+"CHL","salmon_aquaculture_meat","fish-dominant","sunflower",0,"salmon","cake of sunflower seed","mapspam",47,"sunflower seed",12,0
+"CHL","salmon_aquaculture_meat","fish-dominant","wheat",22.148,"salmon","wheat","mapspam",100,"wheat",0,22.148
+"CHL","salmon_aquaculture_meat","fish-dominant","wheat gluten",41.132,"salmon","wheat gluten","mapspam",15,"wheat",1,41.5474747474747
+"CHL","salmon_aquaculture_meat","plant-dominant","coconut oil",1101.667,"salmon","oil of coconuts","mapspam",13,"coconut",79,5246.03333333333
+"CHL","salmon_aquaculture_meat","plant-dominant","corn gluten",7711.669,"salmon","maize gluten","mapspam",10,"maize",16,9180.55833333333
+"CHL","salmon_aquaculture_meat","plant-dominant","faba beans",39660.012,"salmon","faba bean","mapspam",100,"faba bean",0,39660.012
+"CHL","salmon_aquaculture_meat","plant-dominant","guar protein",47371.681,"salmon","guar protein","mapspam",25,"pea",12,53831.4556818182
+"CHL","salmon_aquaculture_meat","plant-dominant","linseed oil",14321.671,"salmon","oil of linseed","mapspam",35,"linseed",2,14613.95
+"CHL","salmon_aquaculture_meat","plant-dominant","pea flour",27541.675,"salmon","pea other","mapspam",63,"pea",12,31297.3579545455
+"CHL","salmon_aquaculture_meat","plant-dominant","pea protein",15423.338,"salmon","pea protein","mapspam",25,"pea",12,17526.5204545455
+"CHL","salmon_aquaculture_meat","plant-dominant","rapeseed and camelina oil",202706.728,"salmon","oil of rapeseed","mapspam",38,"rapeseed",2,206843.6
+"CHL","salmon_aquaculture_meat","plant-dominant","soy protein concentrate",230248.403,"salmon","soy protein concentrate","mapspam",33,"soybean",12,261645.9125
+"CHL","salmon_aquaculture_meat","plant-dominant","soybean oil",4406.668,"salmon","oil of soya bean","mapspam",18,"soybean",3,4542.95670103093
+"CHL","salmon_aquaculture_meat","plant-dominant","sunflower",37456.678,"salmon","cake of sunflower seed","mapspam",47,"sunflower seed",12,42564.4068181818
+"CHL","salmon_aquaculture_meat","plant-dominant","wheat",71608.355,"salmon","wheat","mapspam",100,"wheat",0,71608.355
+"CHL","salmon_aquaculture_meat","plant-dominant","wheat gluten",107963.366,"salmon","wheat gluten","mapspam",15,"wheat",1,109053.905050505
+"CHL","salmon_aquaculture_meat","fish-dominant","coconut oil",0,"salmon","oil of coconuts","mapspam",13,"coconut",79,0
+"CHL","salmon_aquaculture_meat","fish-dominant","corn gluten",44066.68,"salmon","maize gluten","mapspam",10,"maize",16,52460.3333333333
+"CHL","salmon_aquaculture_meat","fish-dominant","faba beans",22033.34,"salmon","faba bean","mapspam",100,"faba bean",0,22033.34
+"CHL","salmon_aquaculture_meat","fish-dominant","guar protein",0,"salmon","guar protein","mapspam",25,"pea",12,0
+"CHL","salmon_aquaculture_meat","fish-dominant","linseed oil",0,"salmon","oil of linseed","mapspam",35,"linseed",2,0
+"CHL","salmon_aquaculture_meat","fish-dominant","pea flour",0,"salmon","pea other","mapspam",63,"pea",12,0
+"CHL","salmon_aquaculture_meat","fish-dominant","pea protein",0,"salmon","pea protein","mapspam",25,"pea",12,0
+"CHL","salmon_aquaculture_meat","fish-dominant","rapeseed and camelina oil",0,"salmon","oil of rapeseed","mapspam",38,"rapeseed",2,0
+"CHL","salmon_aquaculture_meat","fish-dominant","soy protein concentrate",0,"salmon","soy protein concentrate","mapspam",33,"soybean",12,0
+"CHL","salmon_aquaculture_meat","fish-dominant","soybean meal",187283.39,"salmon","soybean meal","mapspam",46,"soybean",12,212822.034090909
+"CHL","salmon_aquaculture_meat","fish-dominant","soybean oil",0,"salmon","oil of soya bean","mapspam",18,"soybean",3,0
+"CHL","salmon_aquaculture_meat","fish-dominant","sunflower",0,"salmon","cake of sunflower seed","mapspam",47,"sunflower seed",12,0
+"CHL","salmon_aquaculture_meat","fish-dominant","wheat",77116.69,"salmon","wheat","mapspam",100,"wheat",0,77116.69
+"CHL","salmon_aquaculture_meat","fish-dominant","wheat gluten",143216.71,"salmon","wheat gluten","mapspam",15,"wheat",1,144663.343434343
+"DNK","salmon_aquaculture_meat","plant-dominant","coconut oil",2.522,"salmon","oil of coconuts","mapspam",13,"coconut",79,12.0095238095238
+"DNK","salmon_aquaculture_meat","plant-dominant","corn gluten",17.654,"salmon","maize gluten","mapspam",10,"maize",16,21.0166666666667
+"DNK","salmon_aquaculture_meat","plant-dominant","faba beans",90.792,"salmon","faba bean","mapspam",100,"faba bean",0,90.792
+"DNK","salmon_aquaculture_meat","plant-dominant","guar protein",108.446,"salmon","guar protein","mapspam",25,"pea",12,123.234090909091
+"DNK","salmon_aquaculture_meat","plant-dominant","linseed oil",32.786,"salmon","oil of linseed","mapspam",35,"linseed",2,33.4551020408163
+"DNK","salmon_aquaculture_meat","plant-dominant","pea flour",63.05,"salmon","pea other","mapspam",63,"pea",12,71.6477272727273
+"DNK","salmon_aquaculture_meat","plant-dominant","pea protein",35.308,"salmon","pea protein","mapspam",25,"pea",12,40.1227272727273
+"DNK","salmon_aquaculture_meat","plant-dominant","rapeseed and camelina oil",464.048,"salmon","oil of rapeseed","mapspam",38,"rapeseed",2,473.518367346939
+"DNK","salmon_aquaculture_meat","plant-dominant","soy protein concentrate",527.098,"salmon","soy protein concentrate","mapspam",33,"soybean",12,598.975
+"DNK","salmon_aquaculture_meat","plant-dominant","soybean oil",10.088,"salmon","oil of soya bean","mapspam",18,"soybean",3,10.4
+"DNK","salmon_aquaculture_meat","plant-dominant","sunflower",85.748,"salmon","cake of sunflower seed","mapspam",47,"sunflower seed",12,97.4409090909091
+"DNK","salmon_aquaculture_meat","plant-dominant","wheat",163.93,"salmon","wheat","mapspam",100,"wheat",0,163.93
+"DNK","salmon_aquaculture_meat","plant-dominant","wheat gluten",247.156,"salmon","wheat gluten","mapspam",15,"wheat",1,249.652525252525
+"DNK","salmon_aquaculture_meat","fish-dominant","coconut oil",0,"salmon","oil of coconuts","mapspam",13,"coconut",79,0
+"DNK","salmon_aquaculture_meat","fish-dominant","corn gluten",100.88,"salmon","maize gluten","mapspam",10,"maize",16,120.095238095238
+"DNK","salmon_aquaculture_meat","fish-dominant","faba beans",50.44,"salmon","faba bean","mapspam",100,"faba bean",0,50.44
+"DNK","salmon_aquaculture_meat","fish-dominant","guar protein",0,"salmon","guar protein","mapspam",25,"pea",12,0
+"DNK","salmon_aquaculture_meat","fish-dominant","linseed oil",0,"salmon","oil of linseed","mapspam",35,"linseed",2,0
+"DNK","salmon_aquaculture_meat","fish-dominant","pea flour",0,"salmon","pea other","mapspam",63,"pea",12,0
+"DNK","salmon_aquaculture_meat","fish-dominant","pea protein",0,"salmon","pea protein","mapspam",25,"pea",12,0
+"DNK","salmon_aquaculture_meat","fish-dominant","rapeseed and camelina oil",0,"salmon","oil of rapeseed","mapspam",38,"rapeseed",2,0
+"DNK","salmon_aquaculture_meat","fish-dominant","soy protein concentrate",0,"salmon","soy protein concentrate","mapspam",33,"soybean",12,0
+"DNK","salmon_aquaculture_meat","fish-dominant","soybean meal",428.74,"salmon","soybean meal","mapspam",46,"soybean",12,487.204545454545
+"DNK","salmon_aquaculture_meat","fish-dominant","soybean oil",0,"salmon","oil of soya bean","mapspam",18,"soybean",3,0
+"DNK","salmon_aquaculture_meat","fish-dominant","sunflower",0,"salmon","cake of sunflower seed","mapspam",47,"sunflower seed",12,0
+"DNK","salmon_aquaculture_meat","fish-dominant","wheat",176.54,"salmon","wheat","mapspam",100,"wheat",0,176.54
+"DNK","salmon_aquaculture_meat","fish-dominant","wheat gluten",327.86,"salmon","wheat gluten","mapspam",15,"wheat",1,331.171717171717
+"FRO","salmon_aquaculture_meat","plant-dominant","coconut oil",115.635,"salmon","oil of coconuts","mapspam",13,"coconut",79,550.642857142857
+"FRO","salmon_aquaculture_meat","plant-dominant","corn gluten",809.445,"salmon","maize gluten","mapspam",10,"maize",16,963.625
+"FRO","salmon_aquaculture_meat","plant-dominant","faba beans",4162.86,"salmon","faba bean","mapspam",100,"faba bean",0,4162.86
+"FRO","salmon_aquaculture_meat","plant-dominant","guar protein",4972.305,"salmon","guar protein","mapspam",25,"pea",12,5650.34659090909
+"FRO","salmon_aquaculture_meat","plant-dominant","linseed oil",1503.255,"salmon","oil of linseed","mapspam",35,"linseed",2,1533.93367346939
+"FRO","salmon_aquaculture_meat","plant-dominant","pea flour",2890.875,"salmon","pea other","mapspam",63,"pea",12,3285.08522727273
+"FRO","salmon_aquaculture_meat","plant-dominant","pea protein",1618.89,"salmon","pea protein","mapspam",25,"pea",12,1839.64772727273
+"FRO","salmon_aquaculture_meat","plant-dominant","rapeseed and camelina oil",21276.84,"salmon","oil of rapeseed","mapspam",38,"rapeseed",2,21711.0612244898
+"FRO","salmon_aquaculture_meat","plant-dominant","soy protein concentrate",24167.715,"salmon","soy protein concentrate","mapspam",33,"soybean",12,27463.3125
+"FRO","salmon_aquaculture_meat","plant-dominant","soybean oil",462.54,"salmon","oil of soya bean","mapspam",18,"soybean",3,476.845360824742
+"FRO","salmon_aquaculture_meat","plant-dominant","sunflower",3931.59,"salmon","cake of sunflower seed","mapspam",47,"sunflower seed",12,4467.71590909091
+"FRO","salmon_aquaculture_meat","plant-dominant","wheat",7516.275,"salmon","wheat","mapspam",100,"wheat",0,7516.275
+"FRO","salmon_aquaculture_meat","plant-dominant","wheat gluten",11332.23,"salmon","wheat gluten","mapspam",15,"wheat",1,11446.696969697
+"FRO","salmon_aquaculture_meat","fish-dominant","coconut oil",0,"salmon","oil of coconuts","mapspam",13,"coconut",79,0
+"FRO","salmon_aquaculture_meat","fish-dominant","corn gluten",4625.4,"salmon","maize gluten","mapspam",10,"maize",16,5506.42857142857
+"FRO","salmon_aquaculture_meat","fish-dominant","faba beans",2312.7,"salmon","faba bean","mapspam",100,"faba bean",0,2312.7
+"FRO","salmon_aquaculture_meat","fish-dominant","guar protein",0,"salmon","guar protein","mapspam",25,"pea",12,0
+"FRO","salmon_aquaculture_meat","fish-dominant","linseed oil",0,"salmon","oil of linseed","mapspam",35,"linseed",2,0
+"FRO","salmon_aquaculture_meat","fish-dominant","pea flour",0,"salmon","pea other","mapspam",63,"pea",12,0
+"FRO","salmon_aquaculture_meat","fish-dominant","pea protein",0,"salmon","pea protein","mapspam",25,"pea",12,0
+"FRO","salmon_aquaculture_meat","fish-dominant","rapeseed and camelina oil",0,"salmon","oil of rapeseed","mapspam",38,"rapeseed",2,0
+"FRO","salmon_aquaculture_meat","fish-dominant","soy protein concentrate",0,"salmon","soy protein concentrate","mapspam",33,"soybean",12,0
+"FRO","salmon_aquaculture_meat","fish-dominant","soybean meal",19657.95,"salmon","soybean meal","mapspam",46,"soybean",12,22338.5795454545
+"FRO","salmon_aquaculture_meat","fish-dominant","soybean oil",0,"salmon","oil of soya bean","mapspam",18,"soybean",3,0
+"FRO","salmon_aquaculture_meat","fish-dominant","sunflower",0,"salmon","cake of sunflower seed","mapspam",47,"sunflower seed",12,0
+"FRO","salmon_aquaculture_meat","fish-dominant","wheat",8094.45,"salmon","wheat","mapspam",100,"wheat",0,8094.45
+"FRO","salmon_aquaculture_meat","fish-dominant","wheat gluten",15032.55,"salmon","wheat gluten","mapspam",15,"wheat",1,15184.3939393939
+"ISL","salmon_aquaculture_meat","plant-dominant","coconut oil",44.6433,"salmon","oil of coconuts","mapspam",13,"coconut",79,212.587142857143
+"ISL","salmon_aquaculture_meat","plant-dominant","corn gluten",312.5031,"salmon","maize gluten","mapspam",10,"maize",16,372.0275
+"ISL","salmon_aquaculture_meat","plant-dominant","faba beans",1607.1588,"salmon","faba bean","mapspam",100,"faba bean",0,1607.1588
+"ISL","salmon_aquaculture_meat","plant-dominant","guar protein",1919.6619,"salmon","guar protein","mapspam",25,"pea",12,2181.43397727273
+"ISL","salmon_aquaculture_meat","plant-dominant","linseed oil",580.3629,"salmon","oil of linseed","mapspam",35,"linseed",2,592.207040816326
+"ISL","salmon_aquaculture_meat","plant-dominant","pea flour",1116.0825,"salmon","pea other","mapspam",63,"pea",12,1268.27556818182
+"ISL","salmon_aquaculture_meat","plant-dominant","pea protein",625.0062,"salmon","pea protein","mapspam",25,"pea",12,710.234318181818
+"ISL","salmon_aquaculture_meat","plant-dominant","rapeseed and camelina oil",8214.3672,"salmon","oil of rapeseed","mapspam",38,"rapeseed",2,8382.00734693878
+"ISL","salmon_aquaculture_meat","plant-dominant","soy protein concentrate",9330.4497,"salmon","soy protein concentrate","mapspam",33,"soybean",12,10602.78375
+"ISL","salmon_aquaculture_meat","plant-dominant","soybean oil",178.5732,"salmon","oil of soya bean","mapspam",18,"soybean",3,184.096082474227
+"ISL","salmon_aquaculture_meat","plant-dominant","sunflower",1517.8722,"salmon","cake of sunflower seed","mapspam",47,"sunflower seed",12,1724.85477272727
+"ISL","salmon_aquaculture_meat","plant-dominant","wheat",2901.8145,"salmon","wheat","mapspam",100,"wheat",0,2901.8145
+"ISL","salmon_aquaculture_meat","plant-dominant","wheat gluten",4375.0434,"salmon","wheat gluten","mapspam",15,"wheat",1,4419.23575757576
+"ISL","salmon_aquaculture_meat","fish-dominant","coconut oil",0,"salmon","oil of coconuts","mapspam",13,"coconut",79,0
+"ISL","salmon_aquaculture_meat","fish-dominant","corn gluten",1785.732,"salmon","maize gluten","mapspam",10,"maize",16,2125.87142857143
+"ISL","salmon_aquaculture_meat","fish-dominant","faba beans",892.866,"salmon","faba bean","mapspam",100,"faba bean",0,892.866
+"ISL","salmon_aquaculture_meat","fish-dominant","guar protein",0,"salmon","guar protein","mapspam",25,"pea",12,0
+"ISL","salmon_aquaculture_meat","fish-dominant","linseed oil",0,"salmon","oil of linseed","mapspam",35,"linseed",2,0
+"ISL","salmon_aquaculture_meat","fish-dominant","pea flour",0,"salmon","pea other","mapspam",63,"pea",12,0
+"ISL","salmon_aquaculture_meat","fish-dominant","pea protein",0,"salmon","pea protein","mapspam",25,"pea",12,0
+"ISL","salmon_aquaculture_meat","fish-dominant","rapeseed and camelina oil",0,"salmon","oil of rapeseed","mapspam",38,"rapeseed",2,0
+"ISL","salmon_aquaculture_meat","fish-dominant","soy protein concentrate",0,"salmon","soy protein concentrate","mapspam",33,"soybean",12,0
+"ISL","salmon_aquaculture_meat","fish-dominant","soybean meal",7589.361,"salmon","soybean meal","mapspam",46,"soybean",12,8624.27386363636
+"ISL","salmon_aquaculture_meat","fish-dominant","soybean oil",0,"salmon","oil of soya bean","mapspam",18,"soybean",3,0
+"ISL","salmon_aquaculture_meat","fish-dominant","sunflower",0,"salmon","cake of sunflower seed","mapspam",47,"sunflower seed",12,0
+"ISL","salmon_aquaculture_meat","fish-dominant","wheat",3125.031,"salmon","wheat","mapspam",100,"wheat",0,3125.031
+"ISL","salmon_aquaculture_meat","fish-dominant","wheat gluten",5803.629,"salmon","wheat gluten","mapspam",15,"wheat",1,5862.25151515152
+"IRL","salmon_aquaculture_meat","plant-dominant","coconut oil",16.731,"salmon","oil of coconuts","mapspam",13,"coconut",79,79.6714285714286
+"IRL","salmon_aquaculture_meat","plant-dominant","corn gluten",117.117,"salmon","maize gluten","mapspam",10,"maize",16,139.425
+"IRL","salmon_aquaculture_meat","plant-dominant","faba beans",602.316,"salmon","faba bean","mapspam",100,"faba bean",0,602.316
+"IRL","salmon_aquaculture_meat","plant-dominant","guar protein",719.433,"salmon","guar protein","mapspam",25,"pea",12,817.5375
+"IRL","salmon_aquaculture_meat","plant-dominant","linseed oil",217.503,"salmon","oil of linseed","mapspam",35,"linseed",2,221.941836734694
+"IRL","salmon_aquaculture_meat","plant-dominant","pea flour",418.275,"salmon","pea other","mapspam",63,"pea",12,475.3125
+"IRL","salmon_aquaculture_meat","plant-dominant","pea protein",234.234,"salmon","pea protein","mapspam",25,"pea",12,266.175
+"IRL","salmon_aquaculture_meat","plant-dominant","rapeseed and camelina oil",3078.504,"salmon","oil of rapeseed","mapspam",38,"rapeseed",2,3141.3306122449
+"IRL","salmon_aquaculture_meat","plant-dominant","soy protein concentrate",3496.779,"salmon","soy protein concentrate","mapspam",33,"soybean",12,3973.6125
+"IRL","salmon_aquaculture_meat","plant-dominant","soybean oil",66.924,"salmon","oil of soya bean","mapspam",18,"soybean",3,68.9938144329897
+"IRL","salmon_aquaculture_meat","plant-dominant","sunflower",568.854,"salmon","cake of sunflower seed","mapspam",47,"sunflower seed",12,646.425
+"IRL","salmon_aquaculture_meat","plant-dominant","wheat",1087.515,"salmon","wheat","mapspam",100,"wheat",0,1087.515
+"IRL","salmon_aquaculture_meat","plant-dominant","wheat gluten",1639.638,"salmon","wheat gluten","mapspam",15,"wheat",1,1656.2
+"IRL","salmon_aquaculture_meat","fish-dominant","coconut oil",0,"salmon","oil of coconuts","mapspam",13,"coconut",79,0
+"IRL","salmon_aquaculture_meat","fish-dominant","corn gluten",669.24,"salmon","maize gluten","mapspam",10,"maize",16,796.714285714286
+"IRL","salmon_aquaculture_meat","fish-dominant","faba beans",334.62,"salmon","faba bean","mapspam",100,"faba bean",0,334.62
+"IRL","salmon_aquaculture_meat","fish-dominant","guar protein",0,"salmon","guar protein","mapspam",25,"pea",12,0
+"IRL","salmon_aquaculture_meat","fish-dominant","linseed oil",0,"salmon","oil of linseed","mapspam",35,"linseed",2,0
+"IRL","salmon_aquaculture_meat","fish-dominant","pea flour",0,"salmon","pea other","mapspam",63,"pea",12,0
+"IRL","salmon_aquaculture_meat","fish-dominant","pea protein",0,"salmon","pea protein","mapspam",25,"pea",12,0
+"IRL","salmon_aquaculture_meat","fish-dominant","rapeseed and camelina oil",0,"salmon","oil of rapeseed","mapspam",38,"rapeseed",2,0
+"IRL","salmon_aquaculture_meat","fish-dominant","soy protein concentrate",0,"salmon","soy protein concentrate","mapspam",33,"soybean",12,0
+"IRL","salmon_aquaculture_meat","fish-dominant","soybean meal",2844.27,"salmon","soybean meal","mapspam",46,"soybean",12,3232.125
+"IRL","salmon_aquaculture_meat","fish-dominant","soybean oil",0,"salmon","oil of soya bean","mapspam",18,"soybean",3,0
+"IRL","salmon_aquaculture_meat","fish-dominant","sunflower",0,"salmon","cake of sunflower seed","mapspam",47,"sunflower seed",12,0
+"IRL","salmon_aquaculture_meat","fish-dominant","wheat",1171.17,"salmon","wheat","mapspam",100,"wheat",0,1171.17
+"IRL","salmon_aquaculture_meat","fish-dominant","wheat gluten",2175.03,"salmon","wheat gluten","mapspam",15,"wheat",1,2197
+"PRK","salmon_aquaculture_meat","plant-dominant","coconut oil",0.078,"salmon","oil of coconuts","mapspam",13,"coconut",79,0.371428571428571
+"PRK","salmon_aquaculture_meat","plant-dominant","corn gluten",0.546,"salmon","maize gluten","mapspam",10,"maize",16,0.65
+"PRK","salmon_aquaculture_meat","plant-dominant","faba beans",2.808,"salmon","faba bean","mapspam",100,"faba bean",0,2.808
+"PRK","salmon_aquaculture_meat","plant-dominant","guar protein",3.354,"salmon","guar protein","mapspam",25,"pea",12,3.81136363636364
+"PRK","salmon_aquaculture_meat","plant-dominant","linseed oil",1.014,"salmon","oil of linseed","mapspam",35,"linseed",2,1.03469387755102
+"PRK","salmon_aquaculture_meat","plant-dominant","pea flour",1.95,"salmon","pea other","mapspam",63,"pea",12,2.21590909090909
+"PRK","salmon_aquaculture_meat","plant-dominant","pea protein",1.092,"salmon","pea protein","mapspam",25,"pea",12,1.24090909090909
+"PRK","salmon_aquaculture_meat","plant-dominant","rapeseed and camelina oil",14.352,"salmon","oil of rapeseed","mapspam",38,"rapeseed",2,14.6448979591837
+"PRK","salmon_aquaculture_meat","plant-dominant","soy protein concentrate",16.302,"salmon","soy protein concentrate","mapspam",33,"soybean",12,18.525
+"PRK","salmon_aquaculture_meat","plant-dominant","soybean oil",0.312,"salmon","oil of soya bean","mapspam",18,"soybean",3,0.321649484536082
+"PRK","salmon_aquaculture_meat","plant-dominant","sunflower",2.652,"salmon","cake of sunflower seed","mapspam",47,"sunflower seed",12,3.01363636363636
+"PRK","salmon_aquaculture_meat","plant-dominant","wheat",5.07,"salmon","wheat","mapspam",100,"wheat",0,5.07
+"PRK","salmon_aquaculture_meat","plant-dominant","wheat gluten",7.644,"salmon","wheat gluten","mapspam",15,"wheat",1,7.72121212121212
+"PRK","salmon_aquaculture_meat","fish-dominant","coconut oil",0,"salmon","oil of coconuts","mapspam",13,"coconut",79,0
+"PRK","salmon_aquaculture_meat","fish-dominant","corn gluten",3.12,"salmon","maize gluten","mapspam",10,"maize",16,3.71428571428571
+"PRK","salmon_aquaculture_meat","fish-dominant","faba beans",1.56,"salmon","faba bean","mapspam",100,"faba bean",0,1.56
+"PRK","salmon_aquaculture_meat","fish-dominant","guar protein",0,"salmon","guar protein","mapspam",25,"pea",12,0
+"PRK","salmon_aquaculture_meat","fish-dominant","linseed oil",0,"salmon","oil of linseed","mapspam",35,"linseed",2,0
+"PRK","salmon_aquaculture_meat","fish-dominant","pea flour",0,"salmon","pea other","mapspam",63,"pea",12,0
+"PRK","salmon_aquaculture_meat","fish-dominant","pea protein",0,"salmon","pea protein","mapspam",25,"pea",12,0
+"PRK","salmon_aquaculture_meat","fish-dominant","rapeseed and camelina oil",0,"salmon","oil of rapeseed","mapspam",38,"rapeseed",2,0
+"PRK","salmon_aquaculture_meat","fish-dominant","soy protein concentrate",0,"salmon","soy protein concentrate","mapspam",33,"soybean",12,0
+"PRK","salmon_aquaculture_meat","fish-dominant","soybean meal",13.26,"salmon","soybean meal","mapspam",46,"soybean",12,15.0681818181818
+"PRK","salmon_aquaculture_meat","fish-dominant","soybean oil",0,"salmon","oil of soya bean","mapspam",18,"soybean",3,0
+"PRK","salmon_aquaculture_meat","fish-dominant","sunflower",0,"salmon","cake of sunflower seed","mapspam",47,"sunflower seed",12,0
+"PRK","salmon_aquaculture_meat","fish-dominant","wheat",5.46,"salmon","wheat","mapspam",100,"wheat",0,5.46
+"PRK","salmon_aquaculture_meat","fish-dominant","wheat gluten",10.14,"salmon","wheat gluten","mapspam",15,"wheat",1,10.2424242424242
+"NOR","salmon_aquaculture_meat","plant-dominant","coconut oil",1804.963992,"salmon","oil of coconuts","mapspam",13,"coconut",79,8595.06662857143
+"NOR","salmon_aquaculture_meat","plant-dominant","corn gluten",12634.747944,"salmon","maize gluten","mapspam",10,"maize",16,15041.3666
+"NOR","salmon_aquaculture_meat","plant-dominant","faba beans",64978.703712,"salmon","faba bean","mapspam",100,"faba bean",0,64978.703712
+"NOR","salmon_aquaculture_meat","plant-dominant","guar protein",77613.451656,"salmon","guar protein","mapspam",25,"pea",12,88197.1041545455
+"NOR","salmon_aquaculture_meat","plant-dominant","linseed oil",23464.531896,"salmon","oil of linseed","mapspam",35,"linseed",2,23943.3998938776
+"NOR","salmon_aquaculture_meat","plant-dominant","pea flour",45124.0998,"salmon","pea other","mapspam",63,"pea",12,51277.3861363636
+"NOR","salmon_aquaculture_meat","plant-dominant","pea protein",25269.495888,"salmon","pea protein","mapspam",25,"pea",12,28715.3362363636
+"NOR","salmon_aquaculture_meat","plant-dominant","rapeseed and camelina oil",332113.374528,"salmon","oil of rapeseed","mapspam",38,"rapeseed",2,338891.198497959
+"NOR","salmon_aquaculture_meat","plant-dominant","soy protein concentrate",377237.474328,"salmon","soy protein concentrate","mapspam",33,"soybean",12,428678.9481
+"NOR","salmon_aquaculture_meat","plant-dominant","soybean oil",7219.855968,"salmon","oil of soya bean","mapspam",18,"soybean",3,7443.15048247423
+"NOR","salmon_aquaculture_meat","plant-dominant","sunflower",61368.775728,"salmon","cake of sunflower seed","mapspam",47,"sunflower seed",12,69737.2451454546
+"NOR","salmon_aquaculture_meat","plant-dominant","wheat",117322.65948,"salmon","wheat","mapspam",100,"wheat",0,117322.65948
+"NOR","salmon_aquaculture_meat","plant-dominant","wheat gluten",176886.471216,"salmon","wheat gluten","mapspam",15,"wheat",1,178673.203248485
+"NOR","salmon_aquaculture_meat","fish-dominant","coconut oil",0,"salmon","oil of coconuts","mapspam",13,"coconut",79,0
+"NOR","salmon_aquaculture_meat","fish-dominant","corn gluten",72198.55968,"salmon","maize gluten","mapspam",10,"maize",16,85950.6662857143
+"NOR","salmon_aquaculture_meat","fish-dominant","faba beans",36099.27984,"salmon","faba bean","mapspam",100,"faba bean",0,36099.27984
+"NOR","salmon_aquaculture_meat","fish-dominant","guar protein",0,"salmon","guar protein","mapspam",25,"pea",12,0
+"NOR","salmon_aquaculture_meat","fish-dominant","linseed oil",0,"salmon","oil of linseed","mapspam",35,"linseed",2,0
+"NOR","salmon_aquaculture_meat","fish-dominant","pea flour",0,"salmon","pea other","mapspam",63,"pea",12,0
+"NOR","salmon_aquaculture_meat","fish-dominant","pea protein",0,"salmon","pea protein","mapspam",25,"pea",12,0
+"NOR","salmon_aquaculture_meat","fish-dominant","rapeseed and camelina oil",0,"salmon","oil of rapeseed","mapspam",38,"rapeseed",2,0
+"NOR","salmon_aquaculture_meat","fish-dominant","soy protein concentrate",0,"salmon","soy protein concentrate","mapspam",33,"soybean",12,0
+"NOR","salmon_aquaculture_meat","fish-dominant","soybean meal",306843.87864,"salmon","soybean meal","mapspam",46,"soybean",12,348686.225727273
+"NOR","salmon_aquaculture_meat","fish-dominant","soybean oil",0,"salmon","oil of soya bean","mapspam",18,"soybean",3,0
+"NOR","salmon_aquaculture_meat","fish-dominant","sunflower",0,"salmon","cake of sunflower seed","mapspam",47,"sunflower seed",12,0
+"NOR","salmon_aquaculture_meat","fish-dominant","wheat",126347.47944,"salmon","wheat","mapspam",100,"wheat",0,126347.47944
+"NOR","salmon_aquaculture_meat","fish-dominant","wheat gluten",234645.31896,"salmon","wheat gluten","mapspam",15,"wheat",1,237015.47369697
+"RUS","salmon_aquaculture_meat","plant-dominant","coconut oil",14.1115,"salmon","oil of coconuts","mapspam",13,"coconut",79,67.197619047619
+"RUS","salmon_aquaculture_meat","plant-dominant","corn gluten",98.7805,"salmon","maize gluten","mapspam",10,"maize",16,117.595833333333
+"RUS","salmon_aquaculture_meat","plant-dominant","faba beans",508.014,"salmon","faba bean","mapspam",100,"faba bean",0,508.014
+"RUS","salmon_aquaculture_meat","plant-dominant","guar protein",606.7945,"salmon","guar protein","mapspam",25,"pea",12,689.539204545454
+"RUS","salmon_aquaculture_meat","plant-dominant","linseed oil",183.4495,"salmon","oil of linseed","mapspam",35,"linseed",2,187.193367346939
+"RUS","salmon_aquaculture_meat","plant-dominant","pea flour",352.7875,"salmon","pea other","mapspam",63,"pea",12,400.894886363636
+"RUS","salmon_aquaculture_meat","plant-dominant","pea protein",197.561,"salmon","pea protein","mapspam",25,"pea",12,224.501136363636
+"RUS","salmon_aquaculture_meat","plant-dominant","rapeseed and camelina oil",2596.516,"salmon","oil of rapeseed","mapspam",38,"rapeseed",2,2649.50612244898
+"RUS","salmon_aquaculture_meat","plant-dominant","soy protein concentrate",2949.3035,"salmon","soy protein concentrate","mapspam",33,"soybean",12,3351.48125
+"RUS","salmon_aquaculture_meat","plant-dominant","soybean oil",56.446,"salmon","oil of soya bean","mapspam",18,"soybean",3,58.1917525773196
+"RUS","salmon_aquaculture_meat","plant-dominant","sunflower",479.791,"salmon","cake of sunflower seed","mapspam",47,"sunflower seed",12,545.217045454546
+"RUS","salmon_aquaculture_meat","plant-dominant","wheat",917.2475,"salmon","wheat","mapspam",100,"wheat",0,917.2475
+"RUS","salmon_aquaculture_meat","plant-dominant","wheat gluten",1382.927,"salmon","wheat gluten","mapspam",15,"wheat",1,1396.89595959596
+"RUS","salmon_aquaculture_meat","fish-dominant","coconut oil",0,"salmon","oil of coconuts","mapspam",13,"coconut",79,0
+"RUS","salmon_aquaculture_meat","fish-dominant","corn gluten",564.46,"salmon","maize gluten","mapspam",10,"maize",16,671.97619047619
+"RUS","salmon_aquaculture_meat","fish-dominant","faba beans",282.23,"salmon","faba bean","mapspam",100,"faba bean",0,282.23
+"RUS","salmon_aquaculture_meat","fish-dominant","guar protein",0,"salmon","guar protein","mapspam",25,"pea",12,0
+"RUS","salmon_aquaculture_meat","fish-dominant","linseed oil",0,"salmon","oil of linseed","mapspam",35,"linseed",2,0
+"RUS","salmon_aquaculture_meat","fish-dominant","pea flour",0,"salmon","pea other","mapspam",63,"pea",12,0
+"RUS","salmon_aquaculture_meat","fish-dominant","pea protein",0,"salmon","pea protein","mapspam",25,"pea",12,0
+"RUS","salmon_aquaculture_meat","fish-dominant","rapeseed and camelina oil",0,"salmon","oil of rapeseed","mapspam",38,"rapeseed",2,0
+"RUS","salmon_aquaculture_meat","fish-dominant","soy protein concentrate",0,"salmon","soy protein concentrate","mapspam",33,"soybean",12,0
+"RUS","salmon_aquaculture_meat","fish-dominant","soybean meal",2398.955,"salmon","soybean meal","mapspam",46,"soybean",12,2726.08522727273
+"RUS","salmon_aquaculture_meat","fish-dominant","soybean oil",0,"salmon","oil of soya bean","mapspam",18,"soybean",3,0
+"RUS","salmon_aquaculture_meat","fish-dominant","sunflower",0,"salmon","cake of sunflower seed","mapspam",47,"sunflower seed",12,0
+"RUS","salmon_aquaculture_meat","fish-dominant","wheat",987.805,"salmon","wheat","mapspam",100,"wheat",0,987.805
+"RUS","salmon_aquaculture_meat","fish-dominant","wheat gluten",1834.495,"salmon","wheat gluten","mapspam",15,"wheat",1,1853.02525252525
+"CHE","salmon_aquaculture_meat","plant-dominant","coconut oil",0.20722,"salmon","oil of coconuts","mapspam",13,"coconut",79,0.986761904761905
+"CHE","salmon_aquaculture_meat","plant-dominant","corn gluten",1.45054,"salmon","maize gluten","mapspam",10,"maize",16,1.72683333333333
+"CHE","salmon_aquaculture_meat","plant-dominant","faba beans",7.45992,"salmon","faba bean","mapspam",100,"faba bean",0,7.45992
+"CHE","salmon_aquaculture_meat","plant-dominant","guar protein",8.91046,"salmon","guar protein","mapspam",25,"pea",12,10.1255227272727
+"CHE","salmon_aquaculture_meat","plant-dominant","linseed oil",2.69386,"salmon","oil of linseed","mapspam",35,"linseed",2,2.74883673469388
+"CHE","salmon_aquaculture_meat","plant-dominant","pea flour",5.1805,"salmon","pea other","mapspam",63,"pea",12,5.88693181818182
+"CHE","salmon_aquaculture_meat","plant-dominant","pea protein",2.90108,"salmon","pea protein","mapspam",25,"pea",12,3.29668181818182
+"CHE","salmon_aquaculture_meat","plant-dominant","rapeseed and camelina oil",38.12848,"salmon","oil of rapeseed","mapspam",38,"rapeseed",2,38.906612244898
+"CHE","salmon_aquaculture_meat","plant-dominant","soy protein concentrate",43.30898,"salmon","soy protein concentrate","mapspam",33,"soybean",12,49.21475
+"CHE","salmon_aquaculture_meat","plant-dominant","soybean oil",0.82888,"salmon","oil of soya bean","mapspam",18,"soybean",3,0.854515463917526
+"CHE","salmon_aquaculture_meat","plant-dominant","sunflower",7.04548,"salmon","cake of sunflower seed","mapspam",47,"sunflower seed",12,8.00622727272727
+"CHE","salmon_aquaculture_meat","plant-dominant","wheat",13.4693,"salmon","wheat","mapspam",100,"wheat",0,13.4693
+"CHE","salmon_aquaculture_meat","plant-dominant","wheat gluten",20.30756,"salmon","wheat gluten","mapspam",15,"wheat",1,20.5126868686869
+"CHE","salmon_aquaculture_meat","fish-dominant","coconut oil",0,"salmon","oil of coconuts","mapspam",13,"coconut",79,0
+"CHE","salmon_aquaculture_meat","fish-dominant","corn gluten",8.2888,"salmon","maize gluten","mapspam",10,"maize",16,9.86761904761905
+"CHE","salmon_aquaculture_meat","fish-dominant","faba beans",4.1444,"salmon","faba bean","mapspam",100,"faba bean",0,4.1444
+"CHE","salmon_aquaculture_meat","fish-dominant","guar protein",0,"salmon","guar protein","mapspam",25,"pea",12,0
+"CHE","salmon_aquaculture_meat","fish-dominant","linseed oil",0,"salmon","oil of linseed","mapspam",35,"linseed",2,0
+"CHE","salmon_aquaculture_meat","fish-dominant","pea flour",0,"salmon","pea other","mapspam",63,"pea",12,0
+"CHE","salmon_aquaculture_meat","fish-dominant","pea protein",0,"salmon","pea protein","mapspam",25,"pea",12,0
+"CHE","salmon_aquaculture_meat","fish-dominant","rapeseed and camelina oil",0,"salmon","oil of rapeseed","mapspam",38,"rapeseed",2,0
+"CHE","salmon_aquaculture_meat","fish-dominant","soy protein concentrate",0,"salmon","soy protein concentrate","mapspam",33,"soybean",12,0
+"CHE","salmon_aquaculture_meat","fish-dominant","soybean meal",35.2274,"salmon","soybean meal","mapspam",46,"soybean",12,40.0311363636364
+"CHE","salmon_aquaculture_meat","fish-dominant","soybean oil",0,"salmon","oil of soya bean","mapspam",18,"soybean",3,0
+"CHE","salmon_aquaculture_meat","fish-dominant","sunflower",0,"salmon","cake of sunflower seed","mapspam",47,"sunflower seed",12,0
+"CHE","salmon_aquaculture_meat","fish-dominant","wheat",14.5054,"salmon","wheat","mapspam",100,"wheat",0,14.5054
+"CHE","salmon_aquaculture_meat","fish-dominant","wheat gluten",26.9386,"salmon","wheat gluten","mapspam",15,"wheat",1,27.2107070707071
+"ARE","salmon_aquaculture_meat","plant-dominant","coconut oil",0.39,"salmon","oil of coconuts","mapspam",13,"coconut",79,1.85714285714286
+"ARE","salmon_aquaculture_meat","plant-dominant","corn gluten",2.73,"salmon","maize gluten","mapspam",10,"maize",16,3.25
+"ARE","salmon_aquaculture_meat","plant-dominant","faba beans",14.04,"salmon","faba bean","mapspam",100,"faba bean",0,14.04
+"ARE","salmon_aquaculture_meat","plant-dominant","guar protein",16.77,"salmon","guar protein","mapspam",25,"pea",12,19.0568181818182
+"ARE","salmon_aquaculture_meat","plant-dominant","linseed oil",5.07,"salmon","oil of linseed","mapspam",35,"linseed",2,5.1734693877551
+"ARE","salmon_aquaculture_meat","plant-dominant","pea flour",9.75,"salmon","pea other","mapspam",63,"pea",12,11.0795454545455
+"ARE","salmon_aquaculture_meat","plant-dominant","pea protein",5.46,"salmon","pea protein","mapspam",25,"pea",12,6.20454545454545
+"ARE","salmon_aquaculture_meat","plant-dominant","rapeseed and camelina oil",71.76,"salmon","oil of rapeseed","mapspam",38,"rapeseed",2,73.2244897959184
+"ARE","salmon_aquaculture_meat","plant-dominant","soy protein concentrate",81.51,"salmon","soy protein concentrate","mapspam",33,"soybean",12,92.625
+"ARE","salmon_aquaculture_meat","plant-dominant","soybean oil",1.56,"salmon","oil of soya bean","mapspam",18,"soybean",3,1.60824742268041
+"ARE","salmon_aquaculture_meat","plant-dominant","sunflower",13.26,"salmon","cake of sunflower seed","mapspam",47,"sunflower seed",12,15.0681818181818
+"ARE","salmon_aquaculture_meat","plant-dominant","wheat",25.35,"salmon","wheat","mapspam",100,"wheat",0,25.35
+"ARE","salmon_aquaculture_meat","plant-dominant","wheat gluten",38.22,"salmon","wheat gluten","mapspam",15,"wheat",1,38.6060606060606
+"ARE","salmon_aquaculture_meat","fish-dominant","coconut oil",0,"salmon","oil of coconuts","mapspam",13,"coconut",79,0
+"ARE","salmon_aquaculture_meat","fish-dominant","corn gluten",15.6,"salmon","maize gluten","mapspam",10,"maize",16,18.5714285714286
+"ARE","salmon_aquaculture_meat","fish-dominant","faba beans",7.8,"salmon","faba bean","mapspam",100,"faba bean",0,7.8
+"ARE","salmon_aquaculture_meat","fish-dominant","guar protein",0,"salmon","guar protein","mapspam",25,"pea",12,0
+"ARE","salmon_aquaculture_meat","fish-dominant","linseed oil",0,"salmon","oil of linseed","mapspam",35,"linseed",2,0
+"ARE","salmon_aquaculture_meat","fish-dominant","pea flour",0,"salmon","pea other","mapspam",63,"pea",12,0
+"ARE","salmon_aquaculture_meat","fish-dominant","pea protein",0,"salmon","pea protein","mapspam",25,"pea",12,0
+"ARE","salmon_aquaculture_meat","fish-dominant","rapeseed and camelina oil",0,"salmon","oil of rapeseed","mapspam",38,"rapeseed",2,0
+"ARE","salmon_aquaculture_meat","fish-dominant","soy protein concentrate",0,"salmon","soy protein concentrate","mapspam",33,"soybean",12,0
+"ARE","salmon_aquaculture_meat","fish-dominant","soybean meal",66.3,"salmon","soybean meal","mapspam",46,"soybean",12,75.3409090909091
+"ARE","salmon_aquaculture_meat","fish-dominant","soybean oil",0,"salmon","oil of soya bean","mapspam",18,"soybean",3,0
+"ARE","salmon_aquaculture_meat","fish-dominant","sunflower",0,"salmon","cake of sunflower seed","mapspam",47,"sunflower seed",12,0
+"ARE","salmon_aquaculture_meat","fish-dominant","wheat",27.3,"salmon","wheat","mapspam",100,"wheat",0,27.3
+"ARE","salmon_aquaculture_meat","fish-dominant","wheat gluten",50.7,"salmon","wheat gluten","mapspam",15,"wheat",1,51.2121212121212
+"GBR","salmon_aquaculture_meat","plant-dominant","coconut oil",231.6,"salmon","oil of coconuts","mapspam",13,"coconut",79,1102.85714285714
+"GBR","salmon_aquaculture_meat","plant-dominant","corn gluten",1621.2,"salmon","maize gluten","mapspam",10,"maize",16,1930
+"GBR","salmon_aquaculture_meat","plant-dominant","faba beans",8337.6,"salmon","faba bean","mapspam",100,"faba bean",0,8337.6
+"GBR","salmon_aquaculture_meat","plant-dominant","guar protein",9958.8,"salmon","guar protein","mapspam",25,"pea",12,11316.8181818182
+"GBR","salmon_aquaculture_meat","plant-dominant","linseed oil",3010.8,"salmon","oil of linseed","mapspam",35,"linseed",2,3072.24489795918
+"GBR","salmon_aquaculture_meat","plant-dominant","pea flour",5790,"salmon","pea other","mapspam",63,"pea",12,6579.54545454545
+"GBR","salmon_aquaculture_meat","plant-dominant","pea protein",3242.4,"salmon","pea protein","mapspam",25,"pea",12,3684.54545454545
+"GBR","salmon_aquaculture_meat","plant-dominant","rapeseed and camelina oil",42614.4,"salmon","oil of rapeseed","mapspam",38,"rapeseed",2,43484.0816326531
+"GBR","salmon_aquaculture_meat","plant-dominant","soy protein concentrate",48404.4,"salmon","soy protein concentrate","mapspam",33,"soybean",12,55005
+"GBR","salmon_aquaculture_meat","plant-dominant","soybean oil",926.4,"salmon","oil of soya bean","mapspam",18,"soybean",3,955.051546391753
+"GBR","salmon_aquaculture_meat","plant-dominant","sunflower",7874.4,"salmon","cake of sunflower seed","mapspam",47,"sunflower seed",12,8948.18181818182
+"GBR","salmon_aquaculture_meat","plant-dominant","wheat",15054,"salmon","wheat","mapspam",100,"wheat",0,15054
+"GBR","salmon_aquaculture_meat","plant-dominant","wheat gluten",22696.8,"salmon","wheat gluten","mapspam",15,"wheat",1,22926.0606060606
+"GBR","salmon_aquaculture_meat","fish-dominant","coconut oil",0,"salmon","oil of coconuts","mapspam",13,"coconut",79,0
+"GBR","salmon_aquaculture_meat","fish-dominant","corn gluten",9264,"salmon","maize gluten","mapspam",10,"maize",16,11028.5714285714
+"GBR","salmon_aquaculture_meat","fish-dominant","faba beans",4632,"salmon","faba bean","mapspam",100,"faba bean",0,4632
+"GBR","salmon_aquaculture_meat","fish-dominant","guar protein",0,"salmon","guar protein","mapspam",25,"pea",12,0
+"GBR","salmon_aquaculture_meat","fish-dominant","linseed oil",0,"salmon","oil of linseed","mapspam",35,"linseed",2,0
+"GBR","salmon_aquaculture_meat","fish-dominant","pea flour",0,"salmon","pea other","mapspam",63,"pea",12,0
+"GBR","salmon_aquaculture_meat","fish-dominant","pea protein",0,"salmon","pea protein","mapspam",25,"pea",12,0
+"GBR","salmon_aquaculture_meat","fish-dominant","rapeseed and camelina oil",0,"salmon","oil of rapeseed","mapspam",38,"rapeseed",2,0
+"GBR","salmon_aquaculture_meat","fish-dominant","soy protein concentrate",0,"salmon","soy protein concentrate","mapspam",33,"soybean",12,0
+"GBR","salmon_aquaculture_meat","fish-dominant","soybean meal",39372,"salmon","soybean meal","mapspam",46,"soybean",12,44740.9090909091
+"GBR","salmon_aquaculture_meat","fish-dominant","soybean oil",0,"salmon","oil of soya bean","mapspam",18,"soybean",3,0
+"GBR","salmon_aquaculture_meat","fish-dominant","sunflower",0,"salmon","cake of sunflower seed","mapspam",47,"sunflower seed",12,0
+"GBR","salmon_aquaculture_meat","fish-dominant","wheat",16212,"salmon","wheat","mapspam",100,"wheat",0,16212
+"GBR","salmon_aquaculture_meat","fish-dominant","wheat gluten",30108,"salmon","wheat gluten","mapspam",15,"wheat",1,30412.1212121212
+"USA","salmon_aquaculture_meat","plant-dominant","coconut oil",21.437676,"salmon","oil of coconuts","mapspam",13,"coconut",79,102.084171428571
+"USA","salmon_aquaculture_meat","plant-dominant","corn gluten",150.063732,"salmon","maize gluten","mapspam",10,"maize",16,178.6473
+"USA","salmon_aquaculture_meat","plant-dominant","faba beans",771.756336,"salmon","faba bean","mapspam",100,"faba bean",0,771.756336
+"USA","salmon_aquaculture_meat","plant-dominant","guar protein",921.820068,"salmon","guar protein","mapspam",25,"pea",12,1047.52280454545
+"USA","salmon_aquaculture_meat","plant-dominant","linseed oil",278.689788,"salmon","oil of linseed","mapspam",35,"linseed",2,284.377334693878
+"USA","salmon_aquaculture_meat","plant-dominant","pea flour",535.9419,"salmon","pea other","mapspam",63,"pea",12,609.024886363637
+"USA","salmon_aquaculture_meat","plant-dominant","pea protein",300.127464,"salmon","pea protein","mapspam",25,"pea",12,341.053936363636
+"USA","salmon_aquaculture_meat","plant-dominant","rapeseed and camelina oil",3944.532384,"salmon","oil of rapeseed","mapspam",38,"rapeseed",2,4025.03304489796
+"USA","salmon_aquaculture_meat","plant-dominant","soy protein concentrate",4480.474284,"salmon","soy protein concentrate","mapspam",33,"soybean",12,5091.44805
+"USA","salmon_aquaculture_meat","plant-dominant","soybean oil",85.750704,"salmon","oil of soya bean","mapspam",18,"soybean",3,88.402787628866
+"USA","salmon_aquaculture_meat","plant-dominant","sunflower",728.880984,"salmon","cake of sunflower seed","mapspam",47,"sunflower seed",12,828.273845454546
+"USA","salmon_aquaculture_meat","plant-dominant","wheat",1393.44894,"salmon","wheat","mapspam",100,"wheat",0,1393.44894
+"USA","salmon_aquaculture_meat","plant-dominant","wheat gluten",2100.892248,"salmon","wheat gluten","mapspam",15,"wheat",1,2122.11338181818
+"USA","salmon_aquaculture_meat","fish-dominant","coconut oil",0,"salmon","oil of coconuts","mapspam",13,"coconut",79,0
+"USA","salmon_aquaculture_meat","fish-dominant","corn gluten",857.50704,"salmon","maize gluten","mapspam",10,"maize",16,1020.84171428571
+"USA","salmon_aquaculture_meat","fish-dominant","faba beans",428.75352,"salmon","faba bean","mapspam",100,"faba bean",0,428.75352
+"USA","salmon_aquaculture_meat","fish-dominant","guar protein",0,"salmon","guar protein","mapspam",25,"pea",12,0
+"USA","salmon_aquaculture_meat","fish-dominant","linseed oil",0,"salmon","oil of linseed","mapspam",35,"linseed",2,0
+"USA","salmon_aquaculture_meat","fish-dominant","pea flour",0,"salmon","pea other","mapspam",63,"pea",12,0
+"USA","salmon_aquaculture_meat","fish-dominant","pea protein",0,"salmon","pea protein","mapspam",25,"pea",12,0
+"USA","salmon_aquaculture_meat","fish-dominant","rapeseed and camelina oil",0,"salmon","oil of rapeseed","mapspam",38,"rapeseed",2,0
+"USA","salmon_aquaculture_meat","fish-dominant","soy protein concentrate",0,"salmon","soy protein concentrate","mapspam",33,"soybean",12,0
+"USA","salmon_aquaculture_meat","fish-dominant","soybean meal",3644.40492,"salmon","soybean meal","mapspam",46,"soybean",12,4141.36922727273
+"USA","salmon_aquaculture_meat","fish-dominant","soybean oil",0,"salmon","oil of soya bean","mapspam",18,"soybean",3,0
+"USA","salmon_aquaculture_meat","fish-dominant","sunflower",0,"salmon","cake of sunflower seed","mapspam",47,"sunflower seed",12,0
+"USA","salmon_aquaculture_meat","fish-dominant","wheat",1500.63732,"salmon","wheat","mapspam",100,"wheat",0,1500.63732
+"USA","salmon_aquaculture_meat","fish-dominant","wheat gluten",2786.89788,"salmon","wheat gluten","mapspam",15,"wheat",1,2815.04836363636

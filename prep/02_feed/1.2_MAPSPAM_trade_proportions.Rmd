@@ -23,6 +23,8 @@ library(janitor)
 
 focus_year = 2021
 
+source(here("src/directories.R"))
+
 
 ```
 
@@ -179,7 +181,7 @@ summary(local_prod_gf)
 filter(local_prod_gf, iso3c_consuming=="SDN")
 filter(local_prod_gf, iso3c_consuming=="IRQ") %>% data.frame()
 filter(local_prod_gf, iso3c_consuming == "AFG" & SPAM_super == "sorg")
-filter(local_prod_gf, iso3c_consuming == "ETH" & SPAM_super == "barl")
+filter(local_prod_gf, iso3c_consuming == "ETH" & SPAM_super == "rape")
 filter(local_prod_gf, iso3c_consuming == "MMR")
 
 tmp <- local_prod_gf %>%
@@ -198,6 +200,7 @@ FAO codes:
 
 feed_products_full <- read_csv(here("prep/02_feed/data/MapSPAM_to_FAO_v2.csv"))
 
+
 feed_products <- feed_products_full %>%
   dplyr::filter(is.na(non_food)) %>%
   dplyr::filter(SPAM_super != "othr") %>%
@@ -209,6 +212,7 @@ feed_products <- feed_products_full %>%
 ```
 
 Get FAO import data and convert to MAPSPAM crops:
+
 ```{r}
 
 import_data <- read_csv(file.path(fao_dir, "FAO_detailed_trade/d2023/Trade_DetailedTradeMatrix_E_All_Data_(Normalized).csv")) # takes awhile to load.. this is a massive csv (~7gb)
@@ -302,7 +306,7 @@ imports <- imports %>%
    dplyr::select(iso3c_consuming, iso3c_producing, SPAM_super, imports_tonnes = Value) %>%   
   filter(iso3c_producing != iso3c_consuming) # just to be sure
 
-filter(imports, iso3c_consuming=="FJI" & SPAM_super=="xpul")
+filter(imports, iso3c_consuming=="FJI" & SPAM_super=="sunf")
 
 ```
 
@@ -316,7 +320,7 @@ imports <- left_join(imports, crop_production_df, by=c("iso3c_producing", "SPAM_
   mutate(imports_tonnes = imports_tonnes*correction) %>%
   dplyr::select(iso3c_consuming, iso3c_producing, SPAM_super, imports_tonnes)
 
-filter(imports, iso3c_consuming=="AFG" & SPAM_super=="orts")
+filter(imports, iso3c_consuming=="AFG" & SPAM_super=="opul")
 ```
 
 
@@ -370,7 +374,7 @@ imports_prop <- imports %>%
 
 filter(imports_prop, iso3c_consuming=="SDN")
 filter(imports_prop, iso3c_consuming=="IRQ")
-filter(imports_prop, iso3c_consuming == "AFG" & SPAM_super == "sorg")
+filter(imports_prop, iso3c_consuming == "AFG" & SPAM_super == "sunf")
 filter(imports_prop, iso3c_consuming == "ETH" & SPAM_super == "barl")
 filter(imports_prop, iso3c_consuming == "FJI" & SPAM_super == "xpul")
 
@@ -572,7 +576,8 @@ data.frame(dplyr::filter(check, total!=1))
 
 write_csv(trade_data, here("prep/02_feed/data/FAO_MAPSPAMcrop_trade_data.csv"))
 
-test <- read.csv(here("prep/02_feed/data/FAO_MAPSPAMcrop_trade_data.csv"))
+test <- read.csv(here("prep/02_feed/data/FAO_MAPSPAMcrop_trade_data.csv")) %>%
+  filter(iso3c_consuming == "NOR")
 
 ```
 

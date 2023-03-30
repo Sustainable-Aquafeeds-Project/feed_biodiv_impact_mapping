@@ -1,0 +1,19 @@
+﻿ingredient,raw_material,FAOSTAT_name,FAO_code,map_spam_code,reference
+corn starch,maize,Maize,56,maiz,https://www.feedipedia.org/node/717
+pea starch,peas,"Peas, dry; Peas, green",187,opul,https://www.feedipedia.org/node/7439
+tapioca starch,cassava,Cassava,125,cass,https://www.feedipedia.org/node/717
+wheat,wheat,Wheat,15,whea,https://www.feedipedia.org/node/223
+canola/camelina oil,rapeseed,Rapeseed,270,rape,https://www.feedipedia.org/node/4254
+linseed oil,flax,Linseed,333,ooil,https://www.feedipedia.org/node/735
+soy oil,soybean,Soybeans,236,soyb,https://www.feedipedia.org/node/674
+corn gluten meal,maize,Maize,56,maiz,https://www.feedipedia.org/node/715
+faba beans,faba beans,"Broad beans, horse beans, dry",181,opul,https://www.feedipedia.org/node/4926
+guar meal,guar,Pulses nes,211,opul,"According to https://www.feedipedia.org/node/311 Guar is largely produced in India and Pakistan. Given Guar is a natural gum but also a pulse it could be in either since it is not reported directly to the FAO. Looking ar FAOSTAT production quantities there is no data for Natural Gums for India or Pakistan for all years, but large quantities in Pulses nes. Allocating to this category. Will have to make sure this makes sense through other references"
+lupins,lupin,Lupins,210,opul,
+pea protein concentrate,peas,"Peas, dry; Peas, green",187,opul,https://www.feedipedia.org/node/7439
+soy protein concentrate,soybean,Soybeans,236,soyb,
+soybean meal,soybean,Soybeans,236,soyb,https://www.feedipedia.org/node/674
+sunflower meal,sunflower,Sunflower seed,267,sunf,https://www.feedipedia.org/node/732
+wheat gluten,wheat,Wheat,15,whea,
+,,,,,
+,,,,,

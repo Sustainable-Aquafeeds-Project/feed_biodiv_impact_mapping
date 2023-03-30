@@ -43,7 +43,6 @@ feed_rgn <- read_csv(here("prep/02_feed/data/FMFO_bySource_2021Apr.csv")) %>%
 ```{r}
 # exploring what is lost
 
-watson_rgn <- read_csv(here("fisheries/marine/ghg/data/Watson_rgns_with_iso3c.csv"))
 
 watson_rgn <- read_csv(file.path(watson_dir, "v5.0/watson_2017_fisheries_catch_w_cat.csv")) %>%
   distinct(CNumber, country = CountryName) %>%
@@ -90,8 +89,6 @@ foragefish <- read_csv(file.path(watson_dir, "v5.0/watson_2017_fisheries_catch_w
   mutate(catch = ReportedIND + IUUIND + ReportedNIND + IUUNIND) %>%
   mutate(FOFM_catch = catch*foragefish) %>%
   mutate(FOFM_catch = ifelse(is.na(FOFM_catch), 0, FOFM_catch)) 
-
-# foragefish <- read_csv("/home/shares/food-systems/Food_footprint/all_food_systems/dataprep/fisheries/marine/ghg/watson_v5_emissions/full_watson_catch_data_2017.csv")
 
 foragefish_rgn_totals <- foragefish %>%
   group_by(iso3c) %>%
@@ -150,7 +147,7 @@ forage_tonnes <- sum(foragefish_rgn_totals$FOFM_catch) # 39054068
 
 # total system consumption:
 system_consumption <- read_csv(here("prep/02_feed/data/demand/FMFO_country_data.csv")) %>%
-  group_by(system) %>%
+  group_by(system, diet) %>%
   summarize(total_feed = sum(tonnes, na.rm=TRUE)) %>%
   filter(!is.na(system))
 
@@ -165,8 +162,8 @@ loss <- FOFM_props_limit %>%
   mutate(forage_tonnes = forage_tonnes) %>%
   mutate(prop_of_global_distribute = loss/forage_tonnes)
 
-# about 8% is being lost from salmon aquaculture
-sum(loss$est_feed, na.rm=TRUE)/sum(loss$total_feed, na.rm=TRUE) #0.92
+# # about 8% is being lost from salmon aquaculture
+# sum(loss$est_feed, na.rm=TRUE)/sum(loss$total_feed, na.rm=TRUE) #0.92
 
 ```
 
@@ -178,8 +175,12 @@ Create rasters describing amount of each countries fofm catch going to feed for 
 
 systems <- loss$system
 
-system_item = systems
-diet_type = "plant_diet"
+diets <- unique(loss$diet)
+
+system_item = unique(systems)
+
+for(diet_type in diets){
+# diet_type = "plant-dominant"
 
   watson_raster_template <- raster::raster(ncol=720, nrow=360, vals=c(1:259200))
 
@@ -188,7 +189,7 @@ diet_type = "plant_diet"
   dplyr::filter(system == system_item) %>%
   dplyr::select(iso3c, prop)
 
-system_extra_prop <- filter(loss, system == system_item) %>%
+system_extra_prop <- filter(loss, system == system_item, diet == diet_type) %>%
   pull(prop_of_global_distribute)
 
 foragefish_system <- left_join(foragefish, system_prop, by="iso3c") %>%
@@ -211,9 +212,9 @@ print(sprintf("observed: %s", filter(loss, system==system_item) %>% pull(total_f
 
 
 writeRaster(forage_fish_system, sprintf(here("prep/02_feed/output/%s/forage_fish_tonnes_feed_%s.tif"), diet_type, diet_type) , overwrite=TRUE)
+}
 
-
-test <- rast(here("prep/02_feed/output/plant_diet/forage_fish_tonnes_feed_plant_diet.tif"))
+test <- rast(here("prep/02_feed/output/fish-dominant/forage_fish_tonnes_feed_fish-dominant.tif"))
 
 plot(log(test+1))
 ```

@@ -18,6 +18,7 @@ library(tidyverse)
 library(countrycode)
 library(tidytext)
 library(knitr)
+library(strex)
 
 focus_year = 2021
 
@@ -66,22 +67,23 @@ Summarize by producing country to get the total production of feed for salmon aq
 ```{r}
 
 feed_source <- production_location %>%
-  group_by(iso3c_producing, animal_system, SPAM_super, product) %>%
+  group_by(iso3c_producing, diet, animal_system, SPAM_super, product) %>%
   summarize(consumed_tonnes = sum(producing_crop_consumed_tonnes)) %>% 
   ungroup()
 
 
 
 tmp <- filter(feed_source, animal_system == "salmon_aquaculture_meat") %>%
-    group_by(product) %>%
+    group_by(product, diet) %>%
   slice_max(order_by = consumed_tonnes, n = 15) %>%
-  ungroup()
+  ungroup() %>%
+  filter(consumed_tonnes > 0)
 
 
 ggplot(data = tmp, aes(x = consumed_tonnes, y = reorder_within(iso3c_producing, consumed_tonnes, SPAM_super))) + 
   geom_bar(stat = "identity") + 
-  facet_wrap(~product, scales = "free") + 
-  labs(x = "Tonnes of raw ingredient produced", y = "Country", title = "Plant diet") + 
+  facet_grid(diet~product, scales = "free") + 
+  labs(x = "Tonnes of raw ingredient produced", y = "Country") + 
   theme_bw() + 
   theme(axis.text.x = element_text(angle = 30, vjust = 0.5)) 
 
@@ -124,7 +126,7 @@ Identify the countries/crops with total consumption rates (across all systems) t
 ## step 1 ID regions where consumption exceeds production
 
 consumption_exceed <- proportion %>%
-  group_by(iso3c_producing, SPAM_super, product) %>%
+  group_by(iso3c_producing, diet, SPAM_super, product) %>%
   mutate(tonnes_consumed_country = sum(consumed_tonnes)) %>%
   ungroup() %>%
   rowwise() %>%
@@ -149,7 +151,7 @@ summary(corrected_prop)
 filter(corrected_prop, iso3c_producing=="BEL", SPAM_super=="soyb")
 
 corrected_prop %>%
-  group_by(iso3c_producing, SPAM_super, product) %>%
+  group_by(iso3c_producing, diet, SPAM_super, product) %>%
   summarize(total_adj_prop = sum(prop_produced_for_system_adjust),
             total_prop = sum(prop_produced_for_system))
 
@@ -170,22 +172,22 @@ summary(tonnes_included_system)
 
 # check, sum of included and excluded should equal sum of all consumption
 tmp <- tonnes_included_system %>%
-  group_by(SPAM_super) %>%
+  group_by(SPAM_super, diet) %>%
   summarize(included_crop = sum(included_tonnes, na.rm=TRUE),
             excluded_crop = sum(lost_crop_tonnes, na.rm=TRUE)) %>% 
   mutate(prop_redistributed = excluded_crop/(excluded_crop + included_crop)) %>%
            data.frame() 
 
-sum(tmp$included_crop)/(sum(tmp$included_crop) + sum(tmp$excluded_crop)) # 97% included and does not need to be distributed
+sum(tmp$included_crop)/(sum(tmp$included_crop) + sum(tmp$excluded_crop)) # 98% included and does not need to be distributed
 
 tonnes_lost_system <- tonnes_included_system %>%
-  group_by(SPAM_super, animal_system, product) %>%
+  group_by(SPAM_super, diet, animal_system, product) %>%
   summarize(lost_crop_tonnes = sum(lost_crop_tonnes, na.rm=TRUE))
 
 
 #calculate extra crop tonnes in each country, and determine what proportion of extra each country accounts for
 tonnes_extra_crop <- corrected_prop %>%
-  dplyr::select(iso3c_producing, SPAM_super, extra_crop_tonnes, tonnes_producing_crop, product) %>%
+  dplyr::select(iso3c_producing, diet, SPAM_super, extra_crop_tonnes, tonnes_producing_crop, product) %>%
   unique() %>%
   mutate(extra_crop_tonnes = ifelse(extra_crop_tonnes<0, 0, extra_crop_tonnes)) %>%
   group_by(SPAM_super) %>%
@@ -207,7 +209,7 @@ excess_excess_prop <- excess_prop %>%
   mutate(extra_dispersed_tonnes = ifelse(prop_dispersed > 1, extra_dispersed_tonnes, 0)) %>%
   left_join(crop_production_global, by = "SPAM_super") %>%
   mutate(prop_global_crop_production = tonnes_producing_crop/tonnes_global) %>%
-  group_by(SPAM_super, product, animal_system) %>%
+  group_by(SPAM_super, diet, product, animal_system) %>%
   mutate(extra_dispersed_tonnes_by_system_crop = sum(extra_dispersed_tonnes))
   
 
@@ -221,11 +223,11 @@ Combine the included and lost proportions for each system and country for plotti
 ```{r}
 
 assigned_prop <- tonnes_included_system  %>%
-  dplyr::select(iso3c_producing, product, animal_system, SPAM_super, prop_produced_for_system = included_prop)
+  dplyr::select(iso3c_producing, diet, product, animal_system, SPAM_super, prop_produced_for_system = included_prop)
 excess_prop <- excess_prop %>%
-  dplyr::select(iso3c_producing, product, animal_system, SPAM_super, prop_extra_for_system = prop_dispersed)
+  dplyr::select(iso3c_producing, diet, product, animal_system, SPAM_super, prop_extra_for_system = prop_dispersed)
 
-total_prop <- left_join(assigned_prop, excess_prop, by=c("iso3c_producing", "animal_system", "SPAM_super", "product")) %>%
+total_prop <- left_join(assigned_prop, excess_prop, by=c("iso3c_producing", "diet", "animal_system", "SPAM_super", "product")) %>%
   rowwise() %>%
   mutate(total_prop = prop_produced_for_system + prop_extra_for_system)
 summary(total_prop)
@@ -242,12 +244,12 @@ filter(total_prop, prop_produced_for_system>1)
 
 ## check: should match original consumption:
 consumption_global <- feed_source %>%
-  group_by(animal_system, product, SPAM_super) %>%
+  group_by(animal_system, diet, product, SPAM_super) %>%
   summarize(obs_tonnes = sum(consumed_tonnes, na.rm=TRUE))
 
 check <- left_join(total_prop, crop_production_df) %>%
   mutate(total_tonnes = total_prop*tonnes_producing_crop) %>%
-  group_by(animal_system, product, SPAM_super) %>%
+  group_by(animal_system, diet, product, SPAM_super) %>%
   summarize(est_tonnes = sum(total_tonnes, na.rm=TRUE)) %>%
   left_join(consumption_global) %>%
   rowwise() %>%
@@ -262,12 +264,16 @@ check %>%
 plot(log(check$est_tonnes+1), log(check$obs_tonnes+1))
 abline(0,1, col="red") # these should look about the same!
 
+
+plot(check$est_tonnes, check$obs_tonnes+1)
+abline(0,1, col="red") # these should look about the same!
+
 ```
 
 
 ```{r}
 
-write_csv(total_prop, here("prep/02_feed/output/plant_diet/proportion_feed_per_country_system.csv"))
+write_csv(total_prop, here("prep/02_feed/output/proportion_feed_per_country_system.csv"))
 
 ```
 
@@ -277,6 +283,7 @@ For each crop determine the proportion of each countries production dedicated to
 
 ```{r}
 
+library(terra)
 library(raster)
 
 ## organize region data
@@ -286,22 +293,28 @@ rgns <- read_csv(file.path(food_systems_data_dir, "food_rgns_xy.csv"))
 ## start loop here
 #################3
 
-todo <- unique(dplyr::select(total_prop, SPAM_super, product, animal_system))
+todo <- unique(dplyr::select(total_prop, diet, SPAM_super, product, animal_system))
 
+
+todo <- total_prop %>%
+  group_by(diet, SPAM_super, product, animal_system) %>%
+  summarise(sum_prop = sum(total_prop, na.rm = TRUE)) %>%
+  ungroup() %>%
+  filter(sum_prop >0)
 
 for(i in 1:dim(todo)[1]){
-#i=4
+#i=7
 crop <- todo$SPAM_super[i]
 system <- todo$animal_system[i]
-product <- todo$product[i]
-diet = "plant_diet"
+product_type <- todo$product[i]
+diet_type = todo$diet[i]
 
 
 crop_spam <- str_replace(crop, "x", "o")
 
 
 # total country feed production
-feed_crop <- filter(total_prop, SPAM_super==crop, animal_system==system) %>%
+feed_crop <- filter(total_prop, SPAM_super==crop, animal_system==system, diet == diet_type, product == product_type ) %>%
   dplyr::select(iso3c = iso3c_producing, prop_feed = total_prop)
 
 # proportion crop grown for feed per country
@@ -319,10 +332,23 @@ tonnes_crop_raster <- raster(sprintf(file.path(mapspam_dir, "scaled_maps_2021/cr
 
 tonnes_crop_feed_raster <- tonnes_crop_raster*prop_feed_crop_raster
 
-writeRaster(tonnes_crop_feed_raster, filename= sprintf(here("prep/02_feed/output/%s/%s_%s_%s.tif"), diet, system, crop, product), overwrite=TRUE)
+# plot(tonnes_crop_feed_raster)
+
+writeRaster(tonnes_crop_feed_raster, filename= sprintf(here("prep/02_feed/output/%s/%s_%s_%s.tif"), diet_type, system, crop, product_type), overwrite=TRUE)
 
 }
 
+
+test <- rast(here("prep/02_feed/output/plant_diet/salmon_aquaculture_meat_soyb_soy protein concentrate.tif"))
+plot(log(test+1))
+
+
+test_names <- str_before_last(str_after_nth(list.files(here("prep/02_feed/output/fish-dominant/"))[2:6], "_", 3), ".tif")
+
+test <- rast(list.files(here("prep/02_feed/output/fish-dominant/"), full.names = TRUE)[2:6])
+
+names(test) <- test_names
+plot(log(test+1))
 
 ```
  

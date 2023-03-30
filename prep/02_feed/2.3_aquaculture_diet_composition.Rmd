@@ -8,6 +8,7 @@ editor_options:
 Wrangling and aggragating some aquaculture diet composition data.
 
 ```{r}
+library(here)
 source(here("src/fxns.R"))
 
 library(tidyverse)
@@ -17,11 +18,6 @@ regions <- read_csv(here("data/spatial/output/food_rgns.csv")) %>%
   select(iso3c) %>%
   unique()
 
-# Halley diet data
-diet <- read_excel(here("prep/02_feed/diet_composition_wrangling/Final_DietCrop_Numbers.xlsx"), sheet = "% type of crop input")
-
-test <- read.csv(here("prep/02_feed/diet_composition_wrangling/salmon_aquaculture_diet_composition.csv"))
-
 ```
 
 Salmon: diet from Aas source, global values used for regions
@@ -30,7 +26,7 @@ Salmon: diet from Aas source, global values used for regions
 
 ```{r}
 
-salmon <- read_xlsx(here("prep/02_feed/diet_composition_wrangling/salmon_aquaculture_diet_composition.xlsx"), sheet = "2020") %>%
+salmon_plant <- read_xlsx(here("prep/02_feed/diet_composition_wrangling/salmon_aquaculture_diet_composition.xlsx"), sheet = "2020") %>%
   mutate(raw_name = ifelse(raw_name == "camelina oil", "rapeseed and camelina oil", raw_name),
          raw_name = ifelse(raw_name == "rapeseed oil", "rapeseed and camelina oil", raw_name)) %>%
   group_by(species, production_system, raw_name) %>%
@@ -38,7 +34,23 @@ salmon <- read_xlsx(here("prep/02_feed/diet_composition_wrangling/salmon_aquacul
   ungroup() %>%
   mutate(prop_diet = per_diet * 0.01) %>%
   merge(regions) %>%
-  select(iso3c, raw_name, prop_diet, production_system, species) 
+  select(iso3c, raw_name, prop_diet, production_system, species) %>%
+  mutate(diet = "plant-dominant")
+
+salmon_fish <-  read_xlsx(here("prep/02_feed/diet_composition_wrangling/salmon_aquaculture_diet_composition.xlsx"), sheet = "fish-dominant") %>%
+  mutate(raw_name = ifelse(raw_name == "camelina oil", "rapeseed and camelina oil", raw_name),
+         raw_name = ifelse(raw_name == "rapeseed oil", "rapeseed and camelina oil", raw_name)) %>%
+  group_by(species, production_system, raw_name) %>%
+  summarise(per_diet = sum(per_diet, na.rm = TRUE)) %>%
+  ungroup() %>%
+  mutate(prop_diet = per_diet * 0.01) %>%
+  merge(regions) %>%
+  select(iso3c, raw_name, prop_diet, production_system, species) %>%
+  mutate(diet = "fish-dominant")
+
+salmon <- rbind(salmon_plant, salmon_fish)
+
+
 
 write.csv(salmon, here("prep/02_feed/data/aquaculture_diet_composition.csv"), row.names = FALSE)
 
