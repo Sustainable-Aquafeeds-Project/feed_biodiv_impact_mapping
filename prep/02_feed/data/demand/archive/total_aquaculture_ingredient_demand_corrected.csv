@@ -1,0 +1,625 @@
+iso3c,animal,system,product,ingredient,ingredient_demand,diet
+AUS,salmon,aquaculture,meat,canola oil,17238.203024,plant-dominant
+AUS,salmon,aquaculture,meat,coconut oil,93.685886,plant-dominant
+AUS,salmon,aquaculture,meat,corn gluten meal,655.801202,plant-dominant
+AUS,salmon,aquaculture,meat,faba beans,3372.691896,plant-dominant
+AUS,salmon,aquaculture,meat,"fish meal, cut offs",3091.634238,plant-dominant
+AUS,salmon,aquaculture,meat,"fish meal, forage fish",8244.357968,plant-dominant
+AUS,salmon,aquaculture,meat,"fish oil, cut offs",1873.71772,plant-dominant
+AUS,salmon,aquaculture,meat,"fish oil, forage fish",7775.928538,plant-dominant
+AUS,salmon,aquaculture,meat,guar meal,4028.493097999999,plant-dominant
+AUS,salmon,aquaculture,meat,linseed oil,1217.916518,plant-dominant
+AUS,salmon,aquaculture,meat,micro ingredients,3841.121326,plant-dominant
+AUS,salmon,aquaculture,meat,other,374.743544,plant-dominant
+AUS,salmon,aquaculture,meat,pea protein concentrate,1311.602404,plant-dominant
+AUS,salmon,aquaculture,meat,pea starch,2342.14715,plant-dominant
+AUS,salmon,aquaculture,meat,soy oil,374.743544,plant-dominant
+AUS,salmon,aquaculture,meat,soy protein concentrate,19580.350174,plant-dominant
+AUS,salmon,aquaculture,meat,sunflower meal,3185.3201240000003,plant-dominant
+AUS,salmon,aquaculture,meat,wheat,6089.58259,plant-dominant
+AUS,salmon,aquaculture,meat,wheat gluten,9181.216828,plant-dominant
+AUS,salmon,aquaculture,meat,canola oil,0,fish-dominant
+AUS,salmon,aquaculture,meat,coconut oil,0,fish-dominant
+AUS,salmon,aquaculture,meat,corn gluten meal,3747.43544,fish-dominant
+AUS,salmon,aquaculture,meat,faba beans,1873.71772,fish-dominant
+AUS,salmon,aquaculture,meat,"fish meal, cut offs",0,fish-dominant
+AUS,salmon,aquaculture,meat,"fish meal, forage fish",29979.48352,fish-dominant
+AUS,salmon,aquaculture,meat,"fish oil, cut offs",0,fish-dominant
+AUS,salmon,aquaculture,meat,"fish oil, forage fish",21547.75378,fish-dominant
+AUS,salmon,aquaculture,meat,guar meal,0,fish-dominant
+AUS,salmon,aquaculture,meat,linseed oil,0,fish-dominant
+AUS,salmon,aquaculture,meat,micro ingredients,1873.71772,fish-dominant
+AUS,salmon,aquaculture,meat,other,0,fish-dominant
+AUS,salmon,aquaculture,meat,pea protein concentrate,0,fish-dominant
+AUS,salmon,aquaculture,meat,pea starch,0,fish-dominant
+AUS,salmon,aquaculture,meat,soy oil,0,fish-dominant
+AUS,salmon,aquaculture,meat,soy protein concentrate,0,fish-dominant
+AUS,salmon,aquaculture,meat,soybean meal,15926.60062,fish-dominant
+AUS,salmon,aquaculture,meat,sunflower meal,0,fish-dominant
+AUS,salmon,aquaculture,meat,wheat,6558.01202,fish-dominant
+AUS,salmon,aquaculture,meat,wheat gluten,12179.16518,fish-dominant
+CAN,salmon,aquaculture,meat,canola oil,6845.6648000000005,plant-dominant
+CAN,salmon,aquaculture,meat,coconut oil,37.2047,plant-dominant
+CAN,salmon,aquaculture,meat,corn gluten meal,260.4329,plant-dominant
+CAN,salmon,aquaculture,meat,faba beans,1339.3692,plant-dominant
+CAN,salmon,aquaculture,meat,"fish meal, cut offs",1227.7551000000003,plant-dominant
+CAN,salmon,aquaculture,meat,"fish meal, forage fish",3274.0136,plant-dominant
+CAN,salmon,aquaculture,meat,"fish oil, cut offs",744.094,plant-dominant
+CAN,salmon,aquaculture,meat,"fish oil, forage fish",3087.9901000000004,plant-dominant
+CAN,salmon,aquaculture,meat,guar meal,1599.8021,plant-dominant
+CAN,salmon,aquaculture,meat,linseed oil,483.6611,plant-dominant
+CAN,salmon,aquaculture,meat,micro ingredients,1525.3927000000003,plant-dominant
+CAN,salmon,aquaculture,meat,other,148.8188,plant-dominant
+CAN,salmon,aquaculture,meat,pea protein concentrate,520.8658,plant-dominant
+CAN,salmon,aquaculture,meat,pea starch,930.1175000000002,plant-dominant
+CAN,salmon,aquaculture,meat,soy oil,148.8188,plant-dominant
+CAN,salmon,aquaculture,meat,soy protein concentrate,7775.782300000001,plant-dominant
+CAN,salmon,aquaculture,meat,sunflower meal,1264.9598000000003,plant-dominant
+CAN,salmon,aquaculture,meat,wheat,2418.3055000000004,plant-dominant
+CAN,salmon,aquaculture,meat,wheat gluten,3646.0606000000007,plant-dominant
+CAN,salmon,aquaculture,meat,canola oil,0,fish-dominant
+CAN,salmon,aquaculture,meat,coconut oil,0,fish-dominant
+CAN,salmon,aquaculture,meat,corn gluten meal,1488.188,fish-dominant
+CAN,salmon,aquaculture,meat,faba beans,744.094,fish-dominant
+CAN,salmon,aquaculture,meat,"fish meal, cut offs",0,fish-dominant
+CAN,salmon,aquaculture,meat,"fish meal, forage fish",11905.504,fish-dominant
+CAN,salmon,aquaculture,meat,"fish oil, cut offs",0,fish-dominant
+CAN,salmon,aquaculture,meat,"fish oil, forage fish",8557.081000000002,fish-dominant
+CAN,salmon,aquaculture,meat,guar meal,0,fish-dominant
+CAN,salmon,aquaculture,meat,linseed oil,0,fish-dominant
+CAN,salmon,aquaculture,meat,micro ingredients,744.094,fish-dominant
+CAN,salmon,aquaculture,meat,other,0,fish-dominant
+CAN,salmon,aquaculture,meat,pea protein concentrate,0,fish-dominant
+CAN,salmon,aquaculture,meat,pea starch,0,fish-dominant
+CAN,salmon,aquaculture,meat,soy oil,0,fish-dominant
+CAN,salmon,aquaculture,meat,soy protein concentrate,0,fish-dominant
+CAN,salmon,aquaculture,meat,soybean meal,6324.799000000001,fish-dominant
+CAN,salmon,aquaculture,meat,sunflower meal,0,fish-dominant
+CAN,salmon,aquaculture,meat,wheat,2604.3290000000006,fish-dominant
+CAN,salmon,aquaculture,meat,wheat gluten,4836.611000000001,fish-dominant
+CAN,salmon,aquaculture,meat,canola oil,21960.4736,plant-dominant
+CAN,salmon,aquaculture,meat,coconut oil,119.3504,plant-dominant
+CAN,salmon,aquaculture,meat,corn gluten meal,835.4528,plant-dominant
+CAN,salmon,aquaculture,meat,faba beans,4296.6144,plant-dominant
+CAN,salmon,aquaculture,meat,"fish meal, cut offs",3938.563200000001,plant-dominant
+CAN,salmon,aquaculture,meat,"fish meal, forage fish",10502.8352,plant-dominant
+CAN,salmon,aquaculture,meat,"fish oil, cut offs",2387.0080000000003,plant-dominant
+CAN,salmon,aquaculture,meat,"fish oil, forage fish",9906.0832,plant-dominant
+CAN,salmon,aquaculture,meat,guar meal,5132.0672,plant-dominant
+CAN,salmon,aquaculture,meat,linseed oil,1551.5552,plant-dominant
+CAN,salmon,aquaculture,meat,micro ingredients,4893.366400000001,plant-dominant
+CAN,salmon,aquaculture,meat,other,477.4016,plant-dominant
+CAN,salmon,aquaculture,meat,pea protein concentrate,1670.9056,plant-dominant
+CAN,salmon,aquaculture,meat,pea starch,2983.76,plant-dominant
+CAN,salmon,aquaculture,meat,soy oil,477.4016,plant-dominant
+CAN,salmon,aquaculture,meat,soy protein concentrate,24944.2336,plant-dominant
+CAN,salmon,aquaculture,meat,sunflower meal,4057.9136000000008,plant-dominant
+CAN,salmon,aquaculture,meat,wheat,7757.776000000001,plant-dominant
+CAN,salmon,aquaculture,meat,wheat gluten,11696.339200000002,plant-dominant
+CAN,salmon,aquaculture,meat,canola oil,0,fish-dominant
+CAN,salmon,aquaculture,meat,coconut oil,0,fish-dominant
+CAN,salmon,aquaculture,meat,corn gluten meal,4774.0160000000005,fish-dominant
+CAN,salmon,aquaculture,meat,faba beans,2387.0080000000003,fish-dominant
+CAN,salmon,aquaculture,meat,"fish meal, cut offs",0,fish-dominant
+CAN,salmon,aquaculture,meat,"fish meal, forage fish",38192.128,fish-dominant
+CAN,salmon,aquaculture,meat,"fish oil, cut offs",0,fish-dominant
+CAN,salmon,aquaculture,meat,"fish oil, forage fish",27450.592000000004,fish-dominant
+CAN,salmon,aquaculture,meat,guar meal,0,fish-dominant
+CAN,salmon,aquaculture,meat,linseed oil,0,fish-dominant
+CAN,salmon,aquaculture,meat,micro ingredients,2387.0080000000003,fish-dominant
+CAN,salmon,aquaculture,meat,other,0,fish-dominant
+CAN,salmon,aquaculture,meat,pea protein concentrate,0,fish-dominant
+CAN,salmon,aquaculture,meat,pea starch,0,fish-dominant
+CAN,salmon,aquaculture,meat,soy oil,0,fish-dominant
+CAN,salmon,aquaculture,meat,soy protein concentrate,0,fish-dominant
+CAN,salmon,aquaculture,meat,soybean meal,20289.568000000003,fish-dominant
+CAN,salmon,aquaculture,meat,sunflower meal,0,fish-dominant
+CAN,salmon,aquaculture,meat,wheat,8354.528000000002,fish-dominant
+CAN,salmon,aquaculture,meat,wheat gluten,15515.552,fish-dominant
+CHL,salmon,aquaculture,meat,canola oil,58.2176,plant-dominant
+CHL,salmon,aquaculture,meat,coconut oil,0.31639999999999996,plant-dominant
+CHL,salmon,aquaculture,meat,corn gluten meal,2.2148,plant-dominant
+CHL,salmon,aquaculture,meat,faba beans,11.390399999999998,plant-dominant
+CHL,salmon,aquaculture,meat,"fish meal, cut offs",10.4412,plant-dominant
+CHL,salmon,aquaculture,meat,"fish meal, forage fish",27.843199999999996,plant-dominant
+CHL,salmon,aquaculture,meat,"fish oil, cut offs",6.327999999999999,plant-dominant
+CHL,salmon,aquaculture,meat,"fish oil, forage fish",26.2612,plant-dominant
+CHL,salmon,aquaculture,meat,guar meal,13.605199999999998,plant-dominant
+CHL,salmon,aquaculture,meat,linseed oil,4.113199999999999,plant-dominant
+CHL,salmon,aquaculture,meat,micro ingredients,12.9724,plant-dominant
+CHL,salmon,aquaculture,meat,other,1.2655999999999998,plant-dominant
+CHL,salmon,aquaculture,meat,pea protein concentrate,4.4296,plant-dominant
+CHL,salmon,aquaculture,meat,pea starch,7.91,plant-dominant
+CHL,salmon,aquaculture,meat,soy oil,1.2655999999999998,plant-dominant
+CHL,salmon,aquaculture,meat,soy protein concentrate,66.12759999999999,plant-dominant
+CHL,salmon,aquaculture,meat,sunflower meal,10.7576,plant-dominant
+CHL,salmon,aquaculture,meat,wheat,20.566,plant-dominant
+CHL,salmon,aquaculture,meat,wheat gluten,31.007199999999997,plant-dominant
+CHL,salmon,aquaculture,meat,canola oil,0,fish-dominant
+CHL,salmon,aquaculture,meat,coconut oil,0,fish-dominant
+CHL,salmon,aquaculture,meat,corn gluten meal,12.656,fish-dominant
+CHL,salmon,aquaculture,meat,faba beans,6.327999999999999,fish-dominant
+CHL,salmon,aquaculture,meat,"fish meal, cut offs",0,fish-dominant
+CHL,salmon,aquaculture,meat,"fish meal, forage fish",101.248,fish-dominant
+CHL,salmon,aquaculture,meat,"fish oil, cut offs",0,fish-dominant
+CHL,salmon,aquaculture,meat,"fish oil, forage fish",72.77199999999999,fish-dominant
+CHL,salmon,aquaculture,meat,guar meal,0,fish-dominant
+CHL,salmon,aquaculture,meat,linseed oil,0,fish-dominant
+CHL,salmon,aquaculture,meat,micro ingredients,6.327999999999999,fish-dominant
+CHL,salmon,aquaculture,meat,other,0,fish-dominant
+CHL,salmon,aquaculture,meat,pea protein concentrate,0,fish-dominant
+CHL,salmon,aquaculture,meat,pea starch,0,fish-dominant
+CHL,salmon,aquaculture,meat,soy oil,0,fish-dominant
+CHL,salmon,aquaculture,meat,soy protein concentrate,0,fish-dominant
+CHL,salmon,aquaculture,meat,soybean meal,53.788,fish-dominant
+CHL,salmon,aquaculture,meat,sunflower meal,0,fish-dominant
+CHL,salmon,aquaculture,meat,wheat,22.148,fish-dominant
+CHL,salmon,aquaculture,meat,wheat gluten,41.132,fish-dominant
+CHL,salmon,aquaculture,meat,canola oil,202706.728,plant-dominant
+CHL,salmon,aquaculture,meat,coconut oil,1101.667,plant-dominant
+CHL,salmon,aquaculture,meat,corn gluten meal,7711.669,plant-dominant
+CHL,salmon,aquaculture,meat,faba beans,39660.011999999995,plant-dominant
+CHL,salmon,aquaculture,meat,"fish meal, cut offs",36355.011,plant-dominant
+CHL,salmon,aquaculture,meat,"fish meal, forage fish",96946.696,plant-dominant
+CHL,salmon,aquaculture,meat,"fish oil, cut offs",22033.34,plant-dominant
+CHL,salmon,aquaculture,meat,"fish oil, forage fish",91438.361,plant-dominant
+CHL,salmon,aquaculture,meat,guar meal,47371.681,plant-dominant
+CHL,salmon,aquaculture,meat,linseed oil,14321.670999999998,plant-dominant
+CHL,salmon,aquaculture,meat,micro ingredients,45168.347,plant-dominant
+CHL,salmon,aquaculture,meat,other,4406.668,plant-dominant
+CHL,salmon,aquaculture,meat,pea protein concentrate,15423.338,plant-dominant
+CHL,salmon,aquaculture,meat,pea starch,27541.675000000003,plant-dominant
+CHL,salmon,aquaculture,meat,soy oil,4406.668,plant-dominant
+CHL,salmon,aquaculture,meat,soy protein concentrate,230248.403,plant-dominant
+CHL,salmon,aquaculture,meat,sunflower meal,37456.678,plant-dominant
+CHL,salmon,aquaculture,meat,wheat,71608.355,plant-dominant
+CHL,salmon,aquaculture,meat,wheat gluten,107963.366,plant-dominant
+CHL,salmon,aquaculture,meat,canola oil,0,fish-dominant
+CHL,salmon,aquaculture,meat,coconut oil,0,fish-dominant
+CHL,salmon,aquaculture,meat,corn gluten meal,44066.68,fish-dominant
+CHL,salmon,aquaculture,meat,faba beans,22033.34,fish-dominant
+CHL,salmon,aquaculture,meat,"fish meal, cut offs",0,fish-dominant
+CHL,salmon,aquaculture,meat,"fish meal, forage fish",352533.44,fish-dominant
+CHL,salmon,aquaculture,meat,"fish oil, cut offs",0,fish-dominant
+CHL,salmon,aquaculture,meat,"fish oil, forage fish",253383.41,fish-dominant
+CHL,salmon,aquaculture,meat,guar meal,0,fish-dominant
+CHL,salmon,aquaculture,meat,linseed oil,0,fish-dominant
+CHL,salmon,aquaculture,meat,micro ingredients,22033.34,fish-dominant
+CHL,salmon,aquaculture,meat,other,0,fish-dominant
+CHL,salmon,aquaculture,meat,pea protein concentrate,0,fish-dominant
+CHL,salmon,aquaculture,meat,pea starch,0,fish-dominant
+CHL,salmon,aquaculture,meat,soy oil,0,fish-dominant
+CHL,salmon,aquaculture,meat,soy protein concentrate,0,fish-dominant
+CHL,salmon,aquaculture,meat,soybean meal,187283.39,fish-dominant
+CHL,salmon,aquaculture,meat,sunflower meal,0,fish-dominant
+CHL,salmon,aquaculture,meat,wheat,77116.69,fish-dominant
+CHL,salmon,aquaculture,meat,wheat gluten,143216.71,fish-dominant
+DNK,salmon,aquaculture,meat,canola oil,464.048,plant-dominant
+DNK,salmon,aquaculture,meat,coconut oil,2.522,plant-dominant
+DNK,salmon,aquaculture,meat,corn gluten meal,17.654,plant-dominant
+DNK,salmon,aquaculture,meat,faba beans,90.792,plant-dominant
+DNK,salmon,aquaculture,meat,"fish meal, cut offs",83.226,plant-dominant
+DNK,salmon,aquaculture,meat,"fish meal, forage fish",221.936,plant-dominant
+DNK,salmon,aquaculture,meat,"fish oil, cut offs",50.44,plant-dominant
+DNK,salmon,aquaculture,meat,"fish oil, forage fish",209.326,plant-dominant
+DNK,salmon,aquaculture,meat,guar meal,108.446,plant-dominant
+DNK,salmon,aquaculture,meat,linseed oil,32.786,plant-dominant
+DNK,salmon,aquaculture,meat,micro ingredients,103.402,plant-dominant
+DNK,salmon,aquaculture,meat,other,10.088,plant-dominant
+DNK,salmon,aquaculture,meat,pea protein concentrate,35.308,plant-dominant
+DNK,salmon,aquaculture,meat,pea starch,63.05,plant-dominant
+DNK,salmon,aquaculture,meat,soy oil,10.088,plant-dominant
+DNK,salmon,aquaculture,meat,soy protein concentrate,527.098,plant-dominant
+DNK,salmon,aquaculture,meat,sunflower meal,85.748,plant-dominant
+DNK,salmon,aquaculture,meat,wheat,163.93,plant-dominant
+DNK,salmon,aquaculture,meat,wheat gluten,247.156,plant-dominant
+DNK,salmon,aquaculture,meat,canola oil,0,fish-dominant
+DNK,salmon,aquaculture,meat,coconut oil,0,fish-dominant
+DNK,salmon,aquaculture,meat,corn gluten meal,100.88,fish-dominant
+DNK,salmon,aquaculture,meat,faba beans,50.44,fish-dominant
+DNK,salmon,aquaculture,meat,"fish meal, cut offs",0,fish-dominant
+DNK,salmon,aquaculture,meat,"fish meal, forage fish",807.04,fish-dominant
+DNK,salmon,aquaculture,meat,"fish oil, cut offs",0,fish-dominant
+DNK,salmon,aquaculture,meat,"fish oil, forage fish",580.0600000000001,fish-dominant
+DNK,salmon,aquaculture,meat,guar meal,0,fish-dominant
+DNK,salmon,aquaculture,meat,linseed oil,0,fish-dominant
+DNK,salmon,aquaculture,meat,micro ingredients,50.44,fish-dominant
+DNK,salmon,aquaculture,meat,other,0,fish-dominant
+DNK,salmon,aquaculture,meat,pea protein concentrate,0,fish-dominant
+DNK,salmon,aquaculture,meat,pea starch,0,fish-dominant
+DNK,salmon,aquaculture,meat,soy oil,0,fish-dominant
+DNK,salmon,aquaculture,meat,soy protein concentrate,0,fish-dominant
+DNK,salmon,aquaculture,meat,soybean meal,428.74,fish-dominant
+DNK,salmon,aquaculture,meat,sunflower meal,0,fish-dominant
+DNK,salmon,aquaculture,meat,wheat,176.54000000000002,fish-dominant
+DNK,salmon,aquaculture,meat,wheat gluten,327.86,fish-dominant
+FRO,salmon,aquaculture,meat,canola oil,21276.84,plant-dominant
+FRO,salmon,aquaculture,meat,coconut oil,115.635,plant-dominant
+FRO,salmon,aquaculture,meat,corn gluten meal,809.445,plant-dominant
+FRO,salmon,aquaculture,meat,faba beans,4162.86,plant-dominant
+FRO,salmon,aquaculture,meat,"fish meal, cut offs",3815.955,plant-dominant
+FRO,salmon,aquaculture,meat,"fish meal, forage fish",10175.88,plant-dominant
+FRO,salmon,aquaculture,meat,"fish oil, cut offs",2312.7000000000003,plant-dominant
+FRO,salmon,aquaculture,meat,"fish oil, forage fish",9597.705,plant-dominant
+FRO,salmon,aquaculture,meat,guar meal,4972.304999999999,plant-dominant
+FRO,salmon,aquaculture,meat,linseed oil,1503.255,plant-dominant
+FRO,salmon,aquaculture,meat,micro ingredients,4741.035,plant-dominant
+FRO,salmon,aquaculture,meat,other,462.54,plant-dominant
+FRO,salmon,aquaculture,meat,pea protein concentrate,1618.89,plant-dominant
+FRO,salmon,aquaculture,meat,pea starch,2890.875,plant-dominant
+FRO,salmon,aquaculture,meat,soy oil,462.54,plant-dominant
+FRO,salmon,aquaculture,meat,soy protein concentrate,24167.715,plant-dominant
+FRO,salmon,aquaculture,meat,sunflower meal,3931.59,plant-dominant
+FRO,salmon,aquaculture,meat,wheat,7516.275,plant-dominant
+FRO,salmon,aquaculture,meat,wheat gluten,11332.23,plant-dominant
+FRO,salmon,aquaculture,meat,canola oil,0,fish-dominant
+FRO,salmon,aquaculture,meat,coconut oil,0,fish-dominant
+FRO,salmon,aquaculture,meat,corn gluten meal,4625.4000000000005,fish-dominant
+FRO,salmon,aquaculture,meat,faba beans,2312.7000000000003,fish-dominant
+FRO,salmon,aquaculture,meat,"fish meal, cut offs",0,fish-dominant
+FRO,salmon,aquaculture,meat,"fish meal, forage fish",37003.2,fish-dominant
+FRO,salmon,aquaculture,meat,"fish oil, cut offs",0,fish-dominant
+FRO,salmon,aquaculture,meat,"fish oil, forage fish",26596.050000000003,fish-dominant
+FRO,salmon,aquaculture,meat,guar meal,0,fish-dominant
+FRO,salmon,aquaculture,meat,linseed oil,0,fish-dominant
+FRO,salmon,aquaculture,meat,micro ingredients,2312.7000000000003,fish-dominant
+FRO,salmon,aquaculture,meat,other,0,fish-dominant
+FRO,salmon,aquaculture,meat,pea protein concentrate,0,fish-dominant
+FRO,salmon,aquaculture,meat,pea starch,0,fish-dominant
+FRO,salmon,aquaculture,meat,soy oil,0,fish-dominant
+FRO,salmon,aquaculture,meat,soy protein concentrate,0,fish-dominant
+FRO,salmon,aquaculture,meat,soybean meal,19657.95,fish-dominant
+FRO,salmon,aquaculture,meat,sunflower meal,0,fish-dominant
+FRO,salmon,aquaculture,meat,wheat,8094.450000000001,fish-dominant
+FRO,salmon,aquaculture,meat,wheat gluten,15032.55,fish-dominant
+ISL,salmon,aquaculture,meat,canola oil,8214.3672,plant-dominant
+ISL,salmon,aquaculture,meat,coconut oil,44.6433,plant-dominant
+ISL,salmon,aquaculture,meat,corn gluten meal,312.5031,plant-dominant
+ISL,salmon,aquaculture,meat,faba beans,1607.1588,plant-dominant
+ISL,salmon,aquaculture,meat,"fish meal, cut offs",1473.2289,plant-dominant
+ISL,salmon,aquaculture,meat,"fish meal, forage fish",3928.6104,plant-dominant
+ISL,salmon,aquaculture,meat,"fish oil, cut offs",892.8660000000001,plant-dominant
+ISL,salmon,aquaculture,meat,"fish oil, forage fish",3705.393900000001,plant-dominant
+ISL,salmon,aquaculture,meat,guar meal,1919.6619,plant-dominant
+ISL,salmon,aquaculture,meat,linseed oil,580.3629,plant-dominant
+ISL,salmon,aquaculture,meat,micro ingredients,1830.3753,plant-dominant
+ISL,salmon,aquaculture,meat,other,178.5732,plant-dominant
+ISL,salmon,aquaculture,meat,pea protein concentrate,625.0062,plant-dominant
+ISL,salmon,aquaculture,meat,pea starch,1116.0825000000002,plant-dominant
+ISL,salmon,aquaculture,meat,soy oil,178.5732,plant-dominant
+ISL,salmon,aquaculture,meat,soy protein concentrate,9330.4497,plant-dominant
+ISL,salmon,aquaculture,meat,sunflower meal,1517.8722000000002,plant-dominant
+ISL,salmon,aquaculture,meat,wheat,2901.8145000000004,plant-dominant
+ISL,salmon,aquaculture,meat,wheat gluten,4375.0434000000005,plant-dominant
+ISL,salmon,aquaculture,meat,canola oil,0,fish-dominant
+ISL,salmon,aquaculture,meat,coconut oil,0,fish-dominant
+ISL,salmon,aquaculture,meat,corn gluten meal,1785.7320000000002,fish-dominant
+ISL,salmon,aquaculture,meat,faba beans,892.8660000000001,fish-dominant
+ISL,salmon,aquaculture,meat,"fish meal, cut offs",0,fish-dominant
+ISL,salmon,aquaculture,meat,"fish meal, forage fish",14285.856000000002,fish-dominant
+ISL,salmon,aquaculture,meat,"fish oil, cut offs",0,fish-dominant
+ISL,salmon,aquaculture,meat,"fish oil, forage fish",10267.959,fish-dominant
+ISL,salmon,aquaculture,meat,guar meal,0,fish-dominant
+ISL,salmon,aquaculture,meat,linseed oil,0,fish-dominant
+ISL,salmon,aquaculture,meat,micro ingredients,892.8660000000001,fish-dominant
+ISL,salmon,aquaculture,meat,other,0,fish-dominant
+ISL,salmon,aquaculture,meat,pea protein concentrate,0,fish-dominant
+ISL,salmon,aquaculture,meat,pea starch,0,fish-dominant
+ISL,salmon,aquaculture,meat,soy oil,0,fish-dominant
+ISL,salmon,aquaculture,meat,soy protein concentrate,0,fish-dominant
+ISL,salmon,aquaculture,meat,soybean meal,7589.361000000001,fish-dominant
+ISL,salmon,aquaculture,meat,sunflower meal,0,fish-dominant
+ISL,salmon,aquaculture,meat,wheat,3125.0310000000004,fish-dominant
+ISL,salmon,aquaculture,meat,wheat gluten,5803.629000000001,fish-dominant
+IRL,salmon,aquaculture,meat,canola oil,3078.504,plant-dominant
+IRL,salmon,aquaculture,meat,coconut oil,16.731,plant-dominant
+IRL,salmon,aquaculture,meat,corn gluten meal,117.117,plant-dominant
+IRL,salmon,aquaculture,meat,faba beans,602.3159999999999,plant-dominant
+IRL,salmon,aquaculture,meat,"fish meal, cut offs",552.123,plant-dominant
+IRL,salmon,aquaculture,meat,"fish meal, forage fish",1472.328,plant-dominant
+IRL,salmon,aquaculture,meat,"fish oil, cut offs",334.62,plant-dominant
+IRL,salmon,aquaculture,meat,"fish oil, forage fish",1388.673,plant-dominant
+IRL,salmon,aquaculture,meat,guar meal,719.433,plant-dominant
+IRL,salmon,aquaculture,meat,linseed oil,217.503,plant-dominant
+IRL,salmon,aquaculture,meat,micro ingredients,685.971,plant-dominant
+IRL,salmon,aquaculture,meat,other,66.924,plant-dominant
+IRL,salmon,aquaculture,meat,pea protein concentrate,234.234,plant-dominant
+IRL,salmon,aquaculture,meat,pea starch,418.275,plant-dominant
+IRL,salmon,aquaculture,meat,soy oil,66.924,plant-dominant
+IRL,salmon,aquaculture,meat,soy protein concentrate,3496.779,plant-dominant
+IRL,salmon,aquaculture,meat,sunflower meal,568.854,plant-dominant
+IRL,salmon,aquaculture,meat,wheat,1087.515,plant-dominant
+IRL,salmon,aquaculture,meat,wheat gluten,1639.638,plant-dominant
+IRL,salmon,aquaculture,meat,canola oil,0,fish-dominant
+IRL,salmon,aquaculture,meat,coconut oil,0,fish-dominant
+IRL,salmon,aquaculture,meat,corn gluten meal,669.24,fish-dominant
+IRL,salmon,aquaculture,meat,faba beans,334.62,fish-dominant
+IRL,salmon,aquaculture,meat,"fish meal, cut offs",0,fish-dominant
+IRL,salmon,aquaculture,meat,"fish meal, forage fish",5353.92,fish-dominant
+IRL,salmon,aquaculture,meat,"fish oil, cut offs",0,fish-dominant
+IRL,salmon,aquaculture,meat,"fish oil, forage fish",3848.13,fish-dominant
+IRL,salmon,aquaculture,meat,guar meal,0,fish-dominant
+IRL,salmon,aquaculture,meat,linseed oil,0,fish-dominant
+IRL,salmon,aquaculture,meat,micro ingredients,334.62,fish-dominant
+IRL,salmon,aquaculture,meat,other,0,fish-dominant
+IRL,salmon,aquaculture,meat,pea protein concentrate,0,fish-dominant
+IRL,salmon,aquaculture,meat,pea starch,0,fish-dominant
+IRL,salmon,aquaculture,meat,soy oil,0,fish-dominant
+IRL,salmon,aquaculture,meat,soy protein concentrate,0,fish-dominant
+IRL,salmon,aquaculture,meat,soybean meal,2844.27,fish-dominant
+IRL,salmon,aquaculture,meat,sunflower meal,0,fish-dominant
+IRL,salmon,aquaculture,meat,wheat,1171.17,fish-dominant
+IRL,salmon,aquaculture,meat,wheat gluten,2175.03,fish-dominant
+PRK,salmon,aquaculture,meat,canola oil,14.352,plant-dominant
+PRK,salmon,aquaculture,meat,coconut oil,0.078,plant-dominant
+PRK,salmon,aquaculture,meat,corn gluten meal,0.546,plant-dominant
+PRK,salmon,aquaculture,meat,faba beans,2.808,plant-dominant
+PRK,salmon,aquaculture,meat,"fish meal, cut offs",2.5740000000000003,plant-dominant
+PRK,salmon,aquaculture,meat,"fish meal, forage fish",6.864,plant-dominant
+PRK,salmon,aquaculture,meat,"fish oil, cut offs",1.56,plant-dominant
+PRK,salmon,aquaculture,meat,"fish oil, forage fish",6.474,plant-dominant
+PRK,salmon,aquaculture,meat,guar meal,3.3539999999999996,plant-dominant
+PRK,salmon,aquaculture,meat,linseed oil,1.014,plant-dominant
+PRK,salmon,aquaculture,meat,micro ingredients,3.198,plant-dominant
+PRK,salmon,aquaculture,meat,other,0.312,plant-dominant
+PRK,salmon,aquaculture,meat,pea protein concentrate,1.092,plant-dominant
+PRK,salmon,aquaculture,meat,pea starch,1.95,plant-dominant
+PRK,salmon,aquaculture,meat,soy oil,0.312,plant-dominant
+PRK,salmon,aquaculture,meat,soy protein concentrate,16.302,plant-dominant
+PRK,salmon,aquaculture,meat,sunflower meal,2.652,plant-dominant
+PRK,salmon,aquaculture,meat,wheat,5.07,plant-dominant
+PRK,salmon,aquaculture,meat,wheat gluten,7.644,plant-dominant
+PRK,salmon,aquaculture,meat,canola oil,0,fish-dominant
+PRK,salmon,aquaculture,meat,coconut oil,0,fish-dominant
+PRK,salmon,aquaculture,meat,corn gluten meal,3.12,fish-dominant
+PRK,salmon,aquaculture,meat,faba beans,1.56,fish-dominant
+PRK,salmon,aquaculture,meat,"fish meal, cut offs",0,fish-dominant
+PRK,salmon,aquaculture,meat,"fish meal, forage fish",24.96,fish-dominant
+PRK,salmon,aquaculture,meat,"fish oil, cut offs",0,fish-dominant
+PRK,salmon,aquaculture,meat,"fish oil, forage fish",17.94,fish-dominant
+PRK,salmon,aquaculture,meat,guar meal,0,fish-dominant
+PRK,salmon,aquaculture,meat,linseed oil,0,fish-dominant
+PRK,salmon,aquaculture,meat,micro ingredients,1.56,fish-dominant
+PRK,salmon,aquaculture,meat,other,0,fish-dominant
+PRK,salmon,aquaculture,meat,pea protein concentrate,0,fish-dominant
+PRK,salmon,aquaculture,meat,pea starch,0,fish-dominant
+PRK,salmon,aquaculture,meat,soy oil,0,fish-dominant
+PRK,salmon,aquaculture,meat,soy protein concentrate,0,fish-dominant
+PRK,salmon,aquaculture,meat,soybean meal,13.260000000000002,fish-dominant
+PRK,salmon,aquaculture,meat,sunflower meal,0,fish-dominant
+PRK,salmon,aquaculture,meat,wheat,5.460000000000001,fish-dominant
+PRK,salmon,aquaculture,meat,wheat gluten,10.14,fish-dominant
+NOR,salmon,aquaculture,meat,canola oil,332113.374528,plant-dominant
+NOR,salmon,aquaculture,meat,coconut oil,1804.963992,plant-dominant
+NOR,salmon,aquaculture,meat,corn gluten meal,12634.747944,plant-dominant
+NOR,salmon,aquaculture,meat,faba beans,64978.703711999995,plant-dominant
+NOR,salmon,aquaculture,meat,"fish meal, cut offs",59563.811736,plant-dominant
+NOR,salmon,aquaculture,meat,"fish meal, forage fish",158836.831296,plant-dominant
+NOR,salmon,aquaculture,meat,"fish oil, cut offs",36099.27984,plant-dominant
+NOR,salmon,aquaculture,meat,"fish oil, forage fish",149812.01133600005,plant-dominant
+NOR,salmon,aquaculture,meat,guar meal,77613.451656,plant-dominant
+NOR,salmon,aquaculture,meat,linseed oil,23464.531896,plant-dominant
+NOR,salmon,aquaculture,meat,micro ingredients,74003.52367200001,plant-dominant
+NOR,salmon,aquaculture,meat,other,7219.855968000001,plant-dominant
+NOR,salmon,aquaculture,meat,pea protein concentrate,25269.495888,plant-dominant
+NOR,salmon,aquaculture,meat,pea starch,45124.0998,plant-dominant
+NOR,salmon,aquaculture,meat,soy oil,7219.855968000001,plant-dominant
+NOR,salmon,aquaculture,meat,soy protein concentrate,377237.474328,plant-dominant
+NOR,salmon,aquaculture,meat,sunflower meal,61368.77572800001,plant-dominant
+NOR,salmon,aquaculture,meat,wheat,117322.65948000002,plant-dominant
+NOR,salmon,aquaculture,meat,wheat gluten,176886.471216,plant-dominant
+NOR,salmon,aquaculture,meat,canola oil,0,fish-dominant
+NOR,salmon,aquaculture,meat,coconut oil,0,fish-dominant
+NOR,salmon,aquaculture,meat,corn gluten meal,72198.55968,fish-dominant
+NOR,salmon,aquaculture,meat,faba beans,36099.27984,fish-dominant
+NOR,salmon,aquaculture,meat,"fish meal, cut offs",0,fish-dominant
+NOR,salmon,aquaculture,meat,"fish meal, forage fish",577588.47744,fish-dominant
+NOR,salmon,aquaculture,meat,"fish oil, cut offs",0,fish-dominant
+NOR,salmon,aquaculture,meat,"fish oil, forage fish",415141.7181600001,fish-dominant
+NOR,salmon,aquaculture,meat,guar meal,0,fish-dominant
+NOR,salmon,aquaculture,meat,linseed oil,0,fish-dominant
+NOR,salmon,aquaculture,meat,micro ingredients,36099.27984,fish-dominant
+NOR,salmon,aquaculture,meat,other,0,fish-dominant
+NOR,salmon,aquaculture,meat,pea protein concentrate,0,fish-dominant
+NOR,salmon,aquaculture,meat,pea starch,0,fish-dominant
+NOR,salmon,aquaculture,meat,soy oil,0,fish-dominant
+NOR,salmon,aquaculture,meat,soy protein concentrate,0,fish-dominant
+NOR,salmon,aquaculture,meat,soybean meal,306843.87864,fish-dominant
+NOR,salmon,aquaculture,meat,sunflower meal,0,fish-dominant
+NOR,salmon,aquaculture,meat,wheat,126347.47944000002,fish-dominant
+NOR,salmon,aquaculture,meat,wheat gluten,234645.31896000003,fish-dominant
+RUS,salmon,aquaculture,meat,canola oil,2596.516,plant-dominant
+RUS,salmon,aquaculture,meat,coconut oil,14.1115,plant-dominant
+RUS,salmon,aquaculture,meat,corn gluten meal,98.7805,plant-dominant
+RUS,salmon,aquaculture,meat,faba beans,508.0139999999999,plant-dominant
+RUS,salmon,aquaculture,meat,"fish meal, cut offs",465.6795,plant-dominant
+RUS,salmon,aquaculture,meat,"fish meal, forage fish",1241.812,plant-dominant
+RUS,salmon,aquaculture,meat,"fish oil, cut offs",282.23,plant-dominant
+RUS,salmon,aquaculture,meat,"fish oil, forage fish",1171.2545,plant-dominant
+RUS,salmon,aquaculture,meat,guar meal,606.7945,plant-dominant
+RUS,salmon,aquaculture,meat,linseed oil,183.4495,plant-dominant
+RUS,salmon,aquaculture,meat,micro ingredients,578.5715,plant-dominant
+RUS,salmon,aquaculture,meat,other,56.446,plant-dominant
+RUS,salmon,aquaculture,meat,pea protein concentrate,197.561,plant-dominant
+RUS,salmon,aquaculture,meat,pea starch,352.7875,plant-dominant
+RUS,salmon,aquaculture,meat,soy oil,56.446,plant-dominant
+RUS,salmon,aquaculture,meat,soy protein concentrate,2949.3035,plant-dominant
+RUS,salmon,aquaculture,meat,sunflower meal,479.79100000000005,plant-dominant
+RUS,salmon,aquaculture,meat,wheat,917.2475,plant-dominant
+RUS,salmon,aquaculture,meat,wheat gluten,1382.927,plant-dominant
+RUS,salmon,aquaculture,meat,canola oil,0,fish-dominant
+RUS,salmon,aquaculture,meat,coconut oil,0,fish-dominant
+RUS,salmon,aquaculture,meat,corn gluten meal,564.46,fish-dominant
+RUS,salmon,aquaculture,meat,faba beans,282.23,fish-dominant
+RUS,salmon,aquaculture,meat,"fish meal, cut offs",0,fish-dominant
+RUS,salmon,aquaculture,meat,"fish meal, forage fish",4515.68,fish-dominant
+RUS,salmon,aquaculture,meat,"fish oil, cut offs",0,fish-dominant
+RUS,salmon,aquaculture,meat,"fish oil, forage fish",3245.645,fish-dominant
+RUS,salmon,aquaculture,meat,guar meal,0,fish-dominant
+RUS,salmon,aquaculture,meat,linseed oil,0,fish-dominant
+RUS,salmon,aquaculture,meat,micro ingredients,282.23,fish-dominant
+RUS,salmon,aquaculture,meat,other,0,fish-dominant
+RUS,salmon,aquaculture,meat,pea protein concentrate,0,fish-dominant
+RUS,salmon,aquaculture,meat,pea starch,0,fish-dominant
+RUS,salmon,aquaculture,meat,soy oil,0,fish-dominant
+RUS,salmon,aquaculture,meat,soy protein concentrate,0,fish-dominant
+RUS,salmon,aquaculture,meat,soybean meal,2398.9550000000004,fish-dominant
+RUS,salmon,aquaculture,meat,sunflower meal,0,fish-dominant
+RUS,salmon,aquaculture,meat,wheat,987.805,fish-dominant
+RUS,salmon,aquaculture,meat,wheat gluten,1834.495,fish-dominant
+CHE,salmon,aquaculture,meat,canola oil,38.12848,plant-dominant
+CHE,salmon,aquaculture,meat,coconut oil,0.20722000000000004,plant-dominant
+CHE,salmon,aquaculture,meat,corn gluten meal,1.4505400000000002,plant-dominant
+CHE,salmon,aquaculture,meat,faba beans,7.45992,plant-dominant
+CHE,salmon,aquaculture,meat,"fish meal, cut offs",6.838260000000001,plant-dominant
+CHE,salmon,aquaculture,meat,"fish meal, forage fish",18.23536,plant-dominant
+CHE,salmon,aquaculture,meat,"fish oil, cut offs",4.144400000000001,plant-dominant
+CHE,salmon,aquaculture,meat,"fish oil, forage fish",17.199260000000002,plant-dominant
+CHE,salmon,aquaculture,meat,guar meal,8.91046,plant-dominant
+CHE,salmon,aquaculture,meat,linseed oil,2.6938600000000004,plant-dominant
+CHE,salmon,aquaculture,meat,micro ingredients,8.496020000000001,plant-dominant
+CHE,salmon,aquaculture,meat,other,0.8288800000000002,plant-dominant
+CHE,salmon,aquaculture,meat,pea protein concentrate,2.9010800000000003,plant-dominant
+CHE,salmon,aquaculture,meat,pea starch,5.180500000000001,plant-dominant
+CHE,salmon,aquaculture,meat,soy oil,0.8288800000000002,plant-dominant
+CHE,salmon,aquaculture,meat,soy protein concentrate,43.308980000000005,plant-dominant
+CHE,salmon,aquaculture,meat,sunflower meal,7.045480000000001,plant-dominant
+CHE,salmon,aquaculture,meat,wheat,13.469300000000002,plant-dominant
+CHE,salmon,aquaculture,meat,wheat gluten,20.30756,plant-dominant
+CHE,salmon,aquaculture,meat,canola oil,0,fish-dominant
+CHE,salmon,aquaculture,meat,coconut oil,0,fish-dominant
+CHE,salmon,aquaculture,meat,corn gluten meal,8.288800000000002,fish-dominant
+CHE,salmon,aquaculture,meat,faba beans,4.144400000000001,fish-dominant
+CHE,salmon,aquaculture,meat,"fish meal, cut offs",0,fish-dominant
+CHE,salmon,aquaculture,meat,"fish meal, forage fish",66.31040000000002,fish-dominant
+CHE,salmon,aquaculture,meat,"fish oil, cut offs",0,fish-dominant
+CHE,salmon,aquaculture,meat,"fish oil, forage fish",47.66060000000001,fish-dominant
+CHE,salmon,aquaculture,meat,guar meal,0,fish-dominant
+CHE,salmon,aquaculture,meat,linseed oil,0,fish-dominant
+CHE,salmon,aquaculture,meat,micro ingredients,4.144400000000001,fish-dominant
+CHE,salmon,aquaculture,meat,other,0,fish-dominant
+CHE,salmon,aquaculture,meat,pea protein concentrate,0,fish-dominant
+CHE,salmon,aquaculture,meat,pea starch,0,fish-dominant
+CHE,salmon,aquaculture,meat,soy oil,0,fish-dominant
+CHE,salmon,aquaculture,meat,soy protein concentrate,0,fish-dominant
+CHE,salmon,aquaculture,meat,soybean meal,35.22740000000001,fish-dominant
+CHE,salmon,aquaculture,meat,sunflower meal,0,fish-dominant
+CHE,salmon,aquaculture,meat,wheat,14.505400000000003,fish-dominant
+CHE,salmon,aquaculture,meat,wheat gluten,26.938600000000005,fish-dominant
+ARE,salmon,aquaculture,meat,canola oil,71.76,plant-dominant
+ARE,salmon,aquaculture,meat,coconut oil,0.39,plant-dominant
+ARE,salmon,aquaculture,meat,corn gluten meal,2.73,plant-dominant
+ARE,salmon,aquaculture,meat,faba beans,14.04,plant-dominant
+ARE,salmon,aquaculture,meat,"fish meal, cut offs",12.87,plant-dominant
+ARE,salmon,aquaculture,meat,"fish meal, forage fish",34.32,plant-dominant
+ARE,salmon,aquaculture,meat,"fish oil, cut offs",7.8,plant-dominant
+ARE,salmon,aquaculture,meat,"fish oil, forage fish",32.370000000000005,plant-dominant
+ARE,salmon,aquaculture,meat,guar meal,16.77,plant-dominant
+ARE,salmon,aquaculture,meat,linseed oil,5.069999999999999,plant-dominant
+ARE,salmon,aquaculture,meat,micro ingredients,15.99,plant-dominant
+ARE,salmon,aquaculture,meat,other,1.56,plant-dominant
+ARE,salmon,aquaculture,meat,pea protein concentrate,5.46,plant-dominant
+ARE,salmon,aquaculture,meat,pea starch,9.75,plant-dominant
+ARE,salmon,aquaculture,meat,soy oil,1.56,plant-dominant
+ARE,salmon,aquaculture,meat,soy protein concentrate,81.50999999999999,plant-dominant
+ARE,salmon,aquaculture,meat,sunflower meal,13.260000000000002,plant-dominant
+ARE,salmon,aquaculture,meat,wheat,25.35,plant-dominant
+ARE,salmon,aquaculture,meat,wheat gluten,38.22,plant-dominant
+ARE,salmon,aquaculture,meat,canola oil,0,fish-dominant
+ARE,salmon,aquaculture,meat,coconut oil,0,fish-dominant
+ARE,salmon,aquaculture,meat,corn gluten meal,15.6,fish-dominant
+ARE,salmon,aquaculture,meat,faba beans,7.8,fish-dominant
+ARE,salmon,aquaculture,meat,"fish meal, cut offs",0,fish-dominant
+ARE,salmon,aquaculture,meat,"fish meal, forage fish",124.8,fish-dominant
+ARE,salmon,aquaculture,meat,"fish oil, cut offs",0,fish-dominant
+ARE,salmon,aquaculture,meat,"fish oil, forage fish",89.7,fish-dominant
+ARE,salmon,aquaculture,meat,guar meal,0,fish-dominant
+ARE,salmon,aquaculture,meat,linseed oil,0,fish-dominant
+ARE,salmon,aquaculture,meat,micro ingredients,7.8,fish-dominant
+ARE,salmon,aquaculture,meat,other,0,fish-dominant
+ARE,salmon,aquaculture,meat,pea protein concentrate,0,fish-dominant
+ARE,salmon,aquaculture,meat,pea starch,0,fish-dominant
+ARE,salmon,aquaculture,meat,soy oil,0,fish-dominant
+ARE,salmon,aquaculture,meat,soy protein concentrate,0,fish-dominant
+ARE,salmon,aquaculture,meat,soybean meal,66.30000000000001,fish-dominant
+ARE,salmon,aquaculture,meat,sunflower meal,0,fish-dominant
+ARE,salmon,aquaculture,meat,wheat,27.300000000000004,fish-dominant
+ARE,salmon,aquaculture,meat,wheat gluten,50.7,fish-dominant
+GBR,salmon,aquaculture,meat,canola oil,42614.4,plant-dominant
+GBR,salmon,aquaculture,meat,coconut oil,231.6,plant-dominant
+GBR,salmon,aquaculture,meat,corn gluten meal,1621.2,plant-dominant
+GBR,salmon,aquaculture,meat,faba beans,8337.599999999999,plant-dominant
+GBR,salmon,aquaculture,meat,"fish meal, cut offs",7642.8,plant-dominant
+GBR,salmon,aquaculture,meat,"fish meal, forage fish",20380.8,plant-dominant
+GBR,salmon,aquaculture,meat,"fish oil, cut offs",4632,plant-dominant
+GBR,salmon,aquaculture,meat,"fish oil, forage fish",19222.8,plant-dominant
+GBR,salmon,aquaculture,meat,guar meal,9958.8,plant-dominant
+GBR,salmon,aquaculture,meat,linseed oil,3010.7999999999997,plant-dominant
+GBR,salmon,aquaculture,meat,micro ingredients,9495.6,plant-dominant
+GBR,salmon,aquaculture,meat,other,926.4,plant-dominant
+GBR,salmon,aquaculture,meat,pea protein concentrate,3242.4,plant-dominant
+GBR,salmon,aquaculture,meat,pea starch,5790,plant-dominant
+GBR,salmon,aquaculture,meat,soy oil,926.4,plant-dominant
+GBR,salmon,aquaculture,meat,soy protein concentrate,48404.4,plant-dominant
+GBR,salmon,aquaculture,meat,sunflower meal,7874.4,plant-dominant
+GBR,salmon,aquaculture,meat,wheat,15054,plant-dominant
+GBR,salmon,aquaculture,meat,wheat gluten,22696.8,plant-dominant
+GBR,salmon,aquaculture,meat,canola oil,0,fish-dominant
+GBR,salmon,aquaculture,meat,coconut oil,0,fish-dominant
+GBR,salmon,aquaculture,meat,corn gluten meal,9264,fish-dominant
+GBR,salmon,aquaculture,meat,faba beans,4632,fish-dominant
+GBR,salmon,aquaculture,meat,"fish meal, cut offs",0,fish-dominant
+GBR,salmon,aquaculture,meat,"fish meal, forage fish",74112,fish-dominant
+GBR,salmon,aquaculture,meat,"fish oil, cut offs",0,fish-dominant
+GBR,salmon,aquaculture,meat,"fish oil, forage fish",53268,fish-dominant
+GBR,salmon,aquaculture,meat,guar meal,0,fish-dominant
+GBR,salmon,aquaculture,meat,linseed oil,0,fish-dominant
+GBR,salmon,aquaculture,meat,micro ingredients,4632,fish-dominant
+GBR,salmon,aquaculture,meat,other,0,fish-dominant
+GBR,salmon,aquaculture,meat,pea protein concentrate,0,fish-dominant
+GBR,salmon,aquaculture,meat,pea starch,0,fish-dominant
+GBR,salmon,aquaculture,meat,soy oil,0,fish-dominant
+GBR,salmon,aquaculture,meat,soy protein concentrate,0,fish-dominant
+GBR,salmon,aquaculture,meat,soybean meal,39372,fish-dominant
+GBR,salmon,aquaculture,meat,sunflower meal,0,fish-dominant
+GBR,salmon,aquaculture,meat,wheat,16212.000000000002,fish-dominant
+GBR,salmon,aquaculture,meat,wheat gluten,30108,fish-dominant
+USA,salmon,aquaculture,meat,canola oil,3944.532384000001,plant-dominant
+USA,salmon,aquaculture,meat,coconut oil,21.437676000000003,plant-dominant
+USA,salmon,aquaculture,meat,corn gluten meal,150.06373200000002,plant-dominant
+USA,salmon,aquaculture,meat,faba beans,771.756336,plant-dominant
+USA,salmon,aquaculture,meat,"fish meal, cut offs",707.4433080000001,plant-dominant
+USA,salmon,aquaculture,meat,"fish meal, forage fish",1886.515488,plant-dominant
+USA,salmon,aquaculture,meat,"fish oil, cut offs",428.7535200000001,plant-dominant
+USA,salmon,aquaculture,meat,"fish oil, forage fish",1779.3271080000004,plant-dominant
+USA,salmon,aquaculture,meat,guar meal,921.820068,plant-dominant
+USA,salmon,aquaculture,meat,linseed oil,278.689788,plant-dominant
+USA,salmon,aquaculture,meat,micro ingredients,878.9447160000002,plant-dominant
+USA,salmon,aquaculture,meat,other,85.75070400000001,plant-dominant
+USA,salmon,aquaculture,meat,pea protein concentrate,300.12746400000003,plant-dominant
+USA,salmon,aquaculture,meat,pea starch,535.9419000000001,plant-dominant
+USA,salmon,aquaculture,meat,soy oil,85.75070400000001,plant-dominant
+USA,salmon,aquaculture,meat,soy protein concentrate,4480.474284000001,plant-dominant
+USA,salmon,aquaculture,meat,sunflower meal,728.8809840000001,plant-dominant
+USA,salmon,aquaculture,meat,wheat,1393.4489400000002,plant-dominant
+USA,salmon,aquaculture,meat,wheat gluten,2100.892248000001,plant-dominant
+USA,salmon,aquaculture,meat,canola oil,0,fish-dominant
+USA,salmon,aquaculture,meat,coconut oil,0,fish-dominant
+USA,salmon,aquaculture,meat,corn gluten meal,857.5070400000002,fish-dominant
+USA,salmon,aquaculture,meat,faba beans,428.7535200000001,fish-dominant
+USA,salmon,aquaculture,meat,"fish meal, cut offs",0,fish-dominant
+USA,salmon,aquaculture,meat,"fish meal, forage fish",6860.0563200000015,fish-dominant
+USA,salmon,aquaculture,meat,"fish oil, cut offs",0,fish-dominant
+USA,salmon,aquaculture,meat,"fish oil, forage fish",4930.665480000001,fish-dominant
+USA,salmon,aquaculture,meat,guar meal,0,fish-dominant
+USA,salmon,aquaculture,meat,linseed oil,0,fish-dominant
+USA,salmon,aquaculture,meat,micro ingredients,428.7535200000001,fish-dominant
+USA,salmon,aquaculture,meat,other,0,fish-dominant
+USA,salmon,aquaculture,meat,pea protein concentrate,0,fish-dominant
+USA,salmon,aquaculture,meat,pea starch,0,fish-dominant
+USA,salmon,aquaculture,meat,soy oil,0,fish-dominant
+USA,salmon,aquaculture,meat,soy protein concentrate,0,fish-dominant
+USA,salmon,aquaculture,meat,soybean meal,3644.404920000001,fish-dominant
+USA,salmon,aquaculture,meat,sunflower meal,0,fish-dominant
+USA,salmon,aquaculture,meat,wheat,1500.6373200000005,fish-dominant
+USA,salmon,aquaculture,meat,wheat gluten,2786.8978800000004,fish-dominant

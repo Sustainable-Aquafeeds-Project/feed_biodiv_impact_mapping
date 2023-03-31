@@ -1,0 +1,309 @@
+---
+title: "Calculating feed components"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+
+This script divides consumption into fofm and crop categories.
+
+```{r setup, include=FALSE}
+
+library(here)
+library(stringi)
+library(kableExtra)
+library(countrycode)
+
+source(here("src/fxns.R"))
+
+demand <- read_csv(here("prep/02_feed/data/demand/total_aquaculture_ingredient_demand_corrected.csv")) %>%
+  mutate(animal_system = paste(animal, system, product, sep="_")) %>%
+  rename(source_ingredient = ingredient) %>%
+  select(iso3c, animal_system, diet, source_ingredient, ingredient_demand)
+
+```
+
+## Calculate tonnes consumption from MAPSPAM categories of feed
+
+```{r}
+
+feed_cats <- read_csv(here("prep/02_feed/data/feed_category_table.csv")) %>% ## this table was created manually. It matches our ingredient names from Aas et al. 2022 to mapspam names. Must also update product_to_fao_spam.csv. 
+  select(-notes) 
+
+# make sure all feed is categorized...if not update the feed_category_table.csv
+setdiff(demand$source_ingredient, feed_cats$source_feedname)
+
+# make sure no duplicates, if there are: correct them:
+feed_cats[duplicated(feed_cats$source_feedname),]
+
+feedstuff_cats <- demand %>%
+  left_join(feed_cats, by= c("source_ingredient" = "source_feedname")) 
+filter(feedstuff_cats, is.na(included_source)) # should be no NA values
+
+crop_feed <- feedstuff_cats %>%
+  filter(included_source == "mapspam")
+
+# see whats there, should be no blank data!
+crop_feed %>%
+  filter(ingredient_demand > 0) %>%
+  select(source_ingredient, product) %>%
+  unique() %>%
+  data.frame()
+
+```
+
+
+Determine processing loss. This gives us the true amount of raw material. 
+
+```{r}
+
+feed_loss <- read_csv(here("prep/02_feed/data/feed_extraction_rates.csv"))  %>%
+  dplyr::select(-processing, -source, -...7) %>%
+  unique()
+
+setdiff(crop_feed$product, feed_loss$product) # if anything pops up, edit feed_extraction_rates.csv to include loss data
+
+crop_feed_extract <- crop_feed %>%
+  left_join(feed_loss, by = "product") %>%
+  mutate(tonnes_product = ingredient_demand * 100/(100 - crop_loss)) 
+
+write.csv(crop_feed_extract, here("prep/02_feed/data/demand/crop_demand_extraction_corrected.csv"), row.names = FALSE)
+
+test <- crop_feed_extract %>%
+  dplyr::select(iso3c, source_ingredient, diet, product, ingredient_demand, crop_loss, tonnes_product) 
+
+
+test <- crop_feed_extract %>%
+  distinct(source_ingredient, product, crop)
+
+```
+
+Convert to mapspam crops.
+
+```{r}
+
+
+## SPAM_super categories that we have combined:
+spam_super <- vroom::vroom(here("prep/02_feed/data/MapSPAM_to_FAO_v2.csv")) %>%
+  select(SPAM_short_name, SPAM_super) %>%
+  unique() %>%
+  data.frame()
+
+## feed items and corresponding spam categories
+spam <- read_csv(here("prep/02_feed/data/product_to_fao_spam.csv")) %>%
+  select(product, SPAM_short_name) %>%
+  unique()
+setdiff(spam_super$SPAM_short_name, spam$SPAM_short_name) # these crops are not feed items
+setdiff(spam$SPAM_short_name, spam_super$SPAM_short_name) # should be nothing here
+## if there are differences: need to edit something to align data
+setdiff(crop_feed_extract$product, spam$product)
+
+spam <- left_join(spam, spam_super, by="SPAM_short_name")
+
+crop_feed_spam <- crop_feed_extract %>%
+  left_join(spam, by="product") %>%
+  group_by(iso3c, diet, animal_system, SPAM_super, product) %>%
+  summarize(tonnes_product = sum(tonnes_product)) %>%
+  ungroup()
+
+write_csv(crop_feed_spam, here("prep/02_feed/data/demand/system_country_mapspam_tonnes_consumption.csv"))
+
+
+test <- crop_feed_extract %>%
+  left_join(spam, by="product") %>%
+  group_by(iso3c, diet, animal_system, SPAM_super, product) %>%
+  summarize(tonnes_product = sum(tonnes_product),
+            tonnes_ingredient = sum(ingredient_demand)) %>%
+  ungroup()
+
+```
+
+
+## Calculate tonnes consumption from FOFM categories of feed
+
+```{r}
+
+feed_cats <- read_csv(here("prep/02_feed/data/feed_category_table.csv")) %>%
+  select(-notes)
+
+feedstuff_cats <- demand %>%
+  left_join(feed_cats, by= c("source_ingredient" ="source_feedname")) 
+
+filter(feedstuff_cats, is.na(included_source)) # should be no NA values
+
+fofm_feed <- feedstuff_cats %>%
+  filter(included_source == "fofm") %>%
+  mutate(feed_item = "fofm marine catch") %>%
+  select(iso3c, diet, system=animal_system, tonnes=ingredient_demand) %>%
+  filter(tonnes>0) %>%
+  filter(!is.na(system))
+
+unique(fofm_feed$system)
+
+```
+
+account for processing loss
+
+```{r}
+
+feed_loss <- read_csv(here("prep/02_feed/data/feed_extraction_rates.csv"))  %>%
+  filter(crop == "forage fish") %>%
+  dplyr::select(crop_loss) %>%
+  unique() %>%
+  pull()
+
+fofm_feed_extract <- fofm_feed %>%
+  mutate(feed_loss = feed_loss) %>%
+  mutate(tonnes_product = tonnes * 100/(100 - feed_loss)) 
+
+# check to see values generally match with expectation
+fofm_feed_extract %>%
+  separate(system, c("animal", "system", "product")) %>%
+  group_by(animal, diet) %>%
+  summarize(tonnes=sum(tonnes_product))
+
+
+read_csv(here("prep/02_feed/data/demand/fofm_aquaculture_corrected_consumption.csv")) %>%
+  select(animal, true_tonnes_fish)
+
+regions <- read_csv(here("data/spatial/output/food_rgns.csv")) %>%
+  select(-ID_0)
+
+fofm_feed_final <- left_join(regions, fofm_feed_extract) %>%
+  mutate(feed_item = "forage fish") %>%
+  select(iso3c, Country, diet, system, feed_item, tonnes = tonnes_product) %>%
+  mutate(tonnes = ifelse(is.na(tonnes), 0, tonnes)) %>%
+  filter(!is.na(system))
+
+write_csv(fofm_feed_final, here("prep/02_feed/data/demand/FMFO_country_data.csv"))
+
+```
+
+
+
+
+Try Rich's way:
+
+
+```{r}
+## test out with fish-dominant diet first (since they match Rich... I will probably change the plant-dominant one to match Rich's paper)
+
+ingredient_by_raw_material <- 
+  read_csv(here("data/tidy_data/plant_ingredient_codes.csv")) |> 
+  select(-reference) |> 
+  drop_na(ingredient) |> 
+  add_row(ingredient = "pea starch", raw_material = "peas", FAOSTAT_name = "Peas, green", FAO_code = 187, map_spam_code = "opul") |> 
+  mutate(FAOSTAT_name = if_else(FAOSTAT_name == "Peas, dry; Peas, green", true = "Peas, dry", false = FAOSTAT_name)) 
+
+
+
+demand <- read_csv(here("prep/02_feed/data/demand/total_aquaculture_ingredient_demand_corrected.csv")) %>%
+  mutate(animal_system = paste(animal, system, product, sep="_")) %>%
+  rename(source_ingredient = ingredient) %>%
+  select(iso3c, animal_system, diet, source_ingredient, ingredient_demand) %>%
+  filter(diet == "fish-dominant") %>%
+  filter(ingredient_demand >0) %>%
+  mutate(source_ingredient = ifelse(source_ingredient == "corn gluten", "corn gluten meal", source_ingredient))
+
+
+crop_production <- readRDS(here("data/tidy_data/production-data/crops_production_tidy.rds")) %>%
+    filter(element == "Production"  & area!= "China" & item %in% ingredient_by_raw_material$FAOSTAT_name & year %in% seq(from = 2019, to = 2021)) |> 
+  group_by(area, item) |> 
+  summarise(mean_value = mean(value, na.rm = TRUE)) |> 
+    ungroup() |> 
+  mutate(area = case_when(grepl("Ivoire", area) ~ "Cote d'Ivoire",
+                          TRUE ~ area),
+         iso3c = countrycode(sourcevar = area, origin = "country.name", destination = "iso3c", warn = TRUE)) |> 
+  filter(!is.na(iso3c)) |> 
+    arrange(item,-mean_value) %>%
+  filter(mean_value > 0 ) %>%
+  left_join(ingredient_by_raw_material, by = c("item" = "FAOSTAT_name")) %>%
+  dplyr::select(ingredient, item, area, iso3c, mean_value) 
+
+
+## read in conversion factor data that rich put together 
+#get yield data from main ingredients
+cf_data <- read_csv(file.path("/mnt/rdsi/raw_data/allocation/top_crop_producers_conversions.csv")) |> 
+  mutate(ingredient = if_else(ingredient == "canola/camelina oil", true = "canola oil", false = ingredient)) %>% 
+ # filter(ingredient!="soy oil") %>%
+  dplyr::select(1:6)
+# get coproduct yield data
+
+cf_coproduct_data <- read_csv(file.path("/mnt/rdsi/raw_data/allocation/coproduct_conversions.csv"))
+
+
+cf_data_all <- crop_production %>%
+  filter(!(iso3c %in% c(cf_data$iso3c))) %>%
+  mutate(cf = NA) %>%
+  rbind(cf_data) %>%
+  group_by(ingredient, item) %>%
+  mutate(cf_mean = mean(cf, na.rm = TRUE)) %>%
+  ungroup() %>%
+  mutate(cf_gf = ifelse(is.na(cf), cf_mean, cf),
+         gf_flag = ifelse(is.na(cf), "gapfilled with global mean cf", NA))
+
+coproduct_means <- cf_coproduct_data %>%
+  group_by(ingredient, coproduct) %>%
+  summarise(coproduct_cf = mean(coproduct_cf, na.rm = TRUE)) %>% ungroup()
+
+
+coproduct_gf <- cf_data_all %>%
+  filter(!is.na(gf_flag)) %>%
+  distinct(iso3c, ingredient) %>%
+  left_join(coproduct_means) %>%
+  mutate(gapfill_flag = "global mean coproduct cf")
+
+
+cf_coproduct_data_all <- cf_coproduct_data %>%
+  dplyr::select(1:4) %>%
+  mutate(gapfill_flag = NA) %>%
+  rename(iso3c = country) %>%
+  rbind(coproduct_gf)
+  
+
+
+#join product and coproduct yield (conversion) data
+all_cf_data <- 
+  cf_data_all |> 
+  filter(!ingredient %in% c("tapioca starch", "lupins")) |> #not included in the diet information
+  dplyr::select(ingredient, item, area, iso3c, cf = cf_gf) %>%
+  left_join(cf_coproduct_data_all, by = c("ingredient", "iso3c")) %>%
+  dplyr::select(-gapfill_flag) %>%
+  filter(item != "Peas, green")
+
+
+allocation_raw <- 
+  all_cf_data |> 
+  group_by(ingredient, area) |> 
+  nest() |> 
+  mutate(
+         mass_allocation_factor = map(data, ~((.$cf/ (sum(unique(.$cf), sum(.$coproduct_cf))))/.$cf)) #need to divide by yield again here otherwise it is just the partitioning factor (for mass allocation only)
+         ) |> 
+  unnest(c(data, mass_allocation_factor))
+
+
+# Join the ingredient demand and allocation data to generate crop raw material demand
+
+plant_ingredient_codes <- read.csv(here("data/tidy_data/plant_ingredient_codes.csv"))
+
+allocation_factors <- allocation_raw %>%
+  select(item, ingredient, area, iso3c, mass_allocation_factor) |> 
+  distinct() |> 
+  left_join(plant_ingredient_codes |> select(-raw_material), by = c("ingredient", "item" = "FAOSTAT_name")) |> 
+  distinct()
+
+
+crop_raw_material_demand <- demand %>%
+  left_join(allocation_factors, by = c("source_ingredient" = "ingredient", "iso3c")) %>%
+  # drop_na(item) |> 
+  rename(FAOSTAT_name = item,
+         source_country = area,
+         source_iso3c = iso3c) |> 
+  mutate(
+         total_crop_demand_ms = ingredient_demand*mass_allocation_factor) %>%
+  group_by(source_iso3c, diet, source_ingredient, ingredient_demand, mass_allocation_factor, map_spam_code) %>%
+  summarise(total_crop_demand_ms = sum(total_crop_demand_ms, na.rm = TRUE)) %>%
+  ungroup()
+```
+
