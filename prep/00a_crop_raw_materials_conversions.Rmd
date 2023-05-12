@@ -1,0 +1,152 @@
+---
+title: "Calculate embodied crop materials from feed demand"
+output: html_document
+---
+
+Next step is to determine raw material demand which will vary by processing technique (e.g. SPC vs SBM) and source. So first, we need to know where the ingredients are largely sourced from. This may change with information that we gain from Biomar but the idea is eventually to make this flexible enough to select any from the top producing countries. This requires knowing the raw material that supports the ingredient and the major places this raw material is grown.
+
+```{r}
+library(tidyverse)
+library(here)
+library(janitor)
+library(countrycode)
+library(data.table)
+library(dtplyr)
+library(raster)
+library(terra)
+library(sf)
+library(jsonlite)
+library(ggnewscale)
+
+source(here("src/directories.R"))
+
+select <- dplyr::select
+values <- terra::values
+```
+
+#CROP INGREDIENTS
+
+Have added codes and FAO_names for plant ingredients in teams so join these to production data.
+
+```{r}
+
+ingredient_by_raw_material <- 
+  read_csv(here("data/tidy_data/plant_ingredient_codes.csv")) |> 
+  select(-reference) |> 
+  drop_na(ingredient) |> 
+  mutate(FAOSTAT_name = if_else(FAOSTAT_name == "Peas, dry; Peas, green", true = "Peas, dry", false = FAOSTAT_name)) 
+ 
+
+crop_production_raw <- readRDS(file = here("data/tidy_data/production-data/crops_production_tidy.rds"))
+
+(crop_production <- 
+  crop_production_raw |>
+  filter(element == "Production"  & area!= "China" & item %in% ingredient_by_raw_material$FAOSTAT_name & year %in% seq(from = 2015, to = 2019)) |> 
+  group_by(area, item) |> 
+  summarise(mean_value = mean(value, na.rm = TRUE)) |> 
+    ungroup() |> 
+  mutate(area = case_when(grepl("Ivoire", area) ~ "Cote d'Ivoire",
+                          TRUE ~ area),
+         iso3c = countrycode(sourcevar = area, origin = "country.name", destination = "iso3c", warn = TRUE)) |> 
+  filter(!is.na(iso3c)) |> 
+    arrange(item,-mean_value)
+)
+
+
+#looking across the top 3 producers for each crop
+top_10_crop_producers <- 
+  crop_production |> 
+  group_split(item) |> 
+  map_df(\(.){ 
+    #this takes the top ten producers - unless it is for Guar (Pulses nes) where I used the suggestion that most guar production comes from India, Pakistan and Africa (so subsequently took the top 8 African producers of pulses nes to make up the top 10)
+    
+    if(unique(.$item) == "Pulses nes"){
+      . |> filter(area %in% c("India", "Pakistan", "Kenya", 
+                              "Ethiopia", "United Republic of Tanzania", 
+                              "Sudan", "Sierra Leone", "Nigeria", 
+                              "Guinea",  "Central African Republic"))
+      }else{
+        . |>  slice(1:10)}
+  }
+)
+
+
+## read in ingredients and associated coproducts
+
+ingredient_coproducts <- read_xlsx(here("data/tidy_data/allocation/all_ingredient_coproducts.xlsx")) %>%
+  dplyr::select(1:5) %>%
+  mutate(ingredient = trimws(ingredient))
+
+ingredient_coproducts_long <- ingredient_coproducts %>%
+  pivot_longer(cols = c(2:5), values_to = "coproduct") %>%
+  dplyr::select(-name) %>%
+  filter(coproduct != "") %>%
+    left_join(ingredient_by_raw_material, by = "ingredient")
+
+## Join with top 10 producers data
+
+top_10_coproducts <- top_10_crop_producers %>%
+  left_join(ingredient_coproducts_long, by = c("item" = "FAOSTAT_name")) %>%
+  dplyr::arrange(ingredient, coproduct, -mean_value) %>%
+  mutate(yield = NA, 
+         yield_source = NA, 
+         yield_coproduct = NA, 
+         yield_coproduct_source = NA) %>%
+  dplyr::select(ingredient, item, iso3c, mean_value, yield, yield_source, coproduct, yield_coproduct, yield_coproduct_source)
+
+ write.csv(x = top_10_coproducts, file = here("data/tidy_data/production-data/top_crop_producers.csv"), row.names = FALSE)
+
+```
+
+Now we have the top 10 producers for each crop that is used as a raw material in feed, we need to get conversion factors from ingredients to each of these raw materials in different places and also the gross energy values of each ingredient and co-product so that energetic allocation and mass allocation conversion to embodied raw material can be achieved. This was done separately in the Sustainable Aquafeeds Project Teams interface and imported here. 
+
+```{r}
+#import codes that will be compatible with MAPSPAM layers
+
+plant_ingredient_codes <- 
+  read_csv(here("data/tidy_data/plant_ingredient_codes.csv")) |> 
+  select(-reference) |> 
+  drop_na(ingredient) |> 
+  mutate(FAOSTAT_name = if_else(FAOSTAT_name == "Peas, dry; Peas, green", true = "Peas, dry", false = FAOSTAT_name),
+         ingredient = if_else(ingredient == "canola/camelina oil", true = "canola oil", false = ingredient))
+
+#join codes to top 10 producers and conversion factors data
+# this contains product and co-product yield factors
+all_cf_data <- read_xlsx(here("data/tidy_data/allocation/top_crop_producers_cf.xlsx")) |> 
+    select(iso3c, item, ingredient, yield, coproduct, yield_coproduct) |> 
+  left_join(plant_ingredient_codes |> select(-raw_material), by = c("ingredient", "item" = "FAOSTAT_name"))
+
+## now take a mean of the yield data. We want a global average yield for each ingredient and co-product. 
+
+all_cf_data_mean <- all_cf_data %>% 
+  group_by(item, ingredient, coproduct, FAO_code, map_spam_code) %>%
+  summarise(yield = mean(yield),
+            yield_coproduct = mean(yield_coproduct)) %>%
+  ungroup()
+
+
+#bring in the gross energy values
+ge_values <- read_xlsx(here("data/raw_data/allocation/feed_coproduct_ge_allocation.xlsx")) |> 
+  select(-c(unit,reference, notes)) |> 
+  filter(!ingredient %in% c("fishmeal", "fish oil")) |> 
+  mutate(coproduct = if_else(coproduct == "soybean meal" & ingredient == "soybean meal", true = "soy protein concentrate", false = coproduct ))
+
+
+setdiff(all_cf_data_mean$ingredient, ge_values$ingredient) # [1]character(0)
+setdiff(all_cf_data_mean$coproduct, ge_values$coproduct) # [1] character(0)
+
+setdiff(ge_values$ingredient, all_cf_data_mean$ingredient) # character(0)
+setdiff(ge_values$coproduct, all_cf_data_mean$coproduct) # [1] "guar gum"  
+
+# calculate the allocation factors for gross energy and mass allocation
+
+allocation_raw <- 
+  ge_values |> 
+  left_join(all_cf_data_mean, by = c("ingredient", "coproduct")) |> 
+  mutate(energy_cf_product = gross_energy_product*yield,
+         energy_cf_coproduct = gross_energy_coproduct*yield_coproduct) |> 
+  ungroup()
+
+write_csv(x = allocation_raw, file = here("data/tidy_data/allocation/crop_ingredient_allocation_factors.csv"))
+
+```

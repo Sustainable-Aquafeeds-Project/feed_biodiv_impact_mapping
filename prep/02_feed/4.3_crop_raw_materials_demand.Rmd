@@ -1,0 +1,49 @@
+---
+title: "Calculate embodied crop materials from feed demand"
+output: html_document
+---
+
+
+Join the ingredient demand and allocation data to generate crop raw material demand
+
+```{r}
+
+#get saved allocation data
+(allocation_factors <- read_csv(here("data/tidy_data/allocation/crop_ingredient_allocation_factors.csv")) |> 
+  select(item, ingredient, area, iso3c, mean_value, ge_allocation_factor, mass_allocation_factor) |> distinct() |> 
+  left_join(plant_ingredient_codes |> select(-raw_material), by = c("ingredient", "item" = "FAOSTAT_name")) |> 
+  distinct()
+)
+
+#join the ingredient demand by diet to the top 10 producer data so for each ingredient there will be an raw material demand per source, and diet scenario. Create new raw_material demand column by dividing total ingredient demand by the conversion factor (i.e. the ingredient extraction rate from the raw material in the first place)
+
+crop_raw_material_demand <- readRDS(here("data/tidy_data/demand/total_ingredient_demand.rds")) |> 
+  ungroup() |> 
+  left_join(allocation_factors, by = c("ingredients" = "ingredient")) |> 
+  drop_na(item) |> 
+  rename(FAOSTAT_name = item,
+         source_country = area,
+         source_iso3c = iso3c) |> 
+  mutate(total_crop_demand_ge = total_ingredient_demand*ge_allocation_factor,
+         total_crop_demand_ms = total_ingredient_demand*mass_allocation_factor)
+
+#export total crop demand 
+saveRDS(object = crop_raw_material_demand, file = here("data/tidy_data/demand/total_crop_demand.rds"))
+
+
+```
+
+Export the allocation factors to process for supplementary information
+
+```{r}
+
+allocation_factors <- read_csv(here("data/tidy_data/allocation/crop_ingredient_allocation_factors.csv"))
+
+
+
+allocation_factors |> select(ingredient, item, iso3c, ge_allocation_factor, mass_allocation_factor) |> distinct() |> 
+  write_csv(here("data/tidy_data/allocation/unique_crop_conversion_factors.csv"))
+
+#clear the environment
+rm(list = ls(all.names = TRUE))
+```
