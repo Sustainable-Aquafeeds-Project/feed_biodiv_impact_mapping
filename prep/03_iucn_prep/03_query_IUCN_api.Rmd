@@ -41,7 +41,6 @@ spp_list_df <- bind_rows(mclapply(X = pagelist, FUN = get_spp_api, mc.cores = de
 
 saveRDS(object = spp_list_df, file = here("data/raw_data/iucn/spp_list.rds"), compress = TRUE)
 
-
 ```
 
 Get species habitat data. This takes a couple of days to run. Don't run if not needed. If needed, adjust the 'iucn_habitat_dir' to your storage.
@@ -62,6 +61,7 @@ n_species_index <- split(n_species, ceiling(seq_along(n_species)/chunk_size)) #p
 
 for (j in 1:length(spp_list_split)){
 
+  # j = 1
   #index by species identity
   spp_ids <- spp_list_split[[j]]
   first_sp <- first(spp_ids)
@@ -89,6 +89,9 @@ for (j in 1:length(spp_list_split)){
   
   
 }
+
+
+test <- readRDS(file.path(sprintf(paste0(iucn_habitat_dir, "/spp_habitat_%s-%s.rds"), first_spp_index, last_spp_index)))
 
 habitat_files <- list.files(path = iucn_habitat_dir, full.names = TRUE)
 
@@ -173,4 +176,30 @@ saveRDS(object = all_threats, file = here("data/raw_data/iucn/threats_by_spp.rds
 
 
 ```
+
+
+```{r}
+spp_100 <- spp_list_df %>%
+  filter(row_number() %in% c(1:100))
+
+habs_100 <- all_habitats %>%
+  filter(spp_id %in% spp_100$taxonid) %>%
+  mutate(spp_id = as.numeric(spp_id)) %>%
+  distinct()
+
+threats_100 <- all_threats %>%
+  filter(id %in% c(spp_100$taxonid)) %>%
+  mutate(id = as.numeric(id)) %>%
+  dplyr::select(-spp_id) %>%
+  distinct()
+
+habs_threats_spp<- habs_100 %>%
+  left_join(threats_100, by = c("spp_id"= "id")) %>%
+  left_join(spp_100, by = c("spp_id" = "taxonid")) %>%
+  dplyr::select(-c(code, suitability, season, majorimportance, result.code, result.scope, result.severity, result.invasive, api_error, taxonomic_authority, population)) %>%
+  distinct()
+
+
+```
+
 

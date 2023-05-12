@@ -1,121 +1,291 @@
-"","area","item","mean_value","iso3c"
-"1","China, mainland","Broad beans, horse beans, dry",1698146.6,"CHN"
-"2","Ethiopia","Broad beans, horse beans, dry",940411,"ETH"
-"3","United Kingdom of Great Britain and Northern Ireland","Broad beans, horse beans, dry",567047.4,"GBR"
-"4","Australia","Broad beans, horse beans, dry",367982.6,"AUS"
-"5","France","Broad beans, horse beans, dry",193958.4,"FRA"
-"6","Germany","Broad beans, horse beans, dry",159200,"DEU"
-"7","Sudan","Broad beans, horse beans, dry",139287,"SDN"
-"8","Egypt","Broad beans, horse beans, dry",125229.4,"EGY"
-"9","Italy","Broad beans, horse beans, dry",104060.4,"ITA"
-"10","Morocco","Broad beans, horse beans, dry",86345.4,"MAR"
-"11","Nigeria","Cassava",57511431.2,"NGA"
-"12","Democratic Republic of the Congo","Cassava",37410763.6,"COD"
-"13","Thailand","Cassava",30892416.4,"THA"
-"14","Brazil","Cassava",19613602.4,"BRA"
-"15","Ghana","Cassava",18846718.8,"GHA"
-"16","Indonesia","Cassava",18716971.6,"IDN"
-"17","Viet Nam","Cassava",10387860,"VNM"
-"18","Angola","Cassava",8341266.4,"AGO"
-"19","Cambodia","Cassava",7500000,"KHM"
-"20","United Republic of Tanzania","Cassava",6333893.2,"TZA"
-"21","Kazakhstan","Linseed",735455,"KAZ"
-"22","Russian Federation","Linseed",604937.4,"RUS"
-"23","Canada","Linseed",603620,"CAN"
-"24","China, mainland","Linseed",367432.2,"CHN"
-"25","United States of America","Linseed",169182,"USA"
-"26","India","Linseed",147416,"IND"
-"27","Ethiopia","Linseed",90022.8,"ETH"
-"28","Ukraine","Linseed",50812,"UKR"
-"29","France","Linseed",46361.8,"FRA"
-"30","United Kingdom of Great Britain and Northern Ireland","Linseed",38600,"GBR"
-"31","Australia","Lupins",749070.8,"AUS"
-"32","Poland","Lupins",186759.4,"POL"
-"33","Russian Federation","Lupins",164609.6,"RUS"
-"34","Morocco","Lupins",56632.2,"MAR"
-"35","Germany","Lupins",37800,"DEU"
-"36","Chile","Lupins",36912.8,"CHL"
-"37","Ukraine","Lupins",21270,"UKR"
-"38","Peru","Lupins",14843.6,"PER"
-"39","Greece","Lupins",13923.8,"GRC"
-"40","France","Lupins",12155.6,"FRA"
-"41","United States of America","Maize",367813762,"USA"
-"42","China, mainland","Maize",261125760,"CHN"
-"43","Brazil","Maize",86174997.2,"BRA"
-"44","Argentina","Maize",44681904,"ARG"
-"45","Ukraine","Maize",29550406,"UKR"
-"46","Mexico","Maize",27021010.2,"MEX"
-"47","India","Maize",26167570,"IND"
-"48","Indonesia","Maize",24990960.2,"IDN"
-"49","Romania","Maize",14038009.4,"ROU"
-"50","Canada","Maize",13790540,"CAN"
-"51","Canada","Peas, dry",3993200,"CAN"
-"52","Russian Federation","Peas, dry",2374679,"RUS"
-"53","China, mainland","Peas, dry",1426146.2,"CHN"
-"54","United States of America","Peas, dry",893714.6,"USA"
-"55","India","Peas, dry",889426,"IND"
-"56","Ukraine","Peas, dry",714132,"UKR"
-"57","France","Peas, dry",665158.2,"FRA"
-"58","Ethiopia","Peas, dry",369238.8,"ETH"
-"59","Lithuania","Peas, dry",289089.2,"LTU"
-"60","Australia","Peas, dry",277370.2,"AUS"
-"61","China, mainland","Peas, green",11323701.2,"CHN"
-"62","India","Peas, green",5158400,"IND"
-"63","United States of America","Peas, green",277422,"USA"
-"64","France","Peas, green",248928.2,"FRA"
-"65","Egypt","Peas, green",175036.4,"EGY"
-"66","Pakistan","Peas, green",160318,"PAK"
-"67","Algeria","Peas, green",156347.2,"DZA"
-"68","United Kingdom of Great Britain and Northern Ireland","Peas, green",143379.4,"GBR"
-"69","Peru","Peas, green",130330.6,"PER"
-"70","Spain","Peas, green",108510.6,"ESP"
-"71","India","Pulses nes",959858.6,"IND"
-"72","Kenya","Pulses nes",122352.4,"KEN"
-"73","Ethiopia","Pulses nes",111388,"ETH"
-"74","United Republic of Tanzania","Pulses nes",105882.6,"TZA"
-"75","Sudan","Pulses nes",90451,"SDN"
-"76","Sierra Leone","Pulses nes",77381.8,"SLE"
-"77","Nigeria","Pulses nes",65753.8,"NGA"
-"78","Pakistan","Pulses nes",63128.6,"PAK"
-"79","Guinea","Pulses nes",57544.8,"GIN"
-"80","Central African Republic","Pulses nes",46728.6,"CAF"
-"81","Canada","Rapeseed",19911740,"CAN"
-"82","China, mainland","Rapeseed",13405400,"CHN"
-"83","India","Rapeseed",7736348,"IND"
-"84","France","Rapeseed",4779711.2,"FRA"
-"85","Germany","Rapeseed",4074440,"DEU"
-"86","Australia","Rapeseed",3377528,"AUS"
-"87","Poland","Rapeseed",2398354.2,"POL"
-"88","Ukraine","Rapeseed",2223444,"UKR"
-"89","United Kingdom of Great Britain and Northern Ireland","Rapeseed",2049600,"GBR"
-"90","Russian Federation","Rapeseed",1514474.8,"RUS"
-"91","United States of America","Soybeans",112226398,"USA"
-"92","Brazil","Soybeans",108164227.2,"BRA"
-"93","Argentina","Soybeans",53653851.6,"ARG"
-"94","China, mainland","Soybeans",14784698.8,"CHN"
-"95","India","Soybeans",11817644,"IND"
-"96","Paraguay","Soybeans",9612730.6,"PRY"
-"97","Canada","Soybeans",6866200,"CAN"
-"98","Ukraine","Soybeans",4053288,"UKR"
-"99","Russian Federation","Soybeans",3571876.2,"RUS"
-"100","Bolivia (Plurinational State of)","Soybeans",2982790.4,"BOL"
-"101","Ukraine","Sunflower seed",13292564,"UKR"
-"102","Russian Federation","Sunflower seed",11782275,"RUS"
-"103","Argentina","Sunflower seed",3413731.8,"ARG"
-"104","China, mainland","Sunflower seed",2674342.6,"CHN"
-"105","Romania","Sunflower seed",2672538.8,"ROU"
-"106","Bulgaria","Sunflower seed",1902216.4,"BGR"
-"107","Turkey","Sunflower seed",1873006,"TUR"
-"108","Hungary","Sunflower seed",1798370,"HUN"
-"109","France","Sunflower seed",1299103.2,"FRA"
-"110","United States of America","Sunflower seed",1068318,"USA"
-"111","China, mainland","Wheat",133037620,"CHN"
-"112","India","Wheat",96159194,"IND"
-"113","Russian Federation","Wheat",73544572.2,"RUS"
-"114","United States of America","Wheat",53987457.4,"USA"
-"115","France","Wheat",37354670.8,"FRA"
-"116","Canada","Wheat",31037247,"CAN"
-"117","Ukraine","Wheat",26372606,"UKR"
-"118","Pakistan","Wheat",25363607.4,"PAK"
-"119","Germany","Wheat",23764200,"DEU"
-"120","Australia","Wheat",23274902.6,"AUS"
+"ingredient","item","iso3c","mean_value","yield","yield_source","coproduct","yield_coproduct","yield_coproduct_source"
+"canola oil","Rape or colza seed","CAN",19987920,NA,NA,"canola meal",NA,NA
+"canola oil","Rape or colza seed","CHN",13405400,NA,NA,"canola meal",NA,NA
+"canola oil","Rape or colza seed","IND",7736348,NA,NA,"canola meal",NA,NA
+"canola oil","Rape or colza seed","FRA",4779711.2,NA,NA,"canola meal",NA,NA
+"canola oil","Rape or colza seed","DEU",4074440,NA,NA,"canola meal",NA,NA
+"canola oil","Rape or colza seed","AUS",3377528.026,NA,NA,"canola meal",NA,NA
+"canola oil","Rape or colza seed","POL",2398354.2,NA,NA,"canola meal",NA,NA
+"canola oil","Rape or colza seed","UKR",2223444,NA,NA,"canola meal",NA,NA
+"canola oil","Rape or colza seed","GBR",2049600,NA,NA,"canola meal",NA,NA
+"canola oil","Rape or colza seed","RUS",1514474.82,NA,NA,"canola meal",NA,NA
+"coconut oil","Coconuts, in shell","IDN",17240000,NA,NA,"cake of coconut",NA,NA
+"coconut oil","Coconuts, in shell","PHL",14420124.526,NA,NA,"cake of coconut",NA,NA
+"coconut oil","Coconuts, in shell","IND",12963143.8,NA,NA,"cake of coconut",NA,NA
+"coconut oil","Coconuts, in shell","BRA",2443563.1,NA,NA,"cake of coconut",NA,NA
+"coconut oil","Coconuts, in shell","LKA",2276160,NA,NA,"cake of coconut",NA,NA
+"coconut oil","Coconuts, in shell","PNG",1780312,NA,NA,"cake of coconut",NA,NA
+"coconut oil","Coconuts, in shell","VNM",1531411.73,NA,NA,"cake of coconut",NA,NA
+"coconut oil","Coconuts, in shell","MMR",1282630,NA,NA,"cake of coconut",NA,NA
+"coconut oil","Coconuts, in shell","MEX",1099600,NA,NA,"cake of coconut",NA,NA
+"coconut oil","Coconuts, in shell","THA",858950.646,NA,NA,"cake of coconut",NA,NA
+"corn gluten meal","Maize (corn)","USA",367813762,NA,NA,"corn gluten feed",NA,NA
+"corn gluten meal","Maize (corn)","CHN",261125760,NA,NA,"corn gluten feed",NA,NA
+"corn gluten meal","Maize (corn)","BRA",86174997.2,NA,NA,"corn gluten feed",NA,NA
+"corn gluten meal","Maize (corn)","ARG",44681904,NA,NA,"corn gluten feed",NA,NA
+"corn gluten meal","Maize (corn)","UKR",29550406,NA,NA,"corn gluten feed",NA,NA
+"corn gluten meal","Maize (corn)","MEX",27021010.4,NA,NA,"corn gluten feed",NA,NA
+"corn gluten meal","Maize (corn)","IND",25821570,NA,NA,"corn gluten feed",NA,NA
+"corn gluten meal","Maize (corn)","IDN",24403760.2,NA,NA,"corn gluten feed",NA,NA
+"corn gluten meal","Maize (corn)","ROU",14038009.4,NA,NA,"corn gluten feed",NA,NA
+"corn gluten meal","Maize (corn)","CAN",13790540,NA,NA,"corn gluten feed",NA,NA
+"corn gluten meal","Maize (corn)","USA",367813762,NA,NA,"corn starch",NA,NA
+"corn gluten meal","Maize (corn)","CHN",261125760,NA,NA,"corn starch",NA,NA
+"corn gluten meal","Maize (corn)","BRA",86174997.2,NA,NA,"corn starch",NA,NA
+"corn gluten meal","Maize (corn)","ARG",44681904,NA,NA,"corn starch",NA,NA
+"corn gluten meal","Maize (corn)","UKR",29550406,NA,NA,"corn starch",NA,NA
+"corn gluten meal","Maize (corn)","MEX",27021010.4,NA,NA,"corn starch",NA,NA
+"corn gluten meal","Maize (corn)","IND",25821570,NA,NA,"corn starch",NA,NA
+"corn gluten meal","Maize (corn)","IDN",24403760.2,NA,NA,"corn starch",NA,NA
+"corn gluten meal","Maize (corn)","ROU",14038009.4,NA,NA,"corn starch",NA,NA
+"corn gluten meal","Maize (corn)","CAN",13790540,NA,NA,"corn starch",NA,NA
+"corn gluten meal","Maize (corn)","USA",367813762,NA,NA,"maize germ oil meal",NA,NA
+"corn gluten meal","Maize (corn)","CHN",261125760,NA,NA,"maize germ oil meal",NA,NA
+"corn gluten meal","Maize (corn)","BRA",86174997.2,NA,NA,"maize germ oil meal",NA,NA
+"corn gluten meal","Maize (corn)","ARG",44681904,NA,NA,"maize germ oil meal",NA,NA
+"corn gluten meal","Maize (corn)","UKR",29550406,NA,NA,"maize germ oil meal",NA,NA
+"corn gluten meal","Maize (corn)","MEX",27021010.4,NA,NA,"maize germ oil meal",NA,NA
+"corn gluten meal","Maize (corn)","IND",25821570,NA,NA,"maize germ oil meal",NA,NA
+"corn gluten meal","Maize (corn)","IDN",24403760.2,NA,NA,"maize germ oil meal",NA,NA
+"corn gluten meal","Maize (corn)","ROU",14038009.4,NA,NA,"maize germ oil meal",NA,NA
+"corn gluten meal","Maize (corn)","CAN",13790540,NA,NA,"maize germ oil meal",NA,NA
+"corn gluten meal","Maize (corn)","USA",367813762,NA,NA,"maize steep liquor",NA,NA
+"corn gluten meal","Maize (corn)","CHN",261125760,NA,NA,"maize steep liquor",NA,NA
+"corn gluten meal","Maize (corn)","BRA",86174997.2,NA,NA,"maize steep liquor",NA,NA
+"corn gluten meal","Maize (corn)","ARG",44681904,NA,NA,"maize steep liquor",NA,NA
+"corn gluten meal","Maize (corn)","UKR",29550406,NA,NA,"maize steep liquor",NA,NA
+"corn gluten meal","Maize (corn)","MEX",27021010.4,NA,NA,"maize steep liquor",NA,NA
+"corn gluten meal","Maize (corn)","IND",25821570,NA,NA,"maize steep liquor",NA,NA
+"corn gluten meal","Maize (corn)","IDN",24403760.2,NA,NA,"maize steep liquor",NA,NA
+"corn gluten meal","Maize (corn)","ROU",14038009.4,NA,NA,"maize steep liquor",NA,NA
+"corn gluten meal","Maize (corn)","CAN",13790540,NA,NA,"maize steep liquor",NA,NA
+"corn starch","Maize (corn)","USA",367813762,NA,NA,"corn gluten feed",NA,NA
+"corn starch","Maize (corn)","CHN",261125760,NA,NA,"corn gluten feed",NA,NA
+"corn starch","Maize (corn)","BRA",86174997.2,NA,NA,"corn gluten feed",NA,NA
+"corn starch","Maize (corn)","ARG",44681904,NA,NA,"corn gluten feed",NA,NA
+"corn starch","Maize (corn)","UKR",29550406,NA,NA,"corn gluten feed",NA,NA
+"corn starch","Maize (corn)","MEX",27021010.4,NA,NA,"corn gluten feed",NA,NA
+"corn starch","Maize (corn)","IND",25821570,NA,NA,"corn gluten feed",NA,NA
+"corn starch","Maize (corn)","IDN",24403760.2,NA,NA,"corn gluten feed",NA,NA
+"corn starch","Maize (corn)","ROU",14038009.4,NA,NA,"corn gluten feed",NA,NA
+"corn starch","Maize (corn)","CAN",13790540,NA,NA,"corn gluten feed",NA,NA
+"corn starch","Maize (corn)","USA",367813762,NA,NA,"corn gluten meal",NA,NA
+"corn starch","Maize (corn)","CHN",261125760,NA,NA,"corn gluten meal",NA,NA
+"corn starch","Maize (corn)","BRA",86174997.2,NA,NA,"corn gluten meal",NA,NA
+"corn starch","Maize (corn)","ARG",44681904,NA,NA,"corn gluten meal",NA,NA
+"corn starch","Maize (corn)","UKR",29550406,NA,NA,"corn gluten meal",NA,NA
+"corn starch","Maize (corn)","MEX",27021010.4,NA,NA,"corn gluten meal",NA,NA
+"corn starch","Maize (corn)","IND",25821570,NA,NA,"corn gluten meal",NA,NA
+"corn starch","Maize (corn)","IDN",24403760.2,NA,NA,"corn gluten meal",NA,NA
+"corn starch","Maize (corn)","ROU",14038009.4,NA,NA,"corn gluten meal",NA,NA
+"corn starch","Maize (corn)","CAN",13790540,NA,NA,"corn gluten meal",NA,NA
+"corn starch","Maize (corn)","USA",367813762,NA,NA,"maize germ oil meal",NA,NA
+"corn starch","Maize (corn)","CHN",261125760,NA,NA,"maize germ oil meal",NA,NA
+"corn starch","Maize (corn)","BRA",86174997.2,NA,NA,"maize germ oil meal",NA,NA
+"corn starch","Maize (corn)","ARG",44681904,NA,NA,"maize germ oil meal",NA,NA
+"corn starch","Maize (corn)","UKR",29550406,NA,NA,"maize germ oil meal",NA,NA
+"corn starch","Maize (corn)","MEX",27021010.4,NA,NA,"maize germ oil meal",NA,NA
+"corn starch","Maize (corn)","IND",25821570,NA,NA,"maize germ oil meal",NA,NA
+"corn starch","Maize (corn)","IDN",24403760.2,NA,NA,"maize germ oil meal",NA,NA
+"corn starch","Maize (corn)","ROU",14038009.4,NA,NA,"maize germ oil meal",NA,NA
+"corn starch","Maize (corn)","CAN",13790540,NA,NA,"maize germ oil meal",NA,NA
+"corn starch","Maize (corn)","USA",367813762,NA,NA,"maize steep liquor",NA,NA
+"corn starch","Maize (corn)","CHN",261125760,NA,NA,"maize steep liquor",NA,NA
+"corn starch","Maize (corn)","BRA",86174997.2,NA,NA,"maize steep liquor",NA,NA
+"corn starch","Maize (corn)","ARG",44681904,NA,NA,"maize steep liquor",NA,NA
+"corn starch","Maize (corn)","UKR",29550406,NA,NA,"maize steep liquor",NA,NA
+"corn starch","Maize (corn)","MEX",27021010.4,NA,NA,"maize steep liquor",NA,NA
+"corn starch","Maize (corn)","IND",25821570,NA,NA,"maize steep liquor",NA,NA
+"corn starch","Maize (corn)","IDN",24403760.2,NA,NA,"maize steep liquor",NA,NA
+"corn starch","Maize (corn)","ROU",14038009.4,NA,NA,"maize steep liquor",NA,NA
+"corn starch","Maize (corn)","CAN",13790540,NA,NA,"maize steep liquor",NA,NA
+"faba beans","Broad beans and horse beans, dry","CHN",1695904.218,NA,NA,"faba beans",NA,NA
+"faba beans","Broad beans and horse beans, dry","ETH",940410.7,NA,NA,"faba beans",NA,NA
+"faba beans","Broad beans and horse beans, dry","GBR",567047.492,NA,NA,"faba beans",NA,NA
+"faba beans","Broad beans and horse beans, dry","AUS",367982.6,NA,NA,"faba beans",NA,NA
+"faba beans","Broad beans and horse beans, dry","FRA",193958.3,NA,NA,"faba beans",NA,NA
+"faba beans","Broad beans and horse beans, dry","DEU",159200,NA,NA,"faba beans",NA,NA
+"faba beans","Broad beans and horse beans, dry","SDN",139286.82,NA,NA,"faba beans",NA,NA
+"faba beans","Broad beans and horse beans, dry","EGY",125229.4,NA,NA,"faba beans",NA,NA
+"faba beans","Broad beans and horse beans, dry","ITA",104060.48,NA,NA,"faba beans",NA,NA
+"faba beans","Broad beans and horse beans, dry","MAR",86345.394,NA,NA,"faba beans",NA,NA
+"guar meal","Other pulses n.e.c.","IND",949687.972,NA,NA,"guar gum powder",NA,NA
+"guar meal","Other pulses n.e.c.","GBR",260587.776,NA,NA,"guar gum powder",NA,NA
+"guar meal","Other pulses n.e.c.","POL",226199.8,NA,NA,"guar gum powder",NA,NA
+"guar meal","Other pulses n.e.c.","MOZ",217709.392,NA,NA,"guar gum powder",NA,NA
+"guar meal","Other pulses n.e.c.","ESP",169638.814,NA,NA,"guar gum powder",NA,NA
+"guar meal","Other pulses n.e.c.","CHN",143597.192,NA,NA,"guar gum powder",NA,NA
+"guar meal","Other pulses n.e.c.","VNM",138729.924,NA,NA,"guar gum powder",NA,NA
+"guar meal","Other pulses n.e.c.","KEN",122352.38,NA,NA,"guar gum powder",NA,NA
+"guar meal","Other pulses n.e.c.","BGD",121092.4,NA,NA,"guar gum powder",NA,NA
+"guar meal","Other pulses n.e.c.","THA",120270.936,NA,NA,"guar gum powder",NA,NA
+"linseed oil","Linseed","KAZ",735455.004,NA,NA,"linseed meal",NA,NA
+"linseed oil","Linseed","RUS",604937.22,NA,NA,"linseed meal",NA,NA
+"linseed oil","Linseed","CAN",603620,NA,NA,"linseed meal",NA,NA
+"linseed oil","Linseed","CHN",367432.266,NA,NA,"linseed meal",NA,NA
+"linseed oil","Linseed","USA",169182,NA,NA,"linseed meal",NA,NA
+"linseed oil","Linseed","IND",147416,NA,NA,"linseed meal",NA,NA
+"linseed oil","Linseed","ETH",90022.606,NA,NA,"linseed meal",NA,NA
+"linseed oil","Linseed","UKR",50812,NA,NA,"linseed meal",NA,NA
+"linseed oil","Linseed","FRA",46361.8,NA,NA,"linseed meal",NA,NA
+"linseed oil","Linseed","GBR",38600,NA,NA,"linseed meal",NA,NA
+"pea flour","Peas, dry","CAN",3993200,NA,NA,"pea flour",NA,NA
+"pea flour","Peas, dry","RUS",2374678.84,NA,NA,"pea flour",NA,NA
+"pea flour","Peas, dry","CHN",1428435.262,NA,NA,"pea flour",NA,NA
+"pea flour","Peas, dry","USA",893714.6,NA,NA,"pea flour",NA,NA
+"pea flour","Peas, dry","IND",889450,NA,NA,"pea flour",NA,NA
+"pea flour","Peas, dry","UKR",714132,NA,NA,"pea flour",NA,NA
+"pea flour","Peas, dry","FRA",665158.14,NA,NA,"pea flour",NA,NA
+"pea flour","Peas, dry","ETH",369238.71,NA,NA,"pea flour",NA,NA
+"pea flour","Peas, dry","LTU",289089.2,NA,NA,"pea flour",NA,NA
+"pea flour","Peas, dry","AUS",277370.2,NA,NA,"pea flour",NA,NA
+"pea protein concentrate","Peas, dry","CAN",3993200,NA,NA,"pea pulp",NA,NA
+"pea protein concentrate","Peas, dry","RUS",2374678.84,NA,NA,"pea pulp",NA,NA
+"pea protein concentrate","Peas, dry","CHN",1428435.262,NA,NA,"pea pulp",NA,NA
+"pea protein concentrate","Peas, dry","USA",893714.6,NA,NA,"pea pulp",NA,NA
+"pea protein concentrate","Peas, dry","IND",889450,NA,NA,"pea pulp",NA,NA
+"pea protein concentrate","Peas, dry","UKR",714132,NA,NA,"pea pulp",NA,NA
+"pea protein concentrate","Peas, dry","FRA",665158.14,NA,NA,"pea pulp",NA,NA
+"pea protein concentrate","Peas, dry","ETH",369238.71,NA,NA,"pea pulp",NA,NA
+"pea protein concentrate","Peas, dry","LTU",289089.2,NA,NA,"pea pulp",NA,NA
+"pea protein concentrate","Peas, dry","AUS",277370.2,NA,NA,"pea pulp",NA,NA
+"pea protein concentrate","Peas, dry","CAN",3993200,NA,NA,"pea solubles",NA,NA
+"pea protein concentrate","Peas, dry","RUS",2374678.84,NA,NA,"pea solubles",NA,NA
+"pea protein concentrate","Peas, dry","CHN",1428435.262,NA,NA,"pea solubles",NA,NA
+"pea protein concentrate","Peas, dry","USA",893714.6,NA,NA,"pea solubles",NA,NA
+"pea protein concentrate","Peas, dry","IND",889450,NA,NA,"pea solubles",NA,NA
+"pea protein concentrate","Peas, dry","UKR",714132,NA,NA,"pea solubles",NA,NA
+"pea protein concentrate","Peas, dry","FRA",665158.14,NA,NA,"pea solubles",NA,NA
+"pea protein concentrate","Peas, dry","ETH",369238.71,NA,NA,"pea solubles",NA,NA
+"pea protein concentrate","Peas, dry","LTU",289089.2,NA,NA,"pea solubles",NA,NA
+"pea protein concentrate","Peas, dry","AUS",277370.2,NA,NA,"pea solubles",NA,NA
+"pea protein concentrate","Peas, dry","CAN",3993200,NA,NA,"pea starch",NA,NA
+"pea protein concentrate","Peas, dry","RUS",2374678.84,NA,NA,"pea starch",NA,NA
+"pea protein concentrate","Peas, dry","CHN",1428435.262,NA,NA,"pea starch",NA,NA
+"pea protein concentrate","Peas, dry","USA",893714.6,NA,NA,"pea starch",NA,NA
+"pea protein concentrate","Peas, dry","IND",889450,NA,NA,"pea starch",NA,NA
+"pea protein concentrate","Peas, dry","UKR",714132,NA,NA,"pea starch",NA,NA
+"pea protein concentrate","Peas, dry","FRA",665158.14,NA,NA,"pea starch",NA,NA
+"pea protein concentrate","Peas, dry","ETH",369238.71,NA,NA,"pea starch",NA,NA
+"pea protein concentrate","Peas, dry","LTU",289089.2,NA,NA,"pea starch",NA,NA
+"pea protein concentrate","Peas, dry","AUS",277370.2,NA,NA,"pea starch",NA,NA
+"pea starch","Peas, dry","CAN",3993200,NA,NA,"pea protein concentrate",NA,NA
+"pea starch","Peas, dry","RUS",2374678.84,NA,NA,"pea protein concentrate",NA,NA
+"pea starch","Peas, dry","CHN",1428435.262,NA,NA,"pea protein concentrate",NA,NA
+"pea starch","Peas, dry","USA",893714.6,NA,NA,"pea protein concentrate",NA,NA
+"pea starch","Peas, dry","IND",889450,NA,NA,"pea protein concentrate",NA,NA
+"pea starch","Peas, dry","UKR",714132,NA,NA,"pea protein concentrate",NA,NA
+"pea starch","Peas, dry","FRA",665158.14,NA,NA,"pea protein concentrate",NA,NA
+"pea starch","Peas, dry","ETH",369238.71,NA,NA,"pea protein concentrate",NA,NA
+"pea starch","Peas, dry","LTU",289089.2,NA,NA,"pea protein concentrate",NA,NA
+"pea starch","Peas, dry","AUS",277370.2,NA,NA,"pea protein concentrate",NA,NA
+"pea starch","Peas, dry","CAN",3993200,NA,NA,"pea pulp",NA,NA
+"pea starch","Peas, dry","RUS",2374678.84,NA,NA,"pea pulp",NA,NA
+"pea starch","Peas, dry","CHN",1428435.262,NA,NA,"pea pulp",NA,NA
+"pea starch","Peas, dry","USA",893714.6,NA,NA,"pea pulp",NA,NA
+"pea starch","Peas, dry","IND",889450,NA,NA,"pea pulp",NA,NA
+"pea starch","Peas, dry","UKR",714132,NA,NA,"pea pulp",NA,NA
+"pea starch","Peas, dry","FRA",665158.14,NA,NA,"pea pulp",NA,NA
+"pea starch","Peas, dry","ETH",369238.71,NA,NA,"pea pulp",NA,NA
+"pea starch","Peas, dry","LTU",289089.2,NA,NA,"pea pulp",NA,NA
+"pea starch","Peas, dry","AUS",277370.2,NA,NA,"pea pulp",NA,NA
+"pea starch","Peas, dry","CAN",3993200,NA,NA,"pea solubles",NA,NA
+"pea starch","Peas, dry","RUS",2374678.84,NA,NA,"pea solubles",NA,NA
+"pea starch","Peas, dry","CHN",1428435.262,NA,NA,"pea solubles",NA,NA
+"pea starch","Peas, dry","USA",893714.6,NA,NA,"pea solubles",NA,NA
+"pea starch","Peas, dry","IND",889450,NA,NA,"pea solubles",NA,NA
+"pea starch","Peas, dry","UKR",714132,NA,NA,"pea solubles",NA,NA
+"pea starch","Peas, dry","FRA",665158.14,NA,NA,"pea solubles",NA,NA
+"pea starch","Peas, dry","ETH",369238.71,NA,NA,"pea solubles",NA,NA
+"pea starch","Peas, dry","LTU",289089.2,NA,NA,"pea solubles",NA,NA
+"pea starch","Peas, dry","AUS",277370.2,NA,NA,"pea solubles",NA,NA
+"soy oil","Soya beans","USA",112226398,NA,NA,"lecithin",NA,NA
+"soy oil","Soya beans","BRA",108164227.2,NA,NA,"lecithin",NA,NA
+"soy oil","Soya beans","ARG",53653851.6,NA,NA,"lecithin",NA,NA
+"soy oil","Soya beans","CHN",14784698.8,NA,NA,"lecithin",NA,NA
+"soy oil","Soya beans","IND",11817644,NA,NA,"lecithin",NA,NA
+"soy oil","Soya beans","PRY",9612730.6,NA,NA,"lecithin",NA,NA
+"soy oil","Soya beans","CAN",6866200,NA,NA,"lecithin",NA,NA
+"soy oil","Soya beans","UKR",4053288,NA,NA,"lecithin",NA,NA
+"soy oil","Soya beans","RUS",3571876.1,NA,NA,"lecithin",NA,NA
+"soy oil","Soya beans","BOL",2982790.27,NA,NA,"lecithin",NA,NA
+"soy oil","Soya beans","USA",112226398,NA,NA,"soybean meal",NA,NA
+"soy oil","Soya beans","BRA",108164227.2,NA,NA,"soybean meal",NA,NA
+"soy oil","Soya beans","ARG",53653851.6,NA,NA,"soybean meal",NA,NA
+"soy oil","Soya beans","CHN",14784698.8,NA,NA,"soybean meal",NA,NA
+"soy oil","Soya beans","IND",11817644,NA,NA,"soybean meal",NA,NA
+"soy oil","Soya beans","PRY",9612730.6,NA,NA,"soybean meal",NA,NA
+"soy oil","Soya beans","CAN",6866200,NA,NA,"soybean meal",NA,NA
+"soy oil","Soya beans","UKR",4053288,NA,NA,"soybean meal",NA,NA
+"soy oil","Soya beans","RUS",3571876.1,NA,NA,"soybean meal",NA,NA
+"soy oil","Soya beans","BOL",2982790.27,NA,NA,"soybean meal",NA,NA
+"soy protein concentrate","Soya beans","USA",112226398,NA,NA,"lecithin",NA,NA
+"soy protein concentrate","Soya beans","BRA",108164227.2,NA,NA,"lecithin",NA,NA
+"soy protein concentrate","Soya beans","ARG",53653851.6,NA,NA,"lecithin",NA,NA
+"soy protein concentrate","Soya beans","CHN",14784698.8,NA,NA,"lecithin",NA,NA
+"soy protein concentrate","Soya beans","IND",11817644,NA,NA,"lecithin",NA,NA
+"soy protein concentrate","Soya beans","PRY",9612730.6,NA,NA,"lecithin",NA,NA
+"soy protein concentrate","Soya beans","CAN",6866200,NA,NA,"lecithin",NA,NA
+"soy protein concentrate","Soya beans","UKR",4053288,NA,NA,"lecithin",NA,NA
+"soy protein concentrate","Soya beans","RUS",3571876.1,NA,NA,"lecithin",NA,NA
+"soy protein concentrate","Soya beans","BOL",2982790.27,NA,NA,"lecithin",NA,NA
+"soy protein concentrate","Soya beans","USA",112226398,NA,NA,"soy oil",NA,NA
+"soy protein concentrate","Soya beans","BRA",108164227.2,NA,NA,"soy oil",NA,NA
+"soy protein concentrate","Soya beans","ARG",53653851.6,NA,NA,"soy oil",NA,NA
+"soy protein concentrate","Soya beans","CHN",14784698.8,NA,NA,"soy oil",NA,NA
+"soy protein concentrate","Soya beans","IND",11817644,NA,NA,"soy oil",NA,NA
+"soy protein concentrate","Soya beans","PRY",9612730.6,NA,NA,"soy oil",NA,NA
+"soy protein concentrate","Soya beans","CAN",6866200,NA,NA,"soy oil",NA,NA
+"soy protein concentrate","Soya beans","UKR",4053288,NA,NA,"soy oil",NA,NA
+"soy protein concentrate","Soya beans","RUS",3571876.1,NA,NA,"soy oil",NA,NA
+"soy protein concentrate","Soya beans","BOL",2982790.27,NA,NA,"soy oil",NA,NA
+"soybean meal","Soya beans","USA",112226398,NA,NA,"lecithin",NA,NA
+"soybean meal","Soya beans","BRA",108164227.2,NA,NA,"lecithin",NA,NA
+"soybean meal","Soya beans","ARG",53653851.6,NA,NA,"lecithin",NA,NA
+"soybean meal","Soya beans","CHN",14784698.8,NA,NA,"lecithin",NA,NA
+"soybean meal","Soya beans","IND",11817644,NA,NA,"lecithin",NA,NA
+"soybean meal","Soya beans","PRY",9612730.6,NA,NA,"lecithin",NA,NA
+"soybean meal","Soya beans","CAN",6866200,NA,NA,"lecithin",NA,NA
+"soybean meal","Soya beans","UKR",4053288,NA,NA,"lecithin",NA,NA
+"soybean meal","Soya beans","RUS",3571876.1,NA,NA,"lecithin",NA,NA
+"soybean meal","Soya beans","BOL",2982790.27,NA,NA,"lecithin",NA,NA
+"soybean meal","Soya beans","USA",112226398,NA,NA,"soy oil",NA,NA
+"soybean meal","Soya beans","BRA",108164227.2,NA,NA,"soy oil",NA,NA
+"soybean meal","Soya beans","ARG",53653851.6,NA,NA,"soy oil",NA,NA
+"soybean meal","Soya beans","CHN",14784698.8,NA,NA,"soy oil",NA,NA
+"soybean meal","Soya beans","IND",11817644,NA,NA,"soy oil",NA,NA
+"soybean meal","Soya beans","PRY",9612730.6,NA,NA,"soy oil",NA,NA
+"soybean meal","Soya beans","CAN",6866200,NA,NA,"soy oil",NA,NA
+"soybean meal","Soya beans","UKR",4053288,NA,NA,"soy oil",NA,NA
+"soybean meal","Soya beans","RUS",3571876.1,NA,NA,"soy oil",NA,NA
+"soybean meal","Soya beans","BOL",2982790.27,NA,NA,"soy oil",NA,NA
+"sunflower meal","Sunflower seed","UKR",13292564,NA,NA,"sunflower oil",NA,NA
+"sunflower meal","Sunflower seed","RUS",11782275.06,NA,NA,"sunflower oil",NA,NA
+"sunflower meal","Sunflower seed","ARG",3413731.8,NA,NA,"sunflower oil",NA,NA
+"sunflower meal","Sunflower seed","CHN",2674342.6,NA,NA,"sunflower oil",NA,NA
+"sunflower meal","Sunflower seed","ROU",2672538.8,NA,NA,"sunflower oil",NA,NA
+"sunflower meal","Sunflower seed","BGR",1902216.4,NA,NA,"sunflower oil",NA,NA
+"sunflower meal","Sunflower seed","HUN",1798370,NA,NA,"sunflower oil",NA,NA
+"sunflower meal","Sunflower seed","FRA",1299103.2,NA,NA,"sunflower oil",NA,NA
+"sunflower meal","Sunflower seed","USA",1068318,NA,NA,"sunflower oil",NA,NA
+"sunflower meal","Sunflower seed","TZA",968000,NA,NA,"sunflower oil",NA,NA
+"wheat","Wheat","CHN",133037620,NA,NA,"wheat",NA,NA
+"wheat","Wheat","IND",96159194,NA,NA,"wheat",NA,NA
+"wheat","Wheat","RUS",73544572.24,NA,NA,"wheat",NA,NA
+"wheat","Wheat","USA",53987457.4,NA,NA,"wheat",NA,NA
+"wheat","Wheat","FRA",37354670.88,NA,NA,"wheat",NA,NA
+"wheat","Wheat","CAN",31037247,NA,NA,"wheat",NA,NA
+"wheat","Wheat","UKR",26372606,NA,NA,"wheat",NA,NA
+"wheat","Wheat","PAK",25363607.4,NA,NA,"wheat",NA,NA
+"wheat","Wheat","DEU",23764200,NA,NA,"wheat",NA,NA
+"wheat","Wheat","AUS",23274902.466,NA,NA,"wheat",NA,NA
+"wheat gluten","Wheat","CHN",133037620,NA,NA,"wheat starch",NA,NA
+"wheat gluten","Wheat","IND",96159194,NA,NA,"wheat starch",NA,NA
+"wheat gluten","Wheat","RUS",73544572.24,NA,NA,"wheat starch",NA,NA
+"wheat gluten","Wheat","USA",53987457.4,NA,NA,"wheat starch",NA,NA
+"wheat gluten","Wheat","FRA",37354670.88,NA,NA,"wheat starch",NA,NA
+"wheat gluten","Wheat","CAN",31037247,NA,NA,"wheat starch",NA,NA
+"wheat gluten","Wheat","UKR",26372606,NA,NA,"wheat starch",NA,NA
+"wheat gluten","Wheat","PAK",25363607.4,NA,NA,"wheat starch",NA,NA
+"wheat gluten","Wheat","DEU",23764200,NA,NA,"wheat starch",NA,NA
+"wheat gluten","Wheat","AUS",23274902.466,NA,NA,"wheat starch",NA,NA
