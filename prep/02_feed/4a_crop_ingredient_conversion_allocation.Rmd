@@ -115,65 +115,39 @@ ggsave(here("prep/02_feed/plots/total_ingredient_feed_origins_plant.png"), units
 
 ## STEP 2: Use allocation methods to account for crop loss and coproducts to get a better idea of the amount of crops actually going to aquaculture feeds (instead of ingredients)
 
-Ok now we need to convert the ingredient to crop raw material using the conversion factors that Rich has put together.. we will start with mass allocation first
+Ok now we need to convert the ingredient to crop raw material using the conversion factors that Rich has put together.. we do mass and energetic allocation both 
 
 
 ```{r}
-## read in raw material extraction rates (yields) and gross energy data that me and Rich compiled 
-
-#get yield data from main ingredients
-cf_data <- read.csv("data/tidy_data/allocation/crop_ingredient_allocation_factors.csv") 
-# get coproduct yield data
-
-
-setdiff(unique(cf_data$ingredient), unique(ingredient_production_location$source_ingredient))
-
-# [1] "tapioca starch" "lupins"         "corn starch" 
-### this is fine.. these are unique to Rich's paper
-
-setdiff(unique(ingredient_production_location$source_ingredient), unique(cf_data$ingredient)) # none
-
-setdiff(unique(cf_data$FAO_code), unique(ingredient_production_location$FAO_code)) # none
-
-setdiff(unique(ingredient_production_location$FAO_code), unique(cf_data$FAO_code)) # none
-
-
-## Join cf data to the ingredient production data and gapfill missing cfs with mean cfs
-
-ingredient_production_cf <- ingredient_production_location %>%
+## join ingredient demand and allocation data to generate crop raw material demand
+ 
+ingredient_production <- ingredient_production_location %>%
   group_by(iso3c_producing, SPAM_super, diet, source_ingredient, raw_material, FAOSTAT_name, FAO_code) %>%
   summarise(producing_ingredient_consumed_tonnes = sum(producing_ingredient_consumed_tonnes, na.rm = TRUE)) %>%
-  ungroup() %>%
-  left_join(cf_data, by = c("source_ingredient" = "ingredient", "FAO_code")) %>%
-  dplyr::select(iso3c_producing, SPAM_super, diet, source_ingredient, raw_material, FAOSTAT_name, FAO_code, producing_ingredient_consumed_tonnes, cf = yield, coproduct_cf = yield_coproduct, energy_cf_product, energy_cf_coproduct, gross_energy_product)
+  ungroup()
+ 
+
+allocation_factors <- read.csv(here("data/tidy_data/allocation/crop_ingredient_allocation_factors.csv")) %>% 
+  dplyr::select(item, ingredient, FAO_code, map_spam_code, ge_allocation_factor, mass_allocation_factor) %>%
+  distinct()
 
 
+#join the ingredient demand by diet to the producer data so for each ingredient there will be an raw material demand per source, and diet scenario. Create new raw_material demand column by dividing total ingredient demand by the conversion factor (i.e. the ingredient extraction rate from the raw material in the first place)
 
-## Ok so now it is gapfilled, we need to calculate the mass allocation factor for each ingredient
-allocation_raw <- ingredient_production_cf %>%
-  filter(!is.na(diet)) %>%
-  group_by(source_ingredient, iso3c_producing, diet) |> 
-  nest() |> 
-  mutate(ge_allocation_factor = map(data, ~(.$gross_energy_product/ (sum(unique(.$energy_cf_product), sum(.$energy_cf_coproduct))))),
-         mass_allocation_factor = map(data, ~((.$cf/ (sum(unique(.$cf), sum(.$coproduct_cf))))/.$cf)) #need to divide by yield again here otherwise it is just the partitioning factor (for mass allocation only)
-         ) |> 
-  unnest(c(data, ge_allocation_factor, mass_allocation_factor))
-
-
-## Now we calculate the actual crop raw material demand! 
-
-
-crop_raw_material_demand <- allocation_raw %>%
+crop_raw_material_demand <- ingredient_production %>%
+  left_join(allocation_factors, by = c("source_ingredient" = "ingredient", "FAO_code")) %>% 
   mutate(total_crop_demand_ge = producing_ingredient_consumed_tonnes*ge_allocation_factor,
          total_crop_demand_ms = producing_ingredient_consumed_tonnes*mass_allocation_factor) %>%
   group_by(iso3c_producing, diet, source_ingredient, FAOSTAT_name, FAO_code) %>%
   summarise(total_crop_demand_ms = sum(total_crop_demand_ms, na.rm = TRUE),
             total_crop_demand_ge = sum(total_crop_demand_ge, na.rm = TRUE)) %>%
-  ungroup()
+  ungroup() %>%
+  filter(total_crop_demand_ge != 0 & total_crop_demand_ms != 0)
 
 
 
 write.csv(crop_raw_material_demand, here("prep/02_feed/data/demand/ingredient_crop_demand_production_conversions.csv"), row.names = FALSE)
+
 
 
 ```
@@ -277,12 +251,14 @@ summary(tonnes_included_system)
 # check, sum of included and excluded should equal sum of all consumption
 tmp <- tonnes_included_system %>%
   group_by(SPAM_super, diet) %>%
-  summarize(included_crop = sum(included_tonnes_ge, na.rm=TRUE),
-            excluded_crop = sum(lost_crop_tonnes_ge, na.rm=TRUE)) %>% 
+  summarize(included_crop = sum(included_tonnes_ms, na.rm=TRUE),
+            excluded_crop = sum(lost_crop_tonnes_ms, na.rm=TRUE)) %>% 
   mutate(prop_redistributed = excluded_crop/(excluded_crop + included_crop)) %>%
-           data.frame() 
+           data.frame()  %>%
+  filter(diet == "plant-dominant")
 
-sum(tmp$included_crop)/(sum(tmp$included_crop) + sum(tmp$excluded_crop)) # 93% included and does not need to be distributed for ms, ~90% for ge
+sum(tmp$included_crop)/(sum(tmp$included_crop) + sum(tmp$excluded_crop)) # 86% for plant ge, 99% for fish ge. 99% for fish ms, 92% for plant ms
+
 
 tonnes_lost_system <- tonnes_included_system %>%
   group_by(SPAM_super, diet, source_ingredient) %>%
@@ -468,12 +444,14 @@ writeRaster(tonnes_crop_feed_raster, filename= sprintf(here("prep/02_feed/output
 
 }
 
-test_names <- str_replace_all(str_before_last(list.files(here("prep/02_feed/output/plant-dominant/")), ".tif"), "_", ":")
+# take a look 
 
-test <- rast(list.files(here("prep/02_feed/output/plant-dominant/"), full.names = TRUE))
+test_names <- str_replace_all(str_before_last(list.files(here("prep/02_feed/output/fish-dominant/"), pattern = ".tif"), ".tif"), "_", ":")
+
+test <- rast(list.files(here("prep/02_feed/output/fish-dominant/"), full.names = TRUE, pattern = ".tif"))
 
 names(test) <- test_names
-plot(log(test+1))
+plot(log(test[[1]]+1))
 
 ```
  
@@ -494,20 +472,20 @@ feed_source <- read.csv(here("prep/02_feed/data/demand/ingredient_crop_demand_pr
 
 tmp <- filter(feed_source) %>%
     group_by(ingredient, diet) %>%
-  slice_max(order_by = produced_ingredient_tonnes_ms, n = 15) %>%
+  slice_max(order_by = produced_ingredient_tonnes_ge, n = 15) %>%
   ungroup() %>%
   filter(produced_ingredient_tonnes_ge > 0)
 
 
 ggplot(data = tmp %>%
-         filter(diet == "fish-dominant"), aes(x = produced_ingredient_tonnes_ms, y = reorder_within(iso3c_producing, produced_ingredient_tonnes_ms, SPAM_super))) + 
+         filter(diet == "fish-dominant"), aes(x = produced_ingredient_tonnes_ge, y = reorder_within(iso3c_producing, produced_ingredient_tonnes_ge, SPAM_super))) + 
   geom_bar(stat = "identity") + 
   facet_wrap(~ingredient, scales = "free") + 
   labs(x = "Tonnes of crop produced for ingredient", y = "Country") + 
   theme_bw() + 
   theme(axis.text.x = element_text(angle = 30, vjust = 0.5)) 
 
-ggsave(here("prep/02_feed/plots/total_crop_feed_origins_fish_mass.png"), units = "in", height = 11, width = 11)
+ggsave(here("prep/02_feed/plots/total_crop_feed_origins_fish_energetic.png"), units = "in", height = 11, width = 11)
 ```
 
 

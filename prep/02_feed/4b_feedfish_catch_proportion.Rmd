@@ -75,9 +75,11 @@ filter(feed_rgn, iso3c %in% excluded) %>%
 # total catch
 feed_rgn %>%
   group_by(system) %>%
-  summarize(total = sum(tonnes, na.rm=TRUE))
+  summarize(total = sum(tonnes, na.rm=TRUE)) # salmon 2813892
 
-## only 311 tonnes missing from salmon.. I'm ok with that! 
+## only 311 tonnes of feed missing from salmon.. I'm ok with that! 
+
+311/2813892 # 0.0001
 ```
 
 
@@ -138,7 +140,7 @@ filter(FOFM_props_limit, iso3c=="USA") %>% data.frame()
   
 ```
 
-All sources of loss result in about 15% loss of fofm catch.  This will be assigned to global catch proportional to total forage fish catch. We will need to calculate the amount of fofm catch lost, and add that to our total. 
+Loss will be assigned to global catch proportional to total forage fish catch. We will need to calculate the amount of fofm catch lost, and add that to our total. 
 
 ```{r}
 
@@ -157,13 +159,11 @@ loss <- FOFM_props_limit %>%
   group_by(system) %>%
   summarize(est_feed = sum(est_tonnes)) %>%
   left_join(system_consumption, by="system") %>%
-  mutate(prop_accounted_for = est_feed/total_feed) %>% # 92% accounted for 
+  mutate(prop_accounted_for = est_feed/total_feed) %>% # 90% accounted for in plant diet, 28% accounted for in fish diet
   mutate(loss = total_feed - est_feed) %>%
   mutate(forage_tonnes = forage_tonnes) %>%
   mutate(prop_of_global_distribute = loss/forage_tonnes)
 
-# # about 8% is being lost from salmon aquaculture
-# sum(loss$est_feed, na.rm=TRUE)/sum(loss$total_feed, na.rm=TRUE) #0.92
 
 ```
 
@@ -208,13 +208,15 @@ forage_fish_system <- raster::subs(watson_raster_template, foragefish_system, by
 # the following should be about equal
 print(sprintf("the following should be about equal for: %s", system_item))
 print(sprintf("raster calc: %s", cellStats(forage_fish_system, "sum", na.rm=TRUE))) 
-print(sprintf("observed: %s", filter(loss, system==system_item) %>% pull(total_feed)))
+print(sprintf("observed: %s", filter(loss, system==system_item, diet == diet_type) %>% pull(total_feed)))
 
 
-writeRaster(forage_fish_system, sprintf(here("prep/02_feed/output/%s/forage_fish_tonnes_feed_%s.tif"), diet_type, diet_type) , overwrite=TRUE)
+writeRaster(forage_fish_system, sprintf(here("prep/02_feed/output/%s/forage_fish/forage_fish_tonnes_feed_%s.tif"), diet_type, diet_type) , overwrite=TRUE)
 }
 
-test <- rast(here("prep/02_feed/output/fish-dominant/forage_fish_tonnes_feed_fish-dominant.tif"))
+test <- rast(here("prep/02_feed/output/plant-dominant/forage_fish/forage_fish_tonnes_feed_plant-dominant.tif"))
 
 plot(log(test+1))
+
+plot(test)
 ```

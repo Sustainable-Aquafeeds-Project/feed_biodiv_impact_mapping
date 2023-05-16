@@ -145,7 +145,14 @@ allocation_raw <-
   left_join(all_cf_data_mean, by = c("ingredient", "coproduct")) |> 
   mutate(energy_cf_product = gross_energy_product*yield,
          energy_cf_coproduct = gross_energy_coproduct*yield_coproduct) |> 
-  ungroup()
+  ungroup() %>% 
+   rename(cf = yield, coproduct_cf = yield_coproduct) %>%
+  group_by(ingredient) |> 
+  nest() |> 
+  mutate(ge_allocation_factor = map(data, ~(.$gross_energy_product/ (sum(unique(.$energy_cf_product), sum(.$energy_cf_coproduct))))),
+         mass_allocation_factor = map(data, ~((.$cf/ (sum(unique(.$cf), sum(.$coproduct_cf))))/.$cf)) #need to divide by yield again here otherwise it is just the partitioning factor (for mass allocation only)
+         ) |> 
+  unnest(c(data, ge_allocation_factor, mass_allocation_factor)) 
 
 write_csv(x = allocation_raw, file = here("data/tidy_data/allocation/crop_ingredient_allocation_factors.csv"))
 
