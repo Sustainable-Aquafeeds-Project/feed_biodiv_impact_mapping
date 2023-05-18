@@ -1,0 +1,9 @@
+"ingredient","diet","total_ingredient_demand","system","allocation_type","total_ingredient_demand_allocated"
+"fish meal, forage fish","fish-dominant",1153454.10368,"salmon_aquaculture_meat","ge",3615377.82604723
+"fish meal, forage fish","fish-dominant",1153454.10368,"salmon_aquaculture_meat","ms",4119478.94171429
+"fish meal, forage fish","plant-dominant",317199.878512,"salmon_aquaculture_meat","ge",994228.902162988
+"fish meal, forage fish","plant-dominant",317199.878512,"salmon_aquaculture_meat","ms",1132856.70897143
+"fish oil, forage fish","fish-dominant",829045.13702,"salmon_aquaculture_meat","ge",4701237.41821592
+"fish oil, forage fish","fish-dominant",829045.13702,"salmon_aquaculture_meat","ms",3014709.58916364
+"fish oil, forage fish","plant-dominant",299177.158142,"salmon_aquaculture_meat","ge",1696533.50309531
+"fish oil, forage fish","plant-dominant",299177.158142,"salmon_aquaculture_meat","ms",1087916.93869818

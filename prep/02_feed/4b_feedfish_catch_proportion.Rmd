@@ -16,6 +16,7 @@ library(here)
 library(raster)
 library(tidyverse)
 library(countrycode)
+library(readxl)
 
 # function to project raster
 ## Use correct CRS
@@ -140,18 +141,48 @@ filter(FOFM_props_limit, iso3c=="USA") %>% data.frame()
   
 ```
 
-Loss will be assigned to global catch proportional to total forage fish catch. We will need to calculate the amount of fofm catch lost, and add that to our total. 
+Because we want the forage fish FOFM catch under each diet scenario, we need to figure out the amount of fofm forage fish catch that is missing from the "real world" scenario (provided by jessica). This missing catch will be assigned to glboal catch proportional to total forage fish catch. Basically, we need to calculate the amount of fofm catch under each diet scenario that isn't represented in the "real world" catch, and add that to our total. 
 
 ```{r}
 
 # total fofm catch:
-forage_tonnes <- sum(foragefish_rgn_totals$FOFM_catch) # 39054068 
+forage_tonnes <- sum(foragefish_rgn_totals$FOFM_catch) # 21414954 
+
+## read in allocation factors for FM and FO 
+allocation_factors <- read_xlsx(here("data/tidy_data/allocation/embodied_fish_allocation.xlsx")) %>% 
+  filter(ecosystem == "GA") %>%
+  dplyr::select(ingredient, ge_value, mass_value) %>%
+  mutate(ingredient = case_when(
+    ingredient == "Fishmeal" ~ "fish meal, forage fish", 
+    ingredient == "Fish oil" ~ "fish oil, forage fish"
+  ))
 
 # total system consumption:
-system_consumption <- read_csv(here("prep/02_feed/data/demand/FMFO_country_data.csv")) %>%
-  group_by(system, diet) %>%
-  summarize(total_feed = sum(tonnes, na.rm=TRUE)) %>%
-  filter(!is.na(system))
+system_consumption_ingredient <- read_csv(here("prep/02_feed/data/demand/total_global_ingredient_demand.csv")) %>%
+  filter(ingredient %in% c("fish meal, forage fish", "fish oil, forage fish")) %>%
+  mutate(system = "salmon_aquaculture_meat") %>% 
+  left_join(allocation_factors) %>%
+  mutate(total_fish_ingredient_demand_ge = total_ingredient_demand*ge_value, 
+         total_fish_ingredient_demand_ms = total_ingredient_demand*mass_value) %>%
+  dplyr::select(-ge_value, -mass_value) %>%
+  pivot_longer(cols = c("total_fish_ingredient_demand_ge", "total_fish_ingredient_demand_ms"),
+               names_to = "allocation_type", values_to = "total_ingredient_demand_allocated") %>%
+  mutate(allocation_type = ifelse(allocation_type == "total_fish_ingredient_demand_ge", "ge", "ms"))
+
+write.csv(system_consumption_ingredient, here("prep/02_feed/data/demand/total_global_fofm_demand_fish_weight_allocated.csv"), row.names = FALSE)
+
+system_consumption <- system_consumption_ingredient %>%
+  group_by(system, diet, allocation_type) %>%
+  summarize(total_feed_diet_allocated = sum(total_ingredient_demand_allocated, na.rm=TRUE)) %>%
+  ungroup()
+
+# # A tibble: 4 × 4
+#   system                  diet           allocation_type total_feed_diet_allocated
+#   <chr>                   <chr>          <chr>                               <dbl>
+# 1 salmon_aquaculture_meat fish-dominant  ge                               8316615.
+# 2 salmon_aquaculture_meat fish-dominant  ms                               7134189.
+# 3 salmon_aquaculture_meat plant-dominant ge                               2690762.
+# 4 salmon_aquaculture_meat plant-dominant ms                               2220774.
 
 loss <- FOFM_props_limit %>%
   rowwise() %>%
@@ -159,19 +190,26 @@ loss <- FOFM_props_limit %>%
   group_by(system) %>%
   summarize(est_feed = sum(est_tonnes)) %>%
   left_join(system_consumption, by="system") %>%
-  mutate(prop_accounted_for = est_feed/total_feed) %>% # 90% accounted for in plant diet, 28% accounted for in fish diet
-  mutate(loss = total_feed - est_feed) %>%
+  mutate(prop_accounted_for = est_feed/total_feed_diet_allocated) %>% # 99% accounted for in fish diet, 3x more accounted for in plant diet. These will change once we convert ingredients to fish weight. 
+  mutate(loss = total_feed_diet_allocated - est_feed) %>%
   mutate(forage_tonnes = forage_tonnes) %>%
   mutate(prop_of_global_distribute = loss/forage_tonnes)
 
+loss
 
+# # A tibble: 4 × 9
+#   system                  est_feed diet           allocation_type total_feed_diet_allocated prop_accounted_for     loss forage_t…¹ prop_…²
+#   <chr>                      <dbl> <chr>          <chr>                               <dbl>              <dbl>    <dbl>      <dbl>   <dbl>
+# 1 salmon_aquaculture_meat 1976716. fish-dominant  ge                               8316615.              0.238 6339899.  21414954.  0.296 
+# 2 salmon_aquaculture_meat 1976716. fish-dominant  ms                               7134189.              0.277 5157473.  21414954.  0.241 
+# 3 salmon_aquaculture_meat 1976716. plant-dominant ge                               2690762.              0.735  714047.  21414954.  0.0333
+# 4 salmon_aquaculture_meat 1976716. plant-dominant ms                               2220774.              0.890  244058.  21414954.  0.0114
+# # … with abbreviated variable names ¹​forage_tonnes, ²​prop_of_global_distribute
 ```
 
-Create rasters describing amount of each countries fofm catch going to feed for salmon aquaculture for each diet scenario.
+Create rasters describing amount of each countries forage fish catch going to feed for salmon aquaculture for each diet scenario.
 
 ```{r}
-
-## eventually retrofit code to add extra diet scenarios
 
 systems <- loss$system
 
@@ -179,9 +217,13 @@ diets <- unique(loss$diet)
 
 system_item = unique(systems)
 
-for(diet_type in diets){
-# diet_type = "plant-dominant"
+allocations = unique(loss$allocation_type)
 
+for(diet_type in diets){
+  for(allocation in allocations){
+# diet_type = "plant-dominant"
+# allocation = "ge"    
+    
   watson_raster_template <- raster::raster(ncol=720, nrow=360, vals=c(1:259200))
 
   
@@ -189,17 +231,21 @@ for(diet_type in diets){
   dplyr::filter(system == system_item) %>%
   dplyr::select(iso3c, prop)
 
-system_extra_prop <- filter(loss, system == system_item, diet == diet_type) %>%
+system_extra_prop_diet <- filter(loss, system == system_item, diet == diet_type, allocation_type == allocation) %>%
   pull(prop_of_global_distribute)
 
 foragefish_system <- left_join(foragefish, system_prop, by="iso3c") %>%
   mutate(prop = ifelse(is.na(prop), 0, prop)) %>% ## fix NAs
-  mutate(system_extra_prop = system_extra_prop) %>%
-  mutate(FOFM_catch_foodsystem_ID = FOFM_catch * prop) %>% ## fofm catch to feed
-  mutate(FOFM_catch_foodsystem_xtra = FOFM_catch * system_extra_prop) %>% ## fofm catch to feed that is missing
-  mutate(FOFM_catch_foodsystem = FOFM_catch_foodsystem_ID + FOFM_catch_foodsystem_xtra) %>% ## add that together
+  mutate(system_extra_prop_diet = system_extra_prop_diet) %>%
+  mutate(FOFM_catch_foodsystem_ID = FOFM_catch * prop) %>% ## "real world" forage fish catch to fofm feed
+  mutate(FOFM_catch_foodsystem_xtra = FOFM_catch * system_extra_prop_diet) %>% ## extra forage fish catch to fofm feed that is missing in each diet
+  mutate(FOFM_catch_foodsystem = FOFM_catch_foodsystem_ID + FOFM_catch_foodsystem_xtra) %>% ## add that together to get forage fish catch to fofm under each diet in each cell 
+ # filter(FOFM_catch_foodsystem < 0)
   group_by(Cell) %>%
-  summarize(tonnes = sum(FOFM_catch_foodsystem, na.rm=TRUE))
+  summarize(tonnes = sum(FOFM_catch_foodsystem, na.rm=TRUE)) %>%
+  ungroup()
+# %>%
+#  mutate(tonnes = ifelse(tonnes < 0 , 0 , tonnes))
   
 forage_fish_system <- raster::subs(watson_raster_template, foragefish_system, by = "Cell", which = "tonnes", subsWithNA=TRUE)
 
@@ -208,15 +254,71 @@ forage_fish_system <- raster::subs(watson_raster_template, foragefish_system, by
 # the following should be about equal
 print(sprintf("the following should be about equal for: %s", system_item))
 print(sprintf("raster calc: %s", cellStats(forage_fish_system, "sum", na.rm=TRUE))) 
-print(sprintf("observed: %s", filter(loss, system==system_item, diet == diet_type) %>% pull(total_feed)))
+print(sprintf("observed: %s", filter(loss, system==system_item, diet == diet_type, allocation_type == allocation) %>% pull(total_feed_diet_allocated)))
 
 
-writeRaster(forage_fish_system, sprintf(here("prep/02_feed/output/%s/forage_fish/forage_fish_tonnes_feed_%s.tif"), diet_type, diet_type) , overwrite=TRUE)
+writeRaster(forage_fish_system, sprintf(here("prep/02_feed/output/%s/forage_fish/forage_fish_fofm_%s.tif"), diet_type, allocation) , overwrite=TRUE)
+  }
 }
 
-test <- rast(here("prep/02_feed/output/plant-dominant/forage_fish/forage_fish_tonnes_feed_plant-dominant.tif"))
+test <- rast(list.files(here("prep/02_feed/output/fish-dominant/forage_fish/"), full.names = TRUE))
+test_names <- list.files(here("prep/02_feed/output/fish-dominant/forage_fish/"))
+
+names(test) <- test_names
 
 plot(log(test+1))
 
+
 plot(test)
 ```
+
+
+Now we need to split the above made rasters into separate rasters for fish meal and fish oil, based on demand proportions
+
+```{r}
+system_consumption_ingredients <- read.csv(here("prep/02_feed/data/demand/total_global_fofm_demand_fish_weight_allocated.csv")) %>%
+  group_by(diet, allocation_type) %>%
+  mutate(total_demand = sum(total_ingredient_demand_allocated)) %>%
+  ungroup() %>%
+  mutate(prop = total_ingredient_demand_allocated/total_demand)
+
+
+diets <- unique(system_consumption_ingredients$diet)
+
+
+allocations = unique(system_consumption_ingredients$allocation_type)
+
+for(diet_type in diets){
+  for(allocation in allocations){
+    
+    # diet_type = diets[1]
+    # allocation = allocations[1]
+    
+    rast_fofm = rast(sprintf(here("prep/02_feed/output/%s/forage_fish/forage_fish_fofm_%s.tif"), diet_type, allocation))
+    
+    FO_prop <- system_consumption_ingredients %>%
+      filter(diet == diet_type, 
+             allocation_type == allocation, 
+             ingredient == "fish oil, forage fish") %>%
+      pull(prop)
+    
+    FM_prop = 1-FO_prop
+    
+    rast_FO = rast_fofm*FO_prop
+    
+    rast_FM = rast_fofm*FM_prop
+    
+    allocation <- ifelse(allocation == "ge", "gross energy", "mass")
+    
+    writeRaster(rast_FO, sprintf(here("prep/02_feed/output/%s/forage fish_fish oil_%s.tif"), diet_type, allocation), overwrite = TRUE)
+    writeRaster(rast_FM, sprintf(here("prep/02_feed/output/%s/forage fish_fish meal_%s.tif"), diet_type, allocation), overwrite = TRUE)
+
+    
+  }
+}
+
+
+plot(log(rast_FM + 1))
+```
+
+

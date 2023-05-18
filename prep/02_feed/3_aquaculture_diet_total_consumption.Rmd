@@ -93,73 +93,16 @@ tonnes_consumption %>%
   ungroup() %>%
   write.csv(here("prep/02_feed/data/demand/total_global_ingredient_demand.csv"), row.names = FALSE)
 
+
+test <- read.csv(here("prep/02_feed/data/demand/total_aquaculture_ingredient_demand.csv")) %>%
+  filter(ingredient %in% c("fish oil, forage fish", "fish meal, forage fish")) %>%
+  group_by(diet) %>%
+  summarise(total = sum(ingredient_demand, na.rm = TRUE)) %>% 
+  ungroup()
+
+
+test2 <- read.csv(here("prep/02_feed/data/demand/total_global_ingredient_demand.csv"))
 ```
-
-Check that fishoil/fishmeal matches Froehlich data.
-Specifically matching to Fig.3 in paper, data here: https://knb.ecoinformatics.org/view/doi:10.5063/F1T43R7N
-(New_Current_Taxon_Fig.csv (for figures))
-
-```{r}
-
-# combine_demand <- read_csv(here("prep/02_feed/data/demand/total_aquaculture_ingredient_demand.csv"))
-# 
-# halley_tonnes <- read.csv(here("prep/02_feed/data/msleckman.45.1_fofm_consumption.csv")) %>%
-#   filter(!is.na(animal)) %>%
-#   group_by(animal) %>%
-#   summarize(true_tonnes_fish = sum(Current_Mean)) %>%
-#   mutate(true_tonnes_fofm = true_tonnes_fish*0.28) %>%  # 0.28 converts tonnes fish to fofm
-#   filter(animal == "salmon")
-# 
-# fofm <- combine_demand %>%
-#     filter(ingredient == "fish meal, forage fish" | ingredient == "fish oil, forage fish" | ingredient == "fish meal, cut offs" | ingredient == "fish oil, cut offs") %>%
-#     group_by(animal, diet) %>%
-#   summarize(tonnes_fofm=sum(ingredient_demand, na.rm=TRUE)) %>%
-#   left_join(halley_tonnes) %>%
-#   mutate(correction = true_tonnes_fofm/tonnes_fofm)
-# 
-# write_csv(fofm, here("prep/02_feed/data/demand/fofm_aquaculture_corrected_consumption.csv"))
-
-```
-
-
-```{r}
-
-# ## I actually don't think we should correct this? 
-# 
-# combine_feedstuff_corrected <- combine_demand %>%
-#  left_join(fofm) %>%
-#   mutate(correction = ifelse(ingredient %in% c("fish meal, forage fish", "fish oil, forage fish", "fish oil, cut offs", "fish meal, cut offs" ) , correction, 1)) %>%
-#  # mutate(tonnes_feedstuff_fofm_correct = ingredient_demand*correction) %>%
-# # dplyr::select(iso3c, animal, system, product, ingredient, ingredient_demand=tonnes_feedstuff_fofm_correct, diet)
-# dplyr::select(iso3c, animal, system, product, ingredient, ingredient_demand, diet)
-# 
-# test <- combine_feedstuff_corrected %>%
-#   group_by( diet, ingredient) %>%
-#   summarise(sum = sum(ingredient_demand, na.rm = TRUE))
-# 
-# write_csv(combine_feedstuff_corrected, here("prep/02_feed/data/demand/total_aquaculture_ingredient_demand_corrected.csv"))    
-# 
-# # check
-# combine_feedstuff_corrected %>%
-#   filter(ingredient == "fish meal, forage fish" | ingredient == "fish oil, forage fish" | ingredient == "fish meal, cut offs" | ingredient == "fish oil, cut offs" ) %>%
-#       group_by(animal, diet) %>%
-#   summarize(total=sum(ingredient_demand, na.rm=TRUE)) %>%    #
-#   left_join(halley_tonnes)
-# 
-# # check that these are still the same
-# combine_feedstuff_corrected %>%
-#     group_by(animal, ingredient, diet) %>%
-#   summarize(total=sum(ingredient_demand, na.rm=TRUE)) %>%    #
-#   filter(ingredient == "wheat") 
-# 
-# combine_demand %>%
-#     group_by(animal, ingredient, diet) %>%
-#   summarize(total=sum(ingredient_demand, na.rm=TRUE)) %>%    #
-#   filter(ingredient == "wheat") 
-
-
-```
-
 
 Check Rich diet data and compare to what I have: 
 
