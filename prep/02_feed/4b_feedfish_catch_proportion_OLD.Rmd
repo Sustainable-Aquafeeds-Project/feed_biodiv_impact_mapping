@@ -93,7 +93,7 @@ foragefish <- read_csv(file.path(watson_dir, "v5.0/watson_2017_fisheries_catch_w
   mutate(FOFM_catch = catch*foragefish) %>%
   mutate(FOFM_catch = ifelse(is.na(FOFM_catch), 0, FOFM_catch)) 
 
-foragefish_rgn_totals <- foragefish %>%
+foragefish_rgn_totals_test <- foragefish %>%
   group_by(iso3c) %>%
   summarize(FOFM_catch = sum(FOFM_catch, na.rm = TRUE)) %>%
   ungroup()
@@ -319,6 +319,19 @@ for(diet_type in diets){
 
 
 plot(log(rast_FM + 1))
+
+
+# need to reproject FOFM to 0.083333333 res
+
+test <- rast(list.files(here("prep/02_feed/output/fish-dominant/"), full.names = TRUE, pattern = ".tif"))
+test_names <- list.files(here("prep/02_feed/output/fish-dominant/"), pattern = ".tif")
+
+names(test) <- test_names
+
+plot(log(test+1))
+
+
+plot(test)
 ```
 
 
