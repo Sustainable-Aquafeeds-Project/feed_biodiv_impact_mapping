@@ -24,87 +24,54 @@ source(here("src/directories.R"))
 ```
 
 
-
-UN COMTRADE data 
-
-Possible HS codes for fish oil and fish meal  
-
-
-
-HS 230120 – Flours, meals and pellets; of fish or of crustaceans, molluscs or other aquatic invertebrates  
-
+ Using BACI trade database as our trade data
+  - derived from COMTRADE
+  - README: http://www.cepii.fr/DATA_DOWNLOAD/baci/doc/DescriptionBACI.html
+  - BACI provides yearly data on bilateral trade flows at the product level. Products are identified using the Harmonized System (HS), which is the standard nomenclature for international trade, used by most customs. 
+  - We filter for HS codes 230120 (fish meals) and 150420 (fish oils)
+  - Using year 2017 so we match with Watson catch data 
+  
 ```{r}
-raw_230120_meals <- read.csv(here("prep/02_feed/data/comtrade/TradeData_230120.csv"))
 
+baci_raw <- read.csv(file.path(rdsi_raw_data_dir, "BACI_data/BACI_HS12_V202301/BACI_HS12_Y2017_V202301.csv")) # want the 2017 data to match fisheries 
 
-test <- raw_230120_meals %>% distinct(ReporterISO, Partner2ISO) %>%
-  pivot_wider(values_from = Partner2ISO, names_from = ReporterISO)
+colnames(baci_raw)
 
-unique(raw_230120_meals$ReporterISO) # 78 importing countries..
-unique(raw_230120_meals$Partner2ISO) # 81 exporting? Maybe just not a lot of FM producers? 
+# i = importer country code? 
+# j = partner country code? 
+# k = product code? 
 
-unique(feed_rgn$iso3c) # 143 in data from jessica...
+product_codes <- read.csv(file.path(rdsi_raw_data_dir, "BACI_data/BACI_HS12_V202301/product_codes_HS12_V202301.csv"))
 
+country_codes <- read.csv(file.path(rdsi_raw_data_dir, "BACI_data/BACI_HS12_V202301/country_codes_V202301.csv"))
 
-raw_150420_oils <- read.csv(here("prep/02_feed/data/comtrade/TradeData_150420.csv"))
+baci_filt <- baci_raw %>% 
+  left_join(product_codes, by = c("k" = "code")) %>%
+  # filter(str_detect(description, "oil|meal|Oil|Meal")) %>%
+  # filter(str_detect(description, "fish|Fish")) %>%
+  rename(importer_code = j, partner_code = i, code = k) %>%
+  filter(code %in% c(230120, 150420)) %>%
+  left_join(country_codes, by = c("importer_code" = "country_code")) %>%
+  dplyr::select(year = t, importer_code, importer_name = country_name_full, importer_iso3c = iso_3digit_alpha, partner_code, hs_code = code, v, q, description) %>%
+    left_join(country_codes, by = c("partner_code" = "country_code")) %>%
+  dplyr::select(year, importer_code, importer_name , importer_iso3c, partner_code, partner_name = country_name_full, partner_iso3c = iso_3digit_alpha, hs_code, v, q, description) %>%
+  filter(!is.na(partner_iso3c)) %>%
+    filter(!is.na(importer_iso3c)) %>%
+    filter(partner_iso3c != "N/A") %>%
+    filter(importer_iso3c != "N/A") %>%
+  mutate(q = as.numeric(q)) %>%
+  filter(!is.na(q)) %>%
+  group_by(year, importer_name, importer_iso3c, partner_name, partner_iso3c, hs_code, description) %>% 
+  summarise(qty = sum(q, na.rm = TRUE)) %>%
+  ungroup()
 
-length(unique(raw_150420_oils$ReporterISO)) # 76 countries.. 
-length(unique(raw_150420_oils$PartnerCode)) # 162 countries.. thats better 
-
-
-raw_150410_oils <- read.csv(here("prep/02_feed/data/comtrade/TradeData_150410.csv"))
-
-length(unique(raw_150410_oils$ReporterISO)) # 75 countries.. 
-length(unique(raw_150410_oils$PartnerCode)) # 141 countries.. 
-
-
-
-meals_df <- raw_230120_meals %>%
-    filter(ReporterISO != "W00", 
-         PartnerISO != "W00") %>% # we want to filter out these "world" ones
-  filter(Partner2ISO == "W00") %>% # We only want the rows where W00 is the second partner, so we don't double count some trading. 
-  dplyr::select(ReporterISO, FlowDesc, PartnerISO, CmdCode, CmdDesc, Qty, PrimaryValue) %>%
-  mutate(Qty = Qty*0.001, 
-         PrimaryValue = PrimaryValue*0.001) 
+test <- baci_filt %>%
+  filter(importer_iso3c == partner_iso3c) # no domestic? 
   
-oils_df <- raw_150420_oils %>% ## we'll use the fats and oils other than liver oil...
-    filter(ReporterISO != "W00", 
-         PartnerISO != "W00") %>%
-  filter(Partner2ISO == "W00") %>%
-  dplyr::select(ReporterISO, FlowDesc, PartnerISO, CmdCode , CmdDesc, Qty, PrimaryValue) %>%
-  mutate(Qty = Qty*0.001, 
-         PrimaryValue = PrimaryValue*0.001)
-
-oils_meals_all <- rbind(oils_df, meals_df) %>%
-  mutate(type = ifelse(CmdCode == 230120, "fish meal", "fish oil"))
-
-oils_meals_imports <- oils_meals_all %>%
-  filter(FlowDesc == "Import") %>%
-  filter(ReporterISO == PartnerISO) %>%
-    group_by(ReporterISO, type) %>% 
-  summarise(tonnes = sum(Qty, na.rm = TRUE)) %>%
-  ungroup()
-
-oils_meals_exports_self <- oils_meals_all %>%
-    filter(FlowDesc == "Export") %>%
-  filter(ReporterISO == PartnerISO) # 0 
-
-
-oils_meals_exports <- oils_meals_all %>%
-    filter(FlowDesc == "Export") %>%
-  group_by(ReporterISO, type) %>% 
-  summarise(tonnes = sum(Qty, na.rm = TRUE)) %>%
-  ungroup()
-  
-oils_meals_landings_exports <- rbind(oils_meals_imports, oils_meals_exports) %>%
-  group_by(ReporterISO, type) %>%
-  summarise(tonnes = sum(tonnes,na.rm = TRUE)) %>%
-  ungroup()
-
 ```
 
 
-## Possible approach 2
+## Approach 
 
  1. Start with demand per country 
     - EX: NOR requires X tonnes of FO
@@ -149,16 +116,17 @@ country_demand <- read_csv(here("prep/02_feed/data/demand/total_aquaculture_ingr
     - EX: NOR imports Y% of FO from USA, Z% from Peru, etc.
     
 ```{r}
-oils_meals_import_props <- oils_meals_all %>% 
-  dplyr::select(ReporterISO, PartnerISO, type, Qty, FlowDesc) %>% 
-  filter(FlowDesc == "Import") %>%
-  group_by(ReporterISO, type) %>%
-  mutate(total_import = sum(Qty, na.rm = TRUE)) %>% 
+oils_meals_import_props <- baci_filt %>% 
+  mutate(type = ifelse(hs_code == 230120, "fish meal", "fish oil")) %>%
+  dplyr::select(importer_iso3c, partner_iso3c, type, qty) %>% 
+  group_by(importer_iso3c, type) %>%
+  mutate(total_import = sum(qty, na.rm = TRUE)) %>% 
   ungroup() %>%
-  mutate(prop_import = Qty/total_import)
+  mutate(prop_import = qty/total_import)
   
-length(unique(oils_meals_import_props$PartnerISO)) # 113. not unreasonable to think. The FOFM demand is only like 10 countries. 
+length(unique(oils_meals_import_props$partner_iso3c)) # 124 not unreasonable to think. The FOFM demand is only like 10 countries. 
 
+length(unique(oils_meals_import_props$importer_iso3c)) # 171
 
 ```
 
@@ -171,8 +139,11 @@ Multiply the import %s by the demand tonnes to get ingredient tonnes imported pe
 ## step 3
 
 demand_trade <- country_demand %>%
-  left_join(oils_meals_import_props, by = c("iso3c" = "ReporterISO", "ingredient" = "type")) %>% ## the comtrade data is missing a lot of countries... 
-  mutate(tonnes_ingredient_demand_traded = prop_import*ingredient_demand) # small problem here: missing RUS, PRK, FRO, and ARE. According to comtrade they don't import any fish oil or fish meal... 
+  left_join(oils_meals_import_props, by = c("iso3c" = "importer_iso3c", "ingredient" = "type")) %>% 
+  mutate(tonnes_ingredient_demand_traded = prop_import*ingredient_demand) 
+
+unique(demand_trade$iso3c)
+unique(demand_trade$partner_iso3c) # 85 countries
 ```
 
 
@@ -183,8 +154,8 @@ Group by exporter country to get total amount of FO or FM ingredients they expor
 
 ## step 4
 demand_trade_origin <- demand_trade %>%
-  group_by(PartnerISO, ingredient, diet) %>%
-  summarise(total_ingredient_tonnes_traded = sum(tonnes_ingredient_demand_traded, na.rm = TRUE)) %>% # missing about 1 million tonnes due to missing countries in trade data 
+  group_by(partner_iso3c, ingredient, diet) %>%
+  summarise(total_ingredient_tonnes_traded = sum(tonnes_ingredient_demand_traded, na.rm = TRUE)) %>% 
   ungroup()
 
 
@@ -296,7 +267,7 @@ Apply these within country percentages to total country exported fish oil and fi
 
 forage_fofm_origins_meal <- forage_catch_iso %>%
   dplyr::select(iso3c, CommonName, TaxonName, prop_of_iso_total) %>%
-  left_join(demand_trade_origin %>% filter(ingredient == "fish meal"), by = c("iso3c" = "PartnerISO")) %>%
+  left_join(demand_trade_origin %>% filter(ingredient == "fish meal"), by = c("iso3c" = "partner_iso3c")) %>%
   mutate(tonnes_fofm_spp = total_ingredient_tonnes_traded*prop_of_iso_total) %>%
   dplyr::select(iso3c, CommonName, TaxonName, ingredient, diet, tonnes_fofm_spp) %>%
   filter(!is.na(tonnes_fofm_spp))
@@ -305,7 +276,7 @@ forage_fofm_origins_meal <- forage_catch_iso %>%
 
 forage_fofm_origins_oil <- forage_catch_iso_no_krill %>%
   dplyr::select(iso3c, CommonName, TaxonName, prop_of_iso_total) %>%
-  left_join(demand_trade_origin %>% filter(ingredient == "fish oil"), by = c("iso3c" = "PartnerISO")) %>%
+  left_join(demand_trade_origin %>% filter(ingredient == "fish oil"), by = c("iso3c" = "partner_iso3c")) %>%
   mutate(tonnes_fofm_spp = total_ingredient_tonnes_traded*prop_of_iso_total) %>%
   dplyr::select(iso3c, CommonName, TaxonName, ingredient, diet, tonnes_fofm_spp) %>%
   filter(!is.na(tonnes_fofm_spp))
@@ -476,7 +447,7 @@ for(diet_type in diets){
 # plot(log(forage_fish_system + 1))
 
 # the following should be about equal
-print(sprintf("the following should be about equal"))
+print(sprintf("the following should be about equal")) # the fish oil observed will be a little lower because of no krill
 print(sprintf("raster calc: %s", cellStats(forage_fish_system, "sum", na.rm=TRUE))) 
 print(sprintf("observed: %s", forage_fofm_allocation_totals %>% filter(diet == diet_type, allocation_type == allocation, ingredient == ingredient_type) %>% group_by(ingredient) %>% summarise(total = sum(total_tonnes_fofm_lw, na.rm = TRUE)) %>% ungroup() %>% pull(total)))
 
@@ -496,7 +467,7 @@ names(test) <- test_names
 
 plot(log(test[[1:4]]+1))
 
-plot(test)
+plot(test[[1:4]])
 ```
  
 
@@ -530,3 +501,9 @@ fbs <- read_csv(file.path(rdsi_raw_data_dir, "fao/FAO_FoodBalanceSheets/d2023/Fo
 
 FAO detailed trade 
  - doesn't include fish products 
+ 
+ 
+
+
+
+
