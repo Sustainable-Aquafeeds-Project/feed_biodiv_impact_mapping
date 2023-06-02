@@ -263,3 +263,126 @@ write_csv(x = current_severe_threats_of_interest, file = here("data/tidy_data/iu
 
 ```
 
+<<<<<<< HEAD
+
+
+#FISHERIES DATA 
+
+
+Pulling together the spatial industrial fisheries data and save to rdsi storage. 
+
+```{r}
+
+#THE v5 DATA
+
+catch <- fread(file.path(watson_dir, "v5.0/Catch2015_2019.csv")) |> lazy_dt(immutable = FALSE) |> filter(IYear == 2017) |> as.data.table()
+
+codes_cell <- fread(file.path(watson_dir, "v5.0/Codes_cells.csv")) |> lazy_dt(immutable = FALSE)
+
+codes_country <- fread(file.path(watson_dir, "v5.0/Codes_country.csv"))|> lazy_dt(immutable = FALSE)
+
+codes_gear <- fread(file.path(watson_dir, "v5.0/Codes_gear.csv")) |> lazy_dt(immutable = FALSE) |> select(Gear, FleetGearName, VBDesc) |> distinct() 
+
+codes_taxa <- read.csv(file.path(watson_dir, "v5.0/Codes_taxa.csv")) |> lazy_dt(immutable = FALSE)
+
+
+catch_joined <- catch |> 
+  lazy_dt(immutable = FALSE) |> 
+  left_join(codes_cell, by = "Cell") |>
+  left_join(codes_country, by = c("CNumber" = "Cnumber")) |>
+  left_join(codes_gear, by = c("Gear")) |>
+  left_join(codes_taxa, by = "Taxonkey") |>
+  rename(CountryName = `FAO name`) |> as.data.table()
+
+fwrite(catch_joined, file.path(watson_dir, "v5.0/watson_2017_fisheries_catch.csv"))
+
+```
+
+#Filter FAO Species lists for forage fish spp
+
+```{r}
+fao_list <- read_csv(file.path(fao_dir, "species_lists/CL_FI_SPECIES_GROUPS.csv"))
+
+unique(fao_list$ISSCAAP_Group)
+
+forage_list <- fao_list |> filter(ISSCAAP_Group == "Herrings, sardines, anchovies" )
+
+write_csv(forage_list, here("data/raw_data/fisheries/fao_forage_fish_spp_list.csv"))
+```
+
+#Prep list of forage fish used for fish oil/meal 
+
+```{r}
+ #145 unique species and species groups in the FAO data
+forage_spp_fao <- read_csv(here("data/raw_data/fisheries/fao_forage_fish_spp_list.csv")) |> select(Name_en, Scientific_Name) |> distinct() |> rename(common_name = Name_en, sci_name = Scientific_Name) 
+
+#bring in species highlighted in the SI of Froehlich et al 2018 Avoiding the ecological limits of forage fish. Nature Sustainability.
+froehlich_spp <- read_csv(here("data/raw_data/fisheries/forage_fish_spp_froehlich_2018.csv")) %>%
+  distinct(sci_name = Species) %>%
+  mutate(common_name = sci2comm(sci_name)) ## ok so the species Rich is using from Halleys paper only represents 71% of total forage fish catch. I think i will use the 238 species for my data. 
+
+froehlich_spp_df <- froehlich_spp %>%
+  mutate(common_name = as.character(ifelse(common_name == "character(0)", NA, common_name))) %>%
+  mutate(common_name = str_to_sentence(common_name)) %>%
+  mutate(common_name = ifelse(common_name == "Na", NA, common_name))
+
+
+#13 species in Kok et al - some not in the FAO data
+forage_spp_koketal <- read_xlsx(here("data/tidy_data/allocation/embodied_fish_allocation.xlsx")) |> drop_na() |>  select(common_name = CommonName, sci_name) |> distinct() %>% drop_na()
+
+#bind the two sources and save - 155 species considered in total
+forage_spp_list <- bind_rows(forage_spp_fao, froehlich_spp_df, forage_spp_koketal) |> distinct() 
+
+dups <- forage_spp_list %>%
+  filter(duplicated(sci_name)) %>%
+  pull(sci_name)
+
+dup_spp <- forage_spp_list %>%
+  filter(sci_name %in% dups) %>%
+  filter(!is.na(common_name))
+
+forage_spp_list_fin <- forage_spp_list %>%
+  filter(!(sci_name %in% dups)) %>%
+  rbind(dup_spp)
+
+write_csv(forage_spp_list, here("data/raw_data/fisheries/forage_fish_list_final.csv"))
+
+```
+
+
+#Filter Watson spatialised catch data for forage fish species so it can be stored in the project. 
+
+Data source: Watson v5.0 provided by request. v4.0 is publicly available through IMAS Research Data Portal https://metadata.imas.utas.edu.au/geonetwork/srv/eng/catalog.search#/metadata/5c4590d3-a45a-4d37-bf8b-ecd145cb356d
+
+```{r}
+
+#THE V5 DATA
+
+catch <- read.csv((file.path(watson_dir, "v5.0/watson_2017_fisheries_catch.csv")))
+
+forage_catch <- catch |> 
+  # lazy_dt(immutable = FALSE) |> 
+   dplyr::mutate(forage_id = ifelse(TaxonName %in% c(forage_spp_list$sci_name), 1, NA)) |> 
+  mutate(total_catch = ReportedIND+IUUIND+ReportedNIND+IUUNIND, total_ind = ReportedIND+IUUIND, total_nind =ReportedNIND+IUUNIND) |>
+  as_tibble()
+
+test <- forage_catch %>% filter(forage_id == 1)
+
+length(unique(test$TaxonName))
+
+#31 million tonnes, represented by 186 species across industrial and non industrial sources. 31 million matches perfectly to Halley's paper. 
+sum(test$total_catch) # 31551575
+sum(test$total_ind) #27.1 mill is from industrial
+sum(test$total_nind) #4.3 mill is from non-industrial
+unique(test$TaxonName) 
+
+tibble(Common_name = unique(test$CommonName), Species_binomial = unique(test$TaxonName) )
+
+write.csv(forage_catch, file = file.path(watson_dir, "v5.0/watson_2017_catch_w_forage_id.csv"), row.names = FALSE)
+
+# 631b80601046406fe8ed55faf74309d439f95cc7
+```
+
+
+=======
+>>>>>>> parent of 631b806... testing big file push
