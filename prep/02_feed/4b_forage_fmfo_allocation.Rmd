@@ -40,19 +40,24 @@ raw_230120_meals <- read.csv(here("prep/02_feed/data/comtrade/TradeData_230120.c
 test <- raw_230120_meals %>% distinct(ReporterISO, Partner2ISO) %>%
   pivot_wider(values_from = Partner2ISO, names_from = ReporterISO)
 
-unique(raw_230120_meals$ReporterISO) # 78 countries.. maybe it didn't download all? 
+unique(raw_230120_meals$ReporterISO) # 78 importing countries..
+unique(raw_230120_meals$Partner2ISO) # 81 exporting? Maybe just not a lot of FM producers? 
 
 unique(feed_rgn$iso3c) # 143 in data from jessica...
 
 
 raw_150420_oils <- read.csv(here("prep/02_feed/data/comtrade/TradeData_150420.csv"))
 
-length(unique(raw_150420_oils$ReporterISO)) # 76 countries.. maybe it didn't download all? 
+length(unique(raw_150420_oils$ReporterISO)) # 76 countries.. 
+length(unique(raw_150420_oils$PartnerCode)) # 162 countries.. thats better 
 
 
 raw_150410_oils <- read.csv(here("prep/02_feed/data/comtrade/TradeData_150410.csv"))
 
-length(unique(raw_150410_oils$ReporterISO)) # 75 countries.. maybe it didn't download all? 
+length(unique(raw_150410_oils$ReporterISO)) # 75 countries.. 
+length(unique(raw_150410_oils$PartnerCode)) # 141 countries.. 
+
+
 
 meals_df <- raw_230120_meals %>%
     filter(ReporterISO != "W00", 
@@ -62,7 +67,7 @@ meals_df <- raw_230120_meals %>%
   mutate(Qty = Qty*0.001, 
          PrimaryValue = PrimaryValue*0.001) 
   
-oils_df <- raw_150420_oils %>%
+oils_df <- raw_150420_oils %>% ## we'll use the fats and oils other than liver oil...
     filter(ReporterISO != "W00", 
          PartnerISO != "W00") %>%
   filter(Partner2ISO == "W00") %>%
@@ -152,7 +157,7 @@ oils_meals_import_props <- oils_meals_all %>%
   ungroup() %>%
   mutate(prop_import = Qty/total_import)
   
-unique(oils_meals_import_props$PartnerISO)
+length(unique(oils_meals_import_props$PartnerISO)) # 113. not unreasonable to think. The FOFM demand is only like 10 countries. 
 
 
 ```
@@ -194,7 +199,7 @@ Determine each countries' breakdown of forage fish species catch by flag country
 ## step 5 
 
 
-watson_raw <- read_csv(file.path(watson_dir, "v5.0/watson_2017_fisheries_catch_w_cat.csv"))
+watson_raw <- read_csv(file.path(watson_dir, "v5.0/watson_2017_catch_w_forage_id.csv"))
 
 watson_rgn <- watson_raw %>%
   distinct(CNumber, country = CountryName) %>%
@@ -221,10 +226,11 @@ codes_country <- read.csv(file.path(watson_dir, "v5.0/Codes_country.csv")) # rea
 # calculate forage catch and add iso3c codes
 forage_catch <- 
   watson_raw |> 
+  dplyr::select(-foragefish) %>% 
   left_join(watson_rgn, by = c("CountryName" = "country", "CNumber")) %>%
   mutate(catch = ReportedIND + IUUIND + ReportedNIND + IUUNIND) %>%
-  mutate(foragefish = ifelse(CommonName == "Antarctic krill", 1, foragefish)) %>%
-  mutate(FOFM_catch = catch*foragefish) %>%
+  mutate(forage_id = ifelse(CommonName == "Antarctic krill", 1, forage_id)) %>%
+  mutate(FOFM_catch = catch*forage_id) %>%
   mutate(FOFM_catch = ifelse(is.na(FOFM_catch), 0, FOFM_catch))  %>%
   filter(FOFM_catch > 0) %>%
   left_join(codes_country, by = c("CNumber" = "Cnumber")) %>%
@@ -245,13 +251,13 @@ forage_catch <-
              TRUE ~ iso3c
            ))
 
-
-foragefish <- 
+foragefish <-  # we need to make a dataframe that has all of the catch in it.. so we can get later get a prop of forage catch to total catch. 
   watson_raw |> 
+  dplyr::select(-foragefish) %>%
   left_join(watson_rgn, by = c("CountryName" = "country", "CNumber")) %>%
-    mutate(foragefish = ifelse(CommonName == "Antarctic krill", 1, foragefish)) %>%
+    mutate(forage_id = ifelse(CommonName == "Antarctic krill", 1, forage_id)) %>%
   mutate(catch = ReportedIND + IUUIND + ReportedNIND + IUUNIND) %>%
-  mutate(FOFM_catch = catch*foragefish) %>%
+  mutate(FOFM_catch = catch*forage_id) %>%
   mutate(FOFM_catch = ifelse(is.na(FOFM_catch), 0, FOFM_catch))
 
 ## get an estimate of proportion of forage fish catch coming from different species in different landing countries. 
@@ -264,7 +270,7 @@ forage_catch_iso <- forage_catch %>%
   ungroup() %>%
   mutate(prop_of_iso_total = catch/total_fofm_catch)
 
-forage_catch_iso_no_krill <- forage_catch %>%
+forage_catch_iso_no_krill <- forage_catch %>% ## we need one without krill for fish oil, since krill isn't included for fish oil. 
   filter(CommonName != "Antarctic krill")  %>%
     group_by(iso3c, CommonName, TaxonName) %>%
   summarise(catch = sum(FOFM_catch, na.rm = TRUE)) %>%
@@ -488,150 +494,11 @@ test_names <- list.files(here("prep/02_feed/output/plant-dominant/"), pattern = 
 names(test) <- test_names
 
 
-plot(log(test+1))
+plot(log(test[[1:4]]+1))
 
 plot(test)
 ```
  
- 
- 
-## Possible approach 1 
-  - Determine each countries' breakdown of forage fish species catch by flag country (e.g., where the catch is actually landed, rather than caught). Filter for all forage fish species, group by country and species, and determine the within-country proportions of catch from each species. For example, 60% of the forage fish species weight that Norway lands is from Atlantic herring, 32% from Blue whiting, 6% from Atlantic mackerel, etc...
- - Apply these within country percentages to total country domestic fish oil and fish meal. Now we will have X tonnes of fish oil and fish meal exported from or kept within country Y per fish species. 
-     - For example, if 60% of the forage catch in Norway is from Atlantic herring, then 60% of the fish meal exported from or kept in Norway will be from Atlantic herring. 
- - Next, we can use the species specific allocation rates that Rich put together to convert the fish oil and fish meal to raw material live weight equivalents. 
-
-After this, I get a bit fuzzy on the best way to move forward. At some point, we need to incorporate the demand for FMFO ingredients for salmon in each country. Doing the above steps would tell us total Fish oil or fish meal in live weight per country, but won't tell us what it is ultimately used for. 
-
- - Match to watson data by vessel flag (e.g., the landing country) and species
- - Then group by cell after multiplying by the proportion of forage catch to fofm in each landing country per species 
-
-```{r}
-
-forage_spp_biomar <- read_csv("/mnt/rdsi/raw_data/biomar/forage_spp_list.csv") %>% dplyr::select(-3) # grab forage fish species from biomar
-
-forage_spp_nceas <-   read_csv(file.path(watson_dir, "v5.0/watson_2017_fisheries_catch_w_cat.csv")) |> 
-  filter(!is.na(foragefish)) %>%
-  distinct(CommonName, TaxonName) # grab forage fish spp from halleys paper
-
-setdiff(forage_spp_biomar$scientific_name, forage_spp_nceas$TaxonName)
-
-setdiff(forage_spp_nceas$TaxonName, forage_spp_biomar$scientific_name) # lots of mismatches based on spelling... 
-
-## ill use halleys species list for now 
-
-codes_country <- read.csv(file.path(watson_dir, "v5.0/Codes_country.csv")) # read in country codes 
-
-watson_raw <- read_csv(file.path(watson_dir, "v5.0/watson_2017_fisheries_catch_w_cat.csv"))
-
-watson_rgn <- watson_raw %>%
-  distinct(CNumber, country = CountryName) %>%
-  mutate(iso3c = countrycode(sourcevar = country, origin = "country.name", destination = "iso3c")) %>%
-  mutate(iso3c = 
-           case_when(
-             country == "Amer Samoa" ~ "ASM", 
-             country == "Br Ind Oc Tr" ~ "IOT", 
-             country == "Br Virgin Is" ~ "VGB", 
-             country == "Dominican Rp" ~ "DOM",
-             country == "Fr Polynesia" ~ "PYF", 
-             country == "Fr Guiana" ~ "GUF", 
-             country == "Micronesia" ~ "FSM", 
-             country == "St Pier Mq" ~ "SPM", 
-             country == "Untd Arab Em" ~ "UAE", 
-             country == "US Virgin Is" ~ "VIR", 
-             TRUE ~ iso3c
-           ))
-
-# calculate forage catch and add iso3c codes
-forage_catch <- 
-  watson_raw |> 
-  left_join(watson_rgn, by = c("CountryName" = "country", "CNumber")) %>%
-  mutate(catch = ReportedIND + IUUIND + ReportedNIND + IUUNIND) %>%
-  mutate(FOFM_catch = catch*foragefish) %>%
-  mutate(FOFM_catch = ifelse(is.na(FOFM_catch), 0, FOFM_catch))  %>%
-  filter(FOFM_catch > 0) %>%
-  left_join(codes_country, by = c("CNumber" = "Cnumber")) %>%
-  rename(country = FAO.name) %>%
-    mutate(iso3c = countrycode(sourcevar = country, origin = "country.name", destination = "iso3c")) %>%
-  mutate(iso3c = 
-           case_when(
-             country == "Amer Samoa" ~ "ASM", 
-             country == "Br Ind Oc Tr" ~ "IOT", 
-             country == "Br Virgin Is" ~ "VGB", 
-             country == "Dominican Rp" ~ "DOM",
-             country == "Fr Polynesia" ~ "PYF", 
-             country == "Fr Guiana" ~ "GUF", 
-             country == "Micronesia" ~ "FSM", 
-             country == "St Pier Mq" ~ "SPM", 
-             country == "Untd Arab Em" ~ "UAE", 
-             country == "US Virgin Is" ~ "VIR", 
-             TRUE ~ iso3c
-           ))
-
-## get an estimate of proportion of forage fish catch coming from different species in different landing countries. 
-forage_catch_iso <- forage_catch %>%
-  group_by(iso3c, CommonName, TaxonName) %>%
-  summarise(catch = sum(FOFM_catch, na.rm = TRUE)) %>%
-  ungroup() %>%
-  group_by(iso3c) %>%
-  mutate(total_fofm_catch = sum(catch, na.rm = TRUE)) %>%
-  ungroup() %>%
-  mutate(prop_of_iso_total = catch/total_fofm_catch)
-
-
-```
-
-
-Now join landings+exports comtrade data with watson data 
-
-```{r}
-forage_fofm <- forage_catch_iso %>%
-  left_join(oils_meals_landings_exports, by = c("iso3c" = "ReporterISO")) %>%
-  mutate(tonnes_fofm_spp = tonnes*prop_of_iso_total) %>%
-  dplyr::select(iso3c, CommonName, TaxonName, type, tonnes_fofm_spp) %>%
-  filter(!is.na(tonnes_fofm_spp))
-
-```
-
-
-Match allocation data to the fish oil and fish meal per species from comtrade
-
-
-
-```{r}
-forage_fofm_allocation <- forage_fofm %>%
-  left_join(fish_allocations_df, by = c("type" = "ingredient", "CommonName")) %>%
-  mutate(ge_value = case_when(
-    is.na(ge_value) & type == "Fishmeal" ~ ga_ge_FM,
-    is.na(ge_value) & type == "Fish oil" ~ ga_ge_FO, 
-    TRUE ~ ge_value),
-    mass_value = case_when(
-      is.na(mass_value) & type == "Fishmeal" ~ ga_mass_FM,
-      is.na(mass_value) & type == "Fish oil" ~ ga_mass_FO, 
-      TRUE ~ mass_value
-    )
-  ) %>%
-  pivot_longer(cols = c("ge_value", "mass_value"), 
-               names_to = "allocation_type", 
-               values_to = "allocation_value"
-               ) %>%
-  mutate(allocation_type = ifelse(allocation_type == "ge_value", "ge", "mass")) %>%
-  mutate(tonnes_fofm_spp_live_weight = tonnes_fofm_spp*allocation_value)
-
-
-## compare to demand 
-
-test <- forage_fofm_allocation %>%
-  group_by(iso3c, type) %>%
-  summarise(tonnes_fofm = sum(tonnes_fofm_spp, na.rm =TRUE),
-            tonnes_fofm_live_weight = sum(tonnes_fofm_spp_live_weight, na.rm = TRUE))
-
-
-system_consumption_ingredient <- read_csv(here("prep/02_feed/data/demand/total_aquaculture_ingredient_demand.csv")) %>%
-  filter(ingredient %in% c("fish meal, forage fish", "fish oil, forage fish")) 
-```
-
-
 
 
 ## Explore other trade databases 
@@ -648,7 +515,8 @@ feed_rgn <- read_csv(here("prep/02_feed/data/FMFO_bySource_2021Apr.csv")) %>%
 
 
 Food balance sheets
-
+ - only consumption. Doesn't have trade associated. 
+ 
 ```{r}
 fbs <- read_csv(file.path(rdsi_raw_data_dir, "fao/FAO_FoodBalanceSheets/d2023/FoodBalanceSheets_E_All_Data_(Normalized).csv")) %>%
   filter(Year == 2020) %>% # have to use 2020 here because fbs doesn't have 2021 yet... 
@@ -661,8 +529,4 @@ fbs <- read_csv(file.path(rdsi_raw_data_dir, "fao/FAO_FoodBalanceSheets/d2023/Fo
 ```
 
 FAO detailed trade 
-
-```{r}
-
-```
-
+ - doesn't include fish products 
