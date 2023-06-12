@@ -1,0 +1,122 @@
+---
+title: "MAPSPAM_tonnes_production.Rmd"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+# Summary
+
+# Data sources
+
+ - MapSPAM: https://mapspam.info/index.php/methodology/ 
+ - Halpern et al. 2022: https://knb.ecoinformatics.org/view/doi%3A10.5063%2FF1FN14NK
+
+# Methods
+
+## Determine total crop grown in each region
+This should be run if there are changes to the MAPSPAM production data.
+
+Calculates total crop production using the MAPSPAM data adjusted to 2021 production. These data include all growing systems (intensive, irrigated, etc.) and are in units of metric tonnes.
+
+This is used in subsequent script to estimate the proportion of each crop going to animal (salmon) feed in each country.
+
+```{r}
+feed_folder <- file.path(here("prep/02_feed"))
+
+library(here)
+library(tidyverse)
+library(countrycode)
+library(strex)
+library(terra)
+
+source("src/directories.R")
+
+focus_year = 2021
+
+## quick check to make sure categories are aligned
+mapspam_crops <- read_csv(file.path(feed_folder, "data/MapSPAM_crop_info.csv")) %>% ## this data is from MapSPAM website
+  dplyr::select(SPAM_short_name, SPAM_super) %>%
+  unique() %>%
+  mutate(SPAM_super = case_when(
+    SPAM_short_name %in% c("sunf", "ooil", "rape", "opul") ~ SPAM_short_name, 
+    TRUE ~ SPAM_super
+  ))
+
+
+```
+
+Extract by region the crop production from the raster maps.
+
+```{r}
+
+regions <- read_csv(here("data/spatial/output/food_rgns.csv")) # these are regions originally derived from GADM36 datasets, but I poached them from https://knb.ecoinformatics.org/view/doi%3A10.5063%2FF1FN14NK
+ 
+crop_tonnes <- list.files(file.path(mapspam_dir, "/scaled_maps_2021"), pattern = "_A_scaled.tif", full=TRUE)
+crop_tonnes <- grep("rest", crop_tonnes, invert=TRUE, value=TRUE) # filter out "rest" category
+
+crop_stack <- terra::rast(crop_tonnes)
+
+names(crop_stack) <- str_after_last(sources(crop_stack), "/")
+
+zones <- terra::rast(file.path(rdsi_raw_data_dir, "food-systems-project/land_eez_rgns.tif")) # also poached from https://knb.ecoinformatics.org/view/doi%3A10.5063%2FF1FN14NK
+
+crop_production <- terra::zonal(crop_stack, zones, fun="sum", na.rm=TRUE, progress="text")
+
+crop_production_df <- data.frame(crop_production) %>%
+  gather("SPAM_short_name", "tonnes_producing_crop", -1) %>%
+  rename("ID_0" = land_eez_rgns) %>%
+  left_join(regions, by="ID_0") %>%
+  mutate(SPAM_short_name = gsub("crop_", "", SPAM_short_name)) %>%
+  mutate(SPAM_short_name = gsub("_A_scaled.tif", "", SPAM_short_name)) %>%
+  dplyr::select(iso3c_producing=iso3c, SPAM_short_name, tonnes_producing_crop) %>%
+  mutate(tonnes_producing_crop = ifelse(is.na(tonnes_producing_crop), 0, tonnes_producing_crop)) # replace NAs with 0
+
+```
+
+Combine the super categories
+
+```{r}
+crop_production_df <- left_join(crop_production_df, mapspam_crops, by="SPAM_short_name") 
+
+# check that all crop categories add up: if not, adjust the crop code datasheet
+crop_production_df <- crop_production_df %>%
+  group_by(iso3c_producing, SPAM_super) %>%
+  summarize(tonnes_producing_crop = sum(tonnes_producing_crop)) %>%
+#  filter(!(SPAM_super %in% c("toba", "ofib", "rcof", "acof", "teas"))) %>%
+  ungroup()
+
+```
+
+Check and save: should be about equal to 2021 FAO production
+
+```{r}
+
+check <- crop_production_df %>%
+  group_by(SPAM_super) %>% summarize(our_tonnes = sum(tonnes_producing_crop, na.rm=TRUE)) %>% data.frame()
+  
+fao_translate <- vroom::vroom(here("prep/01_crops_mapspam/data/crop_codes.csv")) %>%
+  dplyr::select(SPAM_super, item_code) %>%
+  unique()
+
+fao <- read_csv(here("prep/01_crops_mapspam/data/FAOSTAT_crop_production_2010_2021.csv")) %>% 
+  filter(year %in% c(2019, 2020, 2021)) %>%
+  filter(area != "China",
+         area_code < 5000) %>%
+  dplyr::select(area, item_code, value, year) %>%
+  left_join(fao_translate, by="item_code") %>% 
+  group_by(SPAM_super, year) %>%
+  summarise(total = sum(value, na.rm = TRUE)) %>%
+  ungroup() %>%
+  group_by(SPAM_super) %>%
+  summarize(total = mean(total, na.rm=TRUE)) %>%
+  ungroup()
+  
+compare <- check %>% left_join(fao, by="SPAM_super") %>%
+  mutate(prop = our_tonnes/total)
+compare
+sum(compare$our_tonnes, na.rm=TRUE)/sum(compare$total, na.rm = TRUE) # ooil looks problematic... everything else looks ok though...
+
+write_csv(crop_production_df, here("prep/02_feed/data/MAPSPAMcrop_production.csv"))
+
+```

@@ -11,11 +11,11 @@ Wrangle MapSPAM crop category dataset.
 
 # Data sources
 
- - FAO crop production
+ - FAOSTAT crop production: https://www.fao.org/faostat/en/#data/QCL
 
- - MapSPAM
+ - MapSPAM: https://data.apps.fao.org/catalog/iso/59f7a5ef-2be4-43ee-9600-a6a9e9ff562a 
  
- - Halpern et al. 2022
+ - Halpern et al. 2022: https://www.nature.com/articles/s41893-022-00965-x
 
 
 # Setup

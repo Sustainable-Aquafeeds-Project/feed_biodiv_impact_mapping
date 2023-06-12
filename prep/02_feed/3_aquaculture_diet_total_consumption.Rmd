@@ -47,10 +47,7 @@ salmon_production <- production %>%
 
 diet <- read_csv(here("prep/02_feed/data/aquaculture_diet_composition.csv"))
 
-# fcr <- read_csv(here("prep/02_feed/data/feed_conversion_aquaculture.csv")) %>%
-#   select(species, fcr=value)
-
-fcrs <- read.csv(here("data/raw_data/FCR.csv")) %>%
+fcrs <- read.csv(here("prep/02_feed/data/FCR.csv")) %>%
   mutate(species = "salmon")
 
 ```
@@ -103,12 +100,3 @@ test <- read.csv(here("prep/02_feed/data/demand/total_aquaculture_ingredient_dem
 
 test2 <- read.csv(here("prep/02_feed/data/demand/total_global_ingredient_demand.csv"))
 ```
-
-Check Rich diet data and compare to what I have: 
-
-
-```{r}
-both_diets <- read_csv(here("../feed_pressure_mapping/data/raw_data/feed_composition_pressures.csv")) |> select(-X5) |> 
-  mutate(ingredients = if_else(condition = ingredients== "canola/camelina oil", true = "canola oil", false = ingredients))
-```
-

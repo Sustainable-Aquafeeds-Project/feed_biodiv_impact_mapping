@@ -1,9 +1,22 @@
 ---
 title: "Tidying data"
-author: "Rich Cottrell"
-date: "15/02/2022"
+author: "Gage Clawson"
+date: "05/02/2023"
 output: html_document
 ---
+
+## Summary
+
+This script preps necessary data used in subsequent scripts. 
+
+ - preps mapspam rasters
+ - preps FAOSTAT aquaculture data
+ - preps FAOSTAT crop production data
+ - create a base spatial raster 
+ - download IUCN threats of interest to feeds
+ - prep Watson fisheries catch data 
+ - download and prep forage fish species lists
+ - filter Watson spatialised catch data for forage fish species so it can be stored in the project
 
 ```{r}
 library(tidyverse)
@@ -193,6 +206,7 @@ map(.x = production_sector_list, .f = function(this_element){
 
 
 ```
+
 Create a base raster
 ```{r}
 
@@ -262,8 +276,6 @@ write_csv(x = current_severe_threats_of_interest, file = here("data/tidy_data/iu
 
 
 ```
-
-<<<<<<< HEAD
 
 
 #FISHERIES DATA 

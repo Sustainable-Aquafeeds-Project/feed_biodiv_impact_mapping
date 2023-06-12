@@ -3,7 +3,9 @@ title: "Calculate embodied crop materials from feed demand"
 output: html_document
 ---
 
-Next step is to determine raw material demand which will vary by processing technique (e.g. SPC vs SBM) and source. So first, we need to know where the ingredients are largely sourced from. This may change with information that we gain from Biomar but the idea is eventually to make this flexible enough to select any from the top producing countries. This requires knowing the raw material that supports the ingredient and the major places this raw material is grown.
+## Summary 
+
+We need to determine raw material demand which will vary by processing technique (e.g. SPC vs SBM) and source. So first, we need to know where the ingredients are largely sourced from. **This requires knowing the raw material that supports the ingredient and the major places this raw material is grown.** This script preps co-product processing conversion factors.
 
 ```{r}
 library(tidyverse)

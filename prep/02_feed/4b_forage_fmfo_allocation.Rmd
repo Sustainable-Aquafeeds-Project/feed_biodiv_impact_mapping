@@ -1,12 +1,18 @@
 ---
 title: "Forage fish for feed"
-author: "Gage Clawson (NCEAS, IMAS)"
+author: "Gage Clawson"
 date: "May 18, 2023"
 output: html_document
 editor_options: 
   chunk_output_type: console
 ---
 
+## Summary
+
+GOAL: Get proportion of fish oil and fish meal live weight equivalents that is consumed by salmon aquaculture in each country per species. Allocate to live weight fish using mass and energetic allocation rates.
+
+
+Outputs: a raster for each fish oil and fish meal, under each diet scenario, describing the harvest of each FMFO live weight equivalents (tonnes) that are consumed in each country by salmon aquaculture systems.
 
 ```{r}
 # load relevant packages, etc.
@@ -482,7 +488,10 @@ test_names <- list.files(here("prep/02_feed/output/fish-dominant/"), pattern = "
 names(test) <- test_names
 
 
+
+png(file = here("prep/02_feed/plots/fish_dominant_fofm.png"), width = 800, height = 600, res = 120)
 plot(log(test[[1:4]]+1))
+dev.off()
 
 ```
  
@@ -496,7 +505,8 @@ The likely country source of fish meal/oil for each animal system. These data we
 ```{r}
 
 feed_rgn <- read_csv(here("prep/02_feed/data/FMFO_bySource_2021Apr.csv")) %>%
-  filter(!is.na(tonnes))
+  filter(!is.na(tonnes)) %>%
+  filter(system == "salmon_aquaculture_meat")
 
 ```
 

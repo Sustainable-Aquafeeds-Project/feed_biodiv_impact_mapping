@@ -5,9 +5,9 @@ editor_options:
   chunk_output_type: console
 ---
 
-Get proportion of each MAPSPAM crop that is consumed by salmon aquaculture in each country.
+GOAL: Get proportion of each MAPSPAM crop that is consumed by salmon aquaculture in each country. Allocate to raw weight materials using mass and energetic allocation rates.
 
-Outputs: a raster for each crop describing the proportion of each crop consumed in each country by salmon aquaculture systems. This is a final output.
+Outputs: a raster for each crop describing the amount of each crop produced (tonnes) in each country used by salmon aquaculture systems.
 
 Be sure to run previous scripts if changes to data.
 

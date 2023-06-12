@@ -11,7 +11,7 @@ Rescale MapSPAM data to year 2021.
 
 # Data information
 
-We do this using FAOSTAT crop production data trends between year 2010 and 2021. Consider using 3 year mean? I.e. 2009, 2010, 2011, for early years; 2019, 2020, 2021 for later years?
+We do this using FAOSTAT crop production data trends between year 2010 and 2021. Using 3 year mean. I.e. 2009, 2010, 2011, for early years; 2019, 2020, 2021 for later years.
 
 # Setup
 ```{r setup, include = FALSE}

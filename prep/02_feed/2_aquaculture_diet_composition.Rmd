@@ -5,7 +5,7 @@ editor_options:
   chunk_output_type: console
 ---
 
-Wrangling and aggragating some aquaculture diet composition data.
+Wrangling and aggregating aquaculture diet composition data.
 
 ```{r}
 library(here)
