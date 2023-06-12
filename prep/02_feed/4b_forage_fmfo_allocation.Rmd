@@ -31,28 +31,36 @@ source(here("src/directories.R"))
   - We filter for HS codes 230120 (fish meals) and 150420 (fish oils)
   - Using year 2017 so we match with Watson catch data 
   
+https://hstracker.wto.org/?_inputs_&sidebarCollapsed=false&page=%22visualizer%22&hscode=%22150420%22
+  
 ```{r}
+baci_files <- list.files(file.path(rdsi_raw_data_dir, "BACI_data/BACI_HS12_V202301/"), full.names = TRUE)[1:8]
 
-baci_raw <- read.csv(file.path(rdsi_raw_data_dir, "BACI_data/BACI_HS12_V202301/BACI_HS12_Y2017_V202301.csv")) # want the 2017 data to match fisheries 
+baci_raw <- lapply(baci_files, read.csv)
 
-colnames(baci_raw)
+
+baci_list_filter <- map(baci_raw, ~ .x[.x$k %in% c(230120, 150420), ])
+
+baci_raw_df <- bind_rows(baci_list_filter)
+
+colnames(baci_raw_df)
 
 # i = importer country code? 
 # j = partner country code? 
-# k = product code? 
+# k = product code
+# t = year
+# v = value (USD?)
+# q = quantity
 
 product_codes <- read.csv(file.path(rdsi_raw_data_dir, "BACI_data/BACI_HS12_V202301/product_codes_HS12_V202301.csv"))
 
 country_codes <- read.csv(file.path(rdsi_raw_data_dir, "BACI_data/BACI_HS12_V202301/country_codes_V202301.csv"))
 
-baci_filt <- baci_raw %>% 
+baci_filt <- baci_raw_df %>% 
   left_join(product_codes, by = c("k" = "code")) %>%
-  # filter(str_detect(description, "oil|meal|Oil|Meal")) %>%
-  # filter(str_detect(description, "fish|Fish")) %>%
-  rename(importer_code = j, partner_code = i, code = k) %>%
-  filter(code %in% c(230120, 150420)) %>%
+  rename(year = t, importer_code = j, partner_code = i, code = k) %>%
   left_join(country_codes, by = c("importer_code" = "country_code")) %>%
-  dplyr::select(year = t, importer_code, importer_name = country_name_full, importer_iso3c = iso_3digit_alpha, partner_code, hs_code = code, v, q, description) %>%
+  dplyr::select(year, importer_code, importer_name = country_name_full, importer_iso3c = iso_3digit_alpha, partner_code, hs_code = code, v, q, description) %>%
     left_join(country_codes, by = c("partner_code" = "country_code")) %>%
   dplyr::select(year, importer_code, importer_name , importer_iso3c, partner_code, partner_name = country_name_full, partner_iso3c = iso_3digit_alpha, hs_code, v, q, description) %>%
   filter(!is.na(partner_iso3c)) %>%
@@ -63,10 +71,19 @@ baci_filt <- baci_raw %>%
   filter(!is.na(q)) %>%
   group_by(year, importer_name, importer_iso3c, partner_name, partner_iso3c, hs_code, description) %>% 
   summarise(qty = sum(q, na.rm = TRUE)) %>%
+  ungroup() %>% 
+    group_by(importer_name, importer_iso3c, partner_name, partner_iso3c, hs_code, description) %>% 
+  summarise(qty = mean(qty, na.rm = TRUE)) %>%
   ungroup()
 
 test <- baci_filt %>%
-  filter(importer_iso3c == partner_iso3c) # no domestic? 
+  filter(importer_iso3c == partner_iso3c) # no domestic?
+
+
+test <- baci_filt %>%
+  group_by(partner_iso3c, hs_code) %>%
+  summarise(qty = sum(qty, na.rm = TRUE)) %>%
+  ungroup()
   
 ```
 
@@ -124,9 +141,9 @@ oils_meals_import_props <- baci_filt %>%
   ungroup() %>%
   mutate(prop_import = qty/total_import)
   
-length(unique(oils_meals_import_props$partner_iso3c)) # 124 not unreasonable to think. The FOFM demand is only like 10 countries. 
+length(unique(oils_meals_import_props$partner_iso3c)) # 164 not unreasonable to think. The FOFM demand is only like 10 countries. 
 
-length(unique(oils_meals_import_props$importer_iso3c)) # 171
+length(unique(oils_meals_import_props$importer_iso3c)) # 206
 
 ```
 
@@ -143,7 +160,7 @@ demand_trade <- country_demand %>%
   mutate(tonnes_ingredient_demand_traded = prop_import*ingredient_demand) 
 
 unique(demand_trade$iso3c)
-unique(demand_trade$partner_iso3c) # 85 countries
+length(unique(demand_trade$partner_iso3c)) # 113 countries
 ```
 
 
@@ -459,15 +476,14 @@ print(sprintf("observed: %s", forage_fofm_allocation_totals %>% filter(diet == d
 }
 
 
-test <- rast(list.files(here("prep/02_feed/output/plant-dominant/"), full.names = TRUE, pattern = "fish oil|fish meal"))
-test_names <- list.files(here("prep/02_feed/output/plant-dominant/"), pattern = "fish oil|fish meal")
+test <- rast(list.files(here("prep/02_feed/output/fish-dominant/"), full.names = TRUE, pattern = "fish oil|fish meal"))
+test_names <- list.files(here("prep/02_feed/output/fish-dominant/"), pattern = "fish oil|fish meal")
 
 names(test) <- test_names
 
 
 plot(log(test[[1:4]]+1))
 
-plot(test[[1:4]])
 ```
  
 
