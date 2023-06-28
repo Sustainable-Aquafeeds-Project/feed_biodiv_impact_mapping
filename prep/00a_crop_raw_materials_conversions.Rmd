@@ -14,11 +14,8 @@ library(janitor)
 library(countrycode)
 library(data.table)
 library(dtplyr)
-library(raster)
-library(terra)
 library(sf)
-library(jsonlite)
-library(ggnewscale)
+library(readxl)
 
 source(here("src/directories.R"))
 

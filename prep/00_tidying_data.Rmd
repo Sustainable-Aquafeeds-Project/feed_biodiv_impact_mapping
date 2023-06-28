@@ -26,6 +26,7 @@ library(here)
 library(countrycode)
 library(rredlist)
 library(terra)
+library(raster)
 
 source(here("src/directories.R"))
 source(here("src/spatial.R"))

@@ -1,11 +1,14 @@
 ---
-title: "Calculating area loss from species habitats"
+title: "Overlapping species AOH with feed crops"
 output: html_document
 editor_options: 
   chunk_output_type: console
 ---
 
-Libraries
+## Setup
+
+Load libraries
+
 ```{r setup, include=FALSE}
 
 library(tidyverse)
@@ -18,6 +21,7 @@ library(raster)
 library(parallel)
 library(rnaturalearth)
 library(strex)
+library(gdalUtils)
 
 source(here("src/directories.R"))
 
@@ -27,8 +31,284 @@ base_raster_ea <- rast(here("data/spatial/base_raster_gall_peters.tif"))
 
 select <- dplyr::select
 
+
 ```
 
+Check to make sure we downloaded all of the AOH species maps from https://datadryad.org/stash/dataset/doi:10.5061/dryad.02v6wwq48
+
+
+You can download by ssh into the rdsi storage and then running wget url_to_download
+
+ssh ubuntu@131.217.178.173
+cd ../../mnt/rdsi/raw_data/AOH_lumbierres
+wget https://datadryad.org/stash/downloads/file_stream/1931890
+
+unzip 1931890.zip
+
+Above example is how to download mammals_rodentia.zip file. Link taken from https://datadryad.org/stash/dataset/doi:10.5061/dryad.02v6wwq48.
+
+
+Aselliscus_tricuspidatus.tif
+
+```{r}
+
+test <- data.frame(empty = "empty df")
+
+write.csv(test, file.path(rdsi_raw_data_dir, "testing.csv"), row.names = FALSE)
+
+write.csv(test, here("test.csv"))
+
+## read in species lists from raw data dir 
+
+mammals_list <-
+  read.csv(file.path(rdsi_raw_data_dir, "AOH_lumbierres/Mammals_list_AOH.csv")) %>%
+  clean_names() %>%
+  dplyr::select(binomial, aoh_name, order) %>%
+  mutate(type = "mammal")
+
+birds_list <- read.csv(file.path(rdsi_raw_data_dir, "AOH_lumbierres/Birds_list_AOH.csv")) %>%
+  clean_names() %>%
+  dplyr::select(binomial, aoh_name, order) %>%
+  mutate(type = "bird")
+
+
+total_spp_list <- rbind(mammals_list, birds_list)
+
+## now grab the names of the species from the raw data directory
+
+files <- list.files(file.path(rdsi_raw_data_dir, "AOH_lumbierres"), pattern = ".tif")
+
+spp_list_files <- str_before_last(files, ".tif") 
+
+remove_suffix <- function(string) {
+  modified_string <- sub("_[BNR]$", "", string)
+  return(modified_string)
+}
+
+spp_list_files_fin <- remove_suffix(spp_list_files) %>%
+  unique()
+
+
+## now filter these spp out of the spp df 
+
+missing_spp <- total_spp_list %>%
+  filter(!(aoh_name %in% c(spp_list_files_fin)))
+
+## ok I'm missing 4394 spp. 
+
+sort(unique(missing_spp$order)) # still missing 933 Rodentia 
+
+# [1] "CHIROPTERA"    "PASSERIFORMES"    
+
+
+## I will redownload the zip files missing from here: https://datadryad.org/stash/dataset/doi:10.5061/dryad.02v6wwq48 and see if that helps the missing species...
+
+unzip(file.path(rdsi_raw_data_dir, "AOH_lumbierres/1931870.zip"), exdir = here("test/"))
+
+```
+
+Don't think I need to download this one: non migratory passeriformes: https://datadryad.org/stash/downloads/file_stream/1931825
+
+Need to download migratory passeriformes: https://datadryad.org/stash/downloads/file_stream/1931854
+Need to download chiroptera: https://datadryad.org/stash/downloads/file_stream/1931870
+
+
+## Summary
+
+Trying an example using soy production for SPC and soy oil, overlapped with sloths and anteater habitats from the order Pilosa. 
+
+
+Import area of soy production using plant-diet mass allocation
+
+```{r}
+
+allocation = "mass"
+crop = "soyb"
+diet = "plant-dominant"
+
+rast_names <- list.files(sprintf(here("prep/02_feed/output/%s"), diet), pattern = sprintf("%s_.*_%s.tif", crop, allocation))
+
+rasts <- rast(list.files(sprintf(here("prep/02_feed/output/%s"), diet), full.names = TRUE, pattern = sprintf("%s_.*_%s.tif", crop, allocation)))
+
+names(rasts) <- rast_names
+
+plot(log(rasts+1))
+
+
+```
+
+Import AOH maps for Pilosa species into a raster list
+
+```{r}
+aoh <- rast(list.files(file.path(rdsi_raw_data_dir, "AOH_lumbierres/Mammals_pilosa/"), full.names = TRUE)[[8]])
+
+plot(aoh)
+
+aoh_files <- list.files(file.path(rdsi_raw_data_dir, "AOH_lumbierres/Mammals_pilosa/"), full.names = TRUE)
+
+raster_list <- list()
+
+# Loop through each raster file
+for (file_path in aoh_files) {
+  # file_path <- aoh_files[[2]]
+  
+  # Read the raster with the common resolution, projection, and CRS
+  raster <- rast(file_path) 
+  #%>%
+   # extend(rasts)
+  # Add the raster to the list
+  raster_list[[file_path]] <- raster
+  
+ #  plot(raster)
+}
+
+raster_list
+
+plot(raster_list[[3]])
+
+# this is how you plot then all together 
+em <- ext(rasts)
+
+plot(em, type = "n")
+terra::plot(raster_list[[2]], add = TRUE, legend = F, col = "red")
+terra::plot(raster_list[[8]], add = TRUE, legend = F, col = "blue")
+plot(raster_list[[1]], add = TRUE, legend = F)
+plot(raster_list[[3]], add = TRUE, legend = F)
+plot(raster_list[[5]], add = TRUE, legend = F)
+
+
+
+
+
+
+```
+
+
+Try aggregating aoh rasters to crop raster res
+ - this might be quicker... although there are a lot more rasters to resample this way... 
+
+```{r}
+
+
+resample_aoh <- terra::resample(raster_list[[3]], rasts, method = "near")
+plot(resample_aoh)
+
+test <- crop(resample_aoh, ext(raster_list[[3]]))
+
+plot(test)
+plot(raster_list[[3]])
+## ok we definitely lose some info here... what is best practice though? Should we aggregate up to crop resolution? Or disaggregate crop resolution to the better res of the AOH maps? This is called the modifiable areal unit problem. If you disaggregate, you introducec possible randomness and uncerainty. If you aggregate, you lose some information. 
+
+
+# Let's ask chatGPT...
+
+# Given the scenario you described, where the soybean raster has a lower resolution and the habitat raster has a higher resolution, it is recommended to use the higher resolution for the analysis. This approach allows for a more precise assessment of the overlap between the crop production and habitat areas.
+# 
+# By using the higher resolution habitat raster, you can accurately determine the amount of habitat disturbed by crop production at a finer scale. This finer-scale analysis is particularly important when assessing the impacts of land-use changes on biodiversity.
+# 
+# While the soybean raster has a lower resolution, it can still be utilized in the analysis. You can resample the soybean raster to match the resolution of the higher resolution habitat raster. This will ensure consistency in the analysis and enable the accurate calculation of the amount of habitat disturbed by crop production at the higher resolution.
+# 
+# Resampling the soybean raster can be achieved using the terra::resample function. By resampling the soybean raster to the higher resolution, you retain the information on soybean production while aligning it with the habitat raster for the overlap analysis.
+
+## when chatGPT says "lower resolution", it means the "worse" resolution, e.g., the resolution of the crop MAPSPAM data... so this indicates that I should resample to the aoh rasters... which is pretty computationally intensive. 
+```
+
+
+Try resampling crop rasters to same resolution as AOH rasters
+
+ - just testing here. Will probably want to do this to the raw mapSPAM rasters, rather than repeating a bunch here. 
+ - takes 2.446796 for one raster to run. We have ~60 gb of memory, each run takes ~5gb, so we could theoretically run 12 cores at a time. There are 42 raw MapSPAM rasters, so that would take 42 rasters/12 rasters per run = 3.5 runs*2.5 hours = ~9 hours? Probably more, because I will likely limit to 8 cores to be safe... but might also cut some crops out that we don't include in salmon feeds, so could be less rasters to resample. 
+
+```{r}
+# factor = 0.08333333/0.0009920722
+# disagg_crop <- terra::disagg(rasts, factor)
+
+## Define the properties of the template raster based on the given raster
+resolution <- c(0.0009920722, 0.0009920722) # aoh res
+extent <- c(-180, 180, -90, 90) # global extent
+crs <- "+proj=longlat +datum=WGS84 +no_defs" # crs 
+
+# Create the template raster with the desired properties
+template_raster <- rast(resolution = resolution, extent = extent, crs = crs)
+
+# save raster cell size area
+template_raster_area <- terra::cellSize(template_raster, unit = "km")
+
+writeRaster(template_raster_area, file.path("/mnt/rdsi/raw_data/AOH_lumbierres/highres_area_raster.tif"))
+
+# template_raster_area <- rast(file.path("/mnt/rdsi/raw_data/AOH_lumbierres/highres_area_raster.tif"))
+
+# divide by area to make it unitless
+rasts_area_fix <- rasts/terra::cellSize(rasts, unit = "km")
+
+start_time <- Sys.time()
+
+# resample no area raster
+terra::resample(rasts_area_fix[[1]], template_raster, method = "bilinear", filename = file.path("/mnt/rdsi/raw_data/AOH_lumbierres/soyb_soy oil_mass_terra_no_area.tif"), overwrite = TRUE)
+
+# file.info("/mnt/rdsi/raw_data/AOH_lumbierres/highres_area_raster.tif")
+
+# read in new raster
+rasts_high_res_no_area <- rast("/mnt/rdsi/raw_data/AOH_lumbierres/soyb_soy oil_mass_terra_no_area.tif")
+
+# now multiply by area again
+rasts_high_res_area_fix <- rasts_high_res_no_area*template_raster_area
+
+terra::app(rasts_high_res_no_area*template_raster_area, fun = "*", file.name = file.path("/mnt/rdsi/raw_data/AOH_lumbierres/soyb_soy oil_mass_terra_area_adjusted_resampled.tif"))
+
+
+end_time <- Sys.time()
+execution_time <- end_time - start_time
+print(execution_time)
+
+## these should be the same 
+global(rasts[[1]], fun = "sum", na.rm = TRUE)
+
+global(rasts_high_res_area_fix, fun = "sum", na.rm = TRUE)
+
+
+
+# lol well that didn't work... reporting way more production. Do I need to divide by area or something? I'm not reprojecting though... I could rescale the raster by a scaling factor of 14954.95 (original tonnage) /105536365 (new tonnage). Doesn't matter if I use nearest neighbor or if I use bilinear. 
+
+
+
+# input_raster <-  list.files(sprintf(here("prep/02_feed/output/%s"), diet), full.names = TRUE, pattern = sprintf("%s_.*_%s.tif", crop, allocation))[[1]]
+# output_raster <- file.path("/mnt/rdsi/raw_data/AOH_lumbierres/soyb_soy oil_mass.tif")
+# 
+# target_resolution = c(0.0009920722, 0.0009920722)
+# options(gdalUtils_gdalwarp_CHECK_DISK_FREE_SPACE = FALSE)
+# 
+# start_time <- Sys.time()
+# gdalwarp(
+#   srcfile = input_raster,
+#   dstfile = output_raster,
+#   tr = target_resolution,
+#   r = "bilinear",
+#   s_srs = "EPSG:4326",
+#   t_sts = "EPSG:4326",
+#   overwrite = TRUE
+# )
+# end_time <- Sys.time()
+# execution_time <- end_time - start_time
+# print(execution_time)
+
+
+test <- raster(file.path("/mnt/rdsi/raw_data/AOH_lumbierres/soyb_soy oil_mass_terra.tif"))
+plot(test)
+```
+
+Ok, so a couple of options here. Because the AOH files are different resolution and extent, we need to figure out a way to make the AOH files and the mapspam files match. 
+
+ - Disaggregate the mapspam rasters from the very beginning
+ - resample each feed ingredient mapspam raster to match every species AOH. Doing this would result in a ingredient raster (~10 ingredients) for every species (16000) for each allocation approach (2) = >300k rasters... probably don't want this. Even this is really computationally intensive, especially for species that have large AOH extents. 
+ - Resample ingredient rasters to be global extent and same resolution as spp aoh, then overlap... very computationally intensive.
+ - Aggregate species aoh to the higher resolution of mapspam... Problem with this, is it might take away from the advantages of using AOH maps, as the aggregation would probably make the AOH maps look more like species range maps... 
+ 
+**Is there some sort of data frame option? There is, but no matter what, I will have to have the AOH rasters in the same resolution as the feed ingredient rasters. We just have to choose how to do that.**
+
+
+
+ARCHIVE: 
 
 Import threat data
 ```{r}
@@ -65,7 +345,7 @@ vuln_amphibians <- amphibians[ag_threat_index]
 
 
 #soy protein concentrate raster spatial layers - select top 3 to start with
-spc_files <- list.files("../../feed_pressure_mapping/data/spatial/marine_diet/production/", pattern = "soybean meal_AllTech_", full.names = TRUE)
+spc_files <- list.files(here("../feed_pressure_mapping/data/spatial/marine_diet/production/"), pattern = "soybean meal_AllTech_", full.names = TRUE)
 spc_files_top_3 <- spc_files[grepl("USA|BRA|CHN", spc_files)]
 
 
@@ -114,6 +394,8 @@ mammals_aoh <- map(spc_files_top_3, \(this_country){
   
 })
 
+
+test <- map_df(mammals_aoh, as_tibble) ## so this is range map km2 (?) of that overlaps with crops used for SBM?
 
 write_csv(x = map_df(mammals_aoh, as_tibble), file = here("data/int/sbm_mammals_aoh_marine_diet.csv"))
 

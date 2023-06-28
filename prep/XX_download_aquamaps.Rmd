@@ -1,0 +1,63 @@
+---
+title: "Download Aquamaps data"
+name: "Gage Clawson and Rich Cottrell"
+date: "March 2, 2023"
+output: html_document
+---
+
+## Summary 
+
+This script downloads the data from https://aquamaps.org/#tools, using the R package aquamapsdata: https://raquamaps.github.io/aquamapsdata/articles/intro.html
+
+## Setup 
+
+```{r setup, include=FALSE}
+
+library(tidyverse)
+library(here)
+library(sf)
+library(data.table)
+library(dtplyr)
+library(terra)
+library(parallel)
+library(strex)
+library(janitor)
+
+source(here("src/directories.R"))
+
+source(here("src/spatial.R"))
+
+
+```
+
+
+
+
+## Species maps
+
+With a species identifier, probability of occurrence within the known native distribution for a species can either be retrieved in raster format or be displayed on a map. 
+
+To do this, all csv download urls follow this format: https://www.aquamaps.org/CSV/1687469250.csv
+
+Where the last number is a species identifier?
+
+
+```{r}
+## test on one species
+
+test <- read.csv("https://www.aquamaps.org/CSV/1687469250.csv", skip = 24) %>% 
+  clean_names()
+
+
+test2 <- test %>% 
+  dplyr::filter(overall_probability <= 1 ) %>%
+  dplyr::filter(overall_probability != "")
+
+## ok we need a species list I think?
+
+
+
+
+```
+
+
