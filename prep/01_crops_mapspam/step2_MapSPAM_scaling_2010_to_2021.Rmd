@@ -19,6 +19,7 @@ We do this using FAOSTAT crop production data trends between year 2010 and 2021.
 library(here)
 library(janitor)
 library(terra)
+library(vroom)
 
 source(here("src/spatial.R"))
 source(here("src/fxns.R"))

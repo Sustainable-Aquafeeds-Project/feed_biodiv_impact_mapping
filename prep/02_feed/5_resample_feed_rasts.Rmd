@@ -1,0 +1,39 @@
+---
+title: "Resample all crop and fish based feed rasters to 100km2 cells"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+Goal: Resample all crop and fish based feed rasters to 100km2 cells
+
+```{r}
+
+library(here)
+library(tidyverse)
+library(countrycode)
+library(tidytext)
+library(knitr)
+library(strex)
+library(sjmisc)
+
+focus_year = 2021
+
+source(here("src/fxns.R"))
+source(here("src/directories.R"))
+source(here("src/spatial.R"))
+
+```
+
+We will present data at at ~10km resolution in the WGS84 Mollweide coordinate reference system, an equal area projection that retains considerable accuracy in area at polar latitudes.
+
+Reproject and aggregate the ingredient crop rasters
+
+```{r}
+
+
+
+
+```
+
+

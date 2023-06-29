@@ -27,7 +27,7 @@ source(here("src/directories.R"))
 
 source(here("src/spatial.R"))
 
-base_raster_ea <- rast(here("data/spatial/base_raster_gall_peters.tif"))
+base_raster_ea <- rast(here("data/spatial/base_raster_gall_peters.tif")) ## ok so this is the 10km by 10km raster. We want to upscale all AOH rasters to this. 
 
 select <- dplyr::select
 
@@ -48,13 +48,12 @@ unzip 1931890.zip
 Above example is how to download mammals_rodentia.zip file. Link taken from https://datadryad.org/stash/dataset/doi:10.5061/dryad.02v6wwq48.
 
 
-Aselliscus_tricuspidatus.tif
 
 ```{r}
 
 test <- data.frame(empty = "empty df")
 
-write.csv(test, file.path(rdsi_raw_data_dir, "testing.csv"), row.names = FALSE)
+write.csv(test, file.path(rdsi_raw_data_dir, "testing.csv"), row.names = FALSE) # this works... but not writing to the mounted rdsi drive... :(
 
 write.csv(test, here("test.csv"))
 
@@ -104,6 +103,13 @@ sort(unique(missing_spp$order)) # still missing 933 Rodentia
 ## I will redownload the zip files missing from here: https://datadryad.org/stash/dataset/doi:10.5061/dryad.02v6wwq48 and see if that helps the missing species...
 
 unzip(file.path(rdsi_raw_data_dir, "AOH_lumbierres/1931870.zip"), exdir = here("test/"))
+
+
+test <- rast(file.path(rdsi_raw_data_dir, "AOH_lumbierres/Aselliscus_tricuspidatus.tif"))
+
+test_size <- cellSize(test, unit = "km")
+plot(test_size)
+
 
 ```
 
