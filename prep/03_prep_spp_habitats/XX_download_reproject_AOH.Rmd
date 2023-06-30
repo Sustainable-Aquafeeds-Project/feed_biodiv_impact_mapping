@@ -1,0 +1,139 @@
+---
+title: "Overlapping species AOH with feed crops"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+## Setup
+
+Load libraries
+
+```{r setup, include=FALSE}
+
+library(tidyverse)
+library(here)
+library(sf)
+library(data.table)
+library(dtplyr)
+library(terra)
+library(raster)
+library(parallel)
+library(rnaturalearth)
+library(strex)
+library(gdalUtils)
+
+source(here("src/directories.R"))
+
+source(here("src/spatial.R"))
+
+base_raster_ea <- rast(here("data/spatial/base_raster_gall_peters.tif")) ## ok so this is the 10km by 10km raster. We want to upscale all AOH rasters to this. 
+
+select <- dplyr::select
+
+
+```
+
+Check to make sure we downloaded all of the AOH species maps from https://datadryad.org/stash/dataset/doi:10.5061/dryad.02v6wwq48
+
+
+You can download by ssh into the rdsi storage and then running wget url_to_download
+
+ssh ubuntu@131.217.178.173
+cd ../../mnt/rdsi/raw_data/AOH_lumbierres
+wget https://datadryad.org/stash/downloads/file_stream/1931890
+
+unzip 1931890.zip
+
+Above example is how to download mammals_rodentia.zip file. Link taken from https://datadryad.org/stash/dataset/doi:10.5061/dryad.02v6wwq48.
+
+
+
+```{r}
+
+test <- data.frame(empty = "empty df")
+
+write.csv(test, file.path(rdsi_raw_data_dir, "testing.csv"), row.names = FALSE) # this works... but not writing to the mounted rdsi drive... :(
+
+write.csv(test, here("test.csv"))
+
+## read in species lists from raw data dir 
+
+mammals_list <-
+  read.csv(file.path(rdsi_raw_data_dir, "AOH_lumbierres/Mammals_list_AOH.csv")) %>%
+  clean_names() %>%
+  dplyr::select(binomial, aoh_name, order) %>%
+  mutate(type = "mammal")
+
+birds_list <- read.csv(file.path(rdsi_raw_data_dir, "AOH_lumbierres/Birds_list_AOH.csv")) %>%
+  clean_names() %>%
+  dplyr::select(binomial, aoh_name, order) %>%
+  mutate(type = "bird")
+
+
+total_spp_list <- rbind(mammals_list, birds_list)
+
+## now grab the names of the species from the raw data directory
+
+files <- list.files(file.path(rdsi_raw_data_dir, "AOH_lumbierres"), pattern = ".tif")
+
+spp_list_files <- str_before_last(files, ".tif") 
+
+remove_suffix <- function(string) {
+  modified_string <- sub("_[BNR]$", "", string)
+  return(modified_string)
+}
+
+spp_list_files_fin <- remove_suffix(spp_list_files) %>%
+  unique()
+
+
+## now filter these spp out of the spp df 
+
+missing_spp <- total_spp_list %>%
+  filter(!(aoh_name %in% c(spp_list_files_fin)))
+
+## ok I'm missing 4394 spp. 
+
+sort(unique(missing_spp$order)) # still missing 933 Rodentia 
+
+# [1] "CHIROPTERA"    "PASSERIFORMES"    
+
+
+## I will redownload the zip files missing from here: https://datadryad.org/stash/dataset/doi:10.5061/dryad.02v6wwq48 and see if that helps the missing species...
+
+unzip(file.path(rdsi_raw_data_dir, "AOH_lumbierres/1931870.zip"), exdir = here("test/"))
+
+
+test <- rast(file.path(rdsi_raw_data_dir, "AOH_lumbierres/Aselliscus_tricuspidatus.tif"))
+
+test_size <- cellSize(test, unit = "km")
+plot(test_size)
+
+
+```
+
+Don't think I need to download this one: non migratory passeriformes: https://datadryad.org/stash/downloads/file_stream/1931825
+
+Need to download migratory passeriformes: https://datadryad.org/stash/downloads/file_stream/1931854
+Need to download chiroptera: https://datadryad.org/stash/downloads/file_stream/1931870
+
+
+```{r}
+aoh_files <- list.files(file.path(rdsi_raw_data_dir, "AOH_lumbierres/"), full.names = TRUE)
+aoh_rast <- rast(aoh_files[2])
+plot(aoh_rast)
+
+# resample no area raster
+resample_aoh <- terra::project(aoh_rast, moll_template, method = "near")
+
+plot(resample_aoh)
+zoom(resample_aoh) # ok.. looks good. 
+
+# writeRaster(resample_aoh, file.path(rdsi_raw_data_dir, "AOH_lumbierres/test.tif"))
+
+
+```
+
+
+

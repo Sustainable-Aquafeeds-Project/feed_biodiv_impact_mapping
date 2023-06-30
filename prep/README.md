@@ -29,8 +29,8 @@ GOAL: This folder contains scripts that wrangles mapspam production data. It res
 ## 02_feed/
 GOAL: This folder contains scripts that estimate the raw material origins of salmon aquaculture feeds using energetic and mass allocation. 
 
-## 03_iucn_prep/
+## 03_prep_spp_habitats/
 
-Prep IUCN data 
+Goal: Contains scripts that prep Area of Habitat (AOH) maps and Aquamaps suitable habitat maps to the correct resolution and projection (10km by 10km, WGS84 Mollweide)
 
-## 04_area_of_habitat_prep
+

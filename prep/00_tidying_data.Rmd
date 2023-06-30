@@ -76,35 +76,6 @@ parallel::mclapply(X = tifs, FUN = adjust_extent, mc.cores = detectCores()-2)
 ```
 
 
-
-This is the code to unzip the gridded livestock of the world rasters - DO NOT RUN IN PROJECT - here as a backup to scripts in the raw data files
-
-```{r}
-
-dir <- "/mnt/rdsi/raw_data/gridded-livestock-of-the-world"
-
-setwd(dir)
-
-library(tidyverse)
-library(parallel)
-library(raster)
-
-glw_zip_files <- list.files(dir, pattern = "\\.zip$")
-
-unzip_raw_data <- function(this_file){
-  this_file_name <- file.path(dir, this_file)
-  unzip(this_file_name)
-  
-}
-
-
-lapply(X = glw_zip_files, FUN = unzip_raw_data)
-
-
-
-```
-
-
 Tidy global aquaculture production data
 
 ```{r}

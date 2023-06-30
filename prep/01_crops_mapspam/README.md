@@ -5,7 +5,6 @@ This folder organizes crop maps using MapSPAM data as a foundation for calculati
 ## Scripts
 |File Name|Description|Output|
 |---	|--- |---	|
-|step1_MapSPAM_verification|Verification for GitHub issue #98 regarding raster extent problem|None|
 |step2_MapSPAM_wrangling|Harmonizing MapSPAM names and FAO crop codes|MapSPAM_names.csv|
 |step3_MapSPAM_scaling_2010_to_2021|Rescale MapSPAM data to years 2019, 2020, and 2021|scaling_coef.csv|
 

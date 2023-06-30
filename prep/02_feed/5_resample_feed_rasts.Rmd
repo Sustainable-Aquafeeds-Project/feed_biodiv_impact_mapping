@@ -23,17 +23,94 @@ source(here("src/fxns.R"))
 source(here("src/directories.R"))
 source(here("src/spatial.R"))
 
+moll_crs <- crs(moll_template)
+
 ```
 
 We will present data at at ~10km resolution in the WGS84 Mollweide coordinate reference system, an equal area projection that retains considerable accuracy in area at polar latitudes.
 
-Reproject and aggregate the ingredient crop rasters
+Reproject and aggregate the ingredient crop rasters. It runs quick since they are already ~9km by 9km.
 
 ```{r}
 
+for(diet in c("fish-dominant", "plant-dominant")){
+  
+  # diet = "fish-dominant"
+directory <- sprintf("prep/02_feed/output/%s/", diet)
+
+files <- list.files(directory, full.names = TRUE)
+
+filtered_files <- files[!grepl("fish oil|fish meal", files)]
+
+for(i in 1:length(filtered_files)){
+  
+  file <- filtered_files[i]
+  file_name <- basename(file)
+  
+  crop_rast <- rast(file)
+  
+  area_rast <- cellSize(crop_rast, unit = "ha")
+  
+  crop_rast_fix <- crop_rast/area_rast
+  
+  crop_reproject <- project(crop_rast_fix, moll_template, method = "bilinear")
+  
+  crop_reproject_area <- cellSize(crop_reproject, unit = "ha")
+  
+  crop_reproject_fix <- crop_reproject*crop_reproject_area
+  
+  print(global(crop_reproject_fix, "sum", na.rm = TRUE)) # layer 20374.35
+  print(global(crop_rast, "sum", na.rm = TRUE)) # layer 20373.72
+  
+  ## perfect... 
+  writeRaster(crop_reproject_fix, sprintf(here("prep/02_feed/output/resampled/%s/%s"), diet, file_name), overwrite = TRUE)
+  }
+
+}
+```
 
 
+Reproject and disaggregate the ingredient fish rasters to 10km res.
+
+```{r}
+
+for(diet in c("fish-dominant", "plant-dominant")){
+  
+  # diet = "fish-dominant"
+directory <- sprintf("prep/02_feed/output/%s/", diet)
+
+files <- list.files(directory, full.names = TRUE)
+
+filtered_files <- files[grepl("fish oil|fish meal", files)]
+
+for(i in 1:length(filtered_files)){
+  
+  file <- filtered_files[i]
+  file_name <- basename(file)
+  
+  fish_rast <- rast(file)
+  
+  area_rast <- cellSize(fish_rast, unit = "ha")
+  
+  fish_rast_fix <- fish_rast/area_rast
+  
+  fish_reproject <- project(fish_rast_fix, moll_template, method = "bilinear")
+  
+  fish_reproject_area <- cellSize(fish_reproject, unit = "ha")
+  
+  fish_reproject_fix <- fish_reproject*fish_reproject_area
+  
+  print(global(fish_reproject_fix, "sum", na.rm = TRUE)) # layer 3375102
+  print(global(fish_rast, "sum", na.rm = TRUE)) # layer 3381631
+  
+  ## perfect... 
+  writeRaster(fish_reproject_fix, sprintf(here("prep/02_feed/output/resampled/%s/%s"), diet, file_name), overwrite = TRUE)
+  }
+
+}
 
 ```
+
+
 
 

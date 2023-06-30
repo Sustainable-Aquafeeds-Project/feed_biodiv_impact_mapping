@@ -182,11 +182,14 @@ proportion <- left_join(feed_source, crop_production_df, by=c("iso3c_producing",
   mutate(prop_produced_for_system_ms = ifelse(total_crop_demand_ms == 0, 0, total_crop_demand_ms/tonnes_producing_crop),
          prop_produced_for_system_ge = ifelse(total_crop_demand_ge == 0, 0, total_crop_demand_ge/tonnes_producing_crop))
 
+
+write_csv(proportion, here("prep/02_feed/output/proportion_feed_per_country_system_diet.csv"))
+
 ```
 
 # STEP 3: Distribute excess, and adjust proportion produced for system values
 
-NOTE: if ourproduction data were perfect these complicated steps would be unnecessary and the above calculation for prop_produced_for_system would be good enough. But due to mismatches, we spread excess production based on relative global production.
+NOTE: if our production data were perfect these complicated steps would be unnecessary and the above calculation for prop_produced_for_system would be good enough. But due to mismatches, we spread excess production based on relative global production.
 
 Identify the countries/crops with total production rates (across all systems) that exceed total production
 
@@ -374,23 +377,35 @@ abline(0,1, col="red") # these should look about the same!
 
 ```{r}
 
-write_csv(total_prop, here("prep/02_feed/output/proportion_feed_per_country_system_diet.csv"))
+write_csv(total_prop, here("prep/02_feed/output/proportion_feed_per_country_system_diet_limited.csv"))
 
 ```
 
 
+Now multiply rasterize this information to get rasters describing the amount of tonnages for each crop in each cell global that goes to salmon aquaculture feed ingredients, additionally, divide by crop yield estimates from the FAO to get estimates of crop area in each cell that goes to salmon aquaculture feed ingredients. 
 
-
-
-Now multiply rasterize this information to get rasters describing the amount of tonnages for each crop in each cell global that goes to salmon aquaculture feed ingredients! 
+ - we will use the uncapped proportion for this for now.. we are assuming this is a scenario where we completely fulfill demand, regardless of what the current-day production looks like. So if we need to produce more crop to meet ingredient demand in a country, then we will. Vast majority of the proportions are below one. 
 
 
 ```{r}
 
 total_prop <- read.csv(here("prep/02_feed/output/proportion_feed_per_country_system_diet.csv")) %>%
-  dplyr::select(SPAM_super, diet, ingredient = source_ingredient, iso3c_producing, total_prop_ms, total_prop_ge) %>%
+  dplyr::select(SPAM_super, diet, ingredient = source_ingredient, iso3c_producing, total_prop_ms = prop_produced_for_system_ms, total_prop_ge = prop_produced_for_system_ge) %>%
   pivot_longer(cols = c("total_prop_ms", "total_prop_ge"), names_to = "allocation_type", values_to = "total_prop") %>%
   mutate(allocation_type = ifelse(allocation_type == "total_prop_ge", "gross energy", "mass"))
+
+mapspam_fao <- feed_cats %>%
+  dplyr::distinct(FAO_code, map_spam_code)
+
+fao_yields <- readRDS(here("data/tidy_data/production-data/crops_production_tidy.rds")) %>%
+  filter(element == "Yield",
+         year == "2021",
+         area_code < 5000,
+         iso3c %in% total_prop$iso3c_producing) %>%  # filter for 2021 and yield data
+  mutate(yield_tonnes_ha = value/10000) %>% # convert hg to kg 
+  left_join(mapspam_fao, by = c("item_code" = "FAO_code")) %>% # get mapspam codes
+  filter(!is.na(map_spam_code))
+
 
 library(terra)
 library(raster)
@@ -412,7 +427,7 @@ todo <- total_prop %>%
   filter(sum_prop >0)
 
 for(i in 1:dim(todo)[1]){
-#i=7
+#i=30
 crop_spam <- todo$SPAM_super[i]
 product_type <- todo$ingredient[i]
 diet_type = todo$diet[i]
@@ -427,31 +442,70 @@ feed_crop <- filter(total_prop, SPAM_super==crop_spam, diet == diet_type, ingred
 prop_feed_crop <- left_join(rgns, feed_crop, by="iso3c") %>%
   dplyr::select(x, y, prop_feed)
 
-prop_feed_crop_raster <- rasterFromXYZ(prop_feed_crop)
+prop_feed_crop_raster <- rast(prop_feed_crop)
 
 # plot(prop_feed_crop_raster)
 
 crs(prop_feed_crop_raster) <- "+proj=longlat +datum=WGS84"
 
 
-tonnes_crop_raster <- raster(sprintf(file.path(mapspam_dir, "scaled_maps_2021/crop_%s_A_scaled.tif"), crop_spam))
+tonnes_crop_raster <- rast(sprintf(file.path(mapspam_dir, "scaled_prod_maps_2021/crop_%s_A_scaled.tif"), crop_spam))
 
 tonnes_crop_feed_raster <- tonnes_crop_raster*prop_feed_crop_raster
 
 # plot(log(tonnes_crop_feed_raster+1))
 
-writeRaster(tonnes_crop_feed_raster, filename= sprintf(here("prep/02_feed/output/%s/%s_%s_%s.tif"), diet_type, crop_spam, product_type, allocation), overwrite=TRUE)
+writeRaster(tonnes_crop_feed_raster, filename= sprintf(here("prep/02_feed/output/%s/%s_%s_%s_P.tif"), diet_type, crop_spam, product_type, allocation), overwrite=TRUE)
+
+# country yield estimates
+
+feed_yield <- filter(fao_yields, map_spam_code == crop_spam) %>%
+  dplyr::group_by(iso3c) %>%
+  summarise(yield = mean(yield_tonnes_ha, na.rm = TRUE)) %>%
+  ungroup()
+
+mean_yield <- mean(feed_yield$yield, na.rm = TRUE)
+
+
+feed_yield_gf <- feed_yield %>% 
+  full_join(feed_crop) %>% # join with feed crop so we can see which countries are missing yields
+  filter(!is.na(prop_feed)) %>%
+  mutate(yield = ifelse(is.na(yield), mean_yield, yield)) %>% # now we will gapfill the yields with the global average yield for this crop
+  dplyr::select(-prop_feed)
+
+
+
+# proportion crop grown for feed per country
+yield_feed_crop <- left_join(rgns, feed_yield_gf, by="iso3c") %>%
+  dplyr::select(x, y, yield)
+
+yield_feed_crop_raster <- rast(yield_feed_crop)
+
+# plot(yield_feed_crop_raster)
+
+crs(yield_feed_crop_raster) <- "+proj=longlat +datum=WGS84"
+
+
+area_crop_feed_raster <- tonnes_crop_feed_raster/yield_feed_crop_raster
+
+# plot(log(area_crop_feed_raster+1)) # 16197.75 hectares of corn produced for corn gluten feed.. reasonable?
+# plot(area_crop_feed_raster)
+# global(area_crop_feed_raster, "sum", na.rm = TRUE) # 342455.7 hectares of soybean for SPC??
+
+writeRaster(area_crop_feed_raster, filename= sprintf(here("prep/02_feed/output/%s/%s_%s_%s_A.tif"), diet_type, crop_spam, product_type, allocation), overwrite=TRUE)
+
 
 }
 
 # take a look 
 
-test_names <- str_replace_all(str_before_last(list.files(here("prep/02_feed/output/fish-dominant/"), pattern = ".tif"), ".tif"), "_", ":")
+test_names <- str_replace_all(str_before_last(list.files(here("prep/02_feed/output/plant-dominant/"), pattern = "_A.tif"), ".tif"), "_", ":")
 
-test <- rast(list.files(here("prep/02_feed/output/fish-dominant/"), full.names = TRUE, pattern = ".tif"))
+test <- rast(list.files(here("prep/02_feed/output/plant-dominant/"), full.names = TRUE, pattern = "_A.tif"))
 
 names(test) <- test_names
-plot(log(test[[1]]+1))
+plot(log(test+1))
+global(test, "sum", na.rm = TRUE)
 
 ```
  
