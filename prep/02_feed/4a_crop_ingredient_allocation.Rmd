@@ -402,7 +402,7 @@ fao_yields <- readRDS(here("data/tidy_data/production-data/crops_production_tidy
          year == "2021",
          area_code < 5000,
          iso3c %in% total_prop$iso3c_producing) %>%  # filter for 2021 and yield data
-  mutate(yield_tonnes_ha = value/10000) %>% # convert hg to kg 
+  mutate(yield_tonnes_ha = value/10000) %>% # convert hg to tonnes
   left_join(mapspam_fao, by = c("item_code" = "FAO_code")) %>% # get mapspam codes
   filter(!is.na(map_spam_code))
 
@@ -427,7 +427,7 @@ todo <- total_prop %>%
   filter(sum_prop >0)
 
 for(i in 1:dim(todo)[1]){
-#i=30
+#i=6
 crop_spam <- todo$SPAM_super[i]
 product_type <- todo$ingredient[i]
 diet_type = todo$diet[i]
@@ -486,11 +486,11 @@ yield_feed_crop_raster <- rast(yield_feed_crop)
 crs(yield_feed_crop_raster) <- "+proj=longlat +datum=WGS84"
 
 
-area_crop_feed_raster <- tonnes_crop_feed_raster/yield_feed_crop_raster
+area_crop_feed_raster <- (tonnes_crop_feed_raster/yield_feed_crop_raster)/100 # divide by yield to get hectares of cropland then convert hectares to km2 (divide by 100)
 
 # plot(log(area_crop_feed_raster+1)) # 16197.75 hectares of corn produced for corn gluten feed.. reasonable?
 # plot(area_crop_feed_raster)
-# global(area_crop_feed_raster, "sum", na.rm = TRUE) # 342455.7 hectares of soybean for SPC??
+# global(area_crop_feed_raster, "sum", na.rm = TRUE) # 3428.596 km2 of soybean for SPC for plant-dominant??; 1746.714 km2 for SBM fish dominant?
 
 writeRaster(area_crop_feed_raster, filename= sprintf(here("prep/02_feed/output/%s/%s_%s_%s_A.tif"), diet_type, crop_spam, product_type, allocation), overwrite=TRUE)
 
@@ -499,13 +499,19 @@ writeRaster(area_crop_feed_raster, filename= sprintf(here("prep/02_feed/output/%
 
 # take a look 
 
-test_names <- str_replace_all(str_before_last(list.files(here("prep/02_feed/output/plant-dominant/"), pattern = "_A.tif"), ".tif"), "_", ":")
+test_names <- str_replace_all(str_before_last(list.files(here("prep/02_feed/output/plant-dominant/"), pattern = "mass_P.tif"), ".tif"), "_", ":")
 
-test <- rast(list.files(here("prep/02_feed/output/plant-dominant/"), full.names = TRUE, pattern = "_A.tif"))
+test <- rast(list.files(here("prep/02_feed/output/plant-dominant/"), full.names = TRUE, pattern = "mass_P.tif"))
 
 names(test) <- test_names
 plot(log(test+1))
-global(test, "sum", na.rm = TRUE)
+test_df <- as.data.frame(global(test, "sum", na.rm = TRUE))
+sum(test_df$sum) # 10881.41 km2 of cropland for salmon aquaculture feeds? 
+# 2927363 tonnes of crops for salmon aquaculture feeds 
+# 2804335 demanded.. so pretty close there. 
+2927363/10881.41 # 269 tonnes/km2 
+10881.41/2927363 # 0.003717137 km2/tonne 
+(10881.41*1000000)/(2927363*1000) # 3.717137 m2 per kg.. EU chicken meat is 5.59 m2 per kg
 
 ```
  

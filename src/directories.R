@@ -1,4 +1,5 @@
 #rdsi storage
+options(scipen = 999)
 
 rdsi_dir <- "/mnt/rdsi"
 

@@ -112,5 +112,86 @@ for(i in 1:length(filtered_files)){
 ```
 
 
+Data check 
 
+```{r}
+spc_mass_plant <- rast(here("prep/02_feed/output/resampled/plant-dominant/soyb_soy protein concentrate_mass_A.tif"))
+
+global(spc_mass_plant, "sum", na.rm = TRUE) # 3436.418 km2 of soybean for SPC globally
+
+
+all_crop_rast_mass <- rast(list.files(here("prep/02_feed/output/resampled/plant-dominant/"), pattern = "mass_A.tif", full.names = TRUE))
+
+names(all_crop_rast_mass) <- list.files(here("prep/02_feed/output/resampled/plant-dominant/"), pattern = "mass_A.tif")
+
+test <- as.data.frame(global(all_crop_rast_mass, "sum", na.rm = TRUE)) %>%
+  rename(km2 = sum)
+sum(test$sum) # 10874.02 km2 of cropland globally for salmon aquaculture feeds...
+
+# EU chicken paper estimates 67000 km2 of cropland for chicken feed and 5.59 m2 per kg
+
+
+all_crop_rast_mass_P <- rast(list.files(here("prep/02_feed/output/resampled/plant-dominant/"), pattern = "mass_P.tif", full.names = TRUE))
+
+test <- as.data.frame(global(all_crop_rast_mass_P, "sum", na.rm = TRUE))
+sum(test$sum) # 2925089 tonnes of cropland globally for salmon aquaculture feeds...
+
+
+2925089/10874.02 # = 268.9979 tonnes/km2
+
+10874.02/2925089 # = 0.003717501 km2/tonne
+
+(10874.02*1000000)/(2925089*1000) # = 3.717501 m2 per kg
+
+
+test_soy <- rast(file.path(mapspam_dir, "spam2010V2r0_global_A_SOYB_A.tif"))
+
+plot(test_soy/100)
+
+global(test_soy, "sum", na.rm = TRUE)/100 # 979068.3
+
+
+3436/979068.3
+
+```
+
+```{r}
+# hdf_files <- list.files(here("prep/02_feed/data/test_hdf"), full.names = TRUE)
+# for(file in hdf_files){
+#   
+#  # file <- hdf_files[1]
+#   
+#   hdf_name <- tools::file_path_sans_ext(basename(file))
+#   
+#   hdf <- rast(file)
+# 
+# writeRaster(hdf, sprintf(here("prep/02_feed/data/test_hdf/%s.tif"), hdf_name), overwrite = TRUE)
+# }
+# 
+# 
+# # test_hdf <- rast(here("prep/02_feed/data/test_hdf/vgpm.2019001.tif"))
+```
+
+
+
+Compare to Kuempel et al. and halpern et al
+
+```{r}
+
+chicken_salmon <- read.csv(here("prep/02_feed/data/sum_pressures_country.csv"))
+
+salmon_feed_disturbance <- chicken_salmon %>%
+  filter(stressor == "disturbance", 
+         animal_system == "salmon", 
+         source == "feedcrop")
+
+
+halpern <- read.csv(file.path(rdsi_raw_data_dir, "food-systems-project/rgn_raw_summary.csv")) %>%
+  filter(pressure == "disturbance", 
+         organism == "salmon", 
+         category == "feedcrop") 
+
+sum(halpern$sum) # 7525.14
+
+```
 
