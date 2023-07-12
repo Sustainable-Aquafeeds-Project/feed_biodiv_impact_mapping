@@ -13,6 +13,9 @@ food_systems_data_dir <- "/mnt/rdsi/raw_data/food-systems-project"
 #from IFPRI
 mapspam_dir <- "/mnt/rdsi/raw_data/MAPSPAM"
 
+# GAEZ crop data
+gaez_dir <- "/mnt/rdsi/raw_data/GAEZ_2015"
+
 #watson fisheries data
 
 watson_dir <- "/mnt/rdsi/raw_data/watson_2015"
@@ -31,9 +34,4 @@ iucn_dir <- "/mnt/rdsi/raw_data/iucn"
 
 fao_dir <- "/mnt/rdsi/raw_data/fao"
 
-fishstat_dir <- "/mnt/rdsi/raw_data/fao/FAO_fishstat_2020"
 
-
-#Global fishing watch
-
-gfw_dir <- "/mnt/rdsi/raw_data/global-fishing-watch"

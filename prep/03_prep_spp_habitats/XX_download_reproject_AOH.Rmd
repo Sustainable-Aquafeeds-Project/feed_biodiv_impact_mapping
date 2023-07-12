@@ -13,7 +13,6 @@ Load libraries
 
 library(tidyverse)
 library(here)
-library(sf)
 library(data.table)
 library(dtplyr)
 library(terra)
@@ -21,9 +20,7 @@ library(raster)
 library(parallel)
 library(rnaturalearth)
 library(strex)
-library(gdalUtils)
-library(future.apply)
-library(future)
+library(janitor)
 
 source(here("src/directories.R"))
 
@@ -50,14 +47,7 @@ unzip 1931890.zip
 Above example is how to download mammals_rodentia.zip file. Link taken from https://datadryad.org/stash/dataset/doi:10.5061/dryad.02v6wwq48.
 
 
-
 ```{r}
-
-test <- data.frame(empty = "empty df")
-
-write.csv(test, file.path(rdsi_raw_data_dir, "testing.csv"), row.names = FALSE) # this works... but not writing to the mounted rdsi drive... :(
-
-write.csv(test, here("test.csv"))
 
 ## read in species lists from raw data dir 
 
@@ -95,9 +85,9 @@ spp_list_files_fin <- remove_suffix(spp_list_files) %>%
 missing_spp <- total_spp_list %>%
   filter(!(aoh_name %in% c(spp_list_files_fin)))
 
-## ok I'm missing 4394 spp. 
+## ok I'm missing 1984 spp. 
 
-sort(unique(missing_spp$order)) # still missing 933 Rodentia 
+sort(unique(missing_spp$order)) 
 
 # [1] "CHIROPTERA"    "PASSERIFORMES"    
 
@@ -149,12 +139,11 @@ aoh_files <- list.files(file.path(rdsi_raw_data_dir, "AOH_lumbierres"), full.nam
   
 ingredient_files <- list.files(here("prep/02_feed/output/resampled"), full.names = TRUE, recursive = TRUE, pattern = "_A")
 
-# result_list <- list()
-
+# chunk 1569, 7841 not working 
 chunk_size = 112
 
-for(i in seq(1, length(aoh_files), chunk_size)) {
-  # i = 1
+for(i in seq(10529, length(aoh_files), chunk_size)) {
+  # i = 1569
 
   chunk_aoh_files <- aoh_files[i:min(i + chunk_size -1, length(aoh_files))]
 
@@ -245,35 +234,15 @@ elapsed_time <- end_time - start_time
 # Print the elapsed time
 print(elapsed_time)
 
-}
-
-
-# Ok these are 3 problem species
-
-# [1] "Abrocoma_boliviensis" "Abrothrix_olivaceus"  "Abrothrix_sanborni"  
-
-aoh_files <- list.files(file.path(rdsi_raw_data_dir, "AOH_lumbierres"), full.names = TRUE, pattern = "Abrocoma_boliviensis")
-
-this_spp_raster_proj <- rast(aoh_files) %>%
-      project(moll_template, method = "near")  %>% 
-      as.data.frame(xy=TRUE) %>%
-      rename(prescence = 3) %>% 
-      filter(prescence == 1) %>% 
-      lazy_dt()
-
-if(nrow(this_spp_raster_proj) == 0){
-
-this_spp_raster_ag <- rast(aoh_files) %>%
-      aggregate(fact = 10, fun = "mean", na.rm = TRUE) %>% 
-      project(moll_template, method = "near")  %>% 
-      as.data.frame(xy=TRUE) %>%
-      rename(prescence = 3) %>% 
-      filter(prescence == 1) %>% 
-      lazy_dt()
+print(paste("chunk ", i, " out of 15233 finished"))
 
 }
 
 
+```
+
+```{r}
+test_chunk <- readRDS(here("prep/03_prep_spp_habitats/int/aoh_overlay_chunks/full_df_chunk_1592.rds"))
 ```
 
 
