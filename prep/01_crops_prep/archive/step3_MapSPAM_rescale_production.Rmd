@@ -1,0 +1,205 @@
+---
+title: "MapSPAM"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+# Script Description
+
+1. Map crop production coefficients from early period (2009, 2010, 2011) to late period (2019, 2020, 2021).
+2. Produce maps scaled to mean of 2019, 2020, 2021 for each crop category 
+3. Calculate how much of the crop's production is allocated to each cell.
+
+# Data information
+Crop Allocation Source: MapSPAM 2010 v2.0 [Accessed: 10/18/2020]
+
+
+code	label	description
+A	All	all technologies together, ie complete crop   <----- we want to use A (ALL)
+I	Irrigated	irrigated portion of crop
+H	Rainfed High Inputs	rainfed high inputs portion of crop
+L	Rainfed Low Inputs	rainfed low inputs portion of crop
+S	Rainfed Subsistence	rainfed subsistence portion of crop
+R	Rainfed	rainfed portion of crop (= A - I, or H + L + S)
+
+And we are choosing _P_ for production. 
+
+```{r setup, include = FALSE}
+# getting packages we want
+library(here)
+source(here("src/fxns.R"))
+source(here("src/directories.R"))
+source(here("src/spatial.R"))
+library(janitor)
+library(furrr)
+library(vroom)
+
+
+# Distinct crop names and production systems to cycle through
+prod_system <- "_A"
+scaling_coef  <- vroom::vroom(here("prep/01_crops_mapspam/data/scaling_coef.csv"))
+distinct_vars <- expand.grid(prod_system, 
+                             unique(scaling_coef$SPAM_short_name))
+
+food_rgns_xy <- read.csv("/mnt/rdsi/raw_data/food-systems-project/food_rgns_xy.csv") %>%
+  dplyr::select(c(x, y, iso3c))
+
+``` 
+
+# Produce maps scaled to 2021 for each crop category 
+
+```{r}
+scale_from_2010_to_2021 <- function(crop, prod_system) {
+  
+  # crop = "acof"
+  # prod_system = "_A"
+  
+  coef_raster <- 
+    scaling_coef %>% 
+    filter(SPAM_short_name %in% crop) %>% 
+    dplyr::select(-SPAM_short_name) %>% 
+    left_join(food_rgns_xy, ., by = "iso3c") %>% 
+    dplyr::select(x, y, coef) %>% 
+    mutate(coef = ifelse(is.na(coef), 1, coef)) %>% 
+    rasterFromXYZ(crs = food_crs)
+  
+  # Save raster of coefficients
+  writeRaster(coef_raster, 
+              file.path(mapspam_dir,
+                        "/coefficients/crop_coef_",
+                        crop,
+                        ".tif",
+                        fsep = ""), 
+              format = "GTiff", 
+              overwrite = TRUE)
+  
+  # Multiply MAPSPAM crop data by scaling coefficient.  
+  scaled_raster <- overlay(
+    coef_raster, 
+    raster(file.path(mapspam_dir, "/new-extents/spam2010V2r0_global_P_", 
+                     toupper(crop), 
+                     prod_system, 
+                     ".tif",
+                     fsep = "")), 
+           fun = function(r1, r2) {
+             
+             return(r1 * r2)
+             
+             }
+           )
+      
+ #Save raster with scaled MAPSPAM crop data
+  writeRaster(scaled_raster, 
+              file.path(
+                mapspam_dir,
+                "/scaled_prod_maps_2021/crop_",
+                crop,
+                prod_system,
+                "_scaled.tif",
+                fsep = ""),
+              format = "GTiff", 
+              overwrite = TRUE)
+  
+}
+
+plan(multisession, workers = 8)
+
+options <- furrr_options(seed = 54232)
+
+furrr::future_map2(distinct_vars$Var2,
+                   distinct_vars$Var1, 
+                   scale_from_2010_to_2021,
+                   .options = options)
+```
+
+-------------------------------------------------------------------------------
+
+# Split rest map into three maps.
+
+```{r}
+rest_category_proportion <- 
+  vroom(here("prep/01_crops_mapspam/data/rest_category_proportion.csv")) %>% 
+  dplyr::select(!tonnes)
+
+rest_scaled_maps <- 
+  list.files(file.path(mapspam_dir, "/scaled_prod_maps_2021"), 
+             pattern = "rest",
+             full.names = TRUE)
+
+split_rest_maps <- function(scaled_map, crop) {
+  
+  crop_map <- 
+    rest_category_proportion %>% 
+    filter(SPAM_super %in% crop) %>% 
+    left_join(food_rgns_xy, .) %>% 
+    dplyr::select(x, y, prop) %>% 
+    rasterFromXYZ(crs = food_crs)
+  
+  overlay(raster(scaled_map),
+          crop_map,
+          fun = function(r1, r2) {
+            
+            return(r1 * r2)
+            
+            }) %>% 
+    
+    writeRaster(., 
+                file.path(
+                  mapspam_dir,
+                  "/scaled_prod_maps_2021/crop_",
+                  crop,
+                  str_extract(scaled_map, 
+                              pattern = "_H_|_I_|_L_|_A_|_S_"),
+                  "scaled.tif",
+                  fsep = ""),
+                format = "GTiff", 
+                overwrite = TRUE)
+  
+    
+  }
+
+variables <- expand_grid(map = rest_scaled_maps, 
+                         crop = unique(rest_category_proportion$SPAM_super))
+
+map2(.x = variables$map,
+     .y = variables$crop,
+     split_rest_maps)
+
+
+```
+
+-------------------------------------------------------------------------------
+
+
+# Test Plots
+```{r}
+# Check number of files in each folder is a multiple of 42.
+length(list.files(file.path(mapspam_dir, "/coefficients/")))     # 42
+length(list.files(file.path(mapspam_dir, "/scaled_prod_maps_2021/"))) # 225
+
+
+# Coefficients maps
+coef_test <- raster(file.path(mapspam_dir, "/coefficients/crop_coef_cnut.tif"))
+plot(coef_test)
+plot(log(coef_test + 1))
+
+# Scaled maps
+scaled_test <- raster(file.path(mapspam_dir, "/scaled_prod_maps_2021/crop_soyb_A_scaled.tif"))
+plot(scaled_test)
+plot(log(scaled_test + 1))
+
+cellStats(scaled_test, "sum", na.rm = TRUE) # 354610568 tonnes 
+
+test_fao <- scaling_coef %>% 
+  filter(SPAM_short_name == "soyb")
+sum(test_fao$late) # 353657912
+
+353657912-354610568 # so we are overestimating soybeans by ~952656 after scaling the mapspam data.. actually not horrible.
+
+952656/353657912 ## 0.2% overestimation
+
+```
+
+
+

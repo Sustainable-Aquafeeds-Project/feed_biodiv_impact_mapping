@@ -1,0 +1,127 @@
+---
+title: "GAEZ_wrangling"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+# Summary
+
+Wrangle MapSPAM crop category dataset.
+
+# Data sources
+
+ - FAOSTAT crop production: https://www.fao.org/faostat/en/#data/QCL
+
+ - MapSPAM: https://data.apps.fao.org/catalog/iso/59f7a5ef-2be4-43ee-9600-a6a9e9ff562a 
+ 
+ - Halpern et al. 2022: https://www.nature.com/articles/s41893-022-00965-x
+
+
+# Setup
+
+```{r setup, include = FALSE}
+# getting packages we want
+library(tidyverse)
+library(here)
+library(raster)
+library(sf)
+library(vroom)
+library(janitor)
+
+# Raster templates
+source(here("src/spatial.R"))
+source(here("src/fxns.R"))
+source(here("src/directories.R"))
+
+``` 
+
+
+# Methods
+
+```{r}
+
+# read in GAEZ crop info data 
+
+GAEZ_crops <- read.csv(here("prep/01_crops_prep/data/GAEZ_crop_info.csv")) %>%
+  dplyr::select(1:3) %>%
+  rename(item_code = FAOCODE) %>%
+  filter(GAEZ_category != "Foddercrops")
+
+GAEZ_crops$item_code <- gsub(" ", "", GAEZ_crops$item_code, fixed = TRUE)
+GAEZ_crops$FAONAMES <- gsub(" ", "", GAEZ_crops$FAONAMES, fixed = TRUE)
+
+```
+
+
+# Splitting data 
+
+```{r}
+GAEZ_names <- GAEZ_crops %>%
+   separate_rows(FAONAMES, item_code, sep = ",") %>%
+  mutate(item_code = as.numeric(item_code))
+```
+
+# Check for duplicates
+
+```{r}
+GAEZ_names$item_code[duplicated(GAEZ_names$item_code)] #none.. good! 
+
+```
+
+# Save
+
+```{r}
+write_csv(GAEZ_names, here("prep/01_crops_prep/data/GAEZ_names.csv"))
+
+```
+
+# Make FAO crop dataset, with values for 2015 (GAEZ year) and 2021 (latest FAO reporting year)
+
+```{r}
+fao_crop_prod_raw <- readRDS(here("data/tidy_data/production-data/crops_production_tidy.rds"))
+
+fao_crop_prod_2015_2021 <- fao_crop_prod_raw %>%
+  dplyr::filter(element_code == 5510,
+                year_code %in% c(2014, 2015, 2016, 2019, 2020, 2021)) %>%
+  dplyr::select(sector, area_code, area, element_code, element, item_code, item, year_code, year, value)
+
+write.csv(fao_crop_prod_2015_2021, here("prep/01_crops_prep/data/FAOSTAT_crop_production_2015_2021.csv"), row.names = FALSE)
+```
+
+
+
+# Check what crops are in each category.
+
+```{r}
+dsdf <- 
+  vroom::vroom(here("prep/01_crops_prep/data/FAOSTAT_crop_production_2015_2021.csv")) %>% 
+  clean_names() %>% 
+  dplyr::select(item, item_code) %>% 
+  unique() %>% 
+  left_join(GAEZ_names) 
+
+dsfdsf <- vroom::vroom(here("prep/01_crops_prep/data/FAO_crop_definitions.csv")) %>% 
+  clean_names() %>% 
+  dplyr::select(item_code, item, description) %>% 
+  right_join(GAEZ_names)
+```
+
+# Add super categories
+```{r}
+# crop_codes <- 
+#   vroom::vroom(here("prep/01_crops_prep/data/MapSPAM_names.csv")) %>% 
+#   dplyr::select(SPAM_short_name, SPAM_full_name, item_code) %>% 
+#   left_join(vroom::vroom(here("prep/02_feed/data/MapSPAM_crop_info.csv"), 
+#                          col_select = c("SPAM_short_name", "SPAM_super"))) %>%
+#     mutate(SPAM_super = case_when(
+#     SPAM_short_name %in% c("sunf", "ooil", "rape", "opul") ~ SPAM_short_name, 
+#     TRUE ~ SPAM_super
+#   ))
+# 
+# str(crop_codes)
+# 
+# vroom::vroom_write(crop_codes, 
+#                    here("prep/01_crops_mapspam/data/crop_codes.csv"))
+```
+

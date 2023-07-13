@@ -1,0 +1,218 @@
+---
+title: "Rescale GAEZ maps"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+# Script Description
+
+1. Map crop production coefficients from early period (2014, 2015, 2016) to late period (2019, 2020, 2021).
+2. Produce maps scaled to mean of 2019, 2020, 2021 for each crop category 
+3. Calculate how much of the crop's production is allocated to each cell.
+
+# Data information
+Crop Allocation Source: GAEZ 2015 [Accessed: 07/12/2023]
+
+
+We will be rescaling the Production_*_Total rasters to represent 2021 FAO tonnage estimates. These represent the 2015 total production (it is actually the average of 2014, 2015, and 2016) in tonnes per each crop in each cell. Units are 1000 tonnes per 5-arcminute grid cell.
+
+```{r setup, include = FALSE}
+# getting packages we want
+library(here)
+source(here("src/fxns.R"))
+source(here("src/directories.R"))
+source(here("src/spatial.R"))
+library(janitor)
+library(furrr)
+library(vroom)
+library(terra)
+
+
+# Distinct crop names and production systems to cycle through
+prod_system <- "_Total"
+scaling_coef  <- vroom::vroom(here("prep/01_crops_prep/data/scaling_coef.csv"))
+distinct_vars <- expand.grid(prod_system, 
+                             unique(scaling_coef$GAEZ_category))
+
+food_rgns_xy <- read.csv(file.path(food_systems_data_dir, "food_rgns_xy.csv")) %>%
+  dplyr::select(c(x, y, iso3c))
+
+``` 
+
+Do some checking of GAEZ against FAO production. 
+
+ - All of the categories except for banana line up nearly perfectly to FAO data. It seems that Banana is off by a magnitude of 10. In the code below we will just have to multiply the banana raster by 10000, rather than 1000 (production is reported in 1000s of tonnes). 
+ 
+```{r}
+# check mapspam and GAEZ against fao production
+
+
+test <- raster(file.path(mapspam_dir, "new-extents/spam2010V2r0_global_P_BANA_A.tif"))
+cellStats(test, "sum", na.rm = TRUE) # 35053391
+
+test2 <- raster(file.path(gaez_dir, "GAEZ_2015_crop_production/GAEZAct2015_Production_Pulses_Total.tif"))*1000
+cellStats(test2, "sum", na.rm = TRUE) # 76991145
+
+# ok these are way different. Mapspam is only bananas and GAEZ is both bananas and plantains... so which is right? 
+
+# read in FAO data 
+
+prod <- read.csv(here("prep/01_crops_prep/data/FAOSTAT_crop_production_2015_2021.csv"))
+
+test_prod <- prod %>%
+  filter(item_code %in% c(486, 489),
+         element == "Production", 
+         area_code < 351, 
+         year %in% c(2014, 2015, 2016)) %>%
+  group_by(item_code, year) %>%
+  summarise(sum = sum(value, na.rm = TRUE)) %>% 
+  ungroup() %>%
+  group_by(item_code) %>%
+  summarise(mean = mean(sum, na.rm = TRUE))
+
+sum(test_prod$mean) # 77108310 
+#Banana mapspam pretty much right on... what is wrong with GAEZ Banana? Seems like it is off by a magnitude of 10.
+# GAEZ wheat, soybeans, maize, rice, cassava, sunflower, rapeseed, barley, sorghum, potatoes/sweet potatoes, sugarbeet, sugarcane, oilpalmfruit, olives, cotton, pulses nearly perfect
+
+
+test_prod <- scaling_coef %>%
+  filter(GAEZ_category == "Pulses") 
+
+sum(test_prod$early) # 78030351
+
+```
+
+
+
+# Produce maps scaled to 2021 for each crop category 
+
+```{r}
+scale_from_2015_to_2021 <- function(crop, prod_system) {
+  
+  crop = "Banana"
+  prod_system = "_Total"
+  
+  coef_raster <- 
+    scaling_coef %>% 
+    filter(GAEZ_category %in% crop) %>% 
+    dplyr::select(-GAEZ_category) %>% 
+    left_join(food_rgns_xy, ., by = "iso3c") %>% 
+    dplyr::select(x, y, coef) %>% 
+    mutate(coef = ifelse(is.na(coef), 1, coef)) %>% 
+    rast(type = "xyz", crs = "EPSG:4326")
+  
+  # Save raster of coefficients
+  writeRaster(coef_raster, 
+              file.path(gaez_dir,
+                        "/coefficients/crop_coef_",
+                        crop,
+                        ".tif",
+                        fsep = ""), 
+              overwrite = TRUE)
+  
+  # Multiply MAPSPAM crop data by scaling coefficient.  
+  
+  if(crop == "Banana"){
+  
+  scaled_raster <- coef_raster*rast(file.path(gaez_dir, "/GAEZ_2015_crop_production/", "GAEZAct2015_Production_",
+                     crop, 
+                     prod_system, 
+                     ".tif",
+                     fsep = ""))*10000 # because I determined the banana GAEZ raster was off by a magnitude of 10... 
+  }else{
+    
+      scaled_raster <- coef_raster*rast(file.path(gaez_dir, "/GAEZ_2015_crop_production/", "GAEZAct2015_Production_",
+                     crop, 
+                     prod_system, 
+                     ".tif",
+                     fsep = ""))*1000
+  }
+    
+           
+      
+ #Save raster with scaled MAPSPAM crop data
+  writeRaster(scaled_raster, 
+              file.path(
+                gaez_dir,
+                "/scaled_prod_maps_2021/crop_",
+                crop,
+                prod_system,
+                "_scaled.tif",
+                fsep = ""),
+              overwrite = TRUE)
+  
+}
+
+plan(multisession, workers = 8)
+
+options <- furrr_options(seed = 54232)
+
+furrr::future_map2(distinct_vars$Var2,
+                   distinct_vars$Var1, 
+                   scale_from_2015_to_2021,
+                   .options = options)
+```
+
+
+# Test Plots
+```{r}
+# Check number of files in each folder is a multiple of 42.
+length(list.files(file.path(gaez_dir, "/coefficients/")))     # 25
+length(list.files(file.path(gaez_dir, "/scaled_prod_maps_2021/"))) # 25
+
+
+# Coefficients maps
+coef_test <- rast(file.path(gaez_dir, "/coefficients/crop_coef_Wheat.tif"))
+plot(coef_test)
+plot(log(coef_test + 1))
+
+# Scaled maps
+scaled_test <- rast(file.path(gaez_dir, "/scaled_prod_maps_2021/crop_Soybean_Total_scaled.tif"))
+plot(scaled_test)
+plot(log(scaled_test + 1))
+
+global(scaled_test, "sum", na.rm = TRUE) # 354003330 tonnes 
+
+test_fao <- scaling_coef %>% 
+  filter(GAEZ_category == "Soybean")
+sum(test_fao$late) # 353657912
+
+354003330-353657912 # so we are overestimating soybeans by ~345418 after scaling the mapspam data.. actually not horrible.
+
+345418/353657912 ## 0.09% overestimation
+
+```
+
+```{r}
+
+crops <- unique(scaling_coef$GAEZ_category)
+
+for(crop in crops){
+  
+  print(crop)
+  
+  test_fao <- scaling_coef %>% 
+  filter(GAEZ_category == crop)
+
+  sum_fao <- sum(test_fao$late)
+  print(sum_fao)
+  
+  
+  scaled_test <- rast(sprintf(file.path(gaez_dir, "/scaled_prod_maps_2021/crop_%s_Total_scaled.tif"), crop))
+
+  sum_scaled <- global(scaled_test, "sum", na.rm = TRUE) # 354003330 tonnes 
+  
+  print(sum_scaled)
+  
+  print(sum_scaled - sum_fao)
+  
+  
+    print((sum_scaled - sum_fao)/sum_fao)
+  
+}
+
+# stimulants and Yamsandotherroots are problems... luckily we don't use these for our project! The rest are all basically <5% difference from FAO, so in the same ballpark. And definitely better than mapspam. 
+```
+
+

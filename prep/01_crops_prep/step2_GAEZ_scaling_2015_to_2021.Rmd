@@ -1,0 +1,119 @@
+---
+title: "GAEZ_scaling_2015_to_2021"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+# Script Description
+
+Rescale GAEZ data to year 2021.
+
+# Data information
+
+We do this using FAOSTAT crop production data trends between year 2015 and 2021. Using 3 year mean. I.e. 2014, 2015, 2016 for early years (this is what GAEZ actually represents when they say "2015"); 2019, 2020, 2021 for later years (to deal with shocks to system, like 2020 covid shock and 2021 recovery).
+
+# Setup
+```{r setup, include = FALSE}
+# Raster templates
+library(here)
+library(janitor)
+library(terra)
+library(vroom)
+
+source(here("src/spatial.R"))
+source(here("src/fxns.R"))
+source(here("src/directories.R"))
+
+
+food_rgns <- read.csv(here("data/spatial/output/food_rgns.csv"))
+
+```
+
+# Methods 
+
+## Import and wrangle FAO data for 2015 and 2021
+
+```{r}
+crops_gaez <- read.csv(here("prep/01_crops_prep/data/GAEZ_names.csv")) %>%
+  dplyr::select(GAEZ_category, item_code)
+
+scaling_coef_tidy_gaez <- 
+  read.csv(here("prep/01_crops_prep/data/FAOSTAT_crop_production_2015_2021.csv")) %>% 
+  clean_names() %>% 
+  dplyr::select(area_code, item_code, year, value) %>% 
+  rename(tonnes = value) %>% 
+  na.omit() %>%
+  filter(item_code %in% crops_gaez$item_code) %>%
+  mutate(era = ifelse(year %in% c(2014, 2015, 2016), "early", "late"))
+
+test <- scaling_coef_tidy_gaez %>%
+  filter(area_code %in% c(276, 277)) # just check sudan and south sudan are split...
+
+```
+
+# Wrangle FAO dataset 
+
+```{r}
+scaling_coef_tidy_gaez <- 
+  scaling_coef_tidy_gaez %>% 
+  filter(!area_code %in% 351) %>% # Remove China
+  left_join(read_csv(here("data/spatial/output/FAO_rgn_codes.csv")), 
+            by = "area_code") %>% # Add iso3c
+  left_join(crops_gaez) %>% # Add SPAM_short_name
+  group_by(year, iso3c, GAEZ_category, era) %>%
+  summarise(tonnes = sum(tonnes, na.rm = TRUE)) %>%
+  ungroup() %>%
+  dplyr::select(year, tonnes, iso3c, GAEZ_category, era) %>% 
+  na.omit() # Remove NA created by milled rice.
+
+# Distinct area_codes
+n_distinct(scaling_coef_tidy_gaez$iso3c) # 200
+
+missing_rgns <- setdiff(food_rgns$iso3c, scaling_coef_tidy_gaez$iso3c)
+missing_rgns # Nothing unusual, all small islands.
+```
+
+# Calculate scaling from 2010 to 2021 for all crops and countries using 3 year means.
+```{r}
+scaling_coef <- 
+  scaling_coef_tidy_gaez %>% 
+  group_by(GAEZ_category, era, iso3c) %>%
+  summarize(tonnes = mean(tonnes, na.rm = TRUE)) %>% # Calculate mean tonnes for each crop, year and country.
+  ungroup() %>% 
+  spread(., era, tonnes) %>% 
+  mutate_all(~replace(., is.na(.), 0)) %>% 
+  group_by(GAEZ_category, iso3c, `late`, `early`) %>%
+  summarize(coef = `late` / `early`, .groups = "keep") %>% 
+  ungroup()
+
+# Make sure that countries with more than 0 production in 2015 but
+# no data in 2021 have 0 value for 2021.
+scaling_coef$coef[scaling_coef$`early` > 0 & scaling_coef$`late` == 0] <- 0
+
+# Some countries will have data in 2017, according to the FAO, but none in 2010. We need to make sure that we manually insert these values in the scaled maps.
+
+inf_values <- 
+  scaling_coef %>% 
+  filter(`early` == 0 & `late` > 0) %>% 
+  dplyr::select(GAEZ_category, iso3c, tonnes = `late`)
+inf_values
+
+scaling_coef$coef[scaling_coef$`early` == 0 & scaling_coef$`late` > 0] <- 1
+
+# All infinite numbers assigned a coef of 1.
+scaling_coef$coef[which(!is.finite(scaling_coef$coef))] <- 1
+
+
+try <- scaling_coef %>% filter(GAEZ_category == "Pulses")
+sum(try$early) #78030351 - ok that's perfect. 
+```
+
+# Save
+```{r}
+vroom_write(inf_values, here("prep/01_crops_prep/data/inf_values.csv"))
+write_csv(scaling_coef, here("prep/01_crops_prep/data/scaling_coef.csv"))
+
+```
+
+-------------------------------------------------------------------------------
