@@ -475,7 +475,7 @@ print(sprintf("raster calc: %s", cellStats(forage_fish_system, "sum", na.rm=TRUE
 print(sprintf("observed: %s", forage_fofm_allocation_totals %>% filter(diet == diet_type, allocation_type == allocation, ingredient == ingredient_type) %>% group_by(ingredient) %>% summarise(total = sum(total_tonnes_fofm_lw, na.rm = TRUE)) %>% ungroup() %>% pull(total)))
 
 
-    writeRaster(forage_fish_system, sprintf(here("prep/02_feed/output/%s/forage fish_%s_%s.tif"), diet_type, ingredient_type, allocation), overwrite = TRUE)
+    writeRaster(forage_fish_system, sprintf(here("prep/02_feed/output/%s/forage fish_%s_%s_P.tif"), diet_type, ingredient_type, allocation), overwrite = TRUE)
   
    }
   }

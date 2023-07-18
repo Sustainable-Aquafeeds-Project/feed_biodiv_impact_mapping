@@ -20,6 +20,7 @@ library(tidytext)
 library(knitr)
 library(strex)
 library(sjmisc)
+library(readxl)
 
 focus_year = 2021
 
@@ -34,7 +35,7 @@ source(here("src/directories.R"))
 Trade proportion data:
 ```{r}
 
-trade_data <- read_csv(here("prep/02_feed/data/FAO_MAPSPAMcrop_trade_data.csv")) 
+trade_data <- read_csv(here("prep/02_feed/data/FAO_GAEZcrop_trade_data.csv")) 
 
 ```
 
@@ -49,19 +50,19 @@ consumption <- read_csv(here("prep/02_feed/data/demand/total_aquaculture_ingredi
 
 ## need to match `consumption` ingredients to equivalent crop.. need lookup table 
 
-feed_cats <- read_csv(here("data/tidy_data/plant_ingredient_codes.csv")) %>% ## this table was created manually. It matches our ingredient names from Aas et al. 2022 to mapspam names. Must also update product_to_fao_spam.csv. 
+feed_cats <- read_xlsx(here("data/tidy_data/plant_ingredient_codes.xlsx")) %>% ## this table was created manually. It matches our ingredient names from Aas et al. 2022 to mapspam names. Must also update product_to_fao_spam.csv. Taken from our IMAS Sustainable Aquafeed Proejct - Mapping directory on OneDrive, specifically the "allocation_new" folder. 
   dplyr::select(-reference)
   
 
 
-consumption_spam <- consumption %>%
+consumption_spam_gaez <- consumption %>%
   left_join(feed_cats, by = c("source_ingredient" = "ingredient")) %>%
   filter(!is.na(raw_material))
 
 setdiff(unique(consumption$source_ingredient), unique(feed_cats$ingredient)) ## this is only fish ingredients and microingredients, which we don't care about for crops (because they aren't crops!)
 
 
-setdiff(unique(feed_cats$ingredient), unique(consumption$source_ingredient)) # [1] "rapeseed and camelina oil"; replaced by canola oil.. so OK; corn starch and pea starch too.. not included for biodiversity project, so ok
+setdiff(unique(feed_cats$ingredient), unique(consumption$source_ingredient)) # [1]  corn starch, pea starch, and lupin kernel meal... not included for biodiversity project, so ok
 
 ```
 
@@ -70,10 +71,10 @@ Join consumption by country and crop to trade data to get likely country of orig
 
 ```{r}
 # check that all feed products match up: should be nothing showing up here.. if it is then add it to lookup table
-setdiff(consumption_spam$map_spam_code, trade_data$SPAM_super) # character(0)
+setdiff(consumption_spam_gaez$gaez_code, trade_data$GAEZ_category) # character(0)
 
 
-ingredient_production_location <- left_join(trade_data, consumption_spam, by=c("iso3c_consuming", "SPAM_super" = "map_spam_code")) %>%
+ingredient_production_location <- left_join(trade_data, consumption_spam_gaez, by=c("iso3c_consuming", "GAEZ_category" = "gaez_code")) %>%
   filter(!is.na(animal_system)) %>%  #crops not fed to animal system in given country
   mutate(consuming_ingredient_consumed_tonnes = ifelse(is.na(consuming_ingredient_consumed_tonnes), 0, consuming_ingredient_consumed_tonnes)) %>%
   mutate(producing_ingredient_consumed_tonnes = consuming_ingredient_consumed_tonnes * prop_of_supply)
@@ -88,7 +89,7 @@ Take a look at the data
 ```{r}
 
 feed_source <- ingredient_production_location %>%
-  group_by(iso3c_producing, diet, animal_system, SPAM_super, source_ingredient) %>%
+  group_by(iso3c_producing, diet, animal_system, GAEZ_category, source_ingredient) %>%
   summarize(consumed_ingredient_tonnes = sum(producing_ingredient_consumed_tonnes)) %>% 
   ungroup()
 
@@ -102,7 +103,7 @@ tmp <- filter(feed_source, animal_system == "salmon_aquaculture_meat") %>%
 
 
 ggplot(data = tmp %>%
-         filter(diet == "plant-dominant"), aes(x = consumed_ingredient_tonnes, y = reorder_within(iso3c_producing, consumed_ingredient_tonnes, SPAM_super))) + 
+         filter(diet == "plant-dominant"), aes(x = consumed_ingredient_tonnes, y = reorder_within(iso3c_producing, consumed_ingredient_tonnes, GAEZ_category))) + 
   geom_bar(stat = "identity") + 
   facet_wrap(~source_ingredient, scales = "free") + 
   labs(x = "Tonnes of raw ingredient produced", y = "Country") + 
@@ -117,18 +118,19 @@ ggsave(here("prep/02_feed/plots/total_ingredient_feed_origins_plant.png"), units
 
 Ok now we need to convert the ingredient to crop raw material using the conversion factors that Rich has put together.. we do mass and energetic allocation both 
 
+STOPPED HERE
 
 ```{r}
 ## join ingredient demand and allocation data to generate crop raw material demand
  
 ingredient_production <- ingredient_production_location %>%
-  group_by(iso3c_producing, SPAM_super, diet, source_ingredient, raw_material, FAOSTAT_name, FAO_code) %>%
+  group_by(iso3c_producing, GAEZ_category, diet, source_ingredient, raw_material, FAOSTAT_name, FAO_code, map_spam_code) %>%
   summarise(producing_ingredient_consumed_tonnes = sum(producing_ingredient_consumed_tonnes, na.rm = TRUE)) %>%
   ungroup()
  
 
-allocation_factors <- read.csv(here("data/tidy_data/allocation/crop_ingredient_allocation_factors.csv")) %>% 
-  dplyr::select(item, ingredient, FAO_code, map_spam_code, ge_allocation_factor, mass_allocation_factor) %>%
+allocation_factors <- read_xlsx(here("data/tidy_data/allocation/crop_ingredient_allocation_factors.xlsx")) %>% 
+  dplyr::select(item, ingredient, FAO_code, map_spam_code, gaez_code, ge_allocation_factor, mass_allocation_factor) %>%
   distinct()
 
 
@@ -159,10 +161,10 @@ Crop production according to MAPSPAM data adjusted to 2021 production. These dat
 
 ```{r}
 
-crop_production_df <- read_csv(here("prep/02_feed/data/MAPSPAMcrop_production.csv"))
+crop_production_df <- read_csv(here("prep/02_feed/data/GAEZcrop_production.csv"))
   
 crop_production_global <- crop_production_df %>%
-  group_by(SPAM_super) %>%
+  group_by(GAEZ_category) %>%
   summarize(tonnes_global = sum(tonnes_producing_crop, na.rm=TRUE))
 
 ```
@@ -173,11 +175,12 @@ Divide tonnes of consumption for each country/food system by total production to
 feed_source <- read.csv(here("prep/02_feed/data/demand/ingredient_crop_demand_production_conversions.csv")) %>%
   left_join(feed_cats, by = c("source_ingredient" = "ingredient", "FAOSTAT_name", "FAO_code")) %>%
   dplyr::select(-raw_material) %>%
-  dplyr::rename("SPAM_super" = "map_spam_code")
+  dplyr::rename("SPAM_super" = "map_spam_code",
+                "GAEZ_category" = "gaez_code")
 
 # if the data were perfect, we could leave it at this...but there are some corrections to make
 # when consumption overshoots production
-proportion <- left_join(feed_source, crop_production_df, by=c("iso3c_producing", "SPAM_super")) %>%
+proportion <- left_join(feed_source, crop_production_df, by=c("iso3c_producing", "GAEZ_category")) %>%
   mutate(tonnes_producing_crop = ifelse(is.na(tonnes_producing_crop), 0, tonnes_producing_crop)) %>%
   mutate(prop_produced_for_system_ms = ifelse(total_crop_demand_ms == 0, 0, total_crop_demand_ms/tonnes_producing_crop),
          prop_produced_for_system_ge = ifelse(total_crop_demand_ge == 0, 0, total_crop_demand_ge/tonnes_producing_crop))
@@ -197,7 +200,7 @@ Identify the countries/crops with total production rates (across all systems) th
 ## step 1 ID regions where consumption exceeds production
 
 production_exceed <- proportion %>%
-  group_by(iso3c_producing, diet, SPAM_super, source_ingredient) %>%
+  group_by(iso3c_producing, diet, GAEZ_category, source_ingredient) %>%
   mutate(tonnes_produced_country_ms = sum(total_crop_demand_ms),
          tonnes_produced_country_ge = sum(total_crop_demand_ge)) %>%
   ungroup() %>%
@@ -253,7 +256,7 @@ summary(tonnes_included_system)
 
 # check, sum of included and excluded should equal sum of all consumption
 tmp <- tonnes_included_system %>%
-  group_by(SPAM_super, diet) %>%
+  group_by(GAEZ_category, diet) %>%
   summarize(included_crop = sum(included_tonnes_ms, na.rm=TRUE),
             excluded_crop = sum(lost_crop_tonnes_ms, na.rm=TRUE)) %>% 
   mutate(prop_redistributed = excluded_crop/(excluded_crop + included_crop)) %>%
@@ -264,14 +267,14 @@ sum(tmp$included_crop)/(sum(tmp$included_crop) + sum(tmp$excluded_crop)) # 86% f
 
 
 tonnes_lost_system <- tonnes_included_system %>%
-  group_by(SPAM_super, diet, source_ingredient) %>%
+  group_by(GAEZ_category, diet, source_ingredient) %>%
   summarize(lost_crop_tonnes_ms = sum(lost_crop_tonnes_ms, na.rm=TRUE),
             lost_crop_tonnes_ge = sum(lost_crop_tonnes_ge, na.rm=TRUE))
 
 
 #calculate extra crop tonnes in each country, and determine what proportion of extra each country accounts for
 tonnes_extra_crop <- corrected_prop %>%
-  dplyr::select(iso3c_producing, diet, SPAM_super, extra_crop_tonnes_ms, tonnes_producing_crop, extra_crop_tonnes_ge, source_ingredient) %>%
+  dplyr::select(iso3c_producing, diet, SPAM_super, GAEZ_category, extra_crop_tonnes_ms, tonnes_producing_crop, extra_crop_tonnes_ge, source_ingredient) %>%
   unique() %>%
   mutate(extra_crop_tonnes_ms = ifelse(extra_crop_tonnes_ms<0, 0, extra_crop_tonnes_ms),
          extra_crop_tonnes_ge = ifelse(extra_crop_tonnes_ge<0, 0, extra_crop_tonnes_ge)) %>%
@@ -298,9 +301,9 @@ excess_excess_prop <- excess_prop %>%
          extra_dispersed_tonnes_ge = tonnes_dispersed_ge - extra_crop_tonnes_ge) %>%
   mutate(extra_dispersed_tonnes_ms = ifelse(prop_dispersed_ms > 1, extra_dispersed_tonnes_ms, 0),
          extra_dispersed_tonnes_ge = ifelse(prop_dispersed_ge > 1, extra_dispersed_tonnes_ge, 0)) %>%
-  left_join(crop_production_global, by = "SPAM_super") %>%
+  left_join(crop_production_global, by = "GAEZ_category") %>%
   mutate(prop_global_crop_production = tonnes_producing_crop/tonnes_global) %>%
-  group_by(SPAM_super, diet, source_ingredient) %>%
+  group_by(GAEZ_category, diet, source_ingredient) %>%
   mutate(extra_dispersed_tonnes_by_system_crop_ms = sum(extra_dispersed_tonnes_ms),
          extra_dispersed_tonnes_by_system_crop_ge = sum(extra_dispersed_tonnes_ge))
   
@@ -315,16 +318,16 @@ Combine the included and lost proportions for each system and country for plotti
 ```{r}
 
 assigned_prop <- tonnes_included_system  %>%
-  dplyr::select(iso3c_producing, diet, source_ingredient, SPAM_super, prop_produced_for_system_ms = included_prop_ms, prop_produced_for_system_ge = included_prop_ge)
+  dplyr::select(iso3c_producing, diet, source_ingredient, SPAM_super, GAEZ_category, prop_produced_for_system_ms = included_prop_ms, prop_produced_for_system_ge = included_prop_ge)
 excess_prop <- excess_prop %>%
-  dplyr::select(iso3c_producing, diet, source_ingredient, SPAM_super, prop_extra_for_system_ms = prop_dispersed_ms, prop_extra_for_system_ge = prop_dispersed_ge)
+  dplyr::select(iso3c_producing, diet, source_ingredient, SPAM_super, GAEZ_category, prop_extra_for_system_ms = prop_dispersed_ms, prop_extra_for_system_ge = prop_dispersed_ge)
 
-total_prop <- left_join(assigned_prop, excess_prop, by=c("iso3c_producing", "diet", "SPAM_super", "source_ingredient")) %>%
+total_prop <- left_join(assigned_prop, excess_prop, by=c("iso3c_producing", "diet", "GAEZ_category", "source_ingredient")) %>%
   rowwise() %>%
   mutate(total_prop_ms = prop_produced_for_system_ms + prop_extra_for_system_ms,
          total_prop_ge = prop_produced_for_system_ms + prop_extra_for_system_ge)
 summary(total_prop)
-filter(total_prop, iso3c_producing=="AFG" & SPAM_super=="soyb") %>% data.frame()
+filter(total_prop, iso3c_producing=="AFG" & GAEZ_category=="Soybean") %>% data.frame()
 
 ```
 
@@ -337,14 +340,14 @@ filter(total_prop, prop_produced_for_system_ge>1)
 
 ## check: should match original consumption:
 production_global <- feed_source %>%
-  group_by(diet, source_ingredient, SPAM_super) %>%
+  group_by(diet, source_ingredient, GAEZ_category) %>%
   summarize(obs_tonnes_ms = sum(total_crop_demand_ms, na.rm=TRUE),
             obs_tonnes_ge = sum(total_crop_demand_ge, na.rm=TRUE))
 
 check <- left_join(total_prop, crop_production_df) %>%
   mutate(total_tonnes_ms = total_prop_ms*tonnes_producing_crop,
          total_tonnes_ge = total_prop_ge*tonnes_producing_crop) %>%
-  group_by(diet, source_ingredient, SPAM_super) %>%
+  group_by(diet, source_ingredient, GAEZ_category) %>%
   summarize(est_tonnes_ms = sum(total_tonnes_ms, na.rm=TRUE),
             est_tonnes_ge = sum(total_tonnes_ge, na.rm=TRUE)) %>%
   left_join(production_global) %>%
@@ -352,9 +355,9 @@ check <- left_join(total_prop, crop_production_df) %>%
   mutate(difference_ms = obs_tonnes_ms - est_tonnes_ms,
          difference_ge = obs_tonnes_ge - est_tonnes_ge)
 
-# these should be the same
+# these should be similar
 check %>%
-  group_by(SPAM_super) %>%
+  group_by(GAEZ_category) %>%
   summarize(est_tonnes_ms =sum(est_tonnes_ms),
             obs_tonnes_ms = sum(obs_tonnes_ms),
             est_tonnes_ge =sum(est_tonnes_ge),
@@ -390,12 +393,12 @@ Now multiply rasterize this information to get rasters describing the amount of 
 ```{r}
 
 total_prop <- read.csv(here("prep/02_feed/output/proportion_feed_per_country_system_diet.csv")) %>%
-  dplyr::select(SPAM_super, diet, ingredient = source_ingredient, iso3c_producing, total_prop_ms = prop_produced_for_system_ms, total_prop_ge = prop_produced_for_system_ge) %>%
+  dplyr::select(SPAM_super = SPAM_super, GAEZ_category, diet, ingredient = source_ingredient, iso3c_producing, total_prop_ms = prop_produced_for_system_ms, total_prop_ge = prop_produced_for_system_ge) %>%
   pivot_longer(cols = c("total_prop_ms", "total_prop_ge"), names_to = "allocation_type", values_to = "total_prop") %>%
   mutate(allocation_type = ifelse(allocation_type == "total_prop_ge", "gross energy", "mass"))
 
-mapspam_fao <- feed_cats %>%
-  dplyr::distinct(FAO_code, map_spam_code)
+gaez_fao <- feed_cats %>%
+  dplyr::distinct(FAO_code, gaez_code)
 
 fao_yields <- readRDS(here("data/tidy_data/production-data/crops_production_tidy.rds")) %>%
   filter(element == "Yield",
@@ -403,8 +406,8 @@ fao_yields <- readRDS(here("data/tidy_data/production-data/crops_production_tidy
          area_code < 5000,
          iso3c %in% total_prop$iso3c_producing) %>%  # filter for 2021 and yield data
   mutate(yield_tonnes_ha = value/10000) %>% # convert hg to tonnes
-  left_join(mapspam_fao, by = c("item_code" = "FAO_code")) %>% # get mapspam codes
-  filter(!is.na(map_spam_code))
+  left_join(gaez_fao, by = c("item_code" = "FAO_code")) %>% # get mapspam codes
+  filter(!is.na(gaez_code))
 
 
 library(terra)
@@ -417,25 +420,25 @@ rgns <- read_csv(file.path(food_systems_data_dir, "food_rgns_xy.csv"))
 ## start loop here
 #################3
 
-todo <- unique(dplyr::select(total_prop, diet, SPAM_super, ingredient, allocation_type))
+todo <- unique(dplyr::select(total_prop, diet, GAEZ_category, ingredient, allocation_type))
 
 
 todo <- total_prop %>%
-  group_by(diet, SPAM_super, ingredient, allocation_type) %>%
+  group_by(diet, GAEZ_category, ingredient, allocation_type) %>%
   summarise(sum_prop = sum(total_prop, na.rm = TRUE)) %>%
   ungroup() %>%
   filter(sum_prop >0)
 
 for(i in 1:dim(todo)[1]){
-#i=6
-crop_spam <- todo$SPAM_super[i]
+#i=30
+crop_gaez <- todo$GAEZ_category[i]
 product_type <- todo$ingredient[i]
 diet_type = todo$diet[i]
 allocation = todo$allocation_type[i]
 
 
 # total country feed production
-feed_crop <- filter(total_prop, SPAM_super==crop_spam, diet == diet_type, ingredient == product_type , allocation_type == allocation) %>%
+feed_crop <- filter(total_prop, GAEZ_category==crop_gaez, diet == diet_type, ingredient == product_type , allocation_type == allocation) %>%
   dplyr::select(iso3c = iso3c_producing, prop_feed = total_prop)
 
 # proportion crop grown for feed per country
@@ -449,17 +452,17 @@ prop_feed_crop_raster <- rast(prop_feed_crop)
 crs(prop_feed_crop_raster) <- "+proj=longlat +datum=WGS84"
 
 
-tonnes_crop_raster <- rast(sprintf(file.path(mapspam_dir, "scaled_prod_maps_2021/crop_%s_A_scaled.tif"), crop_spam))
+tonnes_crop_raster <- rast(sprintf(file.path(gaez_dir, "scaled_prod_maps_2021/crop_%s_Total_scaled.tif"), crop_gaez))
 
 tonnes_crop_feed_raster <- tonnes_crop_raster*prop_feed_crop_raster
 
 # plot(log(tonnes_crop_feed_raster+1))
 
-writeRaster(tonnes_crop_feed_raster, filename= sprintf(here("prep/02_feed/output/%s/%s_%s_%s_P.tif"), diet_type, crop_spam, product_type, allocation), overwrite=TRUE)
+writeRaster(tonnes_crop_feed_raster, filename= sprintf(here("prep/02_feed/output/%s/%s_%s_%s_P.tif"), diet_type, crop_gaez, product_type, allocation), overwrite=TRUE)
 
 # country yield estimates
 
-feed_yield <- filter(fao_yields, map_spam_code == crop_spam) %>%
+feed_yield <- filter(fao_yields, gaez_code == crop_gaez) %>%
   dplyr::group_by(iso3c) %>%
   summarise(yield = mean(yield_tonnes_ha, na.rm = TRUE)) %>%
   ungroup()
@@ -488,30 +491,30 @@ crs(yield_feed_crop_raster) <- "+proj=longlat +datum=WGS84"
 
 area_crop_feed_raster <- (tonnes_crop_feed_raster/yield_feed_crop_raster)/100 # divide by yield to get hectares of cropland then convert hectares to km2 (divide by 100)
 
-# plot(log(area_crop_feed_raster+1)) # 16197.75 hectares of corn produced for corn gluten feed.. reasonable?
+# plot(log(area_crop_feed_raster+1)) 
 # plot(area_crop_feed_raster)
 # global(area_crop_feed_raster, "sum", na.rm = TRUE) # 3428.596 km2 of soybean for SPC for plant-dominant??; 1746.714 km2 for SBM fish dominant?
 
-writeRaster(area_crop_feed_raster, filename= sprintf(here("prep/02_feed/output/%s/%s_%s_%s_A.tif"), diet_type, crop_spam, product_type, allocation), overwrite=TRUE)
+writeRaster(area_crop_feed_raster, filename= sprintf(here("prep/02_feed/output/%s/%s_%s_%s_A.tif"), diet_type, crop_gaez, product_type, allocation), overwrite=TRUE)
 
 
 }
 
 # take a look 
 
-test_names <- str_replace_all(str_before_last(list.files(here("prep/02_feed/output/plant-dominant/"), pattern = "mass_P.tif"), ".tif"), "_", ":")
+test_names <- str_replace_all(str_before_last(list.files(here("prep/02_feed/output/plant-dominant/"), pattern = "mass_A.tif"), ".tif"), "_", ":")
 
-test <- rast(list.files(here("prep/02_feed/output/plant-dominant/"), full.names = TRUE, pattern = "mass_P.tif"))
+test <- rast(list.files(here("prep/02_feed/output/plant-dominant/"), full.names = TRUE, pattern = "mass_A.tif"))
 
 names(test) <- test_names
 plot(log(test+1))
 test_df <- as.data.frame(global(test, "sum", na.rm = TRUE))
-sum(test_df$sum) # 10881.41 km2 of cropland for salmon aquaculture feeds? 
-# 2927363 tonnes of crops for salmon aquaculture feeds 
+sum(test_df$sum) # 10438.04 km2 of cropland for salmon aquaculture feeds? 
+# 2929747 tonnes of crops for salmon aquaculture feeds 
 # 2804335 demanded.. so pretty close there. 
-2927363/10881.41 # 269 tonnes/km2 
-10881.41/2927363 # 0.003717137 km2/tonne 
-(10881.41*1000000)/(2927363*1000) # 3.717137 m2 per kg.. EU chicken meat is 5.59 m2 per kg
+2929747/10438.04 # 280.6798 tonnes/km2 
+10438.04/2929747 # 0.003562779 km2/tonne 
+(10438.04*1000000)/(2929747*1000) # 3.562779 m2 per kg.. EU chicken meat is 5.59 m2 per kg
 
 ```
  
@@ -522,8 +525,8 @@ Make some plots
 feed_source <- read.csv(here("prep/02_feed/data/demand/ingredient_crop_demand_production_conversions.csv")) %>%
   left_join(feed_cats, by = c("source_ingredient" = "ingredient", "FAOSTAT_name", "FAO_code")) %>%
   dplyr::select(-raw_material) %>%
-  dplyr::rename("SPAM_super" = "map_spam_code", "ingredient" = "source_ingredient") %>%
-  group_by(iso3c_producing, diet, SPAM_super, ingredient) %>%
+  dplyr::rename("GAEZ_category" = "gaez_code", "ingredient" = "source_ingredient") %>%
+  group_by(iso3c_producing, diet, GAEZ_category, ingredient) %>%
   summarize(produced_ingredient_tonnes_ms = sum(total_crop_demand_ms),
             produced_ingredient_tonnes_ge = sum(total_crop_demand_ge)) %>% 
   ungroup()
@@ -538,7 +541,7 @@ tmp <- filter(feed_source) %>%
 
 
 ggplot(data = tmp %>%
-         filter(diet == "fish-dominant"), aes(x = produced_ingredient_tonnes_ge, y = reorder_within(iso3c_producing, produced_ingredient_tonnes_ge, SPAM_super))) + 
+         filter(diet == "fish-dominant"), aes(x = produced_ingredient_tonnes_ge, y = reorder_within(iso3c_producing, produced_ingredient_tonnes_ge, GAEZ_category))) + 
   geom_bar(stat = "identity") + 
   facet_wrap(~ingredient, scales = "free") + 
   labs(x = "Tonnes of crop produced for ingredient", y = "Country") + 
