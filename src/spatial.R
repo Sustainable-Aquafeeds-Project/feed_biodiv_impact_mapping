@@ -1,5 +1,6 @@
 
 library(terra)
+library(raster)
 
 #projections
 
@@ -10,7 +11,7 @@ equal_area_moll_projstring <- "+proj=moll +lon_0=0 +x_0=0 +y_0=0 +ellps=WGS84 +d
 equal_area_moll_esri <- "ESRI:54009"
 
 
-food_raster <- raster(nrows=2160, ncols=4320, xmn=-180, xmx=180, ymn=-90, ymx=90)
+food_raster <- rast(nrow=2160, ncol=4320, xmin=-180, xmax=180, ymin=-90, ymax=90)
 food_crs <- "+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"
 
 ## make a mollweide 10km by 10km raster 

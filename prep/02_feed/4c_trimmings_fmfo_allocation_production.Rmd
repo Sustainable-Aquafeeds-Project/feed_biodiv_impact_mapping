@@ -24,56 +24,6 @@ source(here("src/directories.R"))
 ```
 
 
-
-UN COMTRADE data 
-
-Possible HS codes for fish oil and fish meal  
-
-
-
-HS 230120 – Flours, meals and pellets; of fish or of crustaceans, molluscs or other aquatic invertebrates  
-
-```{r}
-raw_230120_meals <- read.csv(here("prep/02_feed/data/comtrade/TradeData_230120.csv"))
-
-
-test <- raw_230120_meals %>% distinct(ReporterISO, Partner2ISO) %>%
-  pivot_wider(values_from = Partner2ISO, names_from = ReporterISO)
-
-unique(raw_230120_meals$ReporterISO) # 78 countries.. maybe it didn't download all? 
-
-
-raw_150420_oils <- read.csv(here("prep/02_feed/data/comtrade/TradeData_150420.csv"))
-
-length(unique(raw_150420_oils$ReporterISO)) # 76 countries.. maybe it didn't download all? 
-
-
-raw_150410_oils <- read.csv(here("prep/02_feed/data/comtrade/TradeData_150410.csv"))
-
-length(unique(raw_150410_oils$ReporterISO)) # 75 countries.. maybe it didn't download all? 
-
-meals_df <- raw_230120_meals %>%
-    filter(ReporterISO != "W00", 
-         PartnerISO != "W00") %>% # we want to filter out these "world" ones
-  filter(Partner2ISO == "W00") %>% # We only want the rows where W00 is the second partner, so we don't double count some trading. 
-  dplyr::select(ReporterISO, FlowDesc, PartnerISO, CmdCode, CmdDesc, Qty, PrimaryValue) %>%
-  mutate(Qty = Qty*0.001, 
-         PrimaryValue = PrimaryValue*0.001) 
-  
-oils_df <- raw_150420_oils %>%
-    filter(ReporterISO != "W00", 
-         PartnerISO != "W00") %>%
-  filter(Partner2ISO == "W00") %>%
-  dplyr::select(ReporterISO, FlowDesc, PartnerISO, CmdCode , CmdDesc, Qty, PrimaryValue) %>%
-  mutate(Qty = Qty*0.001, 
-         PrimaryValue = PrimaryValue*0.001)
-
-oils_meals_all <- rbind(oils_df, meals_df) %>%
-  mutate(type = ifelse(CmdCode == 230120, "fish meal", "fish oil"))
-
-```
-
-
 ## Methods 
 
  1. Start with demand per country 
@@ -118,16 +68,18 @@ country_demand <- read_csv(here("prep/02_feed/data/demand/total_aquaculture_ingr
     - EX: NOR imports Y% of FO trimmings from USA, Z% from Peru, etc.
     
 ```{r}
+oils_meals_all <- read.csv(file.path(rdsi_raw_data_dir, "BACI_data/BACI_FMFO_codes.csv"))
+
 oils_meals_import_props <- oils_meals_all %>% 
-  dplyr::select(ReporterISO, PartnerISO, type, Qty, FlowDesc) %>% 
-  filter(FlowDesc == "Import") %>%
-  group_by(ReporterISO, type) %>%
-  mutate(total_import = sum(Qty, na.rm = TRUE)) %>% 
+  mutate(type = ifelse(hs_code == 230120, "fish meal", "fish oil")) %>%
+  dplyr::select(importer_iso3c, partner_iso3c, type, qty) %>% 
+  group_by(importer_iso3c, type) %>%
+  mutate(total_import = sum(qty, na.rm = TRUE)) %>% 
   ungroup() %>%
-  mutate(prop_import = Qty/total_import) %>%
+  mutate(prop_import = qty/total_import) %>% 
   mutate(type = ifelse(type == "fish meal", "fish meal, cut offs", "fish oil, cut offs"))
   
-length(unique(oils_meals_import_props$PartnerISO)) # 113 countries...
+length(unique(oils_meals_import_props$partner_iso3c)) # 164 countries...
 
 
 ```
@@ -141,7 +93,7 @@ Multiply the import %s by the demand tonnes to get ingredient tonnes imported pe
 ## step 3
 
 demand_trade <- country_demand %>%
-  left_join(oils_meals_import_props, by = c("iso3c" = "ReporterISO", "ingredient" = "type")) %>% ## the comtrade data is missing a lot of countries... 
+  left_join(oils_meals_import_props, by = c("iso3c" = "importer_iso3c", "ingredient" = "type")) %>% ## the comtrade data is missing a lot of countries... 
   mutate(tonnes_ingredient_demand_traded = prop_import*ingredient_demand) # small problem here: missing RUS, PRK, FRO, and ARE. According to comtrade they don't import any fish oil or fish meal... 
 ```
 
@@ -152,7 +104,7 @@ Group by exporter country to get total amount of FO or FM ingredients from trimm
 
 ## step 4
 demand_trade_origin <- demand_trade %>%
-  group_by(PartnerISO, ingredient, diet) %>%
+  group_by(partner_iso3c, ingredient, diet) %>%
   summarise(total_ingredient_tonnes_traded = sum(tonnes_ingredient_demand_traded, na.rm = TRUE)) %>% # missing about 1 million tonnes due to missing countries in trade data 
   ungroup()
 
@@ -229,6 +181,10 @@ trimmingsfish <-
   mutate(trimmings_catch = catch*trimmingsfish) %>%
   mutate(trimmings_catch = ifelse(is.na(trimmings_catch), 0, trimmings_catch))
 
+
+write_rds(trimmingsfish, file.path(watson_dir, "v5.0/int/all_catch_trimmingsfish.rds"))
+
+
 ## get an estimate of proportion of forage fish catch coming from different species in different landing countries.
 trimmings_catch_iso <- trimmingscatch %>%
   group_by(iso3c, CommonName, TaxonName) %>%
@@ -254,7 +210,7 @@ Apply these within country percentages to total country exported fish oil and fi
 
 trimmings_fofm_origins <- trimmings_catch_iso %>%
   dplyr::select(iso3c, CommonName, TaxonName, prop_of_iso_total) %>%
-  left_join(demand_trade_origin, by = c("iso3c" = "PartnerISO")) %>%
+  left_join(demand_trade_origin, by = c("iso3c" = "partner_iso3c")) %>%
   mutate(tonnes_fofm_trimmings_spp = total_ingredient_tonnes_traded*prop_of_iso_total) %>%
   dplyr::select(iso3c, CommonName, TaxonName, ingredient, diet, tonnes_fofm_trimmings_spp) %>%
   filter(!is.na(tonnes_fofm_trimmings_spp))
@@ -355,22 +311,24 @@ Divide the tonnes of fish oil and fish meal live weight equivalents by the total
 # Divide the tonnes of fish oil and fish meal live weight equivalents by the total amount of trimmings catch in each country. This gives us a proportion of trimmings fish catch in each country that goes to FMFO. 
 
 trimmings_rgn_totals <- trimmings_catch_iso %>%
-  group_by(iso3c) %>%
+  group_by(iso3c, TaxonName) %>%
   summarise(trim_fofm_catch = sum(catch)) %>%
   ungroup()
 
 
 
 trimmings_fofm_allocation_totals <- trimmings_fofm_allocation %>%
-  group_by(iso3c, ingredient, diet, allocation_type) %>%
+  group_by(iso3c, ingredient, TaxonName, diet, allocation_type) %>%
   summarise(total_tonnes_fofm_lw = sum(tonnes_fofm_trimmings_spp_live_weight, na.rm = TRUE)) %>%
               ungroup()
 
 trim_props <- left_join(trimmings_rgn_totals, trimmings_fofm_allocation_totals) %>%
   filter(!is.na(diet)) %>% # filter out NAs since these countries dont produce any fofm catch for salmon feeds
   mutate(prop = ifelse(trim_fofm_catch == 0, 0, total_tonnes_fofm_lw/trim_fofm_catch)) %>%
-  dplyr::select(iso3c, ingredient, diet, allocation_type, prop) %>%
+  dplyr::select(iso3c, ingredient, TaxonName, diet, allocation_type, prop) %>%
   filter(!is.na(iso3c))
+
+write_rds(trim_props, here("prep/02_feed/data/embodied_FMFO_trimmings_rgns.rds"))
 
 
 diets <- unique(trim_props$diet)

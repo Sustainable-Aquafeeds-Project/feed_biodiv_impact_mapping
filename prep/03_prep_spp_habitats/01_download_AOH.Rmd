@@ -1,0 +1,114 @@
+---
+title: "Overlapping species AOH with feed crops"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+## Setup
+
+Load libraries
+
+```{r setup, include=FALSE}
+
+library(tidyverse)
+library(here)
+library(data.table)
+library(dtplyr)
+library(terra)
+library(raster)
+library(parallel)
+library(rnaturalearth)
+library(strex)
+library(janitor)
+
+source(here("src/directories.R"))
+
+source(here("src/spatial.R"))
+
+select <- dplyr::select
+
+
+```
+
+Check to make sure we downloaded all of the AOH species maps from https://datadryad.org/stash/dataset/doi:10.5061/dryad.02v6wwq48
+
+
+You can download by ssh into the rdsi storage and then running wget url_to_download
+
+ssh ubuntu@131.217.178.173
+cd ../../mnt/rdsi/raw_data/AOH_lumbierres
+wget https://datadryad.org/stash/downloads/file_stream/1931890
+
+unzip 1931890.zip
+
+Above example is how to download mammals_rodentia.zip file. Link taken from https://datadryad.org/stash/dataset/doi:10.5061/dryad.02v6wwq48.
+
+
+```{r}
+
+## read in species lists from raw data dir 
+
+mammals_list <-
+  read.csv(file.path(rdsi_raw_data_dir, "AOH_lumbierres/Mammals_list_AOH.csv")) %>%
+  clean_names() %>%
+  dplyr::select(binomial, aoh_name, order) %>%
+  mutate(type = "mammal")
+
+birds_list <- read.csv(file.path(rdsi_raw_data_dir, "AOH_lumbierres/Birds_list_AOH.csv")) %>%
+  clean_names() %>%
+  dplyr::select(binomial, aoh_name, order) %>%
+  mutate(type = "bird")
+
+
+total_spp_list <- rbind(mammals_list, birds_list)
+
+## now grab the names of the species from the raw data directory
+
+files <- list.files(file.path(rdsi_raw_data_dir, "AOH_lumbierres"), pattern = ".tif")
+
+spp_list_files <- str_before_last(files, ".tif") 
+
+remove_suffix <- function(string) {
+  modified_string <- sub("_[BNR]$", "", string)
+  return(modified_string)
+}
+
+spp_list_files_fin <- remove_suffix(spp_list_files) %>%
+  unique()
+
+
+## now filter these spp out of the spp df 
+
+missing_spp <- total_spp_list %>%
+  filter(!(aoh_name %in% c(spp_list_files_fin)))
+
+## ok I'm missing 1984 spp. 
+
+sort(unique(missing_spp$order)) 
+
+# [1] "CHIROPTERA"    "PASSERIFORMES"    
+
+
+## I will redownload the zip files missing from here: https://datadryad.org/stash/dataset/doi:10.5061/dryad.02v6wwq48 and see if that helps the missing species...
+
+unzip(file.path(rdsi_raw_data_dir, "AOH_lumbierres/1931870.zip"), exdir = here("test/"))
+
+
+test <- rast(file.path(rdsi_raw_data_dir, "AOH_lumbierres/Aselliscus_tricuspidatus.tif"))
+
+test_size <- cellSize(test, unit = "km")
+plot(test_size)
+
+
+```
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,594 @@
+---
+title: "Spatial Allocation of Forage fish demand from each diet and source"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+# Overall approach
+
+Using the marine footprint approach outlined in Cashion et al https://onlinelibrary.wiley.com/doi/full/10.1111/faf.12222 based off of the primary production required for catch in a given cell.
+
+We need to calculate this separately for fishmeal and oil as we are interested in the allocation of pressures to ingredients
+  
+```{r, setup}
+
+library(tidyverse)
+library(here)
+library(terra)
+library(sf)
+library(data.table)
+library(dtplyr)
+library(future)
+library(furrr)
+#library(doParallel)
+library(rfishbase)
+
+source(here("src/directories.R"))
+source(here("src/spatial.R"))
+
+select <- dplyr::select
+
+```
+
+
+Equal area projection resources
+```{r}
+
+gall_peters <- "+proj=cea +lon_0=0 +x_0=0 +y_0=0 +lat_ts=45 +ellps=WGS84 +datum=WGS84 +units=m +no_defs"
+#raster template 
+base_rast <- rast(res=0.5)
+ext(base_rast) <- c(-180, 180, -90, 90)
+
+eq_area_rast <- project(base_rast, gall_peters) 
+res(eq_area_rast) <- 10000
+
+values(eq_area_rast) <- 1:ncell(eq_area_rast)
+
+```
+
+
+MARINE FOOTPRINT
+
+
+Create a cell area xyz file for 0.5 res wgs84 raster
+
+```{r}
+
+cell_area <- terra::as.data.frame(cellSize(rast(res=0.5), unit="km"), xy=TRUE) |> rename(LonCentre = x, LatCentre = y)
+
+```
+
+
+
+Import net primary productivity data
+```{r}
+
+
+#make npp into an xy file
+
+mean_npp <- rast(here("../npp_synthesis/data/npp_2013_2022_mean.tif"))
+median_npp <- rast(here("../npp_synthesis/data/npp_2013_2022_median.tif"))
+min_npp <- rast(here("../npp_synthesis/data/npp_2013_2022_min.tif"))
+max_npp <- rast(here("../npp_synthesis/data/npp_2013_2022_max.tif"))
+
+# mean_npp <- rast(here("prep/02_feed/data/vgpm-npp/npp_2013_2022_mean.tif"))
+# median_npp <- rast(here("prep/02_feed/data/vgpm-npp/npp_2013_2022_median.tif"))
+# min_npp <- rast(here("prep/02_feed/data/vgpm-npp/npp_2013_2022_min.tif"))
+# max_npp <- rast(here("prep/02_feed/data/vgpm-npp/npp_2013_2022_max.tif")) 
+
+old_2019 <- rast("/mnt/rdsi/raw_data/00-net-primary-productivity/annual_mean_npp_2019_gf_wgs.tiff")
+new_2019 <- rast(here("../npp_synthesis/data/npp_2019/mean_npp_2019.tif"))
+
+#mean 
+mean_npp_xyz <- terra::as.data.frame(mean_npp, xy = TRUE) |> 
+  rename(mean_npp_t_km2_yr=focal_mean) |> 
+  rename(LonCentre = x, 
+         LatCentre = y)
+
+#median
+median_npp_xyz <- terra::as.data.frame(median_npp, xy = TRUE) |> 
+  rename(median_npp_t_km2_yr=focal_mean) |> 
+  rename(LonCentre = x, 
+         LatCentre = y)
+
+#min
+min_npp_xyz <- terra::as.data.frame(min_npp, xy = TRUE) |> 
+  rename(min_npp_t_km2_yr=focal_mean) |> 
+  rename(LonCentre = x, 
+         LatCentre = y)
+
+#max
+max_npp_xyz <- terra::as.data.frame(max_npp, xy = TRUE) |> 
+  rename(max_npp_t_km2_yr=focal_mean) |> 
+  rename(LonCentre = x, 
+         LatCentre = y)
+
+```
+
+Import ecosystem transfer-efficiency
+
+```{r}
+
+ecosystem_te <- read_csv(file.path(rdsi_raw_data_dir, "cashion/ecosystem_te.csv")) |> select(TE, fao_area_code) |> group_by(fao_area_code) |> summarise(te=mean(TE, na.rm = TRUE)) |> mutate(te= te/100)
+
+
+```
+
+
+Get forage fish trophic levels - needed for calculating the primary productivity required
+
+```{r}
+
+#Separate the catch records that have Genus and species.
+forage_spp <- readRDS(file.path(watson_dir, "v5.0/int/all_catch_foragefish.rds")) |> 
+  filter(forage_id == 1) %>%
+  mutate(binomial = stringi::stri_count(TaxonName, regex="\\S+")) |> 
+  filter(binomial==2) |>  
+  pull(TaxonName) |> 
+  unique() 
+
+# this_sp <- forage_spp[[1]]
+
+taxa_info <- load_taxa()
+
+binomial_tls <- rfishbase::ecology(species_list =  forage_spp, server = getOption("fishbase")) |>
+  select(Species, DietTroph, FoodTroph) |> 
+  mutate(DietTroph = if_else(is.na(DietTroph), true = FoodTroph, false = DietTroph)) |> 
+  drop_na(DietTroph) |> 
+  select(-FoodTroph) |> 
+  distinct() %>% #both extracted manually from fishbase as not coming up from app search
+  left_join(taxa_info, by = "Species")
+
+# get family means
+
+family_means <- binomial_tls %>%
+  group_by(Family) %>%
+  summarise(DietTroph = mean(DietTroph, na.rm = TRUE)) %>%
+  ungroup()
+
+genus_means <- binomial_tls %>%
+  group_by(Genus) %>%
+  summarise(DietTroph = mean(DietTroph, na.rm = TRUE)) %>%
+  ungroup()
+  
+#Add back the Genus only or family records and match to any species with the same Genus
+
+(forage_higherorder <- readRDS(file.path(watson_dir, "v5.0/int/all_catch_foragefish.rds")) |> filter(forage_id == 1) %>% mutate(binomial = stringi::stri_count(TaxonName, regex="\\S+")) |> filter(binomial==1) |>  pull(TaxonName) |> unique()
+)
+
+forage_nonbinomial_tls <- tibble(TaxonName = forage_higherorder) |> 
+  left_join(family_means, by = c("TaxonName" = "Family")) %>% 
+  left_join(genus_means, by = c("TaxonName" = "Genus")) %>% 
+  mutate(DietTroph = ifelse(is.na(DietTroph.x), DietTroph.y, DietTroph.x)) %>%
+  dplyr::select(TaxonName, DietTroph) %>% 
+  mutate(DietTroph = case_when(TaxonName %in% 
+                                 c("Engraulidae", "Clupeiformes", "Stolephorus") ~ binomial_tls |> 
+                                 filter(grepl("Engraulis",Species)) |> 
+                                 pull(DietTroph) |> 
+                                 mean(),
+                                str_detect(TaxonName, "Scomb") ~ binomial_tls |> 
+                                 filter(grepl("Scomber", Species)) |> 
+                                 pull(DietTroph) |> 
+                                 mean(),
+                               TaxonName %in% c("Sardinella") ~ binomial_tls |> 
+                                 filter(grepl("Sardinella", Species)) |> 
+                                 pull(DietTroph) |> 
+                                 mean(),
+                               TaxonName %in% c("Rastrelliger") ~ binomial_tls |> 
+                                 filter(grepl("Rastrelliger", Species)) |> 
+                                 pull(DietTroph) |> 
+                                 mean(),
+                               TaxonName %in% c("Trachurus") ~ binomial_tls |> 
+                                 filter(grepl("Trachurus", Species)) |> 
+                                 pull(DietTroph) |> 
+                                 mean(),
+                               TaxonName %in% c("Harengula", "Clupeidae", "Clupeoids") ~ binomial_tls |> 
+                                 filter(grepl("Clupea", Species)) |> 
+                                 pull(DietTroph),
+                               TaxonName %in% c("Atherinidae") ~ binomial_tls |> 
+                                 pull(DietTroph) |> 
+                                 mean(),
+         TRUE ~ DietTroph)) |> 
+  add_row(TaxonName = "Euphausia superba", DietTroph = 2.25) |> 
+    add_row(TaxonName = "Clupea pallasii pallasii", DietTroph = 3.16) 
+                               
+                          
+     
+                               
+forage_tls <- 
+  bind_rows(binomial_tls |> rename(TaxonName = Species),
+          forage_nonbinomial_tls)
+
+
+test <- readRDS(file.path(watson_dir, "v5.0/int/all_catch_foragefish.rds")) %>% 
+  filter(forage_id == 1)
+
+missing_spp <- setdiff(test$TaxonName, forage_tls$TaxonName)
+
+# missing 8 spp...
+
+
+missing_tls <- tibble(TaxonName = missing_spp, DietTroph = NA)
+
+# lets fill in the species with NA DietTroph
+
+ga_troph <- mean(forage_tls$DietTroph, na.rm = TRUE)
+
+forage_tls_gf <- bind_rows(forage_tls, missing_tls) %>%
+ # filter(is.na(DietTroph)) %>%
+  mutate(DietTroph = case_when(
+    TaxonName == "Holocentridae" ~ 3.1, # https://www.fishbase.se/summary/1061
+    TaxonName == "Scorpaenidae" ~ binomial_tls |> 
+                                 filter(Order == "Perciformes/Scorpaenoidei") |> 
+                                 pull(DietTroph) |> 
+                                 mean(), 
+    TaxonName == "Ostraciidae" ~ binomial_tls |> 
+                                 filter(Order == "Tetraodontiformes") |> # https://en.wikipedia.org/wiki/Ostraciidae
+                                 pull(DietTroph) |> 
+                                 mean(), 
+    TaxonName == "Pomacanthidae" ~ binomial_tls |> 
+                                 filter(Order == "Perciformes/Notothenioidei") |> # https://en.wikipedia.org/wiki/Pomacanthidae
+                                 pull(DietTroph) |> 
+                                 mean(), 
+    TaxonName == "Moridae" ~ binomial_tls |> 
+                                 filter(Order == "Gadiformes") |> # https://en.wikipedia.org/wiki/Moridae
+                                 pull(DietTroph) |> 
+                                 mean(), 
+    TaxonName == "Tetraodontidae" ~ binomial_tls |> 
+                                 filter(Order == "Tetraodontiformes") |> 
+                                 pull(DietTroph) |> 
+                                 mean(), 
+     TaxonName == "Exocoetidae" ~ binomial_tls |> 
+                                 filter(Order == "Beloniformes") |> # https://en.wikipedia.org/wiki/Flying_fish
+                                 pull(DietTroph) |> 
+                                 mean(), 
+     TaxonName == "Batrachoididae" ~ ga_troph,
+    TaxonName == "Gobiidae" ~ 3.2, # https://www.fishbase.se/summary/Gobiosoma-robustum
+    TaxonName == "Cynoglossidae" ~ binomial_tls |> 
+                                 filter(Order == "Pleuronectiformes") |> # https://en.wikipedia.org/wiki/Tonguefish
+                                 pull(DietTroph) |> 
+                                 mean(), 
+    TaxonName == "Leiognathidae" ~ binomial_tls %>%
+      filter(str_detect(Order, "Perciformes")) %>%
+      pull(DietTroph) %>%
+      mean(), 
+    TaxonName == "Caesionidae" ~ binomial_tls %>%
+      filter(str_detect(Order, "Perciformes")) %>% # https://en.wikipedia.org/wiki/Caesionidae
+      pull(DietTroph) %>%
+      mean(), 
+    TaxonName == "Chlorophthalmidae" ~ binomial_tls %>%
+      filter(str_detect(Order, "Aulopiformes")) %>% # https://en.wikipedia.org/wiki/Greeneye
+      pull(DietTroph) %>%
+      mean(), 
+    TaxonName == "Trachinidae" ~ ga_troph,
+    TaxonName == "Trachichthyidae" ~ ga_troph,
+    TaxonName == "Cottidae" ~ ga_troph, 
+    TaxonName == "Apogonidae" ~ ga_troph,
+    TaxonName == "Oblada melanura" ~ binomial_tls %>%
+      filter(str_detect(Family, "Sparidae")) %>% # https://en.wikipedia.org/wiki/Greeneye
+      pull(DietTroph) %>%
+      mean(),
+    TaxonName == "Liza saliens" ~ ga_troph,
+    TaxonName == "Ammodytes personatus" ~ 3.1, # https://www.fishbase.se/summary/Ammodytes-personatus.html
+    TaxonName == "Clupanodon thrissa" ~ 3.1, # https://www.fishbase.se/summary/Clupanodon-thrissa
+    TaxonName == "Liza klunzingeri" ~ 2.6, # https://www.fishbase.se/summary/46376
+    TaxonName == "Pellona ditchela" ~ 4.0, # https://www.fishbase.se/summary/1641
+    TaxonName == "Engraulis capensis" ~ 3.0, # https://www.fishbase.se/summary/Engraulis-capensis.html
+    TaxonName == "Lepidoperca pulchella" ~ 3.6, #https://www.fishbase.se/summary/Lepidoperca-pulchella.html
+    TRUE ~ DietTroph
+  ))
+
+setdiff(test$TaxonName, forage_tls_gf$TaxonName) # character(0) - perfect
+
+write.csv(forage_tls_gf, here("prep/02_feed/data/forage_fish_tls.csv"), row.names = FALSE)
+```
+
+
+Get trimmings species trophic levels  - needed for calculating the primary productivity required
+
+
+```{r}
+
+#Separate the catch records that have Genus and species.
+trim_spp <- readRDS(file.path(watson_dir, "v5.0/int/all_catch_trimmingsfish.rds")) |> 
+  filter(trimmingsfish == 1) %>%
+   mutate(binomial = stringi::stri_count(TaxonName, regex="\\S+")) |> 
+   filter(binomial==2) |> 
+   pull(TaxonName) |> 
+   unique() 
+
+
+
+trimmings_binomial_tls <- rfishbase::ecology(species_list =  trim_spp, server = getOption("fishbase")) |> 
+  select(Species, DietTroph, FoodTroph) |> 
+  mutate(DietTroph = if_else(is.na(DietTroph), true = FoodTroph, false = DietTroph)) |>
+  select(-FoodTroph) |> 
+  mutate(DietTroph = case_when(Species == "Engraulis capensis" ~ mean(c(3.14,3.12,2.51)), #mean of otehr Engraulis values
+                               TRUE ~ DietTroph)) |> 
+  distinct() |> 
+    drop_na() |> 
+    add_row(Species = "Theragra chalcogramma", DietTroph = 3.57) #add Alaska pollack that fell out of the species filter
+
+  
+#Add back the Genus only or family records and match to any species with the same Genus
+
+trim_higherorder <- readRDS(file.path(watson_dir, "v5.0/int/all_catch_trimmingsfish.rds")) |> 
+  filter(trimmingsfish == 1) |> 
+  mutate(binomial = stringi::stri_count(TaxonName, regex="\\S+")) |> 
+  filter(binomial==1) |>  
+  pull(TaxonName) |> 
+  unique()
+
+
+trim_nonbinomial_tls <- tibble(TaxonName = trim_higherorder, DietTroph = NA) |> 
+  mutate(DietTroph = case_when(TaxonName %in% 
+                                 c("Engraulidae") ~ trimmings_binomial_tls |>
+                                 filter(grepl("Engraulis",Species)) |> 
+                                 pull(DietTroph) |> 
+                                 mean(),
+                               TaxonName %in% c("Sardinella") ~ trimmings_binomial_tls |> 
+                                 filter(grepl("Sardinella", Species)) |> 
+                                 pull(DietTroph) |> 
+                                 mean(),
+                               TaxonName %in% c("Clupeidae") ~ trimmings_binomial_tls |> 
+                                 filter(grepl("Clup", Species)) |> 
+                                 pull(DietTroph) |> 
+                                 mean(),
+                               TaxonName %in% c("Thunnus") ~ trimmings_binomial_tls |> 
+                                 filter(grepl("Thunnus", Species)) |> 
+                                 pull(DietTroph) |> 
+                                 mean()))
+                               
+                               
+                               
+trim_tls <- 
+  bind_rows(trimmings_binomial_tls |> rename(TaxonName = Species),
+          trim_nonbinomial_tls)
+
+
+test <- readRDS(file.path(watson_dir, "v5.0/int/all_catch_trimmingsfish.rds")) %>% 
+  filter(trimmingsfish == 1)
+
+missing_spp <- setdiff(test$TaxonName, trim_tls$TaxonName) # character(0)
+
+
+sort(unique(test$TaxonName))
+
+sort(unique(trim_tls$TaxonName))
+
+write.csv(trim_tls, here("prep/02_feed/data/trimmings_fish_tls.csv"), row.names = FALSE)
+
+```
+
+
+
+Attach NPP, TL, data to forage and trimmings catch data and calculate the primary productivity required for the catch, the proportion of the annual PPR that is and tmultiply this proportion by the size of the cell.  
+
+NOTES: These area numbers look very wrong compared to Rich's. I'm not sure what is happening. In terms of embodied tonnage, Rich's values are higher (I'm pretty sure), so I'm not sure why my area values would be so much higher...
+
+```{r}
+
+# read in tls data
+forage_tls_gf <- read.csv(here("prep/02_feed/data/forage_fish_tls.csv"))
+
+#bring in the FAO regions shape file
+
+fao_areas_shp <- read_sf("https://www.fao.org/fishery/geoserver/fifao/ows?service=WFS&request=GetFeature&version=1.0.0&typeName=fifao:FAO_AREAS_CWP_NOCOASTLINE&outputFormat=json") |> filter(F_LEVEL == "MAJOR") |> 
+  mutate(F_AREA = as.numeric(F_AREA)) |> 
+  group_by(F_AREA) |> 
+  group_split()
+
+
+#get xyz file for the FAO areas in 0.5 resolution (catch data resolution)
+
+fao_xyz <- 
+  
+  map_df(.x = fao_areas_shp, .f = \(this_area){
+  
+  this_area_shp <- this_area
+  
+  this_area_raster <- terra::rasterize(x = vect(this_area_shp), y = rast(res = 0.5), field = this_area_shp$F_AREA)
+  
+  this_area_xyz <- terra::as.data.frame(x = this_area_raster, xy = TRUE)  |> mutate(fao_area_name = this_area_shp$NAME_EN)
+  
+  return(this_area_xyz)
+  
+}) |> rename(fao_area_code = layer,
+             LonCentre = x,
+             LatCentre = y)
+
+
+foragefish <- readRDS(file.path(watson_dir, "v5.0/int/all_catch_foragefish.rds"))
+
+FOFM_props <- readRDS(here("prep/02_feed/data/embodied_FMFO_forage_rgns.rds"))
+
+carbon_conversion <- 9
+
+forage_npp <- foragefish %>% 
+  filter(forage_id == 1, 
+         FOFM_catch > 0) %>% 
+  left_join(fao_xyz) %>%
+         left_join(FOFM_props, by = c("iso3c", "TaxonName")) %>%
+  filter(!is.na(prop)) %>%
+  mutate(fmfo_embodied_fish = prop*FOFM_catch) %>% 
+    left_join(ecosystem_te, by="fao_area_code") |> 
+    left_join(forage_tls_gf, by = "TaxonName") |>
+    mutate(te = case_when(is.na(te) ~ ecosystem_te |> pull(te) |> mean(),
+                          TRUE ~ te)) |> 
+    left_join(mean_npp_xyz) |> 
+    left_join(median_npp_xyz) |> 
+    left_join(min_npp_xyz) |> 
+    left_join(max_npp_xyz) |> 
+    left_join(cell_area) |> 
+    mutate(mean_npp_t_C_yr = mean_npp_t_km2_yr*OceanAreasqkm) |> 
+    mutate(median_npp_t_C_yr = median_npp_t_km2_yr*OceanAreasqkm) |> 
+    mutate(min_npp_t_C_yr = min_npp_t_km2_yr*OceanAreasqkm) |> 
+    mutate(max_npp_t_C_yr = max_npp_t_km2_yr*OceanAreasqkm) |>
+    mutate(ppr_fmfo = (fmfo_embodied_fish/carbon_conversion)*(1/te)^(DietTroph-1)) %>% #T C yr-1
+    as_tibble() |> 
+    mutate(ppr_prop_fmfo = case_when(ppr_fmfo/max_npp_t_C_yr<1 ~ ppr_fmfo/max_npp_t_C_yr,
+                                        TRUE ~ ppr_fmfo/max_npp_t_C_yr)) |> 
+    arrange(LonCentre, LatCentre, diet, allocation_type, ingredient) |> 
+    left_join(cell_area) |> 
+    mutate(area_fmfo = ppr_prop_fmfo*OceanAreasqkm)
+ 
+    
+
+test <- forage_npp %>%
+  filter(diet == "plant-dominant",
+         allocation_type == "mass",
+         ingredient == "fish meal"
+        # str_detect(TaxonName, "Euphausia superba")
+         ) %>%
+  dplyr::select(LonCentre, LatCentre, fmfo_embodied_fish) # %>%
+  # dplyr::select(LonCentre, LatCentre, fmfo_embodied_fish)
+
+test2 <- rast(test, type = "xyz")
+ plot(test2)
+plot(log(test2+1))
+
+sum(test$fmfo_embodied_fish) # 1093060 tonnage
+sum(test$area_fmfo, na.rm = TRUE) # 2563.028 ok that is way less than rich... need to see what trimmings adds since he includes trimmings too... 
+
+## compare to cashion.. these numbers seem pretty large 
+
+compare <- rast(here("prep/02_feed/output/plant-dominant/forage fish_fish meal_mass_P.tif"))
+global(compare, "sum", na.rm = TRUE) # 1093060 tonnage matches up.
+ 
+
+compare_rich <- rast(list.files(here("prep/02_feed/test/plant-dominant/"), full.names = TRUE, pattern = "km2"))
+
+sum(global(compare_rich, "sum", na.rm = TRUE)) # 17446.36 km2 way more than me. But he has double the fish meal tonnage reported...
+
+
+compare_rich_tonnes <- rast(list.files(here("prep/02_feed/test/plant-dominant/"), full.names = TRUE, pattern = "diet"))
+
+sum(global(compare_rich_tonnes, "sum", na.rm = TRUE)) # 3948399 tonnes way more than me. > double the fish meal tonnage reported...
+
+test_forage <- 
+ forage_npp %>% 
+  filter(allocation_type == "mass",
+         diet == "plant-dominant",
+         ingredient == "fish meal") %>%
+  dplyr::select(CommonName, area_fmfo, fmfo_embodied_fish)
+
+
+
+
+##### Now do trimmings
+
+trim_tls <- read.csv(here("prep/02_feed/data/trimmings_fish_tls.csv"))
+
+trimmings_fish <- readRDS(file.path(watson_dir, "v5.0/int/all_catch_trimmingsfish.rds"))
+
+trim_props <- readRDS(here("prep/02_feed/data/embodied_FMFO_trimmings_rgns.rds"))
+
+# test_trim <- 
+#  trimmings_fish %>% 
+#   filter(trimmingsfish == 1, 
+#          trimmings_catch > 0) 
+# 
+# test_trim <- 
+#  trim_npp %>% 
+#   filter(allocation_type == "mass",
+#          diet == "plant-dominant",
+#          ingredient == "fish meal, cut offs") %>%
+#   dplyr::select(CommonName, area_fmfo, fmfo_embodied_fish)
+
+trim_npp <- 
+ trimmings_fish %>% 
+  filter(trimmingsfish == 1, 
+         trimmings_catch > 0)  |> 
+  left_join(fao_xyz) %>% 
+  left_join(trim_props, by = c("iso3c", "TaxonName")) %>%
+  filter(!is.na(prop)) %>%
+  mutate(fmfo_embodied_fish = prop*trimmings_catch) %>% 
+  left_join(ecosystem_te, by="fao_area_code") |> 
+  left_join(trim_tls, by = "TaxonName") |>
+  mutate(te = case_when(is.na(te) ~ ecosystem_te |> pull(te) |> mean(),
+                        TRUE ~ te)) |> 
+  left_join(mean_npp_xyz) |> 
+    left_join(median_npp_xyz) |> 
+    left_join(min_npp_xyz) |> 
+    left_join(max_npp_xyz) |> 
+    left_join(cell_area) |> 
+    #work around for missing npp data for cod
+    group_by(fao_area_code) |> 
+    mutate_at(vars(mean_npp_t_km2_yr,median_npp_t_km2_yr,min_npp_t_km2_yr, max_npp_t_km2_yr), 
+            ~replace_na(., 
+                        mean(., na.rm = TRUE))) |> 
+    ungroup() |> 
+    mutate(mean_npp_t_C_yr = mean_npp_t_km2_yr*area) |> 
+    mutate(median_npp_t_C_yr = median_npp_t_km2_yr*area) |> 
+    mutate(min_npp_t_C_yr = min_npp_t_km2_yr*area) |> 
+    mutate(max_npp_t_C_yr = max_npp_t_km2_yr*area) |>
+   mutate(ppr_fmfo = (fmfo_embodied_fish/carbon_conversion)*(1/te)^(DietTroph-1)) %>% #T C yr-1
+    as_tibble() |> 
+    mutate(ppr_prop_fmfo = case_when(ppr_fmfo/max_npp_t_C_yr<1 ~ ppr_fmfo/max_npp_t_C_yr,
+                                        TRUE ~ ppr_fmfo/max_npp_t_C_yr)) |> 
+    left_join(cell_area) |> 
+    mutate(area_fmfo = ppr_prop_fmfo*area)
+    
+test <- trim_npp %>%
+  filter(diet == "plant-dominant",
+         allocation_type == "mass",
+         ingredient == "fish meal, cut offs") %>%
+ dplyr::select(LonCentre, LatCentre, area_fmfo) # %>%
+#   dplyr::select(LonCentre, LatCentre, fmfo_embodied_fish)
+
+test2 <- rast(test, type = "xyz")
+ plot(test2)
+plot(log(test2+1))
+
+sum(test$fmfo_embodied_fish) # 380101.2 tonnage
+sum(test$area_fmfo, na.rm = TRUE) # 32232.51 ok maybe this will be a bit more inline with Rich? 
+
+
+#Bind the forage and trimmings catch npp per cell
+
+all_fish_npp <- 
+  bind_rows(forage_npp |> select(diet, allocation_type, ingredient, LonCentre, LatCentre, area_fmfo, fmfo_embodied_fish),
+            trim_npp |> select(diet, allocation_type, ingredient, LonCentre, LatCentre, area_fmfo, fmfo_embodied_fish)) |> 
+  group_by(diet, allocation_type, ingredient, LonCentre, LatCentre) |> 
+  summarise(area_fmfo = sum(area_fmfo, na.rm = TRUE),
+            fmfo_embodied_fish = sum(fmfo_embodied_fish, na.rm = TRUE)) |> 
+  ungroup() %>%
+  left_join(cell_area)
+
+
+    
+
+test <- all_fish_npp %>%
+  filter(diet == "plant-dominant",
+         allocation_type == "mass",
+         str_detect(ingredient, "fish meal")
+         ) %>%
+  #dplyr::select(LonCentre, LatCentre, area_fmfo)  %>%
+  dplyr::select(LonCentre, LatCentre, fmfo_embodied_fish)
+
+
+test2 <- rast(test, type = "xyz")
+ plot(test2)
+plot(log(test2+1))
+
+sum(test$fmfo_embodied_fish) # 1473161 tonnage
+sum(test$area_fmfo, na.rm = TRUE) # 34795.54 
+
+## compare to Rich
+
+
+compare_rich <- rast(list.files(here("prep/02_feed/test/plant-dominant/"), full.names = TRUE, pattern = "km2"))
+
+sum(global(compare_rich, "sum", na.rm = TRUE)) # 17446.36 km2 ok I have about double what Rich has... Most of mine is coming from trimmings though which seems odd...
+
+
+compare_rich_tonnes <- rast(list.files(here("prep/02_feed/test/plant-dominant/"), full.names = TRUE, pattern = "diet"))
+
+sum(global(compare_rich_tonnes, "sum", na.rm = TRUE)) # 3948399 tonnes way more than me. > double the fish meal tonnage reported... so what is going on??
+
+plot(log(app(compare_rich, "sum", na.rm = TRUE)+1))
+
+combine_rich <- app(compare_rich, "sum", na.rm = TRUE)
+
+```

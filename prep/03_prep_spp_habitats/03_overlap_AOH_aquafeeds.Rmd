@@ -1,0 +1,231 @@
+---
+title: "Overlapping species AOH with feed crops"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+## Setup
+
+Load libraries
+
+```{r setup, include=FALSE}
+
+library(tidyverse)
+library(here)
+library(data.table)
+library(dtplyr)
+library(terra)
+library(raster)
+library(parallel)
+library(rnaturalearth)
+library(strex)
+library(janitor)
+
+source(here("src/directories.R"))
+
+source(here("src/spatial.R"))
+
+base_raster_ea <- rast(here("data/spatial/base_raster_gall_peters.tif")) ## ok so this is the 10km by 10km raster. We want to upscale all AOH rasters to this. 
+
+select <- dplyr::select
+
+
+```
+
+Check to make sure we reprojected all AOH files and reproject any missing
+
+```{r}
+aoh_files <- list.files(file.path(rdsi_raw_data_dir, "AOH_lumbierres/"))
+
+aoh_files_reproj <- list.files(file.path(rdsi_raw_data_dir, "AOH_lumbierres/reprojected"))
+
+missing_names <- setdiff(aoh_files, aoh_files_reproj) # ok missing these
+
+missing_names <- missing_names[!grepl("README|reprojected|\\.csv|\\.R", missing_names)] # remove unwanted files
+
+missing_files <- paste(file.path(rdsi_raw_data_dir, "AOH_lumbierres/"), missing_names, sep = "")
+
+for(file in missing_files){
+  
+    this_spp < file
+    this_spp_name <- basename(tools::file_path_sans_ext(file))
+    
+    rast(this_spp) %>%
+      project(moll_template, method = "near") %>%
+      writeRaster(., sprintf(file.path(rdsi_raw_data_dir, "AOH_lumbierres/reprojected/%s.tif"), this_spp_name), overwrite = TRUE)
+    
+}
+
+# done! perfect
+
+## there are some weird black areas on the rasters, like for the american black bear. Check to see if this would screw up our area calculations.
+
+test_bb <- rast("/mnt/rdsi/raw_data/AOH_lumbierres/reprojected/Ursus_americanus.tif")
+plot(test_bb)
+test_bb <- test_bb[test_bb == 0]
+plot(test_bb) # ok so all the black areas are 0... What happens when we turn that into area? 
+
+    
+this_spp_dt <- 
+      terra::as.data.frame(test_bb, xy = TRUE) %>%  #get the xyz 
+      rename(prescence = 3) %>% 
+      filter(prescence == 1)
+  
+  test <- rast(this_spp_dt, type = "xyz")
+
+plot(test) # ok cool.. so the prescence == 1 filters out any black areas since they are all 0's.
+```
+
+
+## Write up code to overlap the AOH maps with our crop maps 
+
+Overlap all species AOH with crop feed ingredient rasters!
+
+```{r}
+
+aoh_files <- list.files(file.path(rdsi_raw_data_dir, "AOH_lumbierres/reprojected"), full.names = TRUE)
+  
+ingredient_files <- list.files(here("prep/02_feed/output/resampled"), full.names = TRUE, recursive = TRUE, pattern = "_A")
+
+
+chunk_size = 112
+
+for(i in seq(1, length(aoh_files), chunk_size)) {
+  # i = 1
+
+  chunk_aoh_files <- aoh_files[i:min(i + chunk_size -1, length(aoh_files))]
+
+# Start timing
+start_time <- proc.time()
+  
+chunk_terrestrial_aoh <- mclapply(X = chunk_aoh_files, FUN = \(this_spp){
+  
+    #isolate species
+    #this spp id
+    # this_spp <- chunk_aoh_files[[1]]
+
+    this_spp_name <- basename(tools::file_path_sans_ext(this_spp))
+    
+    this_spp_dt <- rast(this_spp) %>%
+      terra::as.data.frame(., xy = TRUE) %>%  #get the xyz 
+      mutate(sci_name = this_spp_name) %>% 
+      rename(prescence = 3) %>% 
+      filter(prescence == 1) %>% 
+      lazy_dt()
+
+
+  overlap_list <- map(ingredient_files, \(this_crop_ingredient){
+
+      # this_crop_ingredient = ingredient_files[30]
+  
+  this_crop_ingredient_name <- str_before_nth(str_before_first(str_after_last(this_crop_ingredient, "/"), ".tif"), "_", 2)
+    
+  this_allocation_type <- str_before_last(str_after_nth(str_after_last(this_crop_ingredient, "/"), "_",  2), "_")
+  
+  this_diet_type <- str_before_last(str_after_nth(this_crop_ingredient, "/", 9), "/")
+  
+  message("processing terrestrial spp impacts in ", this_crop_ingredient_name, " for ", this_allocation_type, " for ", this_diet_type)
+  
+  this_crop_ingredient_raster <- terra::rast(this_crop_ingredient)
+  
+  this_crop_ingredient_dt <- terra::as.data.frame(this_crop_ingredient_raster, xy=TRUE) |> 
+    rename(crop_area = 3) |> 
+    mutate(cell_area = 102.6423) %>% 
+   # filter(crop_area > 0) %>% # keeping in areas without any overlap for now... Time difference is minimal ~1 second
+    lazy_dt()
+  
+    #inner join species and crop files so we know if they overlap and summarise the crop portion of spp habitat
+    spp_crop_overlap <-  this_spp_dt |> 
+      inner_join(this_crop_ingredient_dt, by = c("x", "y")) %>% 
+      group_by(sci_name) |> 
+      summarise(prop_aoh_affected = sum(crop_area)/sum(cell_area),
+                crop_area_overlap_total = sum(crop_area),
+                aoh_total = sum(cell_area)) |> 
+      mutate(allocation = this_allocation_type,
+             crop_ingredient = this_crop_ingredient_name, 
+             diet = this_diet_type) %>%
+    as.data.frame(spp_crop_overlap)
+    
+  
+  })
+  
+  return(bind_rows(overlap_list))
+  
+},  mc.cores = detectCores()-2)
+  
+
+full_df <- bind_rows(overlap_list) %>% as_tibble()
+
+saveRDS(full_df, here(sprintf("prep/03_prep_spp_habitats/int/aoh_overlay_chunks/full_df_chunk_%s.rds", i)))
+
+# End timing
+end_time <- proc.time()
+
+# Calculate the elapsed time
+elapsed_time <- end_time - start_time
+
+# Print the elapsed time
+print(elapsed_time)
+
+print(paste("chunk ", i, " out of 15233 finished"))
+
+}
+
+
+```
+
+```{r}
+test_chunk <- readRDS(here("prep/03_prep_spp_habitats/int/aoh_overlay_chunks/full_df_chunk_1592.rds"))
+```
+
+
+
+
+Make a plot! 
+
+```{r}
+countries_shp <- ne_countries(scale = 110, returnclass = "sf") |> st_transform(crs(moll_template)) 
+
+brazil_shp <- countries_shp |> filter(geounit %in% c("Brazil", "Peru", "Ecuador", "Chile", "Colombia", "Argentina", "Paraguay", "Uruguay", "Bolivia", "Venezuela", "Guyana", "French Guiana", "Panama", "Costa Rica", "Suriname"))
+
+us_can_shp <- countries_shp %>% filter(geounit %in% c("United States of America", "Canada", "Mexico"))
+
+test <- crop(this_crop_ingredient_raster, us_can_shp)
+test[test == 0] <- NA
+test2 <- crop(this_spp_raster, us_can_shp)
+ 
+spp_crop_overlap_plot <-  this_spp_dt |> 
+      inner_join(this_crop_ingredient_dt, by = c("x", "y")) %>%
+  as.data.frame() %>%
+  filter(crop_area >0)
+
+ingredient_df <- this_crop_ingredient_dt %>% filter(crop_area >0)
+
+(p <- ggplot()+
+geom_sf(data = us_can_shp, fill="grey", colour="white")+
+ # geom_tile(data = this_spp_dt %>% as.data.frame(), aes(x=x, y=y, fill = ex_Myrmecophaga_tridactyla), color = "darkgreen") +
+  geom_tile(data = spp_crop_overlap_plot, aes(x = x, y = y, fill = crop_area))+
+ scale_fill_gradientn(colors = RColorBrewer::brewer.pal(n=9, name = "BuPu"))+
+  theme_bw() +
+    theme(title = element_text(size=7))+
+    labs(fill = paste(this_crop_ingredient_name, "km2"), title = this_spp_name)) ## soy production  not showing for some reason...
+
+# ggsave(filename = here("data/int/explore/explore_brazil_species_impacts.jpg"), device = "jpg", dpi=300, height = 20, width = 15, units =  "cm")
+
+ 
+ggplot() +
+  geom_sf(data = us_can_shp, fill="grey", colour="white")+
+   # geom_tile(data = this_spp_dt %>% as.data.frame(), aes(x=x, y=y, fill = prescence), color = "darkgreen") +
+  geom_tile(data = as.data.frame(test, xy=TRUE) %>% as.data.frame(), aes(x=x, y=y, fill = layer)) +  scale_fill_gradientn(colors = RColorBrewer::brewer.pal(n=9, name = "BuPu"))+
+  theme_bw() +
+    theme(title = element_text(size=7))+
+    labs(fill = paste(this_crop_ingredient_name, "km2"))
+
+
+```
+
+
+
+
+

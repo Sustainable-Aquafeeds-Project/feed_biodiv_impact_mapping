@@ -91,6 +91,9 @@ test <- baci_filt %>%
   summarise(qty = sum(qty, na.rm = TRUE)) %>%
   ungroup()
   
+
+write.csv(baci_filt, file.path(rdsi_raw_data_dir, "BACI_data/BACI_FMFO_codes.csv"), row.names = FALSE)
+
 ```
 
 
@@ -139,6 +142,8 @@ country_demand <- read_csv(here("prep/02_feed/data/demand/total_aquaculture_ingr
     - EX: NOR imports Y% of FO from USA, Z% from Peru, etc.
     
 ```{r}
+baci_filt <- read.csv(file.path(rdsi_raw_data_dir, "BACI_data/BACI_FMFO_codes.csv"))
+
 oils_meals_import_props <- baci_filt %>% 
   mutate(type = ifelse(hs_code == 230120, "fish meal", "fish oil")) %>%
   dplyr::select(importer_iso3c, partner_iso3c, type, qty) %>% 
@@ -253,6 +258,8 @@ foragefish <-  # we need to make a dataframe that has all of the catch in it.. s
   mutate(catch = ReportedIND + IUUIND + ReportedNIND + IUUNIND) %>%
   mutate(FOFM_catch = catch*forage_id) %>%
   mutate(FOFM_catch = ifelse(is.na(FOFM_catch), 0, FOFM_catch))
+
+write_rds(foragefish, file.path(watson_dir, "v5.0/int/all_catch_foragefish.rds"))
 
 ## get an estimate of proportion of forage fish catch coming from different species in different landing countries. 
 forage_catch_iso <- forage_catch %>%
@@ -406,6 +413,90 @@ forage_fofm_allocation <- forage_fofm_origins %>%
 
 Divide the tonnes of fish oil and fish meal live weight equivalents by the total amount of forage catch in each country. This gives us a proportion of forage fish catch in each country that goes to FMFO. 
 
+
+I think I need to add disturbance calculation somewhere in here. 
+
+```{r}
+
+## step 8
+
+# Divide the tonnes of fish oil and fish meal live weight equivalents by the total amount of forage catch in each country. This gives us a proportion of forage fish catch in each country that goes to FMFO.
+
+foragefish_rgn_totals_meal <- forage_catch_iso %>%
+  group_by(iso3c, TaxonName) %>%
+  summarise(FOFM_catch = sum(catch)) %>%
+  ungroup() %>%
+  mutate(ingredient = "fish meal")
+
+foragefish_rgn_totals_oil <- forage_catch_iso_no_krill %>%
+  group_by(iso3c, TaxonName) %>%
+  summarise(FOFM_catch = sum(catch)) %>%
+  ungroup() %>%
+  mutate(ingredient = "fish oil")
+
+foragefish_rgn_totals <- rbind(foragefish_rgn_totals_meal, foragefish_rgn_totals_oil)
+
+forage_fofm_allocation_totals <- forage_fofm_allocation %>%
+  group_by(iso3c, ingredient, diet, TaxonName, allocation_type) %>%
+  summarise(total_tonnes_fofm_lw = sum(tonnes_fofm_spp_live_weight, na.rm = TRUE)) %>%
+              ungroup()
+
+FOFM_props <- left_join(foragefish_rgn_totals, forage_fofm_allocation_totals) %>%
+  filter(!is.na(diet)) %>% # filter out NAs since these countries dont produce any fofm catch for salmon feeds
+  mutate(prop = ifelse(FOFM_catch == 0, 0, total_tonnes_fofm_lw/FOFM_catch)) %>%
+  dplyr::select(iso3c, ingredient, diet, TaxonName, allocation_type, prop) %>%
+  filter(!is.na(iso3c)) ## SAVE THIS FILE AND IN NEXT SCRIPT WE CAN ADD NPP ADJUSTMENT AND SAVE RASTERS
+
+write_rds(FOFM_props, here("prep/02_feed/data/embodied_FMFO_forage_rgns.rds"))
+
+# 
+# diets <- unique(FOFM_props$diet)
+# allocations <- unique(FOFM_props$allocation_type)
+# ingredients <- unique(FOFM_props$ingredient)
+# 
+# for(diet_type in diets){
+#   for(allocation in allocations){
+#     for(ingredient_type in ingredients){
+#     
+#     diet_type = "plant-dominant"
+#     allocation = "ge"
+#     ingredient_type = "fish oil"
+#     
+#   watson_raster_template <- raster::raster(ncol=720, nrow=360, vals=c(1:259200))
+#   
+#   system_prop <- FOFM_props %>%
+#     dplyr::filter(diet == diet_type,
+#                   allocation_type == allocation,
+#                   ingredient == ingredient_type) %>%
+#     dplyr::select(iso3c, diet, TaxonName, ingredient, prop)
+#   
+#   foragefish_system <- left_join(foragefish, system_prop, by = c("iso3c", "TaxonName")) %>% ## think i need to stop and save this here so that I can calculate disturbance by spp and cell 
+#     mutate(prop = ifelse(is.na(prop), 0, prop)) %>%
+#     mutate(FOFM_catch_foodsystem = prop*FOFM_catch) %>% 
+#     group_by(Cell) %>%
+#     summarise(tonnes = sum(FOFM_catch_foodsystem, na.rm = TRUE)) %>%
+#     ungroup()
+#     
+#   forage_fish_system <- raster::subs(watson_raster_template, foragefish_system, by = "Cell", which = "tonnes", subsWithNA=TRUE)
+# 
+# # plot(log(forage_fish_system + 1))
+# 
+# # the following should be about equal
+# print(sprintf("the following should be about equal")) # the fish oil observed will be a little lower because of no krill
+# print(sprintf("raster calc: %s", cellStats(forage_fish_system, "sum", na.rm=TRUE))) 
+# print(sprintf("observed: %s", forage_fofm_allocation_totals %>% filter(diet == diet_type, allocation_type == allocation, ingredient == ingredient_type) %>% group_by(ingredient) %>% summarise(total = sum(total_tonnes_fofm_lw, na.rm = TRUE)) %>% ungroup() %>% pull(total)))
+# 
+# 
+#     writeRaster(forage_fish_system, sprintf(here("prep/02_feed/output/%s/forage fish_%s_%s_P.tif"), diet_type, ingredient_type, allocation), overwrite = TRUE)
+#   
+#    }
+#   }
+# }
+# 
+```
+
+
+OLD: 
 ```{r}
 
 ## step 8
@@ -458,7 +549,7 @@ for(diet_type in diets){
                   ingredient == ingredient_type) %>%
     dplyr::select(iso3c, diet, ingredient, prop)
   
-  foragefish_system <- left_join(foragefish, system_prop, by = c("iso3c")) %>%
+  foragefish_system <- left_join(foragefish, system_prop, by = c("iso3c")) %>% ## think i need to stop and save this here so that I can calculate disturbance by spp and cell 
     mutate(prop = ifelse(is.na(prop), 0, prop)) %>%
     mutate(FOFM_catch_foodsystem = prop*FOFM_catch) %>%
     group_by(Cell) %>%
@@ -494,40 +585,7 @@ plot(log(test[[1:4]]+1))
 dev.off()
 
 ```
- 
 
-
-## Explore other trade databases 
-
-
-The likely country source of fish meal/oil for each animal system. These data were generated by Jessica based on country level consumption and UNCOMTRADE trade data. 
-
-```{r}
-
-feed_rgn <- read_csv(here("prep/02_feed/data/FMFO_bySource_2021Apr.csv")) %>%
-  filter(!is.na(tonnes)) %>%
-  filter(system == "salmon_aquaculture_meat")
-
-```
-
-
-Food balance sheets
- - only consumption. Doesn't have trade associated. 
- 
-```{r}
-fbs <- read_csv(file.path(rdsi_raw_data_dir, "fao/FAO_FoodBalanceSheets/d2023/FoodBalanceSheets_E_All_Data_(Normalized).csv")) %>%
-  filter(Year == 2020) %>% # have to use 2020 here because fbs doesn't have 2021 yet... 
-  clean_names() %>%
-  dplyr::select(consuming_area_code = area_code, consuming_country = area, element, FAO_Item_Code_NFB = item_code, item, value) %>%
-  filter(element %in% c("Domestic supply quantity", "Export Quantity", "Feed", "Import Quantity", "Production", "Stock Variation")) %>% # filter for relevant element 
-  filter(item %in% c("Demersal Fish", "Pelagic Fish", "Marine Fish, Other", "Fish, Body Oil", "Fish, Liver Oil", "Crustaceans", "Cephalopods", "Molluscs, Other")) # filter for potential fmfo items
-
-
-```
-
-FAO detailed trade 
- - doesn't include fish products 
- 
  
 
 
