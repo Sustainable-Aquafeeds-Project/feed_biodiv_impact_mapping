@@ -67,3 +67,26 @@ for(i in seq(1, length(aoh_files), chunk_size)) {
   print(paste("chunk ", i, " out of 18565 finished"))
   
 }
+
+
+# Check to make sure we reprojected all AOH files and reproject any missing
+# aoh_files <- list.files(file.path(rdsi_raw_data_dir, "AOH_lumbierres/"))
+# 
+# aoh_files_reproj <- list.files(file.path(rdsi_raw_data_dir, "AOH_lumbierres/reprojected"))
+# 
+# missing_names <- setdiff(aoh_files, aoh_files_reproj) # ok missing these
+# 
+# missing_names <- missing_names[!grepl("README|reprojected|\\.csv|\\.R", missing_names)] # remove unwanted files
+# 
+# missing_files <- paste(file.path(rdsi_raw_data_dir, "AOH_lumbierres/"), missing_names, sep = "")
+# 
+# for(file in missing_files){
+#   
+#   this_spp < file
+#   this_spp_name <- basename(tools::file_path_sans_ext(file))
+#   
+#   rast(this_spp) %>%
+#     project(moll_template, method = "near") %>%
+#     writeRaster(., sprintf(file.path(rdsi_raw_data_dir, "AOH_lumbierres/reprojected/%s.tif"), this_spp_name), overwrite = TRUE)
+#   
+# }

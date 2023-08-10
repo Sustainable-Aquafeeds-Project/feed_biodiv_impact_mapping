@@ -131,6 +131,7 @@ country_demand <- read_csv(here("prep/02_feed/data/demand/total_aquaculture_ingr
   filter(ingredient %in% c("fish meal, forage fish", "fish oil, forage fish")) %>%
   mutate(ingredient = ifelse(ingredient == "fish meal, forage fish", "fish meal", "fish oil"))
 
+sum(country_demand$ingredient_demand) # 2598876
 
 ```
 
@@ -172,7 +173,10 @@ demand_trade <- country_demand %>%
 
 unique(demand_trade$iso3c)
 length(unique(demand_trade$partner_iso3c)) # 113 countries
+
+sum(demand_trade$tonnes_ingredient_demand_traded, na.rm = TRUE) # 2515503... losing a little bit because missing FRO... FRO isn't in the BACI data :( consider gapfilling BACI data for FRO with ISL? 
 ```
+
 
 
 Group by exporter country to get total amount of FO or FM ingredients they export under each diet demand scenario
@@ -186,7 +190,7 @@ demand_trade_origin <- demand_trade %>%
   summarise(total_ingredient_tonnes_traded = sum(tonnes_ingredient_demand_traded, na.rm = TRUE)) %>% 
   ungroup()
 
-
+sum(demand_trade_origin$total_ingredient_tonnes_traded) # 2515503
 
 ```
 
@@ -199,6 +203,8 @@ Determine each countries' breakdown of forage fish species catch by flag country
 
 
 watson_raw <- read_csv(file.path(watson_dir, "v5.0/watson_2017_catch_w_forage_id.csv"))
+
+watson_cells <- read.csv(file.path(watson_dir, "v5.0/Codes_cells.csv"))
 
 watson_rgn <- watson_raw %>%
   distinct(CNumber, country = CountryName) %>%
@@ -230,25 +236,7 @@ forage_catch <-
   mutate(catch = ReportedIND + IUUIND + ReportedNIND + IUUNIND) %>%
   mutate(forage_id = ifelse(CommonName == "Antarctic krill", 1, forage_id)) %>%
   mutate(FOFM_catch = catch*forage_id) %>%
-  mutate(FOFM_catch = ifelse(is.na(FOFM_catch), 0, FOFM_catch))  %>%
-  filter(FOFM_catch > 0) %>%
-  left_join(codes_country, by = c("CNumber" = "Cnumber")) %>%
-  rename(country = FAO.name) %>%
-    mutate(iso3c = countrycode(sourcevar = country, origin = "country.name", destination = "iso3c")) %>%
-  mutate(iso3c = 
-           case_when(
-             country == "Amer Samoa" ~ "ASM", 
-             country == "Br Ind Oc Tr" ~ "IOT", 
-             country == "Br Virgin Is" ~ "VGB", 
-             country == "Dominican Rp" ~ "DOM",
-             country == "Fr Polynesia" ~ "PYF", 
-             country == "Fr Guiana" ~ "GUF", 
-             country == "Micronesia" ~ "FSM", 
-             country == "St Pier Mq" ~ "SPM", 
-             country == "Untd Arab Em" ~ "UAE", 
-             country == "US Virgin Is" ~ "VIR", 
-             TRUE ~ iso3c
-           ))
+  filter(!is.na(FOFM_catch))
 
 foragefish <-  # we need to make a dataframe that has all of the catch in it.. so we can get later get a prop of forage catch to total catch. 
   watson_raw |> 
@@ -312,6 +300,11 @@ forage_fofm_origins_oil <- forage_catch_iso_no_krill %>%
   filter(!is.na(tonnes_fofm_spp))
 
 forage_fofm_origins <- rbind(forage_fofm_origins_meal, forage_fofm_origins_oil)
+
+sum(forage_fofm_origins$tonnes_fofm_spp)
+# 2498083
+
+sum(country_demand$ingredient_demand) # 2598876... missing ~100k tonnes... 
 
 ```
 
@@ -406,15 +399,16 @@ forage_fofm_allocation <- forage_fofm_origins %>%
   mutate(tonnes_fofm_spp_live_weight = tonnes_fofm_spp*allocation_value) %>%
   dplyr::select(iso3c, CommonName, TaxonName, ingredient, diet, tonnes_fofm_spp, allocation_type, allocation_value, tonnes_fofm_spp_live_weight)
 
+sum(forage_fofm_allocation$tonnes_fofm_spp_live_weight) # 19066438/2 = 9533219.. seems excessive, ~4x more than the demand. Do fish weight 4x more than meal and oil? 
+
+mean(forage_fofm_allocation$allocation_value) # 3.946963.. yeah, i guess they do. 
+
 ```
 
 
 ### step 8
 
 Divide the tonnes of fish oil and fish meal live weight equivalents by the total amount of forage catch in each country. This gives us a proportion of forage fish catch in each country that goes to FMFO. 
-
-
-I think I need to add disturbance calculation somewhere in here. 
 
 ```{r}
 
@@ -449,85 +443,6 @@ FOFM_props <- left_join(foragefish_rgn_totals, forage_fofm_allocation_totals) %>
 
 write_rds(FOFM_props, here("prep/02_feed/data/embodied_FMFO_forage_rgns.rds"))
 
-# 
-# diets <- unique(FOFM_props$diet)
-# allocations <- unique(FOFM_props$allocation_type)
-# ingredients <- unique(FOFM_props$ingredient)
-# 
-# for(diet_type in diets){
-#   for(allocation in allocations){
-#     for(ingredient_type in ingredients){
-#     
-#     diet_type = "plant-dominant"
-#     allocation = "ge"
-#     ingredient_type = "fish oil"
-#     
-#   watson_raster_template <- raster::raster(ncol=720, nrow=360, vals=c(1:259200))
-#   
-#   system_prop <- FOFM_props %>%
-#     dplyr::filter(diet == diet_type,
-#                   allocation_type == allocation,
-#                   ingredient == ingredient_type) %>%
-#     dplyr::select(iso3c, diet, TaxonName, ingredient, prop)
-#   
-#   foragefish_system <- left_join(foragefish, system_prop, by = c("iso3c", "TaxonName")) %>% ## think i need to stop and save this here so that I can calculate disturbance by spp and cell 
-#     mutate(prop = ifelse(is.na(prop), 0, prop)) %>%
-#     mutate(FOFM_catch_foodsystem = prop*FOFM_catch) %>% 
-#     group_by(Cell) %>%
-#     summarise(tonnes = sum(FOFM_catch_foodsystem, na.rm = TRUE)) %>%
-#     ungroup()
-#     
-#   forage_fish_system <- raster::subs(watson_raster_template, foragefish_system, by = "Cell", which = "tonnes", subsWithNA=TRUE)
-# 
-# # plot(log(forage_fish_system + 1))
-# 
-# # the following should be about equal
-# print(sprintf("the following should be about equal")) # the fish oil observed will be a little lower because of no krill
-# print(sprintf("raster calc: %s", cellStats(forage_fish_system, "sum", na.rm=TRUE))) 
-# print(sprintf("observed: %s", forage_fofm_allocation_totals %>% filter(diet == diet_type, allocation_type == allocation, ingredient == ingredient_type) %>% group_by(ingredient) %>% summarise(total = sum(total_tonnes_fofm_lw, na.rm = TRUE)) %>% ungroup() %>% pull(total)))
-# 
-# 
-#     writeRaster(forage_fish_system, sprintf(here("prep/02_feed/output/%s/forage fish_%s_%s_P.tif"), diet_type, ingredient_type, allocation), overwrite = TRUE)
-#   
-#    }
-#   }
-# }
-# 
-```
-
-
-OLD: 
-```{r}
-
-## step 8
-
-# Divide the tonnes of fish oil and fish meal live weight equivalents by the total amount of forage catch in each country. This gives us a proportion of forage fish catch in each country that goes to FMFO.
-
-foragefish_rgn_totals_meal <- forage_catch_iso %>%
-  group_by(iso3c) %>%
-  summarise(FOFM_catch = sum(catch)) %>%
-  ungroup() %>%
-  mutate(ingredient = "fish meal")
-
-foragefish_rgn_totals_oil <- forage_catch_iso_no_krill %>%
-  group_by(iso3c) %>%
-  summarise(FOFM_catch = sum(catch)) %>%
-  ungroup() %>%
-  mutate(ingredient = "fish oil")
-
-foragefish_rgn_totals <- rbind(foragefish_rgn_totals_meal, foragefish_rgn_totals_oil)
-
-forage_fofm_allocation_totals <- forage_fofm_allocation %>%
-  group_by(iso3c, ingredient, diet, allocation_type) %>%
-  summarise(total_tonnes_fofm_lw = sum(tonnes_fofm_spp_live_weight, na.rm = TRUE)) %>%
-              ungroup()
-
-FOFM_props <- left_join(foragefish_rgn_totals, forage_fofm_allocation_totals) %>%
-  filter(!is.na(diet)) %>% # filter out NAs since these countries dont produce any fofm catch for salmon feeds
-  mutate(prop = ifelse(FOFM_catch == 0, 0, total_tonnes_fofm_lw/FOFM_catch)) %>%
-  dplyr::select(iso3c, ingredient, diet, allocation_type, prop) %>%
-  filter(!is.na(iso3c))
-
 
 diets <- unique(FOFM_props$diet)
 allocations <- unique(FOFM_props$allocation_type)
@@ -536,58 +451,80 @@ ingredients <- unique(FOFM_props$ingredient)
 for(diet_type in diets){
   for(allocation in allocations){
     for(ingredient_type in ingredients){
-    
+
     # diet_type = "plant-dominant"
-    # allocation = "ge"    
-    # ingredient_type = "fish oil"
-    
-  watson_raster_template <- raster::raster(ncol=720, nrow=360, vals=c(1:259200))
-  
+    # allocation = "mass"
+    # ingredient_type = "fish meal"
+
+  watson_raster_template <- terra::rast(ncol=720, nrow=360, vals=c(1:259200))
+
   system_prop <- FOFM_props %>%
     dplyr::filter(diet == diet_type,
                   allocation_type == allocation,
                   ingredient == ingredient_type) %>%
-    dplyr::select(iso3c, diet, ingredient, prop)
-  
-  foragefish_system <- left_join(foragefish, system_prop, by = c("iso3c")) %>% ## think i need to stop and save this here so that I can calculate disturbance by spp and cell 
+    dplyr::select(iso3c, diet, TaxonName, ingredient, prop)
+
+  foragefish_system <- left_join(foragefish, system_prop, by = c("iso3c", "TaxonName")) %>%
+    filter(!is.na(ingredient)) %>%
     mutate(prop = ifelse(is.na(prop), 0, prop)) %>%
     mutate(FOFM_catch_foodsystem = prop*FOFM_catch) %>%
     group_by(Cell) %>%
     summarise(tonnes = sum(FOFM_catch_foodsystem, na.rm = TRUE)) %>%
-    ungroup()
-    
-  forage_fish_system <- raster::subs(watson_raster_template, foragefish_system, by = "Cell", which = "tonnes", subsWithNA=TRUE)
+    ungroup() %>%
+    left_join(watson_cells) %>%
+    dplyr::select(LonCentre, LatCentre, tonnes)
+
+  
+  forage_fish_system <- rast(foragefish_system, type = "xyz", crs = crs(watson_raster_template)) %>%
+    project(watson_raster_template)
 
 # plot(log(forage_fish_system + 1))
 
 # the following should be about equal
 print(sprintf("the following should be about equal")) # the fish oil observed will be a little lower because of no krill
-print(sprintf("raster calc: %s", cellStats(forage_fish_system, "sum", na.rm=TRUE))) 
+print(sprintf("raster calc: %s", global(forage_fish_system, "sum", na.rm=TRUE)))
 print(sprintf("observed: %s", forage_fofm_allocation_totals %>% filter(diet == diet_type, allocation_type == allocation, ingredient == ingredient_type) %>% group_by(ingredient) %>% summarise(total = sum(total_tonnes_fofm_lw, na.rm = TRUE)) %>% ungroup() %>% pull(total)))
 
 
     writeRaster(forage_fish_system, sprintf(here("prep/02_feed/output/%s/forage fish_%s_%s_P.tif"), diet_type, ingredient_type, allocation), overwrite = TRUE)
-  
+
    }
   }
 }
 
 
-test <- rast(list.files(here("prep/02_feed/output/fish-dominant/"), full.names = TRUE, pattern = "fish oil|fish meal"))
-test_names <- list.files(here("prep/02_feed/output/fish-dominant/"), pattern = "fish oil|fish meal")
+forage_files <- list.files(here("prep/02_feed/output/plant-dominant/"), pattern = "fish oil|fish meal", full.names = TRUE)[1:4]
+
+test <- rast(forage_files)
+
+test_names <- basename(forage_files)
 
 names(test) <- test_names
 
 
+plot(log(test+1))
 
-png(file = here("prep/02_feed/plots/fish_dominant_fofm.png"), width = 800, height = 600, res = 120)
-plot(log(test[[1:4]]+1))
-dev.off()
+plot(test)
+
+global(test, "sum", na.rm = TRUE)
+#                                        sum
+# forage fish_fish meal_ge_P.tif    929948.7
+# forage fish_fish meal_mass_P.tif 1093059.8
+# forage fish_fish oil_ge_P.tif    1552807.4
+# forage fish_fish oil_mass_P.tif  1023593.8
+
+
+test <- forage_fofm_allocation %>%
+  group_by(diet,
+         allocation_type,
+         ingredient) %>%
+  summarise(sum = sum(tonnes_fofm_spp_live_weight)) %>%
+  ungroup()
+test
+
+# 5 plant-dominant ge              fish meal   929949.
+# 6 plant-dominant ge              fish oil   1548199.
+# 7 plant-dominant mass            fish meal  1093060.
+# 8 plant-dominant mass            fish oil   1020567.
 
 ```
-
- 
-
-
-
-

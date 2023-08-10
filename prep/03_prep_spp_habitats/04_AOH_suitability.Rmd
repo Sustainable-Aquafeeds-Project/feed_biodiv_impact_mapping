@@ -1,0 +1,474 @@
+---
+title: "Overlapping species AOH with feed crops"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+## Setup
+
+Load libraries
+
+```{r setup, include=FALSE}
+
+library(tidyverse)
+library(here)
+library(data.table)
+library(dtplyr)
+library(terra)
+library(raster)
+library(parallel)
+library(rnaturalearth)
+library(strex)
+library(janitor)
+library(rredlist)
+library(sf)
+library(tidyterra)
+library(basemaps)
+library(tools)
+
+source(here("src/directories.R"))
+
+source(here("src/spatial.R"))
+
+select <- dplyr::select
+
+
+aoh_dir <- file.path(rdsi_raw_data_dir, "AOH_lumbierres/reprojected/")
+```
+
+Bind all chunked data together, tidy, and save
+
+```{r}
+
+overlay_df <- purrr::map_df(list.files(here("prep/03_prep_spp_habitats/int/aoh_overlay_chunks/"), full.names = TRUE), readRDS)
+
+length(unique(overlay_df$sciname)) # 18558 - perfect! 
+
+# now lets clean up the data a bit 
+
+mammals_list <- read.csv(here("prep/data/Mammals_list_AOH.csv")) %>%
+  dplyr::select(sciname = BINOMIAL, order = ORDER, iucn_rl_cat = Red_List_Category_2019)
+
+birds_list <- read.csv(here("prep/data/Birds_list_AOH.csv")) %>%
+    dplyr::select(sciname = BINOMIAL, order = Order_, iucn_rl_cat = F2019_Iucn_Red_List_Category)
+
+all_spp_list <- rbind(mammals_list, birds_list)
+
+
+overlay_df_tidy <- overlay_df %>%
+  rename(aoh_filename = sciname) %>%
+  separate(aoh_filename, into = c("first", "second", "bird_type"), sep = "_", remove = FALSE) %>%
+  mutate(sciname = paste(first, second)) %>%
+  mutate(aoh_filepath = paste0(aoh_dir, aoh_filename), 
+         feed_filepath = sprintf(here("prep/02_feed/output/resampled/%s/%s_%s_A.tif"), diet, crop_ingredient, allocation)) %>%
+  dplyr::select(aoh_filename, sciname, bird_type, diet, allocation, crop_ingredient, aoh_crop_overlap, aoh_area_orig, feed_filepath, aoh_filepath) %>%
+  left_join(all_spp_list, by = c("sciname")) %>%
+  mutate(aoh_crop_overlap = ifelse(is.na(aoh_crop_overlap), 0, aoh_crop_overlap))
+
+species_list <- c(unique(overlay_df_tidy$sciname))
+
+writeLines(species_list, here("prep/03_prep_spp_habitats/int/species_list.txt"))
+
+```
+
+Now download and save the species habitat preference data from the IUCN
+
+
+#### Get species habitat info for our species from IUCN API
+
+From the species list, send each IUCN species name into the API to get the habitats listed for that species. Combine all habitat dataframes into a master dataframe of all habitats for all species. Note that many species do not have habitat information and will be listed as NA for habitat variables.
+
+**NOTE: You can do this in the .Rmd or in the .r background job script. I prefer to run it in the background job "04a_pull_hab_info.R, as I can work on other things while I wait for this to finish running. Also, this only needs to be done once!**
+
+```{r}
+
+api_version <- '2022-2'
+
+api_key = read.csv(file.path(rdsi_raw_data_dir, "iucn/api_key/api_token.txt"))
+api_key = colnames(api_key)
+
+species_list <- readLines(here("prep/03_prep_spp_habitats/int/species_list.txt"))
+
+num_chunks <- 16133 / 112  # Number of chunks
+species_chunks <- split(species_list, rep(1:num_chunks, each = 112, length.out = length(species_list)))
+  
+
+pull_habitats <- function(species_chunk, chunk_number) {
+  
+    chunk_filename <- sprintf(here("prep/03_prep_spp_habitats/int/habitat_suitability_chunks/full_df_chunk_%s.rds"), chunk_number)
+
+  # Check if the chunk file already exists
+  if (file.exists(chunk_filename)) {
+    message(paste("Skipping chunk", chunk_number, "as the file already exists."))
+    habitat_df <- readRDS(chunk_filename)
+    return(habitat_df)
+  }
+
+  
+  # Replace 'rl_habitats' with the actual function to pull species habitat information
+  habitat_data <- lapply(species_chunk, rl_habitats, key = api_key)
+  
+  species_data <- list()
+  
+  # Loop through the species list and extract the required information
+for (species in habitat_data) {
+  if (length(species$result) > 0) {
+    # If the result is available, use it
+    species_data[[length(species_data) + 1]] <- data.frame(
+      name = species$name,
+      code = species$result$code,
+      habitat = species$result$habitat,
+      suitability = species$result$suitability,
+      season = species$result$season,
+      majorimportance = species$result$majorimportance
+    )
+  } else {
+    # If the result is not available, create empty data with NAs
+    species_data[[length(species_data) + 1]] <- data.frame(
+      name = species$name,
+      code = NA,
+      habitat = NA,
+      suitability = NA,
+      season = NA,
+      majorimportance = NA
+    )
+  }
+}
+  
+  
+  # Do any data manipulation if needed (e.g., binding rows)
+  habitat_df <- do.call(rbind, species_data)
+  
+  # Save the dataframe as an .rds file
+  saveRDS(habitat_df, file = chunk_filename)
+  
+  return(habitat_df)
+}
+
+
+# Number of cores to use
+num_cores <- detectCores() - 2
+
+# Initialize a parallel backend with the specified number of cores
+cl <- makeCluster(num_cores)
+
+# Use 'mclapply' to run 'pull_habitats' function in parallel for each chunk
+results <- mclapply(seq_along(species_chunks), function(i) {
+  pull_habitats(species_chunks[[i]], i)
+}, mc.cores = num_cores)
+
+# Stop the parallel backend
+stopCluster(cl)
+
+
+```
+
+Estimate species' tolerance for croplands
+
+```{r}
+
+data_list <- lapply(list.files(here("prep/03_prep_spp_habitats/int/habitat_suitability_chunks/"), full.names = TRUE), readRDS)
+
+hab_suitability_df <- bind_rows(data_list) %>%
+  filter(!is.na(name)) %>%
+  mutate(suitable = ifelse(suitability == "Suitable",
+                           yes = 1, no = 0),
+         marginal = ifelse(suitability == "Marginal",
+                           yes = 0.5, no = 0))
+  
+
+# Estimating species' tolerance for agricultural lands----
+cropland_habitats <- c("Artificial/Terrestrial - Arable Land",
+                       "Artificial/Terrestrial - Plantations")
+
+ag_suitability <- hab_suitability_df %>%
+  mutate(is_ag = ifelse(habitat %in% c(cropland_habitats),
+                        yes = "cropland_suitability",
+                        no = "not_ag"),
+         is_ag = factor(is_ag),
+         species = factor(name)) %>%
+  dplyr::select(-suitability, -majorimportance, -name) %>%
+    gather(tmp, suitability_value, 
+         -c(code:season, is_ag, species)) %>%
+  select(-tmp) %>%
+  complete(species, is_ag, fill = list(suitability_value = 0)) %>%
+  filter(is_ag != "not_ag") %>%
+  group_by(species, is_ag) %>%
+  summarise(highest_suitability = max(suitability_value, na.rm = TRUE)) %>%
+  spread(is_ag, highest_suitability) %>%
+  ungroup()
+
+```
+
+Pull total amount of cropland (km2) for each allocation, diet, and aquafeed ingredient
+
+```{r}
+file_list <- list.files(here("prep/02_feed/output/resampled"), full.names = TRUE, recursive = TRUE, pattern = "_A") # 36 - good
+
+rast_list <- rast(file_list)
+
+names_list <- basename(file_list)
+
+
+crops_km2 <- data.frame(feed_filepath = file_list, filename = names_list, total_cropland = global(rast_list, "sum", na.rm = TRUE)) %>%
+  mutate(allocation = str_after_last(str_before_last(filename, "_"), "_"),
+         crop_ingredient = str_before_nth(filename, "_", 2),
+         diet = str_after_last(str_before_last(feed_filepath, "\\/"), "\\/")) %>%
+  dplyr::select(-filename) %>%
+  rename(total_cropland = sum)
+
+
+```
+
+
+Bind species' tolerances to the full aoh affected dataframe. Calculate actual amount of AOH that is affected by cropland, based on their habitat preferences. 
+
+```{r}
+mammals_list <- read.csv(here("prep/data/Mammals_list_AOH.csv"))
+
+birds_list <- read.csv(here("prep/data/Birds_list_AOH.csv"))
+
+aoh_df <- overlay_df_tidy %>%
+  left_join(., ag_suitability, by = c("sciname" = "species")) %>%
+  mutate(aoh_affected = aoh_crop_overlap*(1 - cropland_suitability),
+         aoh_unaffected = aoh_area_orig - aoh_affected) %>%
+  left_join(crops_km2) %>%
+  mutate(order = ifelse(is.na(order), "CHIROPTERA", order), # fix the spp with missing order
+         class = ifelse(order %in% c(mammals_list$ORDER), "Mammal", "Bird")) # identifier for class type
+
+
+```
+
+
+Make summary plots
+
+```{r}
+
+## total AOH affected   
+summary_df <- aoh_df %>%
+  group_by(diet, allocation, crop_ingredient) %>%
+  summarise(total_aoh_affected = sum(aoh_affected, na.rm = TRUE)) %>%
+  ungroup() %>%
+  left_join(crops_km2)
+
+summary_df$ordered_crop_ingredient <- with(summary_df, reorder(crop_ingredient, total_aoh_affected, FUN = function(x) sum(x)))
+
+
+ggplot(summary_df, aes(x = ordered_crop_ingredient, y = total_aoh_affected)) + 
+  geom_bar(stat = "identity") +
+  theme_minimal() +
+  facet_grid(diet~allocation) +
+    coord_flip() +
+  labs(title = "Global AOH Affected (~16000 species)", x = "Crop and Ingredient", y = expression(paste("Total AOH Affected (", km^{2}, ")")))
+
+## Split by class total AOH
+summary_df <- aoh_df %>%
+  group_by(diet, allocation, crop_ingredient, class) %>%
+  summarise(total_aoh_affected = sum(aoh_affected, na.rm = TRUE)) %>%
+  ungroup() 
+
+summary_df$ordered_crop_ingredient <- with(summary_df, reorder(crop_ingredient, total_aoh_affected, FUN = function(x) sum(x)))
+
+ggplot(summary_df, aes(x = ordered_crop_ingredient, y = total_aoh_affected, fill = class)) +
+    geom_bar(stat = "identity", position = "dodge") +
+  facet_grid(diet ~ allocation, scales = "free_y") +
+  labs(title = "Global AOH Affected (~16000 species)", x = "Crop and Ingredient", y = expression(paste("Total AOH Affected (", km^{2}, ")")), fill = NULL) +
+  scale_fill_manual(values = c("Bird" = "deepskyblue", "Mammal" = "forestgreen")) +
+  theme_minimal() + 
+  coord_flip() 
+
+
+## Split by class average AOH
+summary_df <- aoh_df %>%
+  group_by(diet, allocation, crop_ingredient, class) %>%
+  summarise(mean_aoh_affected = mean(aoh_affected, na.rm = TRUE),
+            sd_aoh_affected = sd(aoh_affected, na.rm = TRUE)) %>%
+  ungroup() %>%
+  left_join(crops_km2)
+
+summary_df$ordered_crop_ingredient <- with(summary_df, reorder(crop_ingredient, mean_aoh_affected, FUN = function(x) sum(x)))
+
+ggplot(summary_df, aes(x = ordered_crop_ingredient, y = mean_aoh_affected, fill = class)) +
+    geom_bar(stat = "identity", position = "dodge") +
+ geom_errorbar(aes(ymin = mean_aoh_affected, ymax = mean_aoh_affected + sd_aoh_affected), position = position_dodge(width = 0.9), width = 0.25) + 
+  facet_grid(diet ~ allocation, scales = "free_y") +
+  labs(title = "Average AOH Affected", x = "Crop and Ingredient", y = expression(paste("Average AOH Affected (", km^{2}, ")")), fill = NULL) +
+  scale_fill_manual(values = c("Bird" = "deepskyblue", "Mammal" = "forestgreen")) +
+  theme_minimal() + 
+  coord_flip() 
+
+
+
+## Split by class average AOH .. this one isn't super interesting
+summary_df <- aoh_df %>%
+  group_by(diet, allocation, class) %>%
+  summarise(mean_aoh_affected = mean(aoh_affected, na.rm = TRUE),
+            sd_aoh_affected = sd(aoh_affected, na.rm = TRUE),
+            mean_aoh_orig = mean(aoh_area_orig, na.rm = TRUE)) %>%
+  ungroup()
+
+summary_df$class <- with(summary_df, reorder(class, mean_aoh_affected, FUN = function(x) sum(x)))
+
+ggplot(summary_df, aes(x = class, y = mean_aoh_affected, fill = class)) +
+    geom_bar(stat = "identity", position = "dodge") +
+# geom_errorbar(aes(ymin = mean_aoh_affected, ymax = mean_aoh_affected + sd_aoh_affected), position = position_dodge(width = 0.9), width = 0.25) + 
+  facet_grid(diet ~ allocation, scales = "free") +
+  labs(x = "Crop and Ingredient", y = expression(paste("Average AOH Affected (", km^{2}, ")")), fill = NULL) +
+  scale_fill_manual(values = c("Bird" = "deepskyblue", "Mammal" = "forestgreen")) +
+  theme_minimal() + 
+  coord_flip() 
+
+
+```
+
+
+
+Make a plot! 
+
+Coragyps_atratus (Black Vulture) and Giant Anteater have a ton of overlap with soy protein concentrate under plant-dominant and mass allocation. 
+
+ 
+
+```{r}
+countries_shp <- ne_countries(scale = 110, returnclass = "sf") |> st_transform(crs(moll_template)) %>%
+  filter(continent %in% c("North America", "South America"))
+
+this_crop_ingredient_raster <- rast(here("prep/02_feed/output/resampled/plant-dominant/Soybean_soy protein concentrate_mass_A.tif"))
+plot(this_crop_ingredient_raster)
+global(this_crop_ingredient_raster, "sum", na.rm = TRUE) # 3315.874
+
+this_spp_rast <- rast(list.files(file.path(rdsi_raw_data_dir, "AOH_lumbierres/reprojected/"), full.names = TRUE, pattern = "Coragyps_atratus|Myrmecophaga_tridactyla"))
+plot(this_spp_rast)
+
+spp_names <- file_path_sans_ext(basename(list.files(file.path(rdsi_raw_data_dir, "AOH_lumbierres/reprojected/"), full.names = TRUE, pattern = "Coragyps_atratus|Myrmecophaga_tridactyla")))
+
+overlap_rast <- this_crop_ingredient_raster*this_spp_rast 
+
+common_names <- lapply(str_replace_all(spp_names, "_", " "), rl_common_names, key = api_key)
+
+
+common_names_df <- data.frame(
+  name = sapply(common_names[1], function(x) x$name),
+  taxonname = sapply(common_names[1], function(x) x$result$taxonname)
+) %>%
+  add_row(name = "Myrmecophaga tridactyla", 
+         taxonname = "Giant Anteater")
+
+names(overlap_rast) <- common_names_df$taxonname
+
+plot(overlap_rast)
+global(overlap_rast, "sum", na.rm = TRUE) 
+
+# the overlap km2 is 2159.096/3315.874 = ~65% of the total cropland for soy protein concentrate
+
+#                             sum
+# American Black Vulture 2159.096
+# White-tailed Kite      1822.080
+# Guira Cuckoo           1834.975
+# Giant Anteater         1009.906
+
+spc_overlap_pct <- data.frame((global(overlap_rast, "sum", na.rm = TRUE)/3315.874)*100) %>%
+  rownames_to_column(var = "Species") %>%
+  rename(pct_overlap = sum)
+
+ggplot(spc_overlap_pct, aes(x = Species, y = pct_overlap, fill = Species)) + 
+  geom_bar(stat = "identity") +
+  theme_bw() +
+  labs(title = "Percent of SPC production area that overlaps with species habitats", x = "Species", y = "Percent (%)")
+
+#                            sum
+# Ammodramus_humeralis 0.5426815
+# Coragyps_atratus     0.6511395
+# Elanus_leucurus      0.5495022
+# Guira_guira          0.5533911
+
+
+overlap_df <- as.data.frame(overlap_rast, xy = TRUE) %>%
+  pivot_longer(cols = c(3:4), names_to = "species")
+
+names(this_spp_rast) <- common_names_df$taxonname
+spp_aoh_df <- as.data.frame(this_spp_rast, xy = TRUE) %>%
+  pivot_longer(cols = c(3:4), names_to = "species")
+
+crop_df <- as.data.frame(crop(this_crop_ingredient_raster, vect(countries_shp)), xy = TRUE)
+
+
+
+ggplot() + 
+  geom_sf(data = countries_shp, fill = "grey", colour = "white") + 
+   geom_raster(data = spp_aoh_df %>% filter(value >0), aes( x= x, y = y), color = "green") +
+   geom_raster(data = overlap_df %>% filter(value >0), aes( x= x, y = y, fill = value)) + 
+  facet_wrap(~species) +
+  labs(fill = expression(paste(km^{2}, " overlap")), title = "How does AOH overlap with soy production for SPC?", subtitle = "Mass allocation; Plant-Dominant", caption = "Black areas are the AOH") + 
+  scale_fill_gradientn(colors = (RColorBrewer::brewer.pal(n=9, name = "YlOrRd"))) +
+  theme_minimal() +
+      theme(
+          axis.title = element_blank()) 
+
+
+
+ggplot() + 
+  geom_sf(data = countries_shp, fill = "grey", colour = "white") + 
+ geom_raster(data = spp_aoh_df %>% filter(value >0), aes( x= x, y = y, fill = value)) + 
+  facet_wrap(~species) + 
+  labs(title = "Area of Habitat (AOH)") + 
+  theme_minimal() + 
+    theme(legend.position = "none",
+          axis.title = element_blank()) 
+
+
+# ggplot() + 
+#   geom_sf(data = countries_shp, fill = "grey", colour = "white") + 
+#  geom_raster(data = crop_df %>% filter(coef >0), aes( x= x, y = y, fill = coef)) +
+#   scale_fill_gradientn(colors = (RColorBrewer::brewer.pal(n=9, name = "YlOrRd"))) + 
+#     labs(fill = "km2", title = "SPC crop area", subtitle = "Mass allocation; Plant-Dominant") + 
+#     theme_minimal()
+
+ggplot() + 
+  geom_sf(data = countries_shp, fill = "grey", colour = "white") + 
+   geom_raster(data = spp_aoh_df %>% filter(value >0), aes( x= x, y = y), color = "green") +
+      geom_raster(data = crop_df %>% filter(coef >0), aes( x= x, y = y, fill = coef)) +
+  facet_wrap(~species) +
+  labs(fill = expression(paste(km^{2}, " soy")), title = "How does AOH overlap with soy production for SPC?", subtitle = "Mass allocation; Plant-Dominant") +
+    scale_fill_gradientn(colors = (RColorBrewer::brewer.pal(n=9, name = "YlOrRd"))) + 
+  theme_minimal() + 
+      theme(
+          axis.title = element_blank()) 
+  
+
+
+
+```
+  
+  
+  
+Do some checks: 
+
+```{r}
+check_bird <- aoh_df %>%
+  filter(sciname == "Accipiter brevipes")
+
+check_aoh_1 <- rast("/mnt/rdsi/raw_data/AOH_lumbierres/reprojected/Accipiter_badius_B.tif") %>%
+  filter(ex_Accipiter_badius_B != 0)
+plot(check_aoh_1)
+check_aoh_2 <- rast("/mnt/rdsi/raw_data/AOH_lumbierres/reprojected/Accipiter_badius_R.tif") %>%
+    filter(ex_Accipiter_badius_R != 0)
+plot(check_aoh_2)
+check_aoh_3  <- rast("/mnt/rdsi/raw_data/AOH_lumbierres/reprojected/Accipiter_badius_N.tif") %>%
+    filter(ex_Accipiter_badius_N != 0)
+plot(check_aoh_3)
+
+check_intersect <- intersect(check_aoh_1, check_aoh_2)
+plot(check_intersect)
+check_intersect <- intersect(check_aoh_1, check_aoh_3)
+plot(check_intersect)
+check_intersect <- intersect(check_aoh_2, check_aoh_3)
+plot(check_intersect) # ok so looks like there is no/minimal intersection... additionally, the paper indicates that they can be combined and are separate, non-overlapping habitats. So probably no double counting occurring thankfully. 
+
+  
+check <- aoh_df %>%
+  filter(aoh_affected >= total_cropland) # 0, makes sense! 
+```
+
+  

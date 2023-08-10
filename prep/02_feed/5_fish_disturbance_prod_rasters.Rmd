@@ -1,5 +1,5 @@
 ---
-title: "Spatial Allocation of Forage fish demand from each diet and source"
+title: "Forage fish and trimmings marine footprint disturbance (km2)"
 output: html_document
 editor_options: 
   chunk_output_type: console
@@ -67,18 +67,16 @@ Import net primary productivity data
 
 #make npp into an xy file
 
-mean_npp <- rast(here("../npp_synthesis/data/npp_2013_2022_mean.tif"))
-median_npp <- rast(here("../npp_synthesis/data/npp_2013_2022_median.tif"))
-min_npp <- rast(here("../npp_synthesis/data/npp_2013_2022_min.tif"))
-max_npp <- rast(here("../npp_synthesis/data/npp_2013_2022_max.tif"))
+# mean_npp <- rast(here("../npp_synthesis/data/npp_2013_2022_mean.tif"))
+# median_npp <- rast(here("../npp_synthesis/data/npp_2013_2022_median.tif"))
+# min_npp <- rast(here("../npp_synthesis/data/npp_2013_2022_min.tif"))
+# max_npp <- rast(here("../npp_synthesis/data/npp_2013_2022_max.tif"))
 
-# mean_npp <- rast(here("prep/02_feed/data/vgpm-npp/npp_2013_2022_mean.tif"))
-# median_npp <- rast(here("prep/02_feed/data/vgpm-npp/npp_2013_2022_median.tif"))
-# min_npp <- rast(here("prep/02_feed/data/vgpm-npp/npp_2013_2022_min.tif"))
-# max_npp <- rast(here("prep/02_feed/data/vgpm-npp/npp_2013_2022_max.tif")) 
+mean_npp <- rast(here("prep/02_feed/data/npp_old/annual_mean_npp_2019_gf_wgs.tiff"))
+median_npp <- rast(here("prep/02_feed/data/npp_old/annual_median_npp_2019_gf_wgs.tiff"))
+min_npp <- rast(here("prep/02_feed/data/npp_old/annual_min_npp_2019_gf_wgs.tiff"))
+max_npp <- rast(here("prep/02_feed/data/npp_old/annual_max_npp_2019_gf_wgs.tiff"))
 
-old_2019 <- rast("/mnt/rdsi/raw_data/00-net-primary-productivity/annual_mean_npp_2019_gf_wgs.tiff")
-new_2019 <- rast(here("../npp_synthesis/data/npp_2019/mean_npp_2019.tif"))
 
 #mean 
 mean_npp_xyz <- terra::as.data.frame(mean_npp, xy = TRUE) |> 
@@ -403,15 +401,16 @@ foragefish <- readRDS(file.path(watson_dir, "v5.0/int/all_catch_foragefish.rds")
 
 FOFM_props <- readRDS(here("prep/02_feed/data/embodied_FMFO_forage_rgns.rds"))
 
+watson_cells <- read.csv(file.path(watson_dir, "v5.0/Codes_cells.csv"))
+
 carbon_conversion <- 9
 
 forage_npp <- foragefish %>% 
-  filter(forage_id == 1, 
-         FOFM_catch > 0) %>% 
-  left_join(fao_xyz) %>%
-         left_join(FOFM_props, by = c("iso3c", "TaxonName")) %>%
-  filter(!is.na(prop)) %>%
-  mutate(fmfo_embodied_fish = prop*FOFM_catch) %>% 
+  left_join(FOFM_props, by = c("iso3c", "TaxonName")) %>%
+  filter(!is.na(ingredient)) %>%
+  mutate(prop = ifelse(is.na(prop), 0, prop)) %>% # just incase
+  mutate(fmfo_embodied_fish = prop*FOFM_catch) %>%
+    left_join(fao_xyz) %>%
     left_join(ecosystem_te, by="fao_area_code") |> 
     left_join(forage_tls_gf, by = "TaxonName") |>
     mutate(te = case_when(is.na(te) ~ ecosystem_te |> pull(te) |> mean(),
@@ -421,17 +420,20 @@ forage_npp <- foragefish %>%
     left_join(min_npp_xyz) |> 
     left_join(max_npp_xyz) |> 
     left_join(cell_area) |> 
-    mutate(mean_npp_t_C_yr = mean_npp_t_km2_yr*OceanAreasqkm) |> 
-    mutate(median_npp_t_C_yr = median_npp_t_km2_yr*OceanAreasqkm) |> 
-    mutate(min_npp_t_C_yr = min_npp_t_km2_yr*OceanAreasqkm) |> 
-    mutate(max_npp_t_C_yr = max_npp_t_km2_yr*OceanAreasqkm) |>
+    mutate(mean_npp_t_C_yr = mean_npp_t_km2_yr*area) |> 
+    mutate(median_npp_t_C_yr = median_npp_t_km2_yr*area) |> 
+    mutate(min_npp_t_C_yr = min_npp_t_km2_yr*area) |> 
+    mutate(max_npp_t_C_yr = max_npp_t_km2_yr*area) |>
     mutate(ppr_fmfo = (fmfo_embodied_fish/carbon_conversion)*(1/te)^(DietTroph-1)) %>% #T C yr-1
-    as_tibble() |> 
-    mutate(ppr_prop_fmfo = case_when(ppr_fmfo/max_npp_t_C_yr<1 ~ ppr_fmfo/max_npp_t_C_yr,
-                                        TRUE ~ ppr_fmfo/max_npp_t_C_yr)) |> 
-    arrange(LonCentre, LatCentre, diet, allocation_type, ingredient) |> 
-    left_join(cell_area) |> 
-    mutate(area_fmfo = ppr_prop_fmfo*OceanAreasqkm)
+    mutate(ppr_prop_fmfo = ppr_fmfo/max_npp_t_C_yr) |> 
+    mutate(area_fmfo = ppr_prop_fmfo*area) %>%
+  group_by(Cell, diet, allocation_type, ingredient) %>%
+  summarise(area_fmfo = sum(area_fmfo, na.rm = TRUE),
+            fmfo_embodied_fish = sum(fmfo_embodied_fish, na.rm = TRUE)) %>%
+  ungroup() %>% 
+  left_join(watson_cells) %>%
+  dplyr::select(LonCentre, LatCentre, diet, allocation_type, ingredient, fmfo_embodied_fish, area_fmfo)
+  
  
     
 
@@ -439,19 +441,18 @@ test <- forage_npp %>%
   filter(diet == "plant-dominant",
          allocation_type == "mass",
          ingredient == "fish meal"
-        # str_detect(TaxonName, "Euphausia superba")
-         ) %>%
-  dplyr::select(LonCentre, LatCentre, fmfo_embodied_fish) # %>%
-  # dplyr::select(LonCentre, LatCentre, fmfo_embodied_fish)
+         )
 
-test2 <- rast(test, type = "xyz")
- plot(test2)
+test2 <- rast(test %>% dplyr::select(LonCentre, LatCentre, area_fmfo), type = "xyz", crs = crs(base_rast)) %>%
+  project(base_rast)
+plot(test2)
 plot(log(test2+1))
 
-sum(test$fmfo_embodied_fish) # 1093060 tonnage
-sum(test$area_fmfo, na.rm = TRUE) # 2563.028 ok that is way less than rich... need to see what trimmings adds since he includes trimmings too... 
+testing <- rast(here("prep/02_feed/output/plant-dominant/forage fish_fish meal_mass_P.tif"))
+plot(log(testing+1))
 
-## compare to cashion.. these numbers seem pretty large 
+sum(test$fmfo_embodied_fish) # 1093060 tonnage
+sum(test$area_fmfo, na.rm = TRUE) # 77861.26 ok that is more than rich... we are supposed to have more, but does that much more make sense? need to see what trimmings adds since he includes trimmings too... 
 
 compare <- rast(here("prep/02_feed/output/plant-dominant/forage fish_fish meal_mass_P.tif"))
 global(compare, "sum", na.rm = TRUE) # 1093060 tonnage matches up.
@@ -459,21 +460,11 @@ global(compare, "sum", na.rm = TRUE) # 1093060 tonnage matches up.
 
 compare_rich <- rast(list.files(here("prep/02_feed/test/plant-dominant/"), full.names = TRUE, pattern = "km2"))
 
-sum(global(compare_rich, "sum", na.rm = TRUE)) # 17446.36 km2 way more than me. But he has double the fish meal tonnage reported...
+sum(global(compare_rich, "sum", na.rm = TRUE)) # 17446.36 km2 way less than me.. but that makes sense, sense his is only 100k tonnes.
 
-
-compare_rich_tonnes <- rast(list.files(here("prep/02_feed/test/plant-dominant/"), full.names = TRUE, pattern = "diet"))
-
-sum(global(compare_rich_tonnes, "sum", na.rm = TRUE)) # 3948399 tonnes way more than me. > double the fish meal tonnage reported...
-
-test_forage <- 
- forage_npp %>% 
-  filter(allocation_type == "mass",
-         diet == "plant-dominant",
-         ingredient == "fish meal") %>%
-  dplyr::select(CommonName, area_fmfo, fmfo_embodied_fish)
-
-
+# rich is based off of 100k tonnes and gets 17446 km2
+# so 100000/17446 = 5.731973
+# 1093060/77861.26 = 14.03856.. but his includes trimmings... 
 
 
 ##### Now do trimmings
@@ -484,26 +475,13 @@ trimmings_fish <- readRDS(file.path(watson_dir, "v5.0/int/all_catch_trimmingsfis
 
 trim_props <- readRDS(here("prep/02_feed/data/embodied_FMFO_trimmings_rgns.rds"))
 
-# test_trim <- 
-#  trimmings_fish %>% 
-#   filter(trimmingsfish == 1, 
-#          trimmings_catch > 0) 
-# 
-# test_trim <- 
-#  trim_npp %>% 
-#   filter(allocation_type == "mass",
-#          diet == "plant-dominant",
-#          ingredient == "fish meal, cut offs") %>%
-#   dplyr::select(CommonName, area_fmfo, fmfo_embodied_fish)
-
 trim_npp <- 
  trimmings_fish %>% 
-  filter(trimmingsfish == 1, 
-         trimmings_catch > 0)  |> 
-  left_join(fao_xyz) %>% 
   left_join(trim_props, by = c("iso3c", "TaxonName")) %>%
-  filter(!is.na(prop)) %>%
-  mutate(fmfo_embodied_fish = prop*trimmings_catch) %>% 
+  filter(!is.na(ingredient)) %>%
+  mutate(prop = ifelse(is.na(prop), 0, prop)) %>% # just incase
+  mutate(fmfo_embodied_fish = prop*trimmings_catch) %>%
+  left_join(fao_xyz) %>% 
   left_join(ecosystem_te, by="fao_area_code") |> 
   left_join(trim_tls, by = "TaxonName") |>
   mutate(te = case_when(is.na(te) ~ ecosystem_te |> pull(te) |> mean(),
@@ -513,36 +491,38 @@ trim_npp <-
     left_join(min_npp_xyz) |> 
     left_join(max_npp_xyz) |> 
     left_join(cell_area) |> 
-    #work around for missing npp data for cod
-    group_by(fao_area_code) |> 
-    mutate_at(vars(mean_npp_t_km2_yr,median_npp_t_km2_yr,min_npp_t_km2_yr, max_npp_t_km2_yr), 
-            ~replace_na(., 
-                        mean(., na.rm = TRUE))) |> 
-    ungroup() |> 
     mutate(mean_npp_t_C_yr = mean_npp_t_km2_yr*area) |> 
     mutate(median_npp_t_C_yr = median_npp_t_km2_yr*area) |> 
     mutate(min_npp_t_C_yr = min_npp_t_km2_yr*area) |> 
     mutate(max_npp_t_C_yr = max_npp_t_km2_yr*area) |>
    mutate(ppr_fmfo = (fmfo_embodied_fish/carbon_conversion)*(1/te)^(DietTroph-1)) %>% #T C yr-1
-    as_tibble() |> 
-    mutate(ppr_prop_fmfo = case_when(ppr_fmfo/max_npp_t_C_yr<1 ~ ppr_fmfo/max_npp_t_C_yr,
-                                        TRUE ~ ppr_fmfo/max_npp_t_C_yr)) |> 
-    left_join(cell_area) |> 
-    mutate(area_fmfo = ppr_prop_fmfo*area)
+    mutate(ppr_prop_fmfo = ppr_fmfo/max_npp_t_C_yr) |> 
+    mutate(area_fmfo = ppr_prop_fmfo*area)  %>%
+  group_by(Cell, diet, allocation_type, ingredient) %>%
+  summarise(area_fmfo = sum(area_fmfo, na.rm = TRUE),
+            fmfo_embodied_fish = sum(fmfo_embodied_fish, na.rm = TRUE)) %>%
+  ungroup() %>% 
+  left_join(watson_cells) %>%
+  dplyr::select(LonCentre, LatCentre, diet, allocation_type, ingredient, fmfo_embodied_fish, area_fmfo)
     
 test <- trim_npp %>%
   filter(diet == "plant-dominant",
          allocation_type == "mass",
-         ingredient == "fish meal, cut offs") %>%
- dplyr::select(LonCentre, LatCentre, area_fmfo) # %>%
-#   dplyr::select(LonCentre, LatCentre, fmfo_embodied_fish)
+         ingredient %in% c("fish meal, cut offs"))
 
-test2 <- rast(test, type = "xyz")
+test2 <- rast(test %>% dplyr::select(LonCentre, LatCentre, area_fmfo), type = "xyz", crs = crs(base_rast)) %>%
+  project(base_rast)
  plot(test2)
 plot(log(test2+1))
 
-sum(test$fmfo_embodied_fish) # 380101.2 tonnage
-sum(test$area_fmfo, na.rm = TRUE) # 32232.51 ok maybe this will be a bit more inline with Rich? 
+global(test2, "sum", na.rm = TRUE) # 452805.9
+
+sum(test$fmfo_embodied_fish) # 184281 tonnage
+sum(test$area_fmfo, na.rm = TRUE) # 452806.2.. really big number
+
+trim_catch <- rast(here("prep/02_feed/output/plant-dominant/trimmings fish_fish meal, cut offs_mass_P.tif"))
+plot(trim_catch)
+plot(log(trim_catch + 1))
 
 
 #Bind the forage and trimmings catch npp per cell
@@ -553,8 +533,7 @@ all_fish_npp <-
   group_by(diet, allocation_type, ingredient, LonCentre, LatCentre) |> 
   summarise(area_fmfo = sum(area_fmfo, na.rm = TRUE),
             fmfo_embodied_fish = sum(fmfo_embodied_fish, na.rm = TRUE)) |> 
-  ungroup() %>%
-  left_join(cell_area)
+  ungroup()
 
 
     
@@ -564,23 +543,24 @@ test <- all_fish_npp %>%
          allocation_type == "mass",
          str_detect(ingredient, "fish meal")
          ) %>%
-  #dplyr::select(LonCentre, LatCentre, area_fmfo)  %>%
-  dplyr::select(LonCentre, LatCentre, fmfo_embodied_fish)
+  dplyr::select(LonCentre, LatCentre, area_fmfo, fmfo_embodied_fish) 
 
 
-test2 <- rast(test, type = "xyz")
+test2 <- rast(test %>% dplyr::select(LonCentre, LatCentre, area_fmfo), type = "xyz")
  plot(test2)
 plot(log(test2+1))
 
-sum(test$fmfo_embodied_fish) # 1473161 tonnage
-sum(test$area_fmfo, na.rm = TRUE) # 34795.54 
+sum(test$fmfo_embodied_fish) # 1277342 tonnage
+sum(test$area_fmfo, na.rm = TRUE) # 530667.4
+
+1277342/530667.4 # 2.407048
 
 ## compare to Rich
 
 
 compare_rich <- rast(list.files(here("prep/02_feed/test/plant-dominant/"), full.names = TRUE, pattern = "km2"))
 
-sum(global(compare_rich, "sum", na.rm = TRUE)) # 17446.36 km2 ok I have about double what Rich has... Most of mine is coming from trimmings though which seems odd...
+sum(global(compare_rich, "sum", na.rm = TRUE)) # 17446.36 km2 ok lines up well with what Rich has... Most of mine is coming from trimmings though which seems odd...
 
 
 compare_rich_tonnes <- rast(list.files(here("prep/02_feed/test/plant-dominant/"), full.names = TRUE, pattern = "diet"))
@@ -588,7 +568,25 @@ compare_rich_tonnes <- rast(list.files(here("prep/02_feed/test/plant-dominant/")
 sum(global(compare_rich_tonnes, "sum", na.rm = TRUE)) # 3948399 tonnes way more than me. > double the fish meal tonnage reported... so what is going on??
 
 plot(log(app(compare_rich, "sum", na.rm = TRUE)+1))
-
 combine_rich <- app(compare_rich, "sum", na.rm = TRUE)
 
+100000/17446.36 = 5.731855
+
+
+# so to make Rich's, my total should be ~1277342/5.731855 = 222849.7 km2. 
+
 ```
+
+Check against Kuempel et al; will be different due to different methods
+
+```{r}
+kuempel_fofm_dist <- read.csv(here("prep/02_feed/test/sum_pressures_country.csv")) %>%
+  filter(source == "feedfofm",
+         animal_system == "salmon",
+         type == "aquaculture",
+         stressor == "disturbance"
+         )
+
+sum(kuempel_fofm_dist$value) # 80902.86... surprisingly similar lol
+```
+
