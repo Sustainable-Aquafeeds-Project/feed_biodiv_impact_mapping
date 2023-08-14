@@ -67,10 +67,10 @@ Import net primary productivity data
 
 #make npp into an xy file
 
-# mean_npp <- rast(here("../npp_synthesis/data/npp_2013_2022_mean.tif"))
-# median_npp <- rast(here("../npp_synthesis/data/npp_2013_2022_median.tif"))
-# min_npp <- rast(here("../npp_synthesis/data/npp_2013_2022_min.tif"))
-# max_npp <- rast(here("../npp_synthesis/data/npp_2013_2022_max.tif"))
+# mean_npp <- rast(here("../npp_synthesis/data/npp_2019/mean_npp_2019.tif"))
+# median_npp <- rast(here("../npp_synthesis/data/npp_2019/median_npp_2019.tif"))
+# min_npp <- rast(here("../npp_synthesis/data/npp_2019/min_npp_2019.tif"))
+# max_npp <- rast(here("../npp_synthesis/data/npp_2019/max_npp_2019.tif"))
 
 mean_npp <- rast(here("prep/02_feed/data/npp_old/annual_mean_npp_2019_gf_wgs.tiff"))
 median_npp <- rast(here("prep/02_feed/data/npp_old/annual_median_npp_2019_gf_wgs.tiff"))
@@ -435,37 +435,6 @@ forage_npp <- foragefish %>%
   dplyr::select(LonCentre, LatCentre, diet, allocation_type, ingredient, fmfo_embodied_fish, area_fmfo)
   
  
-    
-
-test <- forage_npp %>%
-  filter(diet == "plant-dominant",
-         allocation_type == "mass",
-         ingredient == "fish meal"
-         )
-
-test2 <- rast(test %>% dplyr::select(LonCentre, LatCentre, area_fmfo), type = "xyz", crs = crs(base_rast)) %>%
-  project(base_rast)
-plot(test2)
-plot(log(test2+1))
-
-testing <- rast(here("prep/02_feed/output/plant-dominant/forage fish_fish meal_mass_P.tif"))
-plot(log(testing+1))
-
-sum(test$fmfo_embodied_fish) # 1093060 tonnage
-sum(test$area_fmfo, na.rm = TRUE) # 77861.26 ok that is more than rich... we are supposed to have more, but does that much more make sense? need to see what trimmings adds since he includes trimmings too... 
-
-compare <- rast(here("prep/02_feed/output/plant-dominant/forage fish_fish meal_mass_P.tif"))
-global(compare, "sum", na.rm = TRUE) # 1093060 tonnage matches up.
- 
-
-compare_rich <- rast(list.files(here("prep/02_feed/test/plant-dominant/"), full.names = TRUE, pattern = "km2"))
-
-sum(global(compare_rich, "sum", na.rm = TRUE)) # 17446.36 km2 way less than me.. but that makes sense, sense his is only 100k tonnes.
-
-# rich is based off of 100k tonnes and gets 17446 km2
-# so 100000/17446 = 5.731973
-# 1093060/77861.26 = 14.03856.. but his includes trimmings... 
-
 
 ##### Now do trimmings
 
@@ -480,8 +449,8 @@ trim_npp <-
   left_join(trim_props, by = c("iso3c", "TaxonName")) %>%
   filter(!is.na(ingredient)) %>%
   mutate(prop = ifelse(is.na(prop), 0, prop)) %>% # just incase
-  mutate(fmfo_embodied_fish = prop*trimmings_catch) %>%
-  left_join(fao_xyz) %>% 
+  mutate(fmfo_embodied_fish = prop*trimmings_catch) %>% ## ADD IN TRIMMINGS WEIGHTS HERE ?
+  left_join(fao_xyz) %>%
   left_join(ecosystem_te, by="fao_area_code") |> 
   left_join(trim_tls, by = "TaxonName") |>
   mutate(te = case_when(is.na(te) ~ ecosystem_te |> pull(te) |> mean(),
@@ -505,24 +474,6 @@ trim_npp <-
   left_join(watson_cells) %>%
   dplyr::select(LonCentre, LatCentre, diet, allocation_type, ingredient, fmfo_embodied_fish, area_fmfo)
     
-test <- trim_npp %>%
-  filter(diet == "plant-dominant",
-         allocation_type == "mass",
-         ingredient %in% c("fish meal, cut offs"))
-
-test2 <- rast(test %>% dplyr::select(LonCentre, LatCentre, area_fmfo), type = "xyz", crs = crs(base_rast)) %>%
-  project(base_rast)
- plot(test2)
-plot(log(test2+1))
-
-global(test2, "sum", na.rm = TRUE) # 452805.9
-
-sum(test$fmfo_embodied_fish) # 184281 tonnage
-sum(test$area_fmfo, na.rm = TRUE) # 452806.2.. really big number
-
-trim_catch <- rast(here("prep/02_feed/output/plant-dominant/trimmings fish_fish meal, cut offs_mass_P.tif"))
-plot(trim_catch)
-plot(log(trim_catch + 1))
 
 
 #Bind the forage and trimmings catch npp per cell
@@ -536,7 +487,82 @@ all_fish_npp <-
   ungroup()
 
 
-    
+
+## save as rasters 
+
+diets <- unique(all_fish_npp$diet)
+ingredients <- unique(all_fish_npp$ingredient)
+allocations <- unique(all_fish_npp$allocation_type)
+
+for(diet_type in diets){
+  for(ingredient_type in ingredients){
+    for(allocation in allocations){
+      
+      rast_xyz_df <- all_fish_npp %>%
+        filter(diet == diet_type,
+               ingredient == ingredient_type,
+               allocation_type == allocation) %>%
+        dplyr::select(LonCentre, LatCentre, area_fmfo)
+      
+      fish_type = ifelse(ingredient_type %in% c("fish oil" ," fish meal"), "forage fish", "trimmings fish")
+      
+      rast_xyz <- rast(rast_xyz_df, type = "xyz", crs = crs(base_rast)) %>%
+        project(base_rast)
+      
+      writeRaster(rast_xyz, sprintf(here("prep/02_feed/output/%s/%s_%s_%s_A.tif"), diet_type, fish_type, ingredient_type, allocation), overwrite = TRUE)
+      
+      
+    }
+  }
+}
+
+test <- rast(here("prep/02_feed/output/plant-dominant/trimmings fish_fish meal, cut offs_mass_A.tif"))
+plot(log(test+1))
+
+global(test, "sum", na.rm = TRUE) # 28807.79 perfect! 
+```  
+
+Data checking:
+
+```{r}
+
+test <- forage_npp %>%
+  filter(diet == "plant-dominant",
+         allocation_type == "mass",
+         ingredient == "fish meal"
+         )
+
+test2 <- rast(test %>% dplyr::select(LonCentre, LatCentre, area_fmfo), type = "xyz", crs = crs(base_rast)) %>%
+  project(base_rast)
+plot(test2)
+plot(log(test2+1))
+
+testing <- rast(here("prep/02_feed/output/plant-dominant/forage fish_fish meal_mass_P.tif"))
+plot(log(testing+1))
+
+sum(test$fmfo_embodied_fish) # 1156102 tonnage
+sum(test$area_fmfo, na.rm = TRUE) # 113203.9 ok that is more than rich... we are supposed to have more, but does that much more make sense? need to see what trimmings adds since he includes trimmings too... 
+
+
+
+test <- trim_npp %>%
+  filter(diet == "plant-dominant",
+         allocation_type == "mass",
+         ingredient %in% c("fish meal, cut offs"))
+
+test2 <- rast(test %>% dplyr::select(LonCentre, LatCentre, area_fmfo), type = "xyz", crs = crs(base_rast)) %>%
+  project(base_rast)
+ plot(test2)
+plot(log(test2+1))
+
+global(test2, "sum", na.rm = TRUE) # 28807.79 WHOOOOOOOOOOOO
+
+sum(test$fmfo_embodied_fish) # 204494.7 tonnage
+sum(test$area_fmfo, na.rm = TRUE) # 28807.79 
+
+trim_catch <- rast(here("prep/02_feed/output/plant-dominant/trimmings fish_fish meal, cut offs_mass_P.tif"))
+plot(trim_catch)
+plot(log(trim_catch + 1))
 
 test <- all_fish_npp %>%
   filter(diet == "plant-dominant",
@@ -550,10 +576,10 @@ test2 <- rast(test %>% dplyr::select(LonCentre, LatCentre, area_fmfo), type = "x
  plot(test2)
 plot(log(test2+1))
 
-sum(test$fmfo_embodied_fish) # 1277342 tonnage
-sum(test$area_fmfo, na.rm = TRUE) # 530667.4
+sum(test$fmfo_embodied_fish) # 1360597 tonnage
+sum(test$area_fmfo, na.rm = TRUE) # 142011.7
 
-1277342/530667.4 # 2.407048
+1360597/142011.7 # 9.58088
 
 ## compare to Rich
 
@@ -562,15 +588,10 @@ compare_rich <- rast(list.files(here("prep/02_feed/test/plant-dominant/"), full.
 
 sum(global(compare_rich, "sum", na.rm = TRUE)) # 17446.36 km2 ok lines up well with what Rich has... Most of mine is coming from trimmings though which seems odd...
 
-
-compare_rich_tonnes <- rast(list.files(here("prep/02_feed/test/plant-dominant/"), full.names = TRUE, pattern = "diet"))
-
-sum(global(compare_rich_tonnes, "sum", na.rm = TRUE)) # 3948399 tonnes way more than me. > double the fish meal tonnage reported... so what is going on??
-
 plot(log(app(compare_rich, "sum", na.rm = TRUE)+1))
 combine_rich <- app(compare_rich, "sum", na.rm = TRUE)
 
-100000/17446.36 = 5.731855
+100000/17446.36 # = 5.731855
 
 
 # so to make Rich's, my total should be ~1277342/5.731855 = 222849.7 km2. 

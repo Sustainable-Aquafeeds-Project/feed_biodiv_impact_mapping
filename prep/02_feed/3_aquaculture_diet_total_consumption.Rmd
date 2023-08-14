@@ -10,7 +10,7 @@ editor_options:
 Use following data to calculate tonnes of each feedstuff item consumed by each aquaculture system in each country:
 
 * Tonnes of production: From FAOSTAT
-* Diet composition: From Aas et al. 2022
+* Diet composition: From Aas et al. 2022 and Cottrell et al. 2023 in prep
 * feed conversion ratio: From Tacon & Metian 2008
 
 ```{r setup, include=FALSE}
@@ -32,11 +32,6 @@ source(here("src/directories.R"))
 
 production <- readRDS(here("data/tidy_data/production-data/aquaculture_production_tidy.rds")) 
 
-test <- production %>%
-  filter(str_detect(species, "salmon|Salmon")) %>%
-  filter(species != "Atlantic salmon",
-         year == 2020, 
-         value > 0)
 
 salmon_production <- production %>%
   filter(species == "Atlantic salmon" & year == scenario_year,
@@ -44,11 +39,10 @@ salmon_production <- production %>%
   mutate(species = "salmon")
 
 
-
 diet <- read_csv(here("prep/02_feed/data/aquaculture_diet_composition.csv"))
 
 fcrs <- read.csv(here("prep/02_feed/data/FCR.csv")) %>%
-  mutate(species = "salmon")
+  mutate(species = "salmon") # should i just use 1.2 here like Rich did? 
 
 ```
 
@@ -92,7 +86,7 @@ tonnes_consumption %>%
 
 
 test <- read.csv(here("prep/02_feed/data/demand/total_aquaculture_ingredient_demand.csv")) %>%
-  filter(ingredient %in% c("fish oil, forage fish", "fish meal, forage fish")) %>%
+  filter(str_detect(ingredient, "fish meal|fish oil")) %>%
   group_by(diet) %>%
   summarise(total = sum(ingredient_demand, na.rm = TRUE)) %>% 
   ungroup()
