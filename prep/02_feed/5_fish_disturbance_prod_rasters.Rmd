@@ -67,38 +67,38 @@ Import net primary productivity data
 
 #make npp into an xy file
 
-# mean_npp <- rast(here("../npp_synthesis/data/npp_2019/mean_npp_2019.tif"))
-# median_npp <- rast(here("../npp_synthesis/data/npp_2019/median_npp_2019.tif"))
-# min_npp <- rast(here("../npp_synthesis/data/npp_2019/min_npp_2019.tif"))
-# max_npp <- rast(here("../npp_synthesis/data/npp_2019/max_npp_2019.tif"))
+mean_npp <- rast(here("../npp_synthesis/data/npp_2013_2022_mean.tif"))
+median_npp <- rast(here("../npp_synthesis/data/npp_2013_2022_median.tif"))
+min_npp <- rast(here("../npp_synthesis/data/npp_2013_2022_min.tif"))
+max_npp <- rast(here("../npp_synthesis/data/npp_2013_2022_max.tif"))
 
-mean_npp <- rast(here("prep/02_feed/data/npp_old/annual_mean_npp_2019_gf_wgs.tiff"))
-median_npp <- rast(here("prep/02_feed/data/npp_old/annual_median_npp_2019_gf_wgs.tiff"))
-min_npp <- rast(here("prep/02_feed/data/npp_old/annual_min_npp_2019_gf_wgs.tiff"))
-max_npp <- rast(here("prep/02_feed/data/npp_old/annual_max_npp_2019_gf_wgs.tiff"))
+# mean_npp <- rast(here("prep/02_feed/data/npp_old/annual_mean_npp_2019_gf_wgs.tiff"))
+# median_npp <- rast(here("prep/02_feed/data/npp_old/annual_median_npp_2019_gf_wgs.tiff"))
+# min_npp <- rast(here("prep/02_feed/data/npp_old/annual_min_npp_2019_gf_wgs.tiff"))
+# max_npp <- rast(here("prep/02_feed/data/npp_old/annual_max_npp_2019_gf_wgs.tiff"))
 
 
 #mean 
 mean_npp_xyz <- terra::as.data.frame(mean_npp, xy = TRUE) |> 
-  rename(mean_npp_t_km2_yr=focal_mean) |> 
+  rename(mean_npp_t_km2_yr=mean) |> 
   rename(LonCentre = x, 
          LatCentre = y)
 
 #median
 median_npp_xyz <- terra::as.data.frame(median_npp, xy = TRUE) |> 
-  rename(median_npp_t_km2_yr=focal_mean) |> 
+  rename(median_npp_t_km2_yr=mean) |> 
   rename(LonCentre = x, 
          LatCentre = y)
 
 #min
 min_npp_xyz <- terra::as.data.frame(min_npp, xy = TRUE) |> 
-  rename(min_npp_t_km2_yr=focal_mean) |> 
+  rename(min_npp_t_km2_yr=mean) |> 
   rename(LonCentre = x, 
          LatCentre = y)
 
 #max
 max_npp_xyz <- terra::as.data.frame(max_npp, xy = TRUE) |> 
-  rename(max_npp_t_km2_yr=focal_mean) |> 
+  rename(max_npp_t_km2_yr=mean) |> 
   rename(LonCentre = x, 
          LatCentre = y)
 
@@ -287,9 +287,10 @@ Get trimmings species trophic levels  - needed for calculating the primary produ
 
 
 ```{r}
+trim_catch <-  readRDS(file.path(watson_dir, "v5.0/int/all_catch_trimmingsfish.rds"))
 
 #Separate the catch records that have Genus and species.
-trim_spp <- readRDS(file.path(watson_dir, "v5.0/int/all_catch_trimmingsfish.rds")) |> 
+trim_spp <- trim_catch |> 
   filter(trimmingsfish == 1) %>%
    mutate(binomial = stringi::stri_count(TaxonName, regex="\\S+")) |> 
    filter(binomial==2) |> 
@@ -311,7 +312,7 @@ trimmings_binomial_tls <- rfishbase::ecology(species_list =  trim_spp, server = 
   
 #Add back the Genus only or family records and match to any species with the same Genus
 
-trim_higherorder <- readRDS(file.path(watson_dir, "v5.0/int/all_catch_trimmingsfish.rds")) |> 
+trim_higherorder <- trim_catch |> 
   filter(trimmingsfish == 1) |> 
   mutate(binomial = stringi::stri_count(TaxonName, regex="\\S+")) |> 
   filter(binomial==1) |>  
@@ -329,12 +330,16 @@ trim_nonbinomial_tls <- tibble(TaxonName = trim_higherorder, DietTroph = NA) |>
                                  filter(grepl("Sardinella", Species)) |> 
                                  pull(DietTroph) |> 
                                  mean(),
-                               TaxonName %in% c("Clupeidae") ~ trimmings_binomial_tls |> 
-                                 filter(grepl("Clup", Species)) |> 
-                                 pull(DietTroph) |> 
-                                 mean(),
+                               TaxonName %in% c("Clupeoids") ~ trimmings_binomial_tls %>% 
+                                 filter(grepl("Engraulis ringens", Species)) %>% 
+                                          pull(DietTroph) %>% 
+                                          mean(),
                                TaxonName %in% c("Thunnus") ~ trimmings_binomial_tls |> 
                                  filter(grepl("Thunnus", Species)) |> 
+                                 pull(DietTroph) |> 
+                                 mean(),
+                               TaxonName %in% c("Stolephorus") ~ trimmings_binomial_tls |>
+                                 filter(grepl("Engraulis",Species)) |> 
                                  pull(DietTroph) |> 
                                  mean()))
                                
@@ -345,7 +350,7 @@ trim_tls <-
           trim_nonbinomial_tls)
 
 
-test <- readRDS(file.path(watson_dir, "v5.0/int/all_catch_trimmingsfish.rds")) %>% 
+test <- trim_catch %>% 
   filter(trimmingsfish == 1)
 
 missing_spp <- setdiff(test$TaxonName, trim_tls$TaxonName) # character(0)
@@ -425,7 +430,7 @@ forage_npp <- foragefish %>%
     mutate(min_npp_t_C_yr = min_npp_t_km2_yr*area) |> 
     mutate(max_npp_t_C_yr = max_npp_t_km2_yr*area) |>
     mutate(ppr_fmfo = (fmfo_embodied_fish/carbon_conversion)*(1/te)^(DietTroph-1)) %>% #T C yr-1
-    mutate(ppr_prop_fmfo = ppr_fmfo/max_npp_t_C_yr) |> 
+    mutate(ppr_prop_fmfo = ppr_fmfo/mean_npp_t_C_yr) |> 
     mutate(area_fmfo = ppr_prop_fmfo*area) %>%
   group_by(Cell, diet, allocation_type, ingredient) %>%
   summarise(area_fmfo = sum(area_fmfo, na.rm = TRUE),
@@ -465,7 +470,7 @@ trim_npp <-
     mutate(min_npp_t_C_yr = min_npp_t_km2_yr*area) |> 
     mutate(max_npp_t_C_yr = max_npp_t_km2_yr*area) |>
    mutate(ppr_fmfo = (fmfo_embodied_fish/carbon_conversion)*(1/te)^(DietTroph-1)) %>% #T C yr-1
-    mutate(ppr_prop_fmfo = ppr_fmfo/max_npp_t_C_yr) |> 
+    mutate(ppr_prop_fmfo = ppr_fmfo/mean_npp_t_C_yr) |> 
     mutate(area_fmfo = ppr_prop_fmfo*area)  %>%
   group_by(Cell, diet, allocation_type, ingredient) %>%
   summarise(area_fmfo = sum(area_fmfo, na.rm = TRUE),
@@ -498,14 +503,23 @@ for(diet_type in diets){
   for(ingredient_type in ingredients){
     for(allocation in allocations){
       
+      # diet_type = "plant-dominant"
+      # ingredient_type = "fish meal, cut offs"
+      # allocation = "mass"
+      
       rast_xyz_df <- all_fish_npp %>%
         filter(diet == diet_type,
                ingredient == ingredient_type,
                allocation_type == allocation) %>%
         dplyr::select(LonCentre, LatCentre, area_fmfo)
       
-      fish_type = ifelse(ingredient_type %in% c("fish oil" ," fish meal"), "forage fish", "trimmings fish")
-      
+  if(str_detect(ingredient_type, "cut offs")){
+        fish_type = "trimmings fish"
+  }else{
+        fish_type = "forage fish"
+      }
+        
+  
       rast_xyz <- rast(rast_xyz_df, type = "xyz", crs = crs(base_rast)) %>%
         project(base_rast)
       
@@ -519,7 +533,7 @@ for(diet_type in diets){
 test <- rast(here("prep/02_feed/output/plant-dominant/trimmings fish_fish meal, cut offs_mass_A.tif"))
 plot(log(test+1))
 
-global(test, "sum", na.rm = TRUE) # 28807.79 perfect! 
+global(test, "sum", na.rm = TRUE) # 2473.317 km2
 ```  
 
 Data checking:
@@ -537,11 +551,9 @@ test2 <- rast(test %>% dplyr::select(LonCentre, LatCentre, area_fmfo), type = "x
 plot(test2)
 plot(log(test2+1))
 
-testing <- rast(here("prep/02_feed/output/plant-dominant/forage fish_fish meal_mass_P.tif"))
-plot(log(testing+1))
 
 sum(test$fmfo_embodied_fish) # 1156102 tonnage
-sum(test$area_fmfo, na.rm = TRUE) # 113203.9 ok that is more than rich... we are supposed to have more, but does that much more make sense? need to see what trimmings adds since he includes trimmings too... 
+sum(test$area_fmfo, na.rm = TRUE) # 6419.171 km2
 
 
 
@@ -555,10 +567,10 @@ test2 <- rast(test %>% dplyr::select(LonCentre, LatCentre, area_fmfo), type = "x
  plot(test2)
 plot(log(test2+1))
 
-global(test2, "sum", na.rm = TRUE) # 28807.79 WHOOOOOOOOOOOO
+global(test2, "sum", na.rm = TRUE) # 2473.317 km2
 
-sum(test$fmfo_embodied_fish) # 204494.7 tonnage
-sum(test$area_fmfo, na.rm = TRUE) # 28807.79 
+sum(test$fmfo_embodied_fish) # 215954.7 tonnage
+sum(test$area_fmfo, na.rm = TRUE) # 2473.317 km2
 
 trim_catch <- rast(here("prep/02_feed/output/plant-dominant/trimmings fish_fish meal, cut offs_mass_P.tif"))
 plot(trim_catch)
@@ -576,10 +588,10 @@ test2 <- rast(test %>% dplyr::select(LonCentre, LatCentre, area_fmfo), type = "x
  plot(test2)
 plot(log(test2+1))
 
-sum(test$fmfo_embodied_fish) # 1360597 tonnage
-sum(test$area_fmfo, na.rm = TRUE) # 142011.7
+sum(test$fmfo_embodied_fish) # 1372057 tonnage
+sum(test$area_fmfo, na.rm = TRUE) # 8892.487
 
-1360597/142011.7 # 9.58088
+1360597/8892.487 # 153.0052
 
 ## compare to Rich
 
@@ -592,9 +604,6 @@ plot(log(app(compare_rich, "sum", na.rm = TRUE)+1))
 combine_rich <- app(compare_rich, "sum", na.rm = TRUE)
 
 100000/17446.36 # = 5.731855
-
-
-# so to make Rich's, my total should be ~1277342/5.731855 = 222849.7 km2. 
 
 ```
 

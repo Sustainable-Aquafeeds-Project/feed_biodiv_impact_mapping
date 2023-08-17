@@ -1,0 +1,316 @@
+---
+title: "Download and prep Aquamaps data"
+name: "Gage Clawson"
+date: "August 1, 2023"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+## Summary 
+
+
+## Setup 
+
+```{r setup, include=FALSE}
+
+library(tidyverse)
+library(here)
+library(sf)
+library(data.table)
+library(dtplyr)
+library(terra)
+library(parallel)
+library(strex)
+library(janitor)
+library(readxl)
+library(rfishbase)
+
+source(here("src/directories.R"))
+
+source(here("src/spatial.R"))
+
+
+aquamaps_dir <- file.path(rdsi_raw_data_dir, "aquamaps")
+
+
+gall_peters <- "+proj=cea +lon_0=0 +x_0=0 +y_0=0 +lat_ts=45 +ellps=WGS84 +datum=WGS84 +units=m +no_defs"
+#raster template 
+base_rast <- rast(res=0.5)
+ext(base_rast) <- c(-180, 180, -90, 90)
+
+```
+
+```{r}
+
+aquamaps_csv <- read.csv(file.path(aquamaps_dir, "GTE10_HSPEC_NATIVE/hcaf_species_native_gte10.csv"))
+
+# colnames(aquamaps_csv)
+# length(unique(aquamaps_csv$SpeciesID)) # 23699... each have a distinct id. README says that ids are from catalogueoflife.org
+
+# readme <- read_xlsx(file.path(aquamaps_dir, "GTE10_HSPEC_NATIVE/HSPEC_ReadMe.xlsx"))
+
+
+aquamaps_spp <- read.csv(file.path(aquamaps_dir, "GTE10_SPECIESOCCURSUM/speciesoccursum_gte10.csv")) %>%
+  distinct(SpeciesID, SpecCode, Genus, Species, FBname)
+
+
+aquamaps_spp_df <- aquamaps_csv %>%
+  filter(Probability > 0.5) %>%
+   left_join(aquamaps_spp, by = "SpeciesID")
+
+
+
+```
+
+
+Do some testing 
+
+```{r}
+
+test <- am_spp_df %>% 
+  filter(SpeciesID == "Fis-148339") %>%
+  dplyr::select(CenterLong, CenterLat, Probability) %>%
+  rast(., type = "xyz", crs = crs(base_rast)) 
+
+plot(test) ## ok so this is how to plot individual species 
+
+
+spp_count <- am_spp_df %>%
+  group_by(CenterLong, CenterLat) %>%
+  summarise(all_count = n()) %>%
+  ungroup() %>%
+  rast(., type = "xyz", crs = crs(base_rast)) %>%
+  project(base_rast)
+
+plot(spp_count) # could i just overlap this with our crop maps? This shows number of species in each cell that has habitat. So if a cell has 100 km2 of disturbance in it, and 10 species with habitat, then 100*10 = 1000 km2 of habitat disturbed, right? 
+
+## ok now we should multiply the spp count raster with each feed rast to get km2 of habitat affected?. Also mask the spp count rast with the feed rast to get count of spp affected. Will first ned to reproject/resample the spp count raster. 
+
+# lets test this out: 
+
+fm_mass_plant_dom <- rast(here("prep/02_feed/output/plant-dominant/forage fish_fish meal_mass_A.tif"))
+fm_mass_plant_dom[fm_mass_plant_dom <= 0] <- NA
+plot(fm_mass_plant_dom)
+plot(log(fm_mass_plant_dom+1))
+global(fm_mass_plant_dom, "sum", na.rm = TRUE) # 6419.171 km2
+
+spp_count_overlap <- fm_mass_plant_dom*spp_count
+
+plot(spp_count_overlap) # this shows km2 disturbance in each cell that overlaps with suitable habitat for a species
+plot(log(spp_count_overlap + 1))
+global(spp_count_overlap, "sum", na.rm = TRUE) # 4210918 km2?? that's a lot! 
+global(spp_count_overlap, "mean", na.rm = TRUE) # 101.9297 km2 average habitat area affected? Is that right? 
+
+spp_count_overlap_spp <- mask(spp_count, fm_mass_plant_dom)
+plot(spp_count_overlap_spp) # seems like a lot, but many are overlapped by very little disturbance km2... So what this shows is number of species in each cell that are affected.
+
+# lets try with just one species to see what we get... 
+
+
+test <- am_spp_df %>% 
+  filter(SpeciesID == "Fis-148339") %>%
+  dplyr::select(CenterLong, CenterLat, Probability) %>%
+  rast(., type = "xyz", crs = crs(base_rast))  %>% 
+  project(base_rast)
+
+plot(test) ## ok so this is how to plot individual species.. this one has a wide range so its a good example to use
+test[test > 0] <- 1
+plot(test)
+
+test_overlap <- fm_mass_plant_dom*test
+plot(test_overlap)
+global(test_overlap, "sum", na.rm = TRUE) # 109.9107 km2 overlap for this spp.. this seems reasonable 
+
+# so this is a spp with a huge habitat. Let's assume that all spp have at least this overlap: 109*23000 = 2507000 km2 overlap ok.. so maybe our 4 million km2 estimate above might not be so crazy? 
+
+test_mask <- mask(test, fm_mass_plant_dom)
+plot(test_mask) # ok so it worked 
+
+``` 
+
+Need to clip the aquamaps like this: "These were subsequently clipped to a bathymetric to
+constrain neritic and shallow-water species to areas no deeper than 200 m."
+
+Pull depth information from fish base
+
+```{r}
+
+spp_list <- aquamaps_spp %>%
+  unite("spp_name", Genus:Species, sep = " ") %>% 
+  pull(spp_name)
+
+species_info <- species(spp_list) %>%
+  dplyr::select(Species, SpecCode, DepthRangeShallow, DepthRangeDeep) %>% 
+  filter(!is.na(DepthRangeDeep)) ## missing a lot of species here.. this pull ~9000 species, ~1000 of which don't have depth info. So that means we are missing ~15k species depth info.
+
+setdiff(spp_list, species_info$Species)
+
+# test <- species("Gemmula kieneri") # ok
+
+## so i guess for the spp which we have depth info, we do what casey did. For those that don't, we just clip to bathymetry raster to mask out land. 
+
+
+am_spp_depth_df <- aquamaps_spp_df %>%
+  left_join(species_info)
+```
+
+Depth function: 
+
+```{r}
+rast_shallow <- rast(here("prep/03_prep_spp_habitats/data/spatial/bathy_mol_shallow.tif")) # taken from casey's project 
+rast_neritic <- rast(here("prep/03_prep_spp_habitats/data/spatial/bathy_mol_neritic.tif"))
+rast_bathy <- rast(here("prep/03_prep_spp_habitats/data/spatial/bathy_mol.tif"))
+
+
+clip_to_depth <- function(spp_rast, spp_df) {
+  ### depth clip if necessary; otherwise clip to bathy raster (which previously
+  ### was clipped to area raster - so cells with any marine area will be kept,
+  ### and non-marine cells will be dropped).
+  ### Manual adds of shallow spp:
+  
+  max_depth <- unique(spp_df$DepthRangeDeep)
+  
+  if(is.na(max_depth)){
+    max_depth = 201
+  }
+  
+  if(max_depth < 20) {
+    ### intertidal, very shallow spp
+    spp_rast <- mask(spp_rast, rast_shallow)
+  } else if(max_depth < 200) {
+    ### spp on the continental shelf
+    spp_rast <- mask(spp_rast, rast_neritic)
+  } else{
+    ### rast_bathy covers the entire ocean - effectively masks out land
+    spp_rast <- mask(spp_rast, rast_bathy)
+  }
+  
+  return(spp_rast)
+}
+```
+
+
+
+```{r}
+
+# Overlap all species AOH with fish feed ingredient rasters! This takes ~6.5 hours to run. 
+
+spp_names <- unique(am_spp_depth_df$SpeciesID)
+
+ingredient_files <- list.files(here("prep/02_feed/output/resampled"), full.names = TRUE, recursive = TRUE, pattern = "fish_.*_A")
+
+
+chunk_size = 112 # choosing this as a chunk size since it is a multiple of 14 (the number of cores I'm using). This way it will do exactly 112 species at a time
+
+# 3921, 14897 aren't working
+
+for(i in seq(1, length(spp_names), chunk_size)) {
+  # i = 14897
+  
+  chunk_spp_names <- spp_names[i:min(i + chunk_size -1, length(spp_names))]
+  
+  chunk_spp_names <- chunk_spp_names[!(chunk_spp_names %in% c("Fis-32191", "SLB-184666"))] # these two aren't working for some reason...     # Fis-32191 throwing this: Error: [rast] cannot create a raster geometry from a single y coordinate
+
+  
+  # Start timing
+  start_time <- proc.time()
+  
+  chunk_marine_aoh <- mclapply(X = chunk_spp_names, FUN = \(this_spp){
+    
+    #isolate species
+    #this spp id
+    # this_spp <- chunk_spp_names[[4]]
+   # this_spp = "Fis-32191"
+    
+  
+    this_spp_name <- basename(this_spp)
+    
+    this_spp_df <- am_spp_depth_df %>%
+      filter(SpeciesID == this_spp) %>% 
+      dplyr::select(CenterLong, CenterLat, DepthRangeDeep) %>%
+      mutate(presence = 1)
+    
+   this_spp_rast <- this_spp_df %>%
+     dplyr::select(-DepthRangeDeep) %>%
+  rast(., type = "xyz", crs = crs(base_rast))  %>% 
+  project(moll_template, method = "near")
+   
+   this_spp_rast <- clip_to_depth(this_spp_rast, this_spp_df)
+   
+
+    
+    aoh_orig <- global(this_spp_rast*102.6423, "sum", na.rm = TRUE)$sum
+    
+    
+    overlap_list <- map(ingredient_files, \(this_ingredient){
+      
+      # this_ingredient = ingredient_files[5]
+      
+      this_ingredient_name <- str_before_nth(str_before_first(str_after_last(this_ingredient, "/"), ".tif"), "_", 2)
+      
+      this_allocation_type <- str_before_last(str_after_nth(str_after_last(this_ingredient, "/"), "_",  2), "_")
+      
+      this_diet_type <- str_before_last(str_after_nth(this_ingredient, "/", 9), "/")
+      
+      this_ingredient_raster <- terra::rast(this_ingredient)
+      
+      
+      #inner join species and crop files so we know if they overlap and summarise the crop portion of spp habitat
+      spp_overlap_rast <- this_ingredient_raster*this_spp_rast
+      
+      spp_overlap_df <- data.frame(
+        sciname = this_spp_name,
+        allocation = this_allocation_type,
+        ingredient = this_ingredient_name, 
+        diet = this_diet_type, 
+        aoh_crop_overlap = global(spp_overlap_rast, "sum", na.rm = TRUE)$sum,
+        aoh_area_orig = aoh_orig
+      )
+      
+    })
+    
+    return(bind_rows(overlap_list))
+    
+  },  mc.cores = detectCores()-6)
+  
+  
+  full_df <- bind_rows(chunk_marine_aoh) %>% as_tibble()
+  
+  saveRDS(full_df, here(sprintf("prep/03_prep_spp_habitats/int/aoh_overlay_chunks_marine/full_df_chunk_%s.rds", i)))
+  
+  # End timing
+  end_time <- proc.time()
+  
+  # Calculate the elapsed time
+  elapsed_time <- end_time - start_time
+  
+  # Print the elapsed time
+  print(elapsed_time)
+  
+  print(paste("chunk ", i, " out of 23697 finished"))
+  
+  
+}
+
+
+```
+
+```{r}
+
+overlay_df <- purrr::map_df(list.files(here("prep/03_prep_spp_habitats/int/aoh_overlay_chunks_marine/"), full.names = TRUE), readRDS) %>%
+  rename(SpeciesID = sciname) %>%
+  left_join(aquamaps_spp)
+
+length(unique(overlay_df$SpeciesID)) # 20219 missing ~3000 spp... ? 
+
+test <- overlay_df %>%
+  filter(diet == "plant-dominant",
+         allocation == "mass", 
+         ingredient == "forage fish_fish meal")
+
+sum(test$aoh_crop_overlap, na.rm = TRUE) # 3188267 km2... that's a lot compared to crops! 
+
+```
+
+

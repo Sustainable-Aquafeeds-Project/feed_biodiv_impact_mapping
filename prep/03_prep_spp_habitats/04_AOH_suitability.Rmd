@@ -41,7 +41,7 @@ Bind all chunked data together, tidy, and save
 
 ```{r}
 
-overlay_df <- purrr::map_df(list.files(here("prep/03_prep_spp_habitats/int/aoh_overlay_chunks/"), full.names = TRUE), readRDS)
+overlay_df <- purrr::map_df(list.files(here("prep/03_prep_spp_habitats/int/aoh_overlay_chunks_terrestrial/"), full.names = TRUE), readRDS)
 
 length(unique(overlay_df$sciname)) # 18558 - perfect! 
 

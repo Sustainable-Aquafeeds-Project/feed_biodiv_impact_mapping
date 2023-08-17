@@ -82,7 +82,7 @@ for(i in seq(1, length(aoh_files), chunk_size)) {
   
   full_df <- bind_rows(chunk_terrestrial_aoh) %>% as_tibble()
   
-  saveRDS(full_df, here(sprintf("prep/03_prep_spp_habitats/int/aoh_overlay_chunks/full_df_chunk_%s.rds", i)))
+  saveRDS(full_df, here(sprintf("prep/03_prep_spp_habitats/int/aoh_overlay_chunks_terrestrial/full_df_chunk_%s.rds", i)))
   
   # End timing
   end_time <- proc.time()

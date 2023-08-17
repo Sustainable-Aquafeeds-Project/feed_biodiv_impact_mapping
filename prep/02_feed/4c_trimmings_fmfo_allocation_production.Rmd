@@ -222,6 +222,7 @@ unique(trimmings_catch_iso$CommonName) # much better,
 
 setdiff(trimmings_spp$scientific_name, unique(trimmings_catch_iso$TaxonName)) # [1] "Thunnini sp"         "Sardinella spp"      "Engraulis spp"       ".. many of the common names associated with these match thouhg.
 
+unique(trimmings_catch_iso$TaxonName)
 
 
 ```
