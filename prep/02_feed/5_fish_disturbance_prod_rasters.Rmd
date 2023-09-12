@@ -368,7 +368,6 @@ write.csv(trim_tls, here("prep/02_feed/data/trimmings_fish_tls.csv"), row.names 
 
 Attach NPP, TL, data to forage and trimmings catch data and calculate the primary productivity required for the catch, the proportion of the annual PPR that is and tmultiply this proportion by the size of the cell.  
 
-NOTES: These area numbers look very wrong compared to Rich's. I'm not sure what is happening. In terms of embodied tonnage, Rich's values are higher (I'm pretty sure), so I'm not sure why my area values would be so much higher...
 
 ```{r}
 
@@ -432,12 +431,12 @@ forage_npp <- foragefish %>%
     mutate(ppr_fmfo = (fmfo_embodied_fish/carbon_conversion)*(1/te)^(DietTroph-1)) %>% #T C yr-1
     mutate(ppr_prop_fmfo = ppr_fmfo/mean_npp_t_C_yr) |> 
     mutate(area_fmfo = ppr_prop_fmfo*area) %>%
-  group_by(Cell, diet, allocation_type, ingredient) %>%
+  group_by(Cell, diet, allocation_type, ingredient, water_col_position) %>%
   summarise(area_fmfo = sum(area_fmfo, na.rm = TRUE),
             fmfo_embodied_fish = sum(fmfo_embodied_fish, na.rm = TRUE)) %>%
   ungroup() %>% 
   left_join(watson_cells) %>%
-  dplyr::select(LonCentre, LatCentre, diet, allocation_type, ingredient, fmfo_embodied_fish, area_fmfo)
+  dplyr::select(LonCentre, LatCentre, diet, allocation_type, ingredient, water_col_position, fmfo_embodied_fish, area_fmfo)
   
  
 
@@ -472,21 +471,21 @@ trim_npp <-
    mutate(ppr_fmfo = (fmfo_embodied_fish/carbon_conversion)*(1/te)^(DietTroph-1)) %>% #T C yr-1
     mutate(ppr_prop_fmfo = ppr_fmfo/mean_npp_t_C_yr) |> 
     mutate(area_fmfo = ppr_prop_fmfo*area)  %>%
-  group_by(Cell, diet, allocation_type, ingredient) %>%
+  group_by(Cell, diet, allocation_type, ingredient, water_col_position) %>%
   summarise(area_fmfo = sum(area_fmfo, na.rm = TRUE),
             fmfo_embodied_fish = sum(fmfo_embodied_fish, na.rm = TRUE)) %>%
   ungroup() %>% 
   left_join(watson_cells) %>%
-  dplyr::select(LonCentre, LatCentre, diet, allocation_type, ingredient, fmfo_embodied_fish, area_fmfo)
+  dplyr::select(LonCentre, LatCentre, diet, allocation_type, ingredient, water_col_position, fmfo_embodied_fish, area_fmfo)
     
 
 
 #Bind the forage and trimmings catch npp per cell
 
 all_fish_npp <- 
-  bind_rows(forage_npp |> select(diet, allocation_type, ingredient, LonCentre, LatCentre, area_fmfo, fmfo_embodied_fish),
-            trim_npp |> select(diet, allocation_type, ingredient, LonCentre, LatCentre, area_fmfo, fmfo_embodied_fish)) |> 
-  group_by(diet, allocation_type, ingredient, LonCentre, LatCentre) |> 
+  bind_rows(forage_npp |> select(diet, allocation_type, ingredient, water_col_position, LonCentre, LatCentre, area_fmfo, fmfo_embodied_fish),
+            trim_npp |> select(diet, allocation_type, ingredient, water_col_position, LonCentre, LatCentre, area_fmfo, fmfo_embodied_fish)) |> 
+  group_by(diet, allocation_type, ingredient, water_col_position, LonCentre, LatCentre) |> 
   summarise(area_fmfo = sum(area_fmfo, na.rm = TRUE),
             fmfo_embodied_fish = sum(fmfo_embodied_fish, na.rm = TRUE)) |> 
   ungroup()
@@ -498,19 +497,23 @@ all_fish_npp <-
 diets <- unique(all_fish_npp$diet)
 ingredients <- unique(all_fish_npp$ingredient)
 allocations <- unique(all_fish_npp$allocation_type)
+depth_positions <- unique(all_fish_npp$water_col_position)
 
 for(diet_type in diets){
   for(ingredient_type in ingredients){
     for(allocation in allocations){
+      for(pos in depth_positions){
       
       # diet_type = "plant-dominant"
       # ingredient_type = "fish meal, cut offs"
       # allocation = "mass"
+      #  pos = "benthic"
       
       rast_xyz_df <- all_fish_npp %>%
         filter(diet == diet_type,
                ingredient == ingredient_type,
-               allocation_type == allocation) %>%
+               allocation_type == allocation,
+               water_col_position == pos) %>%
         dplyr::select(LonCentre, LatCentre, area_fmfo)
       
   if(str_detect(ingredient_type, "cut offs")){
@@ -523,17 +526,26 @@ for(diet_type in diets){
       rast_xyz <- rast(rast_xyz_df, type = "xyz", crs = crs(base_rast)) %>%
         project(base_rast)
       
-      writeRaster(rast_xyz, sprintf(here("prep/02_feed/output/%s/%s_%s_%s_A.tif"), diet_type, fish_type, ingredient_type, allocation), overwrite = TRUE)
+      writeRaster(rast_xyz, sprintf(here("prep/02_feed/output/%s/%s_%s_%s_%s_A.tif"), diet_type, fish_type, ingredient_type, allocation, pos), overwrite = TRUE)
       
       
+      }
     }
   }
 }
 
-test <- rast(here("prep/02_feed/output/plant-dominant/trimmings fish_fish meal, cut offs_mass_A.tif"))
+test <- rast(here("prep/02_feed/output/plant-dominant/archive/trimmings fish_fish meal, cut offs_mass_A.tif"))
 plot(log(test+1))
 
-global(test, "sum", na.rm = TRUE) # 2473.317 km2
+global(test, "sum", na.rm = TRUE) # 2464.607 km2
+
+
+test_ben <- rast(here("prep/02_feed/output/plant-dominant/trimmings fish_fish meal, cut offs_mass_benthic_A.tif"))
+test_pel <- rast(here("prep/02_feed/output/plant-dominant/trimmings fish_fish meal, cut offs_mass_pelagic_A.tif"))
+
+global(test_ben, "sum", na.rm = TRUE) + global(test_pel, "sum", na.rm = TRUE)  # 2464.607 km2
+
+## PERFECT
 ```  
 
 Data checking:
@@ -559,7 +571,7 @@ sum(test$area_fmfo, na.rm = TRUE) # 6419.171 km2
 
 test <- trim_npp %>%
   filter(diet == "plant-dominant",
-         allocation_type == "mass",
+         allocation_type == "economic",
          ingredient %in% c("fish meal, cut offs"))
 
 test2 <- rast(test %>% dplyr::select(LonCentre, LatCentre, area_fmfo), type = "xyz", crs = crs(base_rast)) %>%
@@ -567,12 +579,12 @@ test2 <- rast(test %>% dplyr::select(LonCentre, LatCentre, area_fmfo), type = "x
  plot(test2)
 plot(log(test2+1))
 
-global(test2, "sum", na.rm = TRUE) # 2473.317 km2
+global(test2, "sum", na.rm = TRUE) # 211.5595 km2
 
-sum(test$fmfo_embodied_fish) # 215954.7 tonnage
-sum(test$area_fmfo, na.rm = TRUE) # 2473.317 km2
+sum(test$fmfo_embodied_fish) # 23076.47 tonnage
+sum(test$area_fmfo, na.rm = TRUE) # 211.6933 km2
 
-trim_catch <- rast(here("prep/02_feed/output/plant-dominant/trimmings fish_fish meal, cut offs_mass_P.tif"))
+trim_catch <- rast(here("prep/02_feed/output/plant-dominant/archive/trimmings fish_fish meal, cut offs_mass_P.tif"))
 plot(trim_catch)
 plot(log(trim_catch + 1))
 
@@ -588,22 +600,11 @@ test2 <- rast(test %>% dplyr::select(LonCentre, LatCentre, area_fmfo), type = "x
  plot(test2)
 plot(log(test2+1))
 
-sum(test$fmfo_embodied_fish) # 1372057 tonnage
-sum(test$area_fmfo, na.rm = TRUE) # 8892.487
+sum(test$fmfo_embodied_fish) # 1371036 tonnage
+sum(test$area_fmfo, na.rm = TRUE) # 8883.769
 
-1360597/8892.487 # 153.0052
+1371036/8883.769 # 154.3304
 
-## compare to Rich
-
-
-compare_rich <- rast(list.files(here("prep/02_feed/test/plant-dominant/"), full.names = TRUE, pattern = "km2"))
-
-sum(global(compare_rich, "sum", na.rm = TRUE)) # 17446.36 km2 ok lines up well with what Rich has... Most of mine is coming from trimmings though which seems odd...
-
-plot(log(app(compare_rich, "sum", na.rm = TRUE)+1))
-combine_rich <- app(compare_rich, "sum", na.rm = TRUE)
-
-100000/17446.36 # = 5.731855
 
 ```
 
@@ -617,6 +618,7 @@ kuempel_fofm_dist <- read.csv(here("prep/02_feed/test/sum_pressures_country.csv"
          stressor == "disturbance"
          )
 
-sum(kuempel_fofm_dist$value) # 80902.86... surprisingly similar lol
+sum(kuempel_fofm_dist$value) # 80902.86... makes sense as they likely over estimate by a lot
 ```
+
 

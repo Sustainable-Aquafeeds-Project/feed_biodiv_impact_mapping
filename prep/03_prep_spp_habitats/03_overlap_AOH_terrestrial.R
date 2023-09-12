@@ -25,8 +25,10 @@ ingredient_files <- list.files(here("prep/02_feed/output/resampled"), full.names
 
 chunk_size = 112 # choosing this as a chunk size since it is a multiple of 14 (the number of cores I'm using). This way it will do exactly 112 species at a time
 
-for(i in seq(1, length(aoh_files), chunk_size)) {
-  # i = 1
+## 1569 didn't work 
+
+for(i in seq(1681, length(aoh_files), chunk_size)) {
+  # i = 1569
   
   chunk_aoh_files <- aoh_files[i:min(i + chunk_size -1, length(aoh_files))]
   
@@ -67,9 +69,9 @@ for(i in seq(1, length(aoh_files), chunk_size)) {
       spp_overlap_df <- data.frame(
         sciname = this_spp_name,
         allocation = this_allocation_type,
-        crop_ingredient = this_crop_ingredient_name, 
+        ingredient = this_crop_ingredient_name, 
         diet = this_diet_type, 
-        aoh_crop_overlap = global(spp_crop_overlap_rast, "sum", na.rm = TRUE)$sum,
+        aoh_overlap = global(spp_crop_overlap_rast, "sum", na.rm = TRUE)$sum,
         aoh_area_orig = aoh_orig
       )
       

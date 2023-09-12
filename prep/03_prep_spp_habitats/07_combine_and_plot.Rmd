@@ -1,0 +1,262 @@
+---
+title: "Summary plots"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+## Setup
+
+Load libraries
+
+```{r setup, include=FALSE}
+
+library(tidyverse)
+library(here)
+library(data.table)
+library(terra)
+library(raster)
+library(rnaturalearth)
+library(strex)
+library(janitor)
+library(sf)
+
+source(here("src/directories.R"))
+
+source(here("src/spatial.R"))
+
+select <- dplyr::select
+
+
+aoh_dir <- file.path(rdsi_raw_data_dir, "AOH_lumbierres/reprojected/")
+```
+
+
+Read in marine and terrestrial dfs and combine
+
+```{r}
+marine_overlap <- readRDS(here("prep/03_prep_spp_habitats/output/aoh_marine_overlap.rds")) %>%
+  dplyr::select(-gapfill_flag, -feed_filepath) %>%
+  mutate(allocation = ifelse(allocation == "ge", "gross energy", allocation)) %>%
+  mutate(spp_type = ifelse(spp_type == "Microorganisms", "Marine microorganisms", spp_type)) %>%
+  dplyr::select(-aoh_affected, aoh_affected = aoh_affected_test)
+
+
+terrestrial_overlap <- readRDS(here("prep/03_prep_spp_habitats/output/aoh_terrestrial_mammals_birds_overlap.rds")) %>% 
+  group_by(sciname, diet, allocation, ingredient, spp_type) %>%
+  summarise(suitability = mean(suitability, na.rm = TRUE),
+            aoh_overlap = sum(aoh_overlap, na.rm = TRUE),
+            aoh_area_orig = mean(aoh_area_orig, na.rm = TRUE),
+            aoh_affected = sum(aoh_affected, na.rm = TRUE),
+            total_ingredient_km2 = mean(total_ingredient_km2, na.rm = TRUE)) %>%
+  ungroup() %>%
+  filter(allocation != "economic") %>%
+    mutate(allocation = ifelse(allocation == "ge", "gross energy", allocation))
+
+
+all_overlap <- rbind(marine_overlap, terrestrial_overlap)
+
+
+```
+
+
+Make summary plots
+
+```{r}
+
+## total AOH affected   
+summary_df <- all_overlap %>%
+  group_by(diet, allocation, ingredient) %>%
+  summarise(total_aoh_affected = sum(aoh_affected, na.rm = TRUE)) %>%
+  ungroup()
+
+summary_df$ordered_ingredient <- with(summary_df, reorder(ingredient, total_aoh_affected, FUN = function(x) sum(x)))
+
+
+ggplot(summary_df, aes(x = ordered_ingredient, y = total_aoh_affected)) + 
+  geom_bar(stat = "identity") +
+  theme_minimal() +
+  facet_grid(diet~allocation) +
+    coord_flip() +
+  labs(title = "Global AOH Affected (~16000 species)", x = "Raw material and Ingredient", y = expression(paste("Total AOH Affected (", km^{2}, ")")))
+
+## Split by class total AOH
+summary_df <- all_overlap %>%
+  group_by(diet, allocation, ingredient, spp_type) %>%
+  summarise(total_aoh_affected = sum(aoh_affected, na.rm = TRUE)) %>%
+  ungroup() 
+
+summary_df$ordered_ingredient <- with(summary_df, reorder(ingredient, total_aoh_affected, FUN = function(x) sum(x)))
+
+ggplot(summary_df, aes(x = ordered_ingredient, y = total_aoh_affected, fill = spp_type)) +
+    geom_bar(stat = "identity", position = "dodge") +
+  facet_grid(diet ~ allocation, scales = "free_y") +
+  labs(title = "Global AOH Affected (39822 species)", x = "Raw material and Ingredient", y = expression(paste("Total AOH Affected (", km^{2}, ")")), fill = NULL) +
+  #scale_fill_manual(values = c("Bird" = "deepskyblue", "Mammal" = "forestgreen")) +
+  theme_minimal() + 
+  coord_flip() 
+
+
+## Split by class average AOH
+summary_df <- all_overlap %>%
+  group_by(diet, allocation, ingredient, spp_type) %>%
+  summarise(mean_aoh_affected = mean(aoh_affected, na.rm = TRUE),
+            sd_aoh_affected = sd(aoh_affected, na.rm = TRUE)) %>%
+  ungroup() 
+
+summary_df$ordered_ingredient <- with(summary_df, reorder(ingredient, mean_aoh_affected, FUN = function(x) sum(x)))
+
+ggplot(summary_df, aes(x = ordered_ingredient, y = mean_aoh_affected, fill = spp_type)) +
+    geom_bar(stat = "identity", position = "dodge") +
+# geom_errorbar(aes(ymin = mean_aoh_affected, ymax = mean_aoh_affected + sd_aoh_affected), position = position_dodge(width = 0.9), width = 0.25) + 
+  facet_grid(diet ~ allocation, scales = "free_y") +
+  labs(title = "Average AOH Affected", x = "Raw materaial and Ingredient", y = expression(paste("Average AOH Affected (", km^{2}, ")")), fill = NULL) +
+  # scale_fill_manual(values = c("Bird" = "deepskyblue", "Mammal" = "forestgreen")) +
+  theme_minimal() + 
+  coord_flip() 
+
+
+
+## Split by class average AOH .. this one isn't super interesting
+summary_df <- all_overlap %>%
+  group_by(diet, allocation, spp_type) %>%
+  summarise(mean_aoh_affected = mean(aoh_affected, na.rm = TRUE),
+            sd_aoh_affected = sd(aoh_affected, na.rm = TRUE),
+            mean_aoh_orig = mean(aoh_area_orig, na.rm = TRUE)) %>%
+  ungroup()
+
+summary_df$spp_type <- with(summary_df, reorder(spp_type, mean_aoh_affected, FUN = function(x) sum(x)))
+
+
+ggplot(summary_df, aes(x = spp_type, y = mean_aoh_affected, fill = spp_type)) +
+    geom_bar(stat = "identity", position = "dodge") +
+# geom_errorbar(aes(ymin = mean_aoh_affected, ymax = mean_aoh_affected + sd_aoh_affected), position = position_dodge(width = 0.9), width = 0.25) + 
+  facet_grid(diet ~ allocation, scales = "free") +
+  labs(x = "Raw material and Ingredient", y = expression(paste("Average AOH Affected (", km^{2}, ")")), fill = NULL) +
+  # scale_fill_manual(values = c("Bird" = "deepskyblue", "Mammal" = "forestgreen")) +
+  theme_minimal() + 
+  coord_flip() 
+
+
+```
+
+
+
+Make a plot! 
+
+Coragyps_atratus (Black Vulture) and Giant Anteater have a ton of overlap with soy protein concentrate under plant-dominant and mass allocation. 
+
+ 
+
+```{r}
+countries_shp <- ne_countries(scale = 110, returnclass = "sf") |> st_transform(crs(moll_template)) %>%
+  filter(continent %in% c("North America", "South America"))
+
+this_crop_ingredient_raster <- rast(here("prep/02_feed/output/resampled/plant-dominant/Soybean_soy protein concentrate_mass_A.tif"))
+plot(this_crop_ingredient_raster)
+global(this_crop_ingredient_raster, "sum", na.rm = TRUE) # 3315.874
+
+this_spp_rast <- rast(list.files(file.path(rdsi_raw_data_dir, "AOH_lumbierres/reprojected/"), full.names = TRUE, pattern = "Coragyps_atratus|Myrmecophaga_tridactyla"))
+plot(this_spp_rast)
+
+spp_names <- file_path_sans_ext(basename(list.files(file.path(rdsi_raw_data_dir, "AOH_lumbierres/reprojected/"), full.names = TRUE, pattern = "Coragyps_atratus|Myrmecophaga_tridactyla")))
+
+overlap_rast <- this_crop_ingredient_raster*this_spp_rast 
+
+common_names <- lapply(str_replace_all(spp_names, "_", " "), rl_common_names, key = api_key)
+
+
+common_names_df <- data.frame(
+  name = sapply(common_names[1], function(x) x$name),
+  taxonname = sapply(common_names[1], function(x) x$result$taxonname)
+) %>%
+  add_row(name = "Myrmecophaga tridactyla", 
+         taxonname = "Giant Anteater")
+
+names(overlap_rast) <- common_names_df$taxonname
+
+plot(overlap_rast)
+global(overlap_rast, "sum", na.rm = TRUE) 
+
+# the overlap km2 is 2159.096/3315.874 = ~65% of the total cropland for soy protein concentrate
+
+#                             sum
+# American Black Vulture 2159.096
+# White-tailed Kite      1822.080
+# Guira Cuckoo           1834.975
+# Giant Anteater         1009.906
+
+spc_overlap_pct <- data.frame((global(overlap_rast, "sum", na.rm = TRUE)/3315.874)*100) %>%
+  rownames_to_column(var = "Species") %>%
+  rename(pct_overlap = sum)
+
+ggplot(spc_overlap_pct, aes(x = Species, y = pct_overlap, fill = Species)) + 
+  geom_bar(stat = "identity") +
+  theme_bw() +
+  labs(title = "Percent of SPC production area that overlaps with species habitats", x = "Species", y = "Percent (%)")
+
+#                            sum
+# Ammodramus_humeralis 0.5426815
+# Coragyps_atratus     0.6511395
+# Elanus_leucurus      0.5495022
+# Guira_guira          0.5533911
+
+
+overlap_df <- as.data.frame(overlap_rast, xy = TRUE) %>%
+  pivot_longer(cols = c(3:4), names_to = "species")
+
+names(this_spp_rast) <- common_names_df$taxonname
+spp_aoh_df <- as.data.frame(this_spp_rast, xy = TRUE) %>%
+  pivot_longer(cols = c(3:4), names_to = "species")
+
+crop_df <- as.data.frame(crop(this_crop_ingredient_raster, vect(countries_shp)), xy = TRUE)
+
+
+
+ggplot() + 
+  geom_sf(data = countries_shp, fill = "grey", colour = "white") + 
+   geom_raster(data = spp_aoh_df %>% filter(value >0), aes( x= x, y = y), color = "green") +
+   geom_raster(data = overlap_df %>% filter(value >0), aes( x= x, y = y, fill = value)) + 
+  facet_wrap(~species) +
+  labs(fill = expression(paste(km^{2}, " overlap")), title = "How does AOH overlap with soy production for SPC?", subtitle = "Mass allocation; Plant-Dominant", caption = "Black areas are the AOH") + 
+  scale_fill_gradientn(colors = (RColorBrewer::brewer.pal(n=9, name = "YlOrRd"))) +
+  theme_minimal() +
+      theme(
+          axis.title = element_blank()) 
+
+
+
+ggplot() + 
+  geom_sf(data = countries_shp, fill = "grey", colour = "white") + 
+ geom_raster(data = spp_aoh_df %>% filter(value >0), aes( x= x, y = y, fill = value)) + 
+  facet_wrap(~species) + 
+  labs(title = "Area of Habitat (AOH)") + 
+  theme_minimal() + 
+    theme(legend.position = "none",
+          axis.title = element_blank()) 
+
+
+# ggplot() + 
+#   geom_sf(data = countries_shp, fill = "grey", colour = "white") + 
+#  geom_raster(data = crop_df %>% filter(coef >0), aes( x= x, y = y, fill = coef)) +
+#   scale_fill_gradientn(colors = (RColorBrewer::brewer.pal(n=9, name = "YlOrRd"))) + 
+#     labs(fill = "km2", title = "SPC crop area", subtitle = "Mass allocation; Plant-Dominant") + 
+#     theme_minimal()
+
+ggplot() + 
+  geom_sf(data = countries_shp, fill = "grey", colour = "white") + 
+   geom_raster(data = spp_aoh_df %>% filter(value >0), aes( x= x, y = y), color = "green") +
+      geom_raster(data = crop_df %>% filter(coef >0), aes( x= x, y = y, fill = coef)) +
+  facet_wrap(~species) +
+  labs(fill = expression(paste(km^{2}, " soy")), title = "How does AOH overlap with soy production for SPC?", subtitle = "Mass allocation; Plant-Dominant") +
+    scale_fill_gradientn(colors = (RColorBrewer::brewer.pal(n=9, name = "YlOrRd"))) + 
+  theme_minimal() + 
+      theme(
+          axis.title = element_blank()) 
+  
+
+
+
+```
+  
+  

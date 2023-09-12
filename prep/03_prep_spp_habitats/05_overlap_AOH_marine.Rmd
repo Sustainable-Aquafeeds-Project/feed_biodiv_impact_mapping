@@ -1,0 +1,563 @@
+---
+title: "Overlap Aquamaps suitable habitat with feed rasters"
+name: "Gage Clawson"
+date: "September 12, 2023"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+## Summary 
+
+In this script we overlap [Aquamaps probability of suitable habitat maps](https://www.aquamaps.org/) with our disturbance pressure maps created in the `02_feed` folder. The goal of this script is to create exposure maps, that is, the area of likely suitable habitat (>0.6 probability) for each species that is exposed to harvest of forage or trimmings fish that is ultimately processed into FMFO. To do this, we: 
+
+ - We have created maps of disturbance (km2) of harvest of forage and trimmings fish species that end up as FMFO. They have these categories: 
+    - Ingredient type; Fish oil or fish meal
+    - Allocation type; mass, energetic, or economic
+    - Diet type; feed formulation; plant-dominant or fish-dominant
+    - Fish type; forage or trimmings species 
+    - Depth zone; reef, pelagic, bentho-pelagic, or benthic 
+    - Gear type ? 
+    
+ - Categorize each Aquamaps species into depth zones of reef, pelagic, bentho-pelagic, or benthic. This code was adapted from Casey O'Hara (O'Hara et al. 2023, in prep), and pulls from Fishbase, Sealifebase, and Butt et al. 2022 to obtain the appropriate depth ranges; https://github.com/mapping-marine-spp-vuln/spp_vuln_mapping/tree/master
+ - Clip downscaled and re-projected Aquamaps species suitable habitat maps (>0.6 probability) (from 0.5 to ~10km resolution) to a bathymetric layer, so as to constrain neritic and shallow-water species to areas no deeper than 200 m (adapted from O'Hara et al. 2021). 
+ - Overlap re-projected and clipped Aquamaps species suitable habitat maps with the appropriate disturbance rasters based on depth range. This will provide a km2 estimate of the amount of suitable habitat that is exposed to harvest of forage or trimmings fish used for FMFO. 
+
+
+## References
+
+* Froese, R. and D. Pauly, Editors. 2000. FishBase 2000: concepts, design and data sources. ICLARM, Los Baños, Laguna, Philippines. 344 p.
+* Houde, E.D. and C.E. Zastrow. 1993. Ecosystem- and taxon-specific dynamic energetics properties of fish larvae assemblages. Bull. Mar. Sci. 53(2):290-335.
+* Sa-a, P., M.L. Palomares and D. Pauly. 2000. The FOOD ITEMS table, p. 182-188. In R. Froese and D. Pauly (eds.) FishBase 2000: concepts, design and data sources. ICLARM, Los Baños, Laguna, Philippines. 344 p.
+* Welcomme, R.L. 1988. International introductions of inland aquatic species. FAO Fish. Tech. Pap. 294, 318 p.
+* Butt, N. et al. 2022.
+* Kaschner, K., Kesner-Reyes, K., Garilao, C., Segschneider, J., Rius-Barile, J. Rees, T., & Froese, R. (2019, October). AquaMaps: Predicted range maps for aquatic species. Retrieved from https://www.aquamaps.org.
+* O'Hara et al. 2023 in prep 
+* Casey C. O’Hara et al., At-risk marine biodiversity faces extensive, expanding, and intensifying human impacts.Science372,84-87(2021).DOI:10.1126/science.abe6731
+
+FishBase is a scientific database, and this has the implication - among others - that its use and the use of its contents are free as long as due credit is given.
+
+This may be done at different levels, for which we suggest different forms of citations:
+
+* when referring to FishBase concepts and design, cite its architects (Froese and Pauly 2000);
+* when referring to a set of values extracted from a FishBase table, cite the author(s) of the original data, e.g., "Houde and Zastrow (1993)", or "Welcomme (1988)". To help us track the use of FishBase in the literature, we would appreciate your also citing Froese and Pauly (2000) in an appropriate part of your text, as the source of the information;
+* when discussing the features of a FishBase table, cite the section documenting that table, e.g., "Sa-a et al. (2000)."
+
+
+## Setup 
+
+```{r setup, include=FALSE}
+
+library(tidyverse)
+library(tidyr)
+library(here)
+library(sf)
+library(data.table)
+library(dtplyr)
+library(terra)
+library(parallel)
+library(strex)
+library(janitor)
+library(readxl)
+library(rfishbase)
+
+source(here("src/directories.R"))
+
+source(here("src/spatial.R"))
+
+aquamaps_dir <- file.path(rdsi_raw_data_dir, "aquamaps")
+
+
+gall_peters <- "+proj=cea +lon_0=0 +x_0=0 +y_0=0 +lat_ts=45 +ellps=WGS84 +datum=WGS84 +units=m +no_defs"
+#raster template 
+base_rast <- rast(res=0.5)
+ext(base_rast) <- c(-180, 180, -90, 90)
+
+```
+
+Read in Aquamaps data and filter for prob > 0.6
+
+```{r}
+
+aquamaps_csv <- read.csv(file.path(aquamaps_dir, "GTE10_HSPEC_NATIVE/hcaf_species_native_gte10.csv"))
+
+# colnames(aquamaps_csv)
+# length(unique(aquamaps_csv$SpeciesID)) # 23699... each have a distinct id. README says that ids are from catalogueoflife.org
+
+aquamaps_spp <- read.csv(file.path(aquamaps_dir, "GTE10_SPECIESOCCURSUM/speciesoccursum_gte10.csv")) %>%
+  distinct(SpeciesID, SpecCode, Genus, Species, FBname)
+
+
+aquamaps_spp_df <- aquamaps_csv %>%
+  filter(Probability > 0.6) %>%
+   left_join(aquamaps_spp, by = "SpeciesID")
+
+rm(aquamaps_csv)
+
+
+# test <- aquamaps_spp_df %>%
+#   filter(Genus == "Carcharodon",
+#          Species == "carcharias") %>%
+#   dplyr::select(CenterLong, CenterLat, Probability)
+# 
+# plot(rast(test, type = "xyz", crs = base_rast))
+
+```
+
+
+### Find depth information for all aquamaps species
+
+Grab depth information (continuous depth values) that Aquamaps team provided. Then we need to classify each species into "reef associated", "pelagic", "bentho-pelagic", and "benthic", for exposure calculations. These depth classifications are based on depth classifications in Butt et al. 2022 and O'Hara et al. 2023 (in prep).
+
+
+```{r}
+## grab continuous depth values; provided directly by Aquamaps team
+aquamaps_depth <- read.csv(file.path(aquamaps_dir, "ver10_2019_hspen.csv"), sep="\t", header=TRUE) %>%
+  dplyr::select(SpeciesID, SpecCode = Speccode, DepthPrefMin, DepthPrefMax) %>%
+  right_join(aquamaps_spp) %>%
+  mutate(species = paste0(tolower(Genus), " ", Species))
+
+## now we need to classify those depth values into "reef", "pelagic", "bentho-pelagic", and "benthic". We can start this by reading in depth information from the trait-based assessment (Butt et al., 2022). Code taken from Casey O'Hara spp_vuln_mapping project: https://github.com/mapping-marine-spp-vuln/spp_vuln_mapping/blob/master/1_setup/functional_traits/1d_collect_water_col_pos.Rmd#L38
+
+vuln_info <- read.csv(here("prep/03_prep_spp_habitats/data/spp_vuln_butt/spp_traits_valid.csv")) %>% # dataset downloaded from KNB: https://knb.ecoinformatics.org/view/doi%3A10.5063%2FF1FX77VJ
+  filter(trait %in% c('zone', 'terrestrial_and_marine_life_stages', 
+                      'within_stage_dependent_habitats_condition', 
+                      'across_stage_dependent_habitats_condition', 
+                      'air_sea_interface'))
+
+
+btm_terms <- c('bottom', 'slope', 'shelf', 'mud', 
+               'benth', 'rubble', 'intertid', 'demersal') %>%
+  paste0(collapse = '|') # terms associated with bottom/benthic
+
+reef_terms <- c('reef') %>%
+  paste0(collapse = '|') # reef terms 
+
+mid_terms <- c('pelagic', 'mid', 'ocean') %>%
+  paste0(collapse = '|') # midwater terms, e.g., pelagic
+
+depth_vuln_downfill <- vuln_info %>%
+  group_by(taxon, spp_gp) %>%
+  summarize(trait_value = paste0(trait_value, collapse = ';'), .groups = 'drop') %>%
+  fill(.direction = "down") # downfill any missing depth values (I don't think there are any missing?)
+
+depth_vuln_score <- depth_vuln_downfill %>%
+  rowwise() %>%
+  mutate(pelagic = any(str_detect(trait_value, mid_terms)),
+         benthic = any(str_detect(trait_value, btm_terms)),
+         reef    = any(str_detect(trait_value, reef_terms)),
+         .groups = 'drop') %>% # categorize into benthic, pelagic, or reef
+  ungroup() %>%
+  mutate(reef = ifelse(taxon == 'sponges', TRUE, reef)) %>%
+  dplyr::select(taxon, species = spp_gp, benthic, pelagic, reef) %>%
+  distinct()
+
+
+```
+
+Get depth categorizations from Fishbase and Sealifebase 
+
+```{r}
+
+# first look in Fishbase
+
+spp_list <- aquamaps_spp %>%
+  unite("spp_name", Genus:Species, sep = " ") %>%
+  pull(spp_name)
+
+species_info_fb <- species(spp_list) %>%
+  dplyr::select(species = Species, SpecCode, DemersPelag) %>%
+  filter(!is.na(DemersPelag)) %>%
+    mutate(benthic = str_detect(DemersPelag, 'benth|sessile|demersal'),
+         pelagic = str_detect(DemersPelag, 'pelagic'),
+         reef    = str_detect(DemersPelag, 'reef')) %>%
+  dplyr::select(-DemersPelag) %>%
+  filter(benthic | pelagic | reef) %>%
+  mutate(taxon = NA) %>%
+  mutate(species = tolower(species))
+
+# now look in Sealifebase
+
+species_info_slb <- species(spp_list, server = "sealifebase") %>%
+  dplyr::select(species = Species, SpecCode, DemersPelag) %>%
+  filter(!is.na(DemersPelag)) %>%
+    mutate(benthic = str_detect(DemersPelag, 'benth|sessile|demersal'),
+         pelagic = str_detect(DemersPelag, 'pelagic'),
+         reef    = str_detect(DemersPelag, 'reef')) %>%
+  dplyr::select(-DemersPelag) %>%
+  filter(benthic | pelagic | reef) %>%
+  mutate(taxon = NA) %>%
+  mutate(species = tolower(species))
+
+species_info <- rbind(species_info_slb, species_info_fb)
+
+
+# rbind fishbase and vuln datasets
+fb_vuln_depth_df <- depth_vuln_score %>%
+  filter(!species %in% species_info$species) %>%
+  mutate(source = 'vuln_traits') %>%
+  bind_rows(species_info %>%
+              mutate(source = 'fishbase')) %>%
+  gather(value, bool, benthic, pelagic, reef) %>%
+  filter(bool == TRUE) %>%
+  dplyr::select(species, value, source, taxon) %>%
+  mutate(genus = str_extract(species, '[a-z]+(?= ?)')) %>%
+  distinct() 
+  
+```
+
+**Now we need to join the depth category information with the aquamaps depth information and gapfill any missing categories**
+
+For processing, consider trait categories (in order of preference, but not an ordered category) of benthopelagic, pelagic, reef, benthic.  Few reef species are pelagic; this order will assign those to benthopelagic (along with all others that are both benthic and pelagic).  
+
+Remaining pelagic species will not be benthic or reef-associated.  
+
+Some reef spp are also benthic, but reef association seems more likely to be important as a trait, so these will be assigned as reef. 
+
+Because many species from FishBase/vulnerability paper appear to have non-matched names from aquamaps (e.g., unaccepted synonyms), while many aquamaps species in the same genus are unscored, use genus-level (then family, order, class, phylum, and kingdom, in that order) gapfill to assign traits from unmatched species to aquamaps-matched species. Identify genera with more than one scored spp; select those traits that appear in the majority of the genus (e.g., use the mode).
+ - Gapfilling is only necessary for ~3% of the species. 
+
+```{r}
+
+aquamaps_info <- read.csv(file.path(aquamaps_dir, "GTE10_SPECIESOCCURSUM/speciesoccursum_gte10.csv"))
+
+aquamaps_depth_cats <- aquamaps_depth %>% 
+  left_join(fb_vuln_depth_df) %>%
+  mutate(genus = tolower(Genus)) %>%
+  dplyr::select(-Genus) %>%
+  left_join(aquamaps_info) # join everything together and see how much we are missing
+
+test <- aquamaps_depth_cats %>%
+  filter(is.na(value)) ## ok so missing 654/23699 = ~3% of depth categories for species 
+
+
+
+
+mode <- function(x) { names(which.max(table(x))) }
+
+results_df <- aquamaps_depth_cats %>%
+  mutate(x = TRUE) %>%
+  spread(value, x) %>%
+  ### Coerce mammals, birds, and reptiles to be pelagic, indicating presence above
+  ### the bottom - no air breathing creature is truly benthic!
+  mutate(pelagic = ifelse(taxon %in% c('seabirds', 'marine_mammals', 'reptiles'), TRUE, pelagic)) %>%
+  mutate(pelagic = 
+           case_when(
+    Class == "Mammalia" ~ TRUE,
+    Class == "Aves" ~ TRUE,
+    Class %in% c("Reptilia", "Amphibia") ~ TRUE, 
+    TRUE ~ pelagic
+  )) %>%
+  mutate(depth_position = case_when(benthic & pelagic ~ 'benthopelagic',
+                           pelagic ~ 'pelagic',
+                           reef ~ 'reef',
+                           benthic ~ 'benthic',
+                           TRUE ~ 'oops')) %>%
+  dplyr::select(species, genus, depth_position, source, DepthPrefMin, DepthPrefMax, FBname, SpeciesID, SpecCode, Class, Family, Order, Phylum, Kingdom) %>%
+  distinct() 
+
+genus_mode <- fb_vuln_depth_df %>%
+  group_by(genus) %>%
+  mutate(nspp = n_distinct(species)) %>%
+  group_by(genus, value, nspp) %>%
+  summarize(nspp_val = n_distinct(species), .groups = 'drop') %>%
+  mutate(pct_spp = nspp_val / nspp) %>%
+  filter(pct_spp >= .50) %>%
+  filter(nspp > 1) %>%
+  dplyr::select(genus, mode_depth_genus = value) %>%
+  distinct()
+
+
+family_mode <- results_df %>%
+    group_by(Family) %>%
+  summarise(mode_depth_family = mode(depth_position)) %>% # gapfill any missing ones with the mode from their Family
+  ungroup()
+
+order_mode <- results_df %>%
+    group_by(Order) %>%
+  summarise(mode_depth_order = mode(depth_position)) %>% # gapfill any missing ones with the mode from their Family
+  ungroup()
+
+class_mode <- results_df %>%
+    group_by(Class) %>%
+  summarise(mode_depth_class = mode(depth_position)) %>% # gapfill any missing ones with the mode from their Family
+  ungroup()
+
+phylum_mode <- results_df %>%
+    group_by(Phylum) %>%
+  summarise(mode_depth_phylum = mode(depth_position)) %>% # gapfill any missing ones with the mode from their Family
+  ungroup()
+
+kingdom_mode <- results_df %>%
+    group_by(Kingdom) %>%
+  summarise(mode_depth_kingdom = mode(depth_position)) %>% # gapfill any missing ones with the mode from their Family
+  ungroup()
+
+
+  
+results_df_gf <- results_df %>% 
+  left_join(genus_mode) %>%
+    mutate(depth_position = ifelse(depth_position == "oops"|is.na(depth_position), mode_depth_genus, depth_position),
+         source = ifelse(depth_position == "oops"|is.na(depth_position), "genus gapfill", source)) %>%
+  left_join(family_mode) %>%
+  mutate(depth_position = ifelse(depth_position == "oops"|is.na(depth_position), mode_depth_family, depth_position),
+         source = ifelse(depth_position == "oops"|is.na(depth_position), "family gapfill", source)) %>%
+  left_join(order_mode) %>%
+  mutate(depth_position = ifelse(depth_position == "oops"|is.na(depth_position), mode_depth_order, depth_position), 
+         source = ifelse(depth_position == "oops"|is.na(depth_position), "order gapfill", source)) %>%
+  left_join(class_mode) %>%
+  mutate(depth_position = ifelse(depth_position == "oops"|is.na(depth_position), mode_depth_class, depth_position), 
+         source = ifelse(depth_position == "oops"|is.na(depth_position), "class gapfill", source))  %>%
+    left_join(phylum_mode) %>%
+  mutate(depth_position = ifelse(depth_position == "oops"|is.na(depth_position), mode_depth_phylum, depth_position), 
+         source = ifelse(depth_position == "oops"|is.na(depth_position), "phylum gapfill", source)) %>%
+      left_join(kingdom_mode) %>%
+  mutate(depth_position = ifelse(depth_position == "oops"|is.na(depth_position), mode_depth_kingdom, depth_position), 
+         source = ifelse(depth_position == "oops"|is.na(depth_position), "kingdom gapfill", source)) %>%
+  dplyr::select(species, genus, depth_position, source, DepthPrefMin, DepthPrefMax, FBname, SpeciesID, SpecCode) %>%
+  distinct()
+
+
+dups <- duplicated(results_df_gf$species) # we have some duplicates, as evidenced in the number of rows in our results df. Let's fix those. These are mostly because some species are both benthic and pelagic, and need to be recategorized...
+
+dup_spps <- results_df_gf[dups, ]
+
+dups_results <- results_df_gf %>% 
+  filter(species %in% c(dup_spps$species)) %>% 
+  pivot_wider(names_from = depth_position, values_from = depth_position) %>%
+  mutate(depth_position = case_when(
+    benthic == "benthic" & reef == "reef" ~ "reef",
+    benthic == "benthic" & pelagic == "pelagic" ~ "benthopelagic",
+    TRUE ~ "oops"
+  )) %>%
+  dplyr::select(-benthic, -reef, -pelagic)
+
+results_df_fin <- results_df_gf %>%
+  filter(!(species %in% c(dups_results$species))) %>%
+  rbind(dups_results) %>%
+  dplyr::select(-FBname) # rebind the fixed dups
+
+length(results_df_fin$species) # 23699 perfect
+
+write.csv(results_df_fin, here("prep/03_prep_spp_habitats/int/spp_depth_info.csv"), row.names = FALSE) # save
+
+
+am_spp_depth_df <- aquamaps_spp_df %>%
+  left_join(results_df_fin)
+
+length(unique(am_spp_depth_df$SpeciesID)) # 23697... hmmm missing two species? 
+
+setdiff(results_df_fin$species, am_spp_depth_df$species) # [1] "artedidraco mirus"      "careproctus georgianus"
+
+# Both have really small ranges, and no probabilities >0.6, therefore they were cut out. Makes sense. 
+
+write.csv(am_spp_depth_df, file.path(aquamaps_dir, "aquamaps_0.6_depth_prepped.csv"), row.names = FALSE) # save file
+
+```
+
+**Write depth clipping function**
+
+Need to clip the Aquamaps like this: "These were subsequently clipped to a bathymetric to
+constrain neritic and shallow-water species to areas no deeper than 200 m."
+
+Here we create a depth function for clipping to appropriate depths.
+
+```{r}
+rast_shallow <- rast(here("prep/03_prep_spp_habitats/data/spatial/bathy_mol_shallow.tif")) # taken from casey's project 
+rast_neritic <- rast(here("prep/03_prep_spp_habitats/data/spatial/bathy_mol_neritic.tif"))
+rast_bathy <- rast(here("prep/03_prep_spp_habitats/data/spatial/bathy_mol.tif"))
+
+
+clip_to_depth <- function(spp_rast, spp_df) {
+  ### depth clip if necessary; otherwise clip to bathy raster (which previously
+  ### was clipped to area raster - so cells with any marine area will be kept,
+  ### and non-marine cells will be dropped).
+  ### Manual adds of shallow spp:
+  
+  max_depth <- unique(spp_df$DepthPrefMax)
+  
+  if(is.na(max_depth)){
+    max_depth = 201
+  }
+  
+  if(max_depth < 20) {
+    ### intertidal, very shallow spp
+    spp_rast <- mask(spp_rast, rast_shallow)
+  } else if(max_depth < 200) {
+    ### spp on the continental shelf
+    spp_rast <- mask(spp_rast, rast_neritic)
+  } else{
+    ### rast_bathy covers the entire ocean - effectively masks out land
+    spp_rast <- mask(spp_rast, rast_bathy)
+  }
+  
+  return(spp_rast)
+}
+```
+
+### Species overlap loop
+
+Now overlap the species suitable habitat areas with the FMFO disturbance rasters. 
+
+ - Clip species based on depth and bathymetric rasters
+ - Overlap gear and depth pressure rasters with appropriate species rasters 
+ - Save km2 of overlap (if there is any) with columns describing allocation, diet, species, depth range, gear type, and ingredient. 
+
+```{r}
+am_spp_depth_df <- read.csv(file.path(aquamaps_dir, "aquamaps_0.6_depth_prepped.csv"))
+
+# Overlap all species AOH with fish feed ingredient rasters! This takes ~6.5 hours to run. 
+
+spp_names <- unique(am_spp_depth_df$SpeciesID)
+
+# spp_names <- spp_to_run # use this if rerunning based on setdiff in chunk below
+
+ingredient_files <- list.files(here("prep/02_feed/output/resampled"), full.names = TRUE, recursive = TRUE, pattern = "fish_.*_A")
+
+
+chunk_size = 112 # choosing this as a chunk size since it is a multiple of 14 (the number of cores I'm using). This way it will do exactly 112 species at a time
+
+# 3921, 14897 aren't working
+
+for(i in seq(1, length(spp_names), chunk_size)) {
+  # i = 1
+  
+  chunk_spp_names <- spp_names[i:min(i + chunk_size -1, length(spp_names))]
+  
+  chunk_spp_names <- chunk_spp_names[!(chunk_spp_names %in% c("Fis-32191", "SLB-184666", "Fis-148871"))] # these two aren't working for some reason...     # Fis-32191 throwing this: Error: [rast] cannot create a raster geometry from a single y coordinate
+
+  
+  # Start timing
+  start_time <- proc.time()
+  
+  chunk_marine_aoh <- mclapply(X = chunk_spp_names, FUN = \(this_spp){
+    
+    #isolate species
+    #this spp id
+ #   this_spp <- chunk_spp_names[[112]]
+   # this_spp = "Fis-32191"
+   # this_spp = "Fis-148871"
+    # this_spp = "Fis-22721"
+    
+    ## ok so we are getting errors on some of these species because they don't have any AOH due to our >0.6 probability filter. We need to skip these somehow. 
+    
+  
+    this_spp_name <- basename(this_spp)
+    
+    this_spp_df <- am_spp_depth_df %>%
+      filter(SpeciesID == this_spp) %>% 
+      dplyr::select(CenterLong, CenterLat, DepthPrefMax, depth_position) %>%
+      mutate(presence = 1)
+    
+    if(nrow(this_spp_df) == 0){
+      
+      moll_template_0 <- setValues(moll_template, 0)
+      
+      this_spp_rast <- moll_template_0
+
+      
+    }else{
+    
+   this_spp_rast <- this_spp_df %>%
+     dplyr::select(-DepthPrefMax, -depth_position) %>%
+  rast(., type = "xyz", crs = crs(base_rast))  %>% 
+  project(moll_template, method = "near")
+   
+    
+   
+   this_spp_rast <- clip_to_depth(this_spp_rast, this_spp_df)
+  
+
+    }
+    
+        aoh_orig <- global(this_spp_rast*102.6423, "sum", na.rm = TRUE)$sum
+    
+
+    
+    overlap_list <- map(ingredient_files, \(this_ingredient){
+      
+      # this_ingredient = ingredient_files[13]
+      
+      this_ingredient_name <- str_before_nth(str_before_first(str_after_last(this_ingredient, "/"), ".tif"), "_", 2)
+      
+      this_allocation_type <- str_before_last(str_before_last(str_after_nth(str_after_last(this_ingredient, "/"), "_",  2), "_"), "_")
+      
+      this_diet_type <- str_before_last(str_after_nth(this_ingredient, "/", 9), "/")
+      
+      this_ingredient_raster <- terra::rast(this_ingredient)
+      
+      this_depth_position_spp <- unique(this_spp_df$depth_position)
+      
+            this_depth_position_disturbance <- str_after_last(str_before_last(str_after_nth(str_after_last(this_ingredient, "/"), "_",  2), "_"), "_")
+      
+      if(this_depth_position_spp %in% c("benthopelagic", "reef")){
+       this_depth_position_spp_2 = this_depth_position_disturbance
+      }else{
+        this_depth_position_spp_2 = this_depth_position_spp
+      }
+      
+  
+      if(this_depth_position_spp == this_depth_position_disturbance | this_depth_position_spp_2 == this_depth_position_disturbance){
+      spp_overlap_rast <- this_ingredient_raster*this_spp_rast
+      
+      spp_overlap_df <- data.frame(
+        sciname = this_spp_name,
+        allocation = this_allocation_type,
+        ingredient = this_ingredient_name, 
+        diet = this_diet_type, 
+        spp_depth_pos = this_depth_position_spp,
+        dist_depth_pos = this_depth_position_disturbance, 
+        aoh_overlap = global(spp_overlap_rast, "sum", na.rm = TRUE)$sum,
+        aoh_area_orig = aoh_orig
+      )
+      }else{
+        
+        spp_overlap_df <- data.frame(
+        sciname = this_spp_name,
+        allocation = this_allocation_type,
+        ingredient = this_ingredient_name, 
+        diet = this_diet_type, 
+        spp_depth_pos = this_depth_position_spp,
+        dist_depth_pos = this_depth_position_disturbance, 
+        aoh_overlap = 0,
+        aoh_area_orig = aoh_orig)
+      }
+      
+    })
+    
+    return(bind_rows(overlap_list))
+    
+  },  mc.cores = detectCores()-6)
+  
+  
+  full_df <- bind_rows(chunk_marine_aoh) %>% as_tibble() 
+  # %>%
+  #   filter(allocation != "economic")
+  # test <- readRDS(here("prep/03_prep_spp_habitats/int/aoh_overlay_chunks_marine_older/full_df_chunk_1.rds")) %>%
+  #   filter(sciname %in% c(full_df$sciname))
+  
+  # sum(full_df$aoh_overlap, na.rm = TRUE) 283295.3
+  # sum(test$aoh_overlap) 497324.6 !!! that's already excluding around half! thats great. 
+  
+  
+ saveRDS(full_df, here(sprintf("prep/03_prep_spp_habitats/int/aoh_overlay_chunks_marine/full_df_chunk_%s.rds", i)))
+
+ # saveRDS(full_df, here(sprintf("prep/03_prep_spp_habitats/int/aoh_overlay_chunks_marine/retry_spp/full_df_chunk_%s.rds", i))) ### Use this if rerunning species based on setdiff in chunk below
+  
+  # End timing
+  end_time <- proc.time()
+  
+  # Calculate the elapsed time
+  elapsed_time <- end_time - start_time
+  
+  # Print the elapsed time
+  print(elapsed_time)
+  
+  print(paste("chunk ", i, " out of 23697 finished"))
+  
+  
+}
+
+
+```
+

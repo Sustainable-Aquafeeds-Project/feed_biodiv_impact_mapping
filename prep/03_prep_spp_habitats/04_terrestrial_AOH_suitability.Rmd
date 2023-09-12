@@ -1,0 +1,274 @@
+---
+title: "Overlapping species AOH with feed crops"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+## Setup
+
+Load libraries
+
+```{r setup, include=FALSE}
+
+library(tidyverse)
+library(here)
+library(data.table)
+library(dtplyr)
+library(terra)
+library(raster)
+library(parallel)
+library(rnaturalearth)
+library(strex)
+library(janitor)
+library(rredlist)
+library(sf)
+library(tidyterra)
+library(basemaps)
+library(tools)
+
+source(here("src/directories.R"))
+
+source(here("src/spatial.R"))
+
+select <- dplyr::select
+
+
+aoh_dir <- file.path(rdsi_raw_data_dir, "AOH_lumbierres/reprojected/")
+```
+
+Bind all chunked data together, tidy, and save
+
+```{r}
+
+overlay_df <- purrr::map_df(list.files(here("prep/03_prep_spp_habitats/int/aoh_overlay_chunks_terrestrial/"), full.names = TRUE), readRDS)
+
+length(unique(overlay_df$sciname)) # 18558 - perfect! 
+
+# now lets clean up the data a bit 
+
+mammals_list <- read.csv(here("prep/data/Mammals_list_AOH.csv")) %>%
+  dplyr::select(sciname = BINOMIAL, order = ORDER, iucn_rl_cat = Red_List_Category_2019)
+
+birds_list <- read.csv(here("prep/data/Birds_list_AOH.csv")) %>%
+    dplyr::select(sciname = BINOMIAL, order = Order_, iucn_rl_cat = F2019_Iucn_Red_List_Category)
+
+all_spp_list <- rbind(mammals_list, birds_list)
+
+
+overlay_df_tidy <- overlay_df %>%
+  rename(aoh_filename = sciname) %>%
+  separate(aoh_filename, into = c("first", "second", "bird_type"), sep = "_", remove = FALSE) %>%
+  mutate(sciname = paste(first, second)) %>%
+  mutate(aoh_filepath = paste0(aoh_dir, aoh_filename), 
+         feed_filepath = sprintf(here("prep/02_feed/output/resampled/%s/%s_%s_A.tif"), diet, ingredient, allocation)) %>%
+  dplyr::select(aoh_filename, sciname, bird_type, diet, allocation, ingredient, aoh_overlap, aoh_area_orig, feed_filepath, aoh_filepath) %>%
+  left_join(all_spp_list, by = c("sciname")) %>%
+  mutate(aoh_overlap = ifelse(is.na(aoh_overlap), 0, aoh_overlap))
+
+species_list <- c(unique(overlay_df_tidy$sciname))
+
+writeLines(species_list, here("prep/03_prep_spp_habitats/int/species_list.txt"))
+
+```
+
+Now download and save the species habitat preference data from the IUCN
+
+
+#### Get species habitat info for our species from IUCN API
+
+From the species list, send each IUCN species name into the API to get the habitats listed for that species. Combine all habitat dataframes into a master dataframe of all habitats for all species. Note that many species do not have habitat information and will be listed as NA for habitat variables.
+
+**NOTE: You can do this in the .Rmd or in the .r background job script. I prefer to run it in the background job "04a_pull_hab_info.R, as I can work on other things while I wait for this to finish running. Also, this only needs to be done once!**
+
+```{r}
+
+api_version <- '2022-2'
+
+api_key = read.csv(file.path(rdsi_raw_data_dir, "iucn/api_key/api_token.txt"))
+api_key = colnames(api_key)
+
+species_list <- readLines(here("prep/03_prep_spp_habitats/int/species_list.txt"))
+
+num_chunks <- 16133 / 112  # Number of chunks
+species_chunks <- split(species_list, rep(1:num_chunks, each = 112, length.out = length(species_list)))
+  
+
+pull_habitats <- function(species_chunk, chunk_number) {
+  
+    chunk_filename <- sprintf(here("prep/03_prep_spp_habitats/int/habitat_suitability_chunks/full_df_chunk_%s.rds"), chunk_number)
+
+  # Check if the chunk file already exists
+  if (file.exists(chunk_filename)) {
+    message(paste("Skipping chunk", chunk_number, "as the file already exists."))
+    habitat_df <- readRDS(chunk_filename)
+    return(habitat_df)
+  }
+
+  
+  # Replace 'rl_habitats' with the actual function to pull species habitat information
+  habitat_data <- lapply(species_chunk, rl_habitats, key = api_key)
+  
+  species_data <- list()
+  
+  # Loop through the species list and extract the required information
+for (species in habitat_data) {
+  if (length(species$result) > 0) {
+    # If the result is available, use it
+    species_data[[length(species_data) + 1]] <- data.frame(
+      name = species$name,
+      code = species$result$code,
+      habitat = species$result$habitat,
+      suitability = species$result$suitability,
+      season = species$result$season,
+      majorimportance = species$result$majorimportance
+    )
+  } else {
+    # If the result is not available, create empty data with NAs
+    species_data[[length(species_data) + 1]] <- data.frame(
+      name = species$name,
+      code = NA,
+      habitat = NA,
+      suitability = NA,
+      season = NA,
+      majorimportance = NA
+    )
+  }
+}
+  
+  
+  # Do any data manipulation if needed (e.g., binding rows)
+  habitat_df <- do.call(rbind, species_data)
+  
+  # Save the dataframe as an .rds file
+  saveRDS(habitat_df, file = chunk_filename)
+  
+  return(habitat_df)
+}
+
+
+# Number of cores to use
+num_cores <- detectCores() - 2
+
+# Initialize a parallel backend with the specified number of cores
+cl <- makeCluster(num_cores)
+
+# Use 'mclapply' to run 'pull_habitats' function in parallel for each chunk
+results <- mclapply(seq_along(species_chunks), function(i) {
+  pull_habitats(species_chunks[[i]], i)
+}, mc.cores = num_cores)
+
+# Stop the parallel backend
+stopCluster(cl)
+
+
+```
+
+Estimate species' tolerance for croplands
+
+```{r}
+
+data_list <- lapply(list.files(here("prep/03_prep_spp_habitats/int/habitat_suitability_chunks/"), full.names = TRUE), readRDS)
+
+hab_suitability_df <- bind_rows(data_list) %>%
+  filter(!is.na(name)) %>%
+  mutate(suitable = ifelse(suitability == "Suitable",
+                           yes = 1, no = 0),
+         marginal = ifelse(suitability == "Marginal",
+                           yes = 0.5, no = 0))
+  
+
+# Estimating species' tolerance for agricultural lands----
+cropland_habitats <- c("Artificial/Terrestrial - Arable Land",
+                       "Artificial/Terrestrial - Plantations")
+
+ag_suitability <- hab_suitability_df %>%
+  mutate(is_ag = ifelse(habitat %in% c(cropland_habitats),
+                        yes = "cropland_suitability",
+                        no = "not_ag"),
+         is_ag = factor(is_ag),
+         species = factor(name)) %>%
+  dplyr::select(-suitability, -majorimportance, -name) %>%
+    gather(tmp, suitability_value, 
+         -c(code:season, is_ag, species)) %>%
+  select(-tmp) %>%
+  complete(species, is_ag, fill = list(suitability_value = 0)) %>%
+  filter(is_ag != "not_ag") %>%
+  group_by(species, is_ag) %>%
+  summarise(highest_suitability = max(suitability_value, na.rm = TRUE)) %>%
+  spread(is_ag, highest_suitability) %>%
+  ungroup()
+
+```
+
+Pull total amount of cropland (km2) for each allocation, diet, and aquafeed ingredient
+
+```{r}
+file_list <- list.files(here("prep/02_feed/output/resampled"), full.names = TRUE, recursive = TRUE, pattern = "_A") # 36 - good
+
+rast_list <- rast(file_list)
+
+names_list <- basename(file_list)
+
+
+crops_km2 <- data.frame(feed_filepath = file_list, filename = names_list, total_cropland = global(rast_list, "sum", na.rm = TRUE)) %>%
+  mutate(allocation = str_after_last(str_before_last(filename, "_"), "_"),
+         ingredient = str_before_nth(filename, "_", 2),
+         diet = str_after_last(str_before_last(feed_filepath, "\\/"), "\\/")) %>%
+  dplyr::select(-filename) %>%
+  rename(total_ingredient_km2 = sum)
+
+
+```
+
+
+Bind species' tolerances to the full aoh affected dataframe. Calculate actual amount of AOH that is affected by cropland, based on their habitat preferences. 
+
+```{r}
+mammals_list <- read.csv(here("prep/data/Mammals_list_AOH.csv"))
+
+birds_list <- read.csv(here("prep/data/Birds_list_AOH.csv"))
+
+aoh_df <- overlay_df_tidy %>%
+  left_join(., ag_suitability, by = c("sciname" = "species")) %>%
+  mutate(aoh_affected = aoh_overlap*(1 - cropland_suitability)) %>%
+  left_join(crops_km2) %>%
+  mutate(order = ifelse(is.na(order), "CHIROPTERA", order), # fix the spp with missing order
+         spp_type = ifelse(order %in% c(mammals_list$ORDER), "Terrestrial mammal", "Bird")) %>% # identifier for class type
+  dplyr::select(-order) %>%
+  rename(suitability = cropland_suitability)
+
+saveRDS(aoh_df, here("prep/03_prep_spp_habitats/output/aoh_terrestrial_mammals_birds_overlap.rds")) # save rds to save space
+
+```
+
+  
+Do some checks: 
+
+```{r}
+check_bird <- aoh_df %>%
+  filter(sciname == "Accipiter brevipes")
+
+check_aoh_1 <- rast("/mnt/rdsi/raw_data/AOH_lumbierres/reprojected/Accipiter_badius_B.tif") %>%
+  filter(ex_Accipiter_badius_B != 0)
+plot(check_aoh_1)
+check_aoh_2 <- rast("/mnt/rdsi/raw_data/AOH_lumbierres/reprojected/Accipiter_badius_R.tif") %>%
+    filter(ex_Accipiter_badius_R != 0)
+plot(check_aoh_2)
+check_aoh_3  <- rast("/mnt/rdsi/raw_data/AOH_lumbierres/reprojected/Accipiter_badius_N.tif") %>%
+    filter(ex_Accipiter_badius_N != 0)
+plot(check_aoh_3)
+
+check_intersect <- intersect(check_aoh_1, check_aoh_2)
+plot(check_intersect)
+check_intersect <- intersect(check_aoh_1, check_aoh_3)
+plot(check_intersect)
+check_intersect <- intersect(check_aoh_2, check_aoh_3)
+plot(check_intersect) # ok so looks like there is no/minimal intersection... additionally, the paper indicates that they can be combined and are separate, non-overlapping habitats. So probably no double counting occurring thankfully. 
+
+  
+check <- aoh_df %>%
+  filter(aoh_affected >= total_cropland) # 0, makes sense! 
+```
+
+  
