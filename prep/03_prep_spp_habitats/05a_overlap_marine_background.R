@@ -1,3 +1,31 @@
+
+library(tidyverse)
+library(tidyr)
+library(here)
+library(sf)
+library(data.table)
+library(dtplyr)
+library(terra)
+library(parallel)
+library(strex)
+library(janitor)
+library(readxl)
+library(rfishbase)
+
+source(here("src/directories.R"))
+
+source(here("src/spatial.R"))
+
+aquamaps_dir <- file.path(rdsi_raw_data_dir, "aquamaps")
+
+
+gall_peters <- "+proj=cea +lon_0=0 +x_0=0 +y_0=0 +lat_ts=45 +ellps=WGS84 +datum=WGS84 +units=m +no_defs"
+#raster template 
+base_rast <- rast(res=0.5)
+ext(base_rast) <- c(-180, 180, -90, 90)
+
+
+
 rast_shallow <- rast(here("prep/03_prep_spp_habitats/data/spatial/bathy_mol_shallow.tif")) # taken from casey's project 
 rast_neritic <- rast(here("prep/03_prep_spp_habitats/data/spatial/bathy_mol_neritic.tif"))
 rast_bathy <- rast(here("prep/03_prep_spp_habitats/data/spatial/bathy_mol.tif"))

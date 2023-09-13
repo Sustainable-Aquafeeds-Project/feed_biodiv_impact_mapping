@@ -17,11 +17,11 @@ In this script we overlap [Aquamaps probability of suitable habitat maps](https:
     - Diet type; feed formulation; plant-dominant or fish-dominant
     - Fish type; forage or trimmings species 
     - Depth zone; reef, pelagic, bentho-pelagic, or benthic 
-    - Gear type ? 
     
  - Categorize each Aquamaps species into depth zones of reef, pelagic, bentho-pelagic, or benthic. This code was adapted from Casey O'Hara (O'Hara et al. 2023, in prep), and pulls from Fishbase, Sealifebase, and Butt et al. 2022 to obtain the appropriate depth ranges; https://github.com/mapping-marine-spp-vuln/spp_vuln_mapping/tree/master
  - Clip downscaled and re-projected Aquamaps species suitable habitat maps (>0.6 probability) (from 0.5 to ~10km resolution) to a bathymetric layer, so as to constrain neritic and shallow-water species to areas no deeper than 200 m (adapted from O'Hara et al. 2021). 
  - Overlap re-projected and clipped Aquamaps species suitable habitat maps with the appropriate disturbance rasters based on depth range. This will provide a km2 estimate of the amount of suitable habitat that is exposed to harvest of forage or trimmings fish used for FMFO. 
+    - **NOTE**: This takes ~8.5 hours to run. I recommend running as a background job, using `05a_overlap_marine_background.R` script. This way you can work on other things while it runs, and generally it is less memory intensive to run as a background job. 
 
 
 ## References
@@ -397,10 +397,12 @@ clip_to_depth <- function(spp_rast, spp_df) {
 
 ### Species overlap loop
 
+**NOTE**: This takes ~8.5 hours to run. I recommend running as a background job, using `05a_overlap_marine_background.R` script. This way you can work on other things while it runs, and generally it is less memory intensive to run as a background job.
+
 Now overlap the species suitable habitat areas with the FMFO disturbance rasters. 
 
  - Clip species based on depth and bathymetric rasters
- - Overlap gear and depth pressure rasters with appropriate species rasters 
+ - Overlap depth pressure rasters with appropriate species rasters 
  - Save km2 of overlap (if there is any) with columns describing allocation, diet, species, depth range, gear type, and ingredient. 
 
 ```{r}
@@ -424,7 +426,7 @@ for(i in seq(1, length(spp_names), chunk_size)) {
   
   chunk_spp_names <- spp_names[i:min(i + chunk_size -1, length(spp_names))]
   
-  chunk_spp_names <- chunk_spp_names[!(chunk_spp_names %in% c("Fis-32191", "SLB-184666", "Fis-148871"))] # these two aren't working for some reason...     # Fis-32191 throwing this: Error: [rast] cannot create a raster geometry from a single y coordinate
+  chunk_spp_names <- chunk_spp_names[!(chunk_spp_names %in% c("Fis-32191", "SLB-184666", "Fis-148871"))] # these three aren't working for some reason...     # Fis-32191 throwing this: Error: [rast] cannot create a raster geometry from a single y coordinate
 
   
   # Start timing

@@ -102,7 +102,10 @@ test_high_bycatch <- trimmings_catch_bycatch %>%
 ## only 11% have high bycatch! even better than forage...
 
 
-  
+all_catch_bycatch <- forage_catch_bycatch %>%
+  dplyr::select(water_col_position, forage_prop_bycatch = prop_discards) %>%
+  left_join(trimmings_catch_bycatch %>% dplyr::select(water_col_position, trimmings_prop_bycatch = prop_discards))
+
 ```
 
 
@@ -187,7 +190,7 @@ aquamaps_vuln_scores <- aquamaps_spp_vuln_taxa %>%
                      )) 
 
 summary(aquamaps_vuln_scores)
-hist(aquamaps_vuln_scores$bycatch_gf) # really concentrated around 0.3... I bet adding this will reduce affected area by quite a bit.
+hist(aquamaps_vuln_scores$bycatch_gf) # really concentrated around 0.3/0.4... I bet adding this will reduce affected area by quite a bit.
   
 ```
 
@@ -222,9 +225,11 @@ overlay_df <- purrr::map_df(list.files(here("prep/03_prep_spp_habitats/int/aoh_o
   rename(SpeciesID = sciname) %>%
   left_join(aquamaps_spp)
 
-length(unique(overlay_df$SpeciesID)) # 23696
+length(unique(overlay_df$SpeciesID)) # 23694
 spp_to_run <- setdiff(unique(aquamaps_spp$SpeciesID), unique(overlay_df$SpeciesID)) # there are 5 missing. Will fix this later.
 setdiff(unique(overlay_df$SpeciesID), unique(aquamaps_spp$SpeciesID)) # 0 good
+
+23694*3*2*2*2*2 == nrow(overlay_df) # TRUE perfect! So we have all of the combinations we need. (Just need to fix those 5 species at some point...)
 
 forage_spp <- read.csv(here("data/raw_data/fisheries/forage_fish_list_final.csv")) %>%
     mutate(species = tolower(sci_name)) # ok so some of these are family level... will need to fix that eventually...
@@ -235,6 +240,8 @@ trimmings_spp <- read_csv(here("data/raw_data/biomar/trimmings_spp_list.csv")) %
 
 overlay_vuln <- overlay_df %>%
   left_join(aquamaps_vuln_scores) %>%
+  left_join(all_catch_bycatch, by = c("dist_depth_pos" = "water_col_position")) %>%
+    mutate(vuln_depth = ifelse(str_detect(ingredient, "trimmings"), trimmings_prop_bycatch, forage_prop_bycatch)) %>%
   mutate(trim_spp = ifelse(species %in% c(trimmings_spp$species), 1, NA),
          for_spp = ifelse(species %in% c(forage_spp$species), 1, NA)) %>%
   mutate(bycatch = case_when(
@@ -242,32 +249,42 @@ overlay_vuln <- overlay_df %>%
     ingredient %in% c("trimmings fish_fish meal, cut offs", "trimmings fish_fish oil, cut offs") & trim_spp == 1 ~ 1,
     TRUE ~ bycatch_gf
   )) %>%
-  mutate(aoh_overlap_vuln = aoh_overlap*bycatch_gf) %>%
   mutate(bycatch_quartile = case_when(
     bycatch_gf <0.25 ~ 0,
     bycatch_gf <= 0.75 & bycatch >= 0.25 ~ 0.5, 
     bycatch_gf > 0.75 ~ 1
   )) %>% 
-   mutate(bycatch_new_test = case_when(
+   mutate(bycatch_0.5 = case_when(
     bycatch_gf <0.25 ~ 0,
     bycatch_gf <= 0.75 & bycatch >= 0.25 ~ 0.25, 
     bycatch_gf > 0.75 ~ 0.5
   )) %>%
-  mutate(aoh_overlap_vuln_quartile = aoh_overlap*bycatch_quartile) %>%
-  mutate(aoh_overlap_vuln_test = aoh_overlap*bycatch_new_test) %>%
-  dplyr::select(Genus, Species, spp_type, diet, allocation, ingredient, aoh_overlap, aoh_area_orig, suitability = bycatch_quartile, aoh_affected = aoh_overlap_vuln_quartile, aoh_affected_test = aoh_overlap_vuln_test, gapfill_flag) %>%
+  mutate(affected_reg_vuln = aoh_overlap*bycatch_quartile) %>%
+  mutate(affected_rescale_vuln = aoh_overlap*bycatch_0.5) %>%
+  mutate(affected_depth = aoh_overlap*vuln_depth) %>%
+  mutate(affected_depth_reg_vuln = aoh_overlap*vuln_depth*bycatch_quartile) %>%
+  mutate(affected_depth_rescale_vuln = aoh_overlap*vuln_depth*bycatch_0.5) %>% 
+  dplyr::select(Genus, Species, spp_type, diet, allocation, ingredient, spp_depth_pos, aoh_area_orig, reg_vuln = bycatch_quartile, vuln_rescale = bycatch_0.5, vuln_depth, aoh_overlap, affected_reg_vuln, affected_rescale_vuln, affected_depth, affected_depth_reg_vuln, affected_depth_rescale_vuln) %>%
   mutate(sciname = paste(Genus, Species)) %>%
-  dplyr::select(-Genus, -Species) %>%
-  left_join(fishing_km2)
+  dplyr::select(-Genus, -Species)
+# %>%
+  # left_join(fishing_km2)
 
 saveRDS(overlay_vuln, here("prep/03_prep_spp_habitats/output/aoh_marine_overlap.rds"))
 
-terrestrial_overlap <- read.csv(here("prep/03_prep_spp_habitats/output/aoh_terrestrial_mammals_birds_overlap.csv"))
+terrestrial_overlap <- readRDS(here("prep/03_prep_spp_habitats/output/aoh_terrestrial_mammals_birds_overlap.rds"))
 colnames(terrestrial_overlap)
 # [1] "aoh_filename"         "sciname"              "bird_type"            "diet"                 "allocation"          
 #  [6] "crop_ingredient"      "aoh_crop_overlap"     "aoh_area_orig"        "feed_filepath"        "aoh_filepath"        
 # [11] "order"                "iucn_rl_cat"          "cropland_suitability" "aoh_affected"         "aoh_unaffected"      
-# [16] "total_cropland"       "class"    
+# [16] "total_cropland"       "class" 
+
+test_terr <- terrestrial_overlap %>%
+  filter(diet == "plant-dominant",
+         allocation == "mass")
+
+sum(test_terr$aoh_affected, na.rm = TRUE) # 1000315
+mean(test_terr$aoh_affected, na.rm = TRUE) # 3.171222
 
 ```
 
@@ -280,14 +297,22 @@ test <- overlay_vuln %>%
          allocation == "mass", 
          ingredient == "forage fish_fish meal")
 
-sum(test$aoh_overlap, na.rm = TRUE) # 3342859 km2... that's a lot compared to crops! But there are more species, with larger AOH ranges, and more dispersed harvesting area
+sum(test$aoh_overlap, na.rm = TRUE) # 934851.3
 
-sum(test$aoh_affected, na.rm = TRUE) # 1432985 way better.. still pretty high tho 
-sum(test$aoh_affected_test, na.rm = TRUE) # 716492.5 better but still pretty high 
+# 3342859 km2... that's a lot compared to crops! But there are more species, with larger AOH ranges, and more dispersed harvesting area
 
-mean(test$aoh_overlap, na.rm = TRUE) # 141.359 km2 mean
-mean(test$aoh_affected, na.rm = TRUE) # 60.60158 km2 mean 
-mean(test$aoh_affected_test, na.rm = TRUE) # 30.30079 km2 mean 
+sum(test$affected_reg_vuln, na.rm = TRUE) # 450772.2
+sum(test$affected_rescale_vuln, na.rm = TRUE) # 225386.1 
+sum(test$affected_depth, na.rm = TRUE) # 64466.13 
+sum(test$affected_depth_reg_vuln, na.rm = TRUE) # 27780.4 
+sum(test$affected_depth_rescale_vuln, na.rm = TRUE) # 13890.2 
+
+
+mean(test$affected_reg_vuln, na.rm = TRUE) # 9.53995 km2 mean
+mean(test$affected_rescale_vuln, na.rm = TRUE) # 4.769975 km2 mean 
+mean(test$affected_depth, na.rm = TRUE) # 1.364334 km2 mean 
+mean(test$affected_depth_reg_vuln, na.rm = TRUE) # 0.5879324 km2 mean 
+mean(test$affected_depth_rescale_vuln, na.rm = TRUE) # 0.2939662 km2 mean 
 
 
 ``` 
