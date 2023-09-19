@@ -253,7 +253,7 @@ forage_catch <-
   watson_raw |> 
   dplyr::select(-foragefish) %>% 
   left_join(watson_rgn, by = c("CountryName" = "country", "CNumber")) %>%
-  mutate(catch = ReportedIND + IUUIND + ReportedNIND + IUUNIND) %>%
+  mutate(catch = ReportedIND  + ReportedNIND) %>%
   mutate(forage_id = ifelse(CommonName == "Antarctic krill", 1, forage_id)) %>%
   mutate(FOFM_catch = catch*forage_id) %>%
   filter(!is.na(FOFM_catch)) %>% 
@@ -264,11 +264,13 @@ foragefish <-  # we need to make a dataframe that has all of the catch in it.. s
   dplyr::select(-foragefish) %>%
   left_join(watson_rgn, by = c("CountryName" = "country", "CNumber")) %>%
     mutate(forage_id = ifelse(CommonName == "Antarctic krill", 1, forage_id)) %>%
-  mutate(catch = ReportedIND + IUUIND + ReportedNIND + IUUNIND) %>%
+  mutate(catch = ReportedIND + ReportedNIND) %>%
   mutate(FOFM_catch = catch*forage_id) %>%
   mutate(FOFM_catch = ifelse(is.na(FOFM_catch), 0, FOFM_catch)) %>%
   left_join(gear_clean_df, by = c("Gear" = "gear", "FGearCode"= "f_gear_code")) %>%
-  mutate(water_col_position = ifelse(fleet_gear_name %in% benthic_gears, "benthic", "pelagic"))
+  mutate(water_col_position = ifelse(fleet_gear_name %in% benthic_gears, "benthic", "pelagic")) %>%
+  mutate(prop_discards = (DiscardsIND + DiscardsNIND)/(DiscardsIND + DiscardsNIND + FOFM_catch)) %>%
+  mutate(prop_discards = ifelse(FOFM_catch == 0, 0, prop_discards))
 
 write_rds(foragefish, file.path(watson_dir, "v5.0/int/all_catch_foragefish.rds"))
 
@@ -500,8 +502,8 @@ for(diet_type in diets){
     # diet_type = "plant-dominant"
     # allocation = "mass"
     # ingredient_type = "fish meal"
-    #  pos = "benthic"  
-        
+    #  pos = "benthic"
+    #     
 
   watson_raster_template <- terra::rast(ncol=720, nrow=360, vals=c(1:259200))
 
@@ -511,7 +513,9 @@ for(diet_type in diets){
                   ingredient == ingredient_type) %>%
     dplyr::select(iso3c, diet, TaxonName, ingredient, prop)
   
-  foragefish_system <- left_join(foragefish, system_prop, by = c("iso3c", "TaxonName")) %>%
+  ## first do regular catch
+  
+  foragefish_system_catch <- left_join(foragefish, system_prop, by = c("iso3c", "TaxonName")) %>%
     filter(!is.na(ingredient)) %>%
     mutate(prop = ifelse(is.na(prop), 0, prop)) %>%
     mutate(FOFM_catch_foodsystem = prop*FOFM_catch) %>% 
@@ -523,44 +527,38 @@ for(diet_type in diets){
     dplyr::select(LonCentre, LatCentre, tonnes)
 
   
-  forage_fish_system <- rast(foragefish_system, type = "xyz", crs = crs(watson_raster_template)) %>%
+  forage_fish_system_catch <- rast(foragefish_system_catch, type = "xyz", crs = crs(watson_raster_template)) %>%
     project(watson_raster_template)
 
 # plot(log(forage_fish_system + 1))
 
-# the following should be about equal
-# print(sprintf("the following should be about equal")) # the fish oil observed will be a little lower because of no krill
-# print(sprintf("raster calc: %s", global(forage_fish_system, "sum", na.rm=TRUE)))
-# print(sprintf("observed: %s", forage_fofm_allocation_totals %>% filter(diet == diet_type, allocation_type == allocation, ingredient == ingredient_type) %>% group_by(ingredient) %>% summarise(total = sum(total_tonnes_fofm_lw, na.rm = TRUE)) %>% ungroup() %>% pull(total)))
+    writeRaster(forage_fish_system_catch, sprintf(here("prep/02_feed/output/%s/forage fish_%s_%s_%s_catch_P.tif"), diet_type, ingredient_type, allocation, pos), overwrite = TRUE)
+    
+    ## now do bycatch 
+    foragefish_system_bycatch <- left_join(foragefish, system_prop, by = c("iso3c", "TaxonName")) %>%
+    filter(!is.na(ingredient)) %>%
+    mutate(prop = ifelse(is.na(prop), 0, prop)) %>%
+    mutate(FOFM_catch_foodsystem = prop*FOFM_catch*prop_discards) %>% 
+    filter(water_col_position == pos) %>% ## filter for DEPTH RANGE HERE
+    group_by(Cell) %>%
+    summarise(tonnes = sum(FOFM_catch_foodsystem, na.rm = TRUE)) %>%
+    ungroup() %>%
+    left_join(watson_cells) %>%
+    dplyr::select(LonCentre, LatCentre, tonnes)
 
+  
+  forage_fish_system_bycatch <- rast(foragefish_system_bycatch, type = "xyz", crs = crs(watson_raster_template)) %>%
+    project(watson_raster_template)
 
-    writeRaster(forage_fish_system, sprintf(here("prep/02_feed/output/%s/forage fish_%s_%s_%s_P.tif"), diet_type, ingredient_type, allocation, pos), overwrite = TRUE)
+# plot(log(forage_fish_system_bycatch + 1))
+  print(global(forage_fish_system_bycatch, "sum", na.rm = TRUE)/global(forage_fish_system_catch, "sum", na.rm = TRUE))
+
+    writeRaster(forage_fish_system_bycatch, sprintf(here("prep/02_feed/output/%s/forage fish_%s_%s_%s_bycatch_P.tif"), diet_type, ingredient_type, allocation, pos), overwrite = TRUE)
 
       }
     }
   }
 }
-
-
-forage_files <- list.files(here("prep/02_feed/output/fish-dominant"), pattern = "fish oil|fish meal", full.names = TRUE)
-forage_fish_orig <- forage_files[!grepl("benthic|pelagic|trimmings|_A", forage_files)]
-
-orig_rasts <- rast(forage_fish_orig)
-
-orig_names <- basename(forage_fish_orig)
-
-names(orig_rasts) <- orig_names
-
-plot(log(orig_rasts+1))
-
-global(orig_rasts, "sum", na.rm = TRUE)
-#                                          sum
-# forage fish_fish meal_economic_P.tif 2665081
-# forage fish_fish meal_ge_P.tif       2495606
-# forage fish_fish meal_mass_P.tif     2838613
-# forage fish_fish oil_economic_P.tif  3158491
-# forage fish_fish oil_ge_P.tif        3776819
-# forage fish_fish oil_mass_P.tif      2609488
 
 
 
@@ -590,15 +588,6 @@ global(new_rasts, "sum", na.rm = TRUE)
 # forage fish_fish oil_mass_benthic_P.tif       283617.9
 # forage fish_fish oil_mass_pelagic_P.tif      2325870.0
 
-125450.2+2539630.9 # 2665081 - perfect it adds up! 
-
-test <- forage_fofm_allocation %>%
-  group_by(diet,
-         allocation_type,
-         ingredient) %>%
-  summarise(sum = sum(tonnes_fofm_spp_live_weight)) %>%
-  ungroup()
-test
 
 
 ```

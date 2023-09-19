@@ -430,13 +430,15 @@ forage_npp <- foragefish %>%
     mutate(max_npp_t_C_yr = max_npp_t_km2_yr*area) |>
     mutate(ppr_fmfo = (fmfo_embodied_fish/carbon_conversion)*(1/te)^(DietTroph-1)) %>% #T C yr-1
     mutate(ppr_prop_fmfo = ppr_fmfo/mean_npp_t_C_yr) |> 
-    mutate(area_fmfo = ppr_prop_fmfo*area) %>%
+    mutate(area_fmfo = ppr_prop_fmfo*area,
+           area_fmfo_bycatch = area_fmfo*prop_discards) %>%
   group_by(Cell, diet, allocation_type, ingredient, water_col_position) %>%
   summarise(area_fmfo = sum(area_fmfo, na.rm = TRUE),
-            fmfo_embodied_fish = sum(fmfo_embodied_fish, na.rm = TRUE)) %>%
+            fmfo_embodied_fish = sum(fmfo_embodied_fish, na.rm = TRUE),
+            area_fmfo_bycatch = sum(area_fmfo_bycatch, na.rm = TRUE)) %>%
   ungroup() %>% 
   left_join(watson_cells) %>%
-  dplyr::select(LonCentre, LatCentre, diet, allocation_type, ingredient, water_col_position, fmfo_embodied_fish, area_fmfo)
+  dplyr::select(LonCentre, LatCentre, diet, allocation_type, ingredient, water_col_position, fmfo_embodied_fish, area_fmfo, area_fmfo_bycatch)
   
  
 
@@ -470,24 +472,27 @@ trim_npp <-
     mutate(max_npp_t_C_yr = max_npp_t_km2_yr*area) |>
    mutate(ppr_fmfo = (fmfo_embodied_fish/carbon_conversion)*(1/te)^(DietTroph-1)) %>% #T C yr-1
     mutate(ppr_prop_fmfo = ppr_fmfo/mean_npp_t_C_yr) |> 
-    mutate(area_fmfo = ppr_prop_fmfo*area)  %>%
+    mutate(area_fmfo = ppr_prop_fmfo*area,
+           area_fmfo_bycatch = area_fmfo*prop_discards)  %>%
   group_by(Cell, diet, allocation_type, ingredient, water_col_position) %>%
   summarise(area_fmfo = sum(area_fmfo, na.rm = TRUE),
-            fmfo_embodied_fish = sum(fmfo_embodied_fish, na.rm = TRUE)) %>%
+            fmfo_embodied_fish = sum(fmfo_embodied_fish, na.rm = TRUE),
+            area_fmfo_bycatch = sum(area_fmfo_bycatch, na.rm = TRUE)) %>%
   ungroup() %>% 
   left_join(watson_cells) %>%
-  dplyr::select(LonCentre, LatCentre, diet, allocation_type, ingredient, water_col_position, fmfo_embodied_fish, area_fmfo)
+  dplyr::select(LonCentre, LatCentre, diet, allocation_type, ingredient, water_col_position, fmfo_embodied_fish, area_fmfo, area_fmfo_bycatch)
     
 
 
 #Bind the forage and trimmings catch npp per cell
 
 all_fish_npp <- 
-  bind_rows(forage_npp |> select(diet, allocation_type, ingredient, water_col_position, LonCentre, LatCentre, area_fmfo, fmfo_embodied_fish),
-            trim_npp |> select(diet, allocation_type, ingredient, water_col_position, LonCentre, LatCentre, area_fmfo, fmfo_embodied_fish)) |> 
+  bind_rows(forage_npp |> select(diet, allocation_type, ingredient, water_col_position, LonCentre, LatCentre, area_fmfo, fmfo_embodied_fish, area_fmfo_bycatch),
+            trim_npp |> select(diet, allocation_type, ingredient, water_col_position, LonCentre, LatCentre, area_fmfo, fmfo_embodied_fish, area_fmfo_bycatch)) |> 
   group_by(diet, allocation_type, ingredient, water_col_position, LonCentre, LatCentre) |> 
   summarise(area_fmfo = sum(area_fmfo, na.rm = TRUE),
-            fmfo_embodied_fish = sum(fmfo_embodied_fish, na.rm = TRUE)) |> 
+            fmfo_embodied_fish = sum(fmfo_embodied_fish, na.rm = TRUE),
+            area_fmfo_bycatch = sum(area_fmfo_bycatch, na.rm = TRUE)) |> 
   ungroup()
 
 
@@ -516,6 +521,13 @@ for(diet_type in diets){
                water_col_position == pos) %>%
         dplyr::select(LonCentre, LatCentre, area_fmfo)
       
+      rast_xyz_df_bycatch <- all_fish_npp %>%
+        filter(diet == diet_type,
+               ingredient == ingredient_type,
+               allocation_type == allocation,
+               water_col_position == pos) %>%
+        dplyr::select(LonCentre, LatCentre, area_fmfo_bycatch)
+      
   if(str_detect(ingredient_type, "cut offs")){
         fish_type = "trimmings fish"
   }else{
@@ -526,7 +538,15 @@ for(diet_type in diets){
       rast_xyz <- rast(rast_xyz_df, type = "xyz", crs = crs(base_rast)) %>%
         project(base_rast)
       
-      writeRaster(rast_xyz, sprintf(here("prep/02_feed/output/%s/%s_%s_%s_%s_A.tif"), diet_type, fish_type, ingredient_type, allocation, pos), overwrite = TRUE)
+      writeRaster(rast_xyz, sprintf(here("prep/02_feed/output/%s/%s_%s_%s_%s_catch_A.tif"), diet_type, fish_type, ingredient_type, allocation, pos), overwrite = TRUE)
+      
+            rast_xyz_bycatch <- rast(rast_xyz_df_bycatch, type = "xyz", crs = crs(base_rast)) %>%
+        project(base_rast)
+      
+      writeRaster(rast_xyz_bycatch, sprintf(here("prep/02_feed/output/%s/%s_%s_%s_%s_bycatch_A.tif"), diet_type, fish_type, ingredient_type, allocation, pos), overwrite = TRUE)
+      
+      
+      print(global(rast_xyz_bycatch, "sum", na.rm = TRUE)/global(rast_xyz, "sum", na.rm = TRUE))
       
       
       }
@@ -534,18 +554,18 @@ for(diet_type in diets){
   }
 }
 
-test <- rast(here("prep/02_feed/output/plant-dominant/archive/trimmings fish_fish meal, cut offs_mass_A.tif"))
+test <- rast(here("prep/02_feed/output/plant-dominant/archive/trimmings fish_fish meal, cut offs_mass_pelagic_A.tif"))
 plot(log(test+1))
 
 global(test, "sum", na.rm = TRUE) # 2464.607 km2
 
 
-test_ben <- rast(here("prep/02_feed/output/plant-dominant/trimmings fish_fish meal, cut offs_mass_benthic_A.tif"))
-test_pel <- rast(here("prep/02_feed/output/plant-dominant/trimmings fish_fish meal, cut offs_mass_pelagic_A.tif"))
+test_ben <- rast(here("prep/02_feed/output/plant-dominant/trimmings fish_fish meal, cut offs_mass_benthic_catch_A.tif"))
+test_pel <- rast(here("prep/02_feed/output/plant-dominant/trimmings fish_fish meal, cut offs_mass_pelagic_catch_A.tif"))
 
 global(test_ben, "sum", na.rm = TRUE) + global(test_pel, "sum", na.rm = TRUE)  # 2464.607 km2
 
-## PERFECT
+## looks good
 ```  
 
 Data checking:

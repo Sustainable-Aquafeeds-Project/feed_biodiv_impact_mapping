@@ -21,7 +21,7 @@ select <- dplyr::select
 aoh_files <- list.files(file.path(rdsi_raw_data_dir, "AOH_lumbierres/reprojected"), full.names = TRUE)
 
 ingredient_files <- list.files(here("prep/02_feed/output/resampled"), full.names = TRUE, recursive = TRUE, pattern = "_A")
-
+ingredient_files <- ingredient_files[!grepl( "fish meal|fish oil", ingredient_files)]
 
 chunk_size = 112 # choosing this as a chunk size since it is a multiple of 14 (the number of cores I'm using). This way it will do exactly 112 species at a time
 

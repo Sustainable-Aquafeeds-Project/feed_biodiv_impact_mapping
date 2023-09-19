@@ -23,7 +23,6 @@ library(strex)
 library(janitor)
 library(rredlist)
 library(sf)
-library(tidyterra)
 library(basemaps)
 library(tools)
 
@@ -41,7 +40,8 @@ Bind all chunked data together, tidy, and save
 
 ```{r}
 
-overlay_df <- purrr::map_df(list.files(here("prep/03_prep_spp_habitats/int/aoh_overlay_chunks_terrestrial/"), full.names = TRUE), readRDS)
+overlay_df <- purrr::map_df(list.files(here("prep/03_prep_spp_habitats/int/aoh_overlay_chunks_terrestrial/"), full.names = TRUE), readRDS) %>% 
+  filter(!(ingredient %in% c("forage fish_fish meal", "forage fish_fish oil", "trimmings fish_fish meal, cut offs", "trimmings fish_fish oil, cut offs"))) # filter out marine ingredients, as there should be no overlap.. this is just a mistake from the last run
 
 length(unique(overlay_df$sciname)) # 18558 - perfect! 
 

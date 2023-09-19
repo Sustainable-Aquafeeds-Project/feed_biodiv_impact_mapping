@@ -261,9 +261,9 @@ overlay_vuln <- overlay_df %>%
   )) %>%
   mutate(affected_reg_vuln = aoh_overlap*bycatch_quartile) %>%
   mutate(affected_rescale_vuln = aoh_overlap*bycatch_0.5) %>%
-  mutate(affected_depth = aoh_overlap*vuln_depth) %>%
-  mutate(affected_depth_reg_vuln = aoh_overlap*vuln_depth*bycatch_quartile) %>%
-  mutate(affected_depth_rescale_vuln = aoh_overlap*vuln_depth*bycatch_0.5) %>% 
+  mutate(affected_depth = ifelse(!(species %in% c(trimmings_spp$species, forage_spp$species)), aoh_overlap*vuln_depth, aoh_overlap)) %>%
+  mutate(affected_depth_reg_vuln = ifelse(!(species %in% c(trimmings_spp$species, forage_spp$species)), aoh_overlap*vuln_depth*bycatch_quartile, aoh_overlap*bycatch_quartile)) %>%
+  mutate(affected_depth_rescale_vuln = ifelse(!(species %in% c(trimmings_spp$species, forage_spp$species)), aoh_overlap*vuln_depth*bycatch_0.5, aoh_overlap*bycatch_0.5)) %>% 
   dplyr::select(Genus, Species, spp_type, diet, allocation, ingredient, spp_depth_pos, aoh_area_orig, reg_vuln = bycatch_quartile, vuln_rescale = bycatch_0.5, vuln_depth, aoh_overlap, affected_reg_vuln, affected_rescale_vuln, affected_depth, affected_depth_reg_vuln, affected_depth_rescale_vuln) %>%
   mutate(sciname = paste(Genus, Species)) %>%
   dplyr::select(-Genus, -Species)
@@ -303,16 +303,16 @@ sum(test$aoh_overlap, na.rm = TRUE) # 934851.3
 
 sum(test$affected_reg_vuln, na.rm = TRUE) # 450772.2
 sum(test$affected_rescale_vuln, na.rm = TRUE) # 225386.1 
-sum(test$affected_depth, na.rm = TRUE) # 64466.13 
-sum(test$affected_depth_reg_vuln, na.rm = TRUE) # 27780.4 
-sum(test$affected_depth_rescale_vuln, na.rm = TRUE) # 13890.2 
+sum(test$affected_depth, na.rm = TRUE) # 100037.3 
+sum(test$affected_depth_reg_vuln, na.rm = TRUE) # 45095 
+sum(test$affected_depth_rescale_vuln, na.rm = TRUE) # 22547.5 
 
 
 mean(test$affected_reg_vuln, na.rm = TRUE) # 9.53995 km2 mean
 mean(test$affected_rescale_vuln, na.rm = TRUE) # 4.769975 km2 mean 
-mean(test$affected_depth, na.rm = TRUE) # 1.364334 km2 mean 
-mean(test$affected_depth_reg_vuln, na.rm = TRUE) # 0.5879324 km2 mean 
-mean(test$affected_depth_rescale_vuln, na.rm = TRUE) # 0.2939662 km2 mean 
+mean(test$affected_depth, na.rm = TRUE) # 2.117147 km2 mean 
+mean(test$affected_depth_reg_vuln, na.rm = TRUE) # 0.9543714 km2 mean 
+mean(test$affected_depth_rescale_vuln, na.rm = TRUE) # 0.4771857 km2 mean 
 
 
 ``` 

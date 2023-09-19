@@ -204,11 +204,13 @@ trimmingsfish <-
   watson_raw |> 
   mutate(trimmingsfish = ifelse(CommonName %in% c(trimmings_spp$common_name) | TaxonName %in% c(trimmings_spp$scientific_name), 1, NA)) %>%
   left_join(watson_rgn, by = c("CountryName" = "country", "CNumber")) %>%
-  mutate(catch = ReportedIND + IUUIND + ReportedNIND + IUUNIND) %>%
+  mutate(catch = ReportedIND + ReportedNIND) %>%
   mutate(trimmings_catch = catch*trimmingsfish) %>%
   mutate(trimmings_catch = ifelse(is.na(trimmings_catch), 0, trimmings_catch)) %>%
   left_join(gear_clean_df, by = c("Gear" = "gear", "FGearCode"= "f_gear_code")) %>%
-    mutate(water_col_position = ifelse(fleet_gear_name %in% benthic_gears, "benthic", "pelagic"))
+    mutate(water_col_position = ifelse(fleet_gear_name %in% benthic_gears, "benthic", "pelagic")) %>%
+  mutate(prop_discards = (DiscardsIND + DiscardsNIND)/ (DiscardsIND + DiscardsNIND + trimmings_catch)) %>%
+  mutate(prop_discards = ifelse(trimmings_catch != 0, prop_discards, 0))
 
 
 
@@ -531,7 +533,7 @@ for(diet_type in diets){
                   ingredient == ingredient_type) %>%
     dplyr::select(iso3c, diet, TaxonName, ingredient, prop)
   
-  trimmingsfish_system <- left_join(trimmingsfish, system_prop) %>%
+  trimmingsfish_system_catch <- left_join(trimmingsfish, system_prop) %>%
     filter(!is.na(ingredient)) %>%
     mutate(prop = ifelse(is.na(prop), 0, prop)) %>%
     mutate(trimmings_catch_foodsystem = prop*trimmings_catch) %>%
@@ -543,18 +545,36 @@ for(diet_type in diets){
     dplyr::select(LonCentre, LatCentre, tonnes)
   
 
-  trimmings_fish_system <- rast(trimmingsfish_system, type = "xyz", crs = crs(watson_raster_template)) %>%
+  trimmings_fish_system_catch <- rast(trimmingsfish_system_catch, type = "xyz", crs = crs(watson_raster_template)) %>%
     project(watson_raster_template)
 
 # plot(log(trimmings_fish_system + 1))
 
-# the following should be about equal
-# print(sprintf("the following should be about equal"))
-# print(sprintf("raster calc: %s", global(trimmings_fish_system, "sum", na.rm=TRUE))) 
-# print(sprintf("observed: %s", trimmings_fofm_allocation_totals %>% filter(diet == diet_type, allocation_type == allocation, ingredient == ingredient_type) %>% group_by(ingredient) %>% summarise(total = sum(total_tonnes_fofm_lw, na.rm = TRUE)) %>% ungroup() %>% pull(total)))
+    writeRaster(trimmings_fish_system_catch, sprintf(here("prep/02_feed/output/%s/trimmings fish_%s_%s_%s_catch_P.tif"), diet_type, ingredient_type, allocation, pos), overwrite = TRUE)
+    
+    
+      trimmingsfish_system_bycatch <- left_join(trimmingsfish, system_prop) %>%
+    filter(!is.na(ingredient)) %>%
+    mutate(prop = ifelse(is.na(prop), 0, prop)) %>%
+    mutate(trimmings_catch_foodsystem = prop*trimmings_catch*prop_discards) %>%
+    filter(water_col_position == pos) %>% ## filter for DEPTH RANGE HERE
+    group_by(Cell) %>%
+    summarise(tonnes = sum(trimmings_catch_foodsystem, na.rm = TRUE)) %>%
+    ungroup() %>%
+    left_join(watson_cells) %>%
+    dplyr::select(LonCentre, LatCentre, tonnes)
+  
 
+  trimmings_fish_system_bycatch <- rast(trimmingsfish_system_bycatch, type = "xyz", crs = crs(watson_raster_template)) %>%
+    project(watson_raster_template)
 
-    writeRaster(trimmings_fish_system, sprintf(here("prep/02_feed/output/%s/trimmings fish_%s_%s_%s_P.tif"), diet_type, ingredient_type, allocation, pos), overwrite = TRUE)
+# plot(log(trimmings_fish_system + 1))
+
+    writeRaster(trimmings_fish_system_bycatch, sprintf(here("prep/02_feed/output/%s/trimmings fish_%s_%s_%s_bycatch_P.tif"), diet_type, ingredient_type, allocation, pos), overwrite = TRUE)
+    
+    print(global(trimmings_fish_system_bycatch, "sum", na.rm = TRUE)/global(trimmings_fish_system_catch, "sum", na.rm = TRUE))
+    
+    
         }else{
           cat("file exists")
         }
@@ -565,57 +585,17 @@ for(diet_type in diets){
 }
 
 
-trim_files <- list.files(here("prep/02_feed/output/fish-dominant"), pattern = "fish oil|fish meal|trimmings", full.names = TRUE, recursive = TRUE)
-trim_fish_orig <- trim_files[!grepl("benthic|pelagic|forage|_A", trim_files)]
+trim_files <- list.files(here("prep/02_feed/output/fish-dominant"), pattern = "fish oil|fish meal|trimmings", full.names = TRUE)
 
-trim_rasts <- rast(trim_fish_orig)
-
-trim_names <- basename(trim_fish_orig)
-
-names(trim_rasts) <- trim_names
-
-plot(log(trim_rasts+1))
-
-global(trim_rasts, "sum", na.rm = TRUE)
-#                                                         sum
-# trimmings fish_fish meal, cut offs_economic_P.tif  56660.98
-# trimmings fish_fish meal, cut offs_ge_P.tif       549960.60
-# trimmings fish_fish meal, cut offs_mass_P.tif     527769.88
-# trimmings fish_fish oil, cut offs_economic_P.tif   43884.05
-# trimmings fish_fish oil, cut offs_ge_P.tif        678742.13
-# trimmings fish_fish oil, cut offs_mass_P.tif      316429.29
-
-
-
-trim_fish_new <- trim_files[grepl("benthic|pelagic|trimmings|_P", trim_files)]
-trim_fish_new <- trim_fish_new[!grepl("archive|forage|_A", trim_fish_new)]
-
-new_rasts <- rast(trim_fish_new)
+new_rasts <- rast(trim_files)
 
 new_names <- basename(trim_fish_new)
 
 names(new_rasts) <- new_names
 
-plot(log(new_rasts+1))
+# plot(log(new_rasts+1))
 
 global(new_rasts, "sum", na.rm = TRUE)
-
-#                                                                  sum
-# trimmings fish_fish meal, cut offs_economic_benthic_P.tif    142.136
-# trimmings fish_fish meal, cut offs_economic_pelagic_P.tif  56518.849
-# trimmings fish_fish meal, cut offs_ge_benthic_P.tif         2355.600
-# trimmings fish_fish meal, cut offs_ge_pelagic_P.tif       547604.998
-# trimmings fish_fish meal, cut offs_mass_benthic_P.tif       2290.481
-# trimmings fish_fish meal, cut offs_mass_pelagic_P.tif     525479.402
-# trimmings fish_fish oil, cut offs_economic_benthic_P.tif    1095.001
-# trimmings fish_fish oil, cut offs_economic_pelagic_P.tif   42789.050
-# trimmings fish_fish oil, cut offs_ge_benthic_P.tif         28170.557
-# trimmings fish_fish oil, cut offs_ge_pelagic_P.tif        650571.572
-# trimmings fish_fish oil, cut offs_mass_benthic_P.tif       11436.686
-# trimmings fish_fish oil, cut offs_mass_pelagic_P.tif      304992.609
-
-142.136 + 56518.849 # 56660.99 - perfect! it matches
-
 
 
 test <- trimmings_fofm_allocation %>%
