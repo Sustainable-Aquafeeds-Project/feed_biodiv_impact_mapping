@@ -21,6 +21,7 @@ library(knitr)
 library(strex)
 library(sjmisc)
 library(readxl)
+library(terra)
 
 focus_year = 2021
 
@@ -413,7 +414,9 @@ write_csv(total_prop, here("prep/02_feed/output/proportion_feed_per_country_syst
 ```
 
 
-Now multiply rasterize this information to get rasters describing the amount of tonnages for each crop in each cell global that goes to salmon aquaculture feed ingredients, additionally, divide by crop yield estimates from the FAO to get estimates of crop area in each cell that goes to salmon aquaculture feed ingredients. 
+Combine with yield information per country to calculate the amount of km2 disturbance per each crop/ingredient per cell. 
+
+Then rasterize this information to get rasters describing the amount of tonnages for each crop in each cell global that goes to salmon aquaculture feed ingredients, additionally, divide by crop yield estimates from the FAO to get estimates of crop area in each cell that goes to salmon aquaculture feed ingredients. 
 
  - we will use the uncapped proportion for this for now.. we are assuming this is a scenario where we completely fulfill demand, regardless of what the current-day production looks like. So if we need to produce more crop to meet ingredient demand in a country, then we will. Vast majority of the proportions are below one. 
 
@@ -444,15 +447,13 @@ fao_yields <- readRDS(here("data/tidy_data/production-data/crops_production_tidy
   filter(!is.na(gaez_code))
 
 
-library(terra)
-library(raster)
 
 ## organize region data
 rgns <- read_csv(file.path(food_systems_data_dir, "food_rgns_xy.csv"))
 
 ####################
 ## start loop here
-#################3
+#################
 
 todo <- unique(dplyr::select(total_prop, diet, GAEZ_category, ingredient, allocation_type))
 

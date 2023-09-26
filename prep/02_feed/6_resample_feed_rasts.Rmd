@@ -43,19 +43,19 @@ files <- list.files(directory, full.names = TRUE)
 filtered_files <- files[!grepl("fish oil|fish meal|archive", files)]
 
 for(i in 1:length(filtered_files)){
-  
+  # i = 17
   file <- filtered_files[i]
   file_name <- basename(file)
   
   crop_rast <- rast(file)
   
-  area_rast <- cellSize(crop_rast, unit = "ha")
+  area_rast <- cellSize(crop_rast, unit = "km")
   
   crop_rast_fix <- crop_rast/area_rast
   
   crop_reproject <- project(crop_rast_fix, moll_template, method = "bilinear")
   
-  crop_reproject_area <- cellSize(crop_reproject, unit = "ha")
+  crop_reproject_area <- cellSize(crop_reproject, unit = "km")
   
   crop_reproject_fix <- crop_reproject*crop_reproject_area
   
@@ -90,13 +90,13 @@ for(i in 1:length(filtered_files)){
   
   fish_rast <- rast(file)
   
-  area_rast <- cellSize(fish_rast, unit = "ha")
+  area_rast <- cellSize(fish_rast, unit = "km")
   
   fish_rast_fix <- fish_rast/area_rast
   
   fish_reproject <- project(fish_rast_fix, moll_template, method = "bilinear")
   
-  fish_reproject_area <- cellSize(fish_reproject, unit = "ha")
+  fish_reproject_area <- cellSize(fish_reproject, unit = "km")
   
   fish_reproject_fix <- fish_reproject*fish_reproject_area
   

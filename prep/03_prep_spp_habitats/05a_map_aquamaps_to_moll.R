@@ -46,7 +46,6 @@ cell_id_df <- data.frame(loiczid = values(loiczid_mol_r),
 
 moll_template_xy <- as.data.frame(moll_template %>% mutate(value = 1), xy = TRUE) %>%
   mutate(cell_id = 1:ncell(moll_template)) %>%
- # dplyr::select(x,y,cell_id) %>%
   left_join(cell_id_df) %>%
   filter(!is.na(ocean_a)) %>%
   dplyr::select(x, y, cell_id)
@@ -80,7 +79,7 @@ am_spp_info <- am_spp_depth %>%
 
 x <- list.files(am_dir_mol, full.names = TRUE)
 
-spp_done <- basename(x) %>% str_remove_all('csv$') %>%
+spp_done <- basename(x) %>% str_remove_all('.csv$') %>%
   str_replace_all('[^a-z]+', ' ')
 
 spp_vec <- am_spp_info %>%

@@ -17,19 +17,19 @@ food_crs <- "+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"
 ## make a mollweide 10km by 10km raster 
 
 # Define the dimensions
-nrow <- 1755
-ncol <- 3510
+nrow <- 1814
+ncol <- 3617
 nlyr <- 1
 
 # Define the resolution
-x_res <- 10279.27
-y_res <- 10279.27
+x_res <- 10000
+y_res <- 10000
 
 # Define the extent
-xmin <- -18040095
-xmax <- 18040134
-ymin <- -9020047
-ymax <- 9020067
+xmin <- -18086282
+xmax <- 18083718
+ymin <- -9069952
+ymax <- 9070048
 
 # Define the coordinate reference system (CRS)
 crs <- "+proj=moll +lon_0=0 +x_0=0 +y_0=0 +ellps=WGS84 +units=m +no_defs"
