@@ -11,6 +11,7 @@ library(strex)
 library(janitor)
 library(readxl)
 library(rfishbase)
+library(tidyterra)
 
 source(here("src/directories.R"))
 
@@ -27,17 +28,31 @@ ext(base_rast) <- c(-180, 180, -90, 90)
 
 
 ### create cell id lookup
-loiczid_mol_r <- raster(here('prep/03_prep_spp_habitats/data/spatial/loiczid_mol.tif'))
-ocean_mol_r <- raster(here('prep/03_prep_spp_habitats/data/spatial/ocean_area_mol.tif'))
-bathy_mol_neritic <- raster(here('prep/03_prep_spp_habitats/data/spatial/bathy_mol_neritic.tif'))
-bathy_mol_shallow <- raster(here('prep/03_prep_spp_habitats/data/spatial/bathy_mol_shallow.tif'))
+loiczid_mol_r <- rast(here('prep/03_prep_spp_habitats/data/spatial/loiczid_mol.tif')) %>%
+  project(moll_template, method = "near")
+ocean_mol_r <- rast(here('prep/03_prep_spp_habitats/data/spatial/ocean_area_mol.tif')) %>%
+  project(moll_template, method = "near")
+bathy_mol_neritic <- rast(here('prep/03_prep_spp_habitats/data/spatial/bathy_mol_neritic.tif'))
+bathy_mol_shallow <- rast(here('prep/03_prep_spp_habitats/data/spatial/bathy_mol_shallow.tif'))
+test <- rast(here('prep/03_prep_spp_habitats/data/spatial/bathy_mol_neritic_test.tif'))
 
 cell_id_df <- data.frame(loiczid = values(loiczid_mol_r),
                          ocean_a = values(ocean_mol_r),
                          neritic = values(bathy_mol_neritic),
                          shallow = values(bathy_mol_shallow),
-                         cell_id = 1:ncell(loiczid_mol_r)) %>%
+                         cell_id = 1:ncell(moll_template)) %>%
+  rename(loiczid = loiczid_mol, ocean_a = ocean_area_mol, neritic = bathy_mol_neritic, shallow = bathy_mol_shallow) %>%
   filter(!is.na(ocean_a))
+
+moll_template_xy <- as.data.frame(moll_template %>% mutate(value = 1), xy = TRUE) %>%
+  mutate(cell_id = 1:ncell(moll_template)) %>%
+ # dplyr::select(x,y,cell_id) %>%
+  left_join(cell_id_df) %>%
+  filter(!is.na(ocean_a)) %>%
+  dplyr::select(x, y, cell_id)
+
+# write_rds(moll_template_xy, here("prep/03_prep_spp_habitats/data/spatial/moll_template_xy.rds"))
+
 
 ### read in aquamaps data
 
@@ -98,8 +113,9 @@ map_am_hcaf_to_moll <- function(s) {
     ### identify the cells for am_sid(s) and join to Mollweide cells
     s_cells <- am_spp_depth %>%
       filter(SpeciesID %in% s_sids)
+    
     s_mol <- s_cells %>%
-      oharac::dt_join(cell_id_df, by = 'loiczid', type = 'left')
+      left_join(cell_id_df, by = c('loiczid'))
     
     ### filter to proper depth category
     if(s_depth == 'shallow') {
@@ -113,7 +129,17 @@ map_am_hcaf_to_moll <- function(s) {
     } ### else, 'none', so no bathymetric filter
     
     s_mol <- s_mol %>%
-      select(prob, cell_id)
+      dplyr::select(prob = Probability, cell_id) %>%
+      mutate(presence = 1)
+    
+    # s_mol_rast <- s_mol %>%
+    #   left_join(moll_template_xy) %>%
+    #   dplyr::select(x, y, prob) %>%
+    #   rast(., type = "xyz", crs = crs(moll_template))
+    # 
+    # plot(s_mol_rast)
+
+    
     write_csv(s_mol, out_f)
   }
 }
