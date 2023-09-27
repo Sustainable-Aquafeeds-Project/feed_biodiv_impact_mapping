@@ -1,16 +1,25 @@
+##### Map AquaMaps species to Mollweide from HCAF
+
+# # Summary
+# 
+# Convert HCAF maps from AquaMaps into the Mollweide 10 km x 10 km projection.
+# 
+# # Methods
+# 
+# For each species, bind the AquaMaps HCAF cell presence values with a lookup dataframe of LOICZID to Mollweide cell ID.  Save out a vector of just the new Mollweide ID cell values, per species (rather than per AquaMaps species ID).
+# Unless you are on a server with a lot of memory (we have 16 cores and 64 gb memory), you will likely experience interruptions and core failures. Because of this you must be vigilant in seeing if things have actually run or not.
+# This takes ~7 hours with no interruptions.
+
 ### SETUP
 library(tidyverse)
 library(tidyr)
 library(here)
-library(sf)
 library(data.table)
 library(dtplyr)
 library(terra)
 library(parallel)
 library(strex)
 library(janitor)
-library(readxl)
-library(rfishbase)
 library(tidyterra)
 
 source(here("src/directories.R"))
@@ -18,23 +27,13 @@ source(here("src/directories.R"))
 source(here("src/spatial.R"))
 
 aquamaps_dir <- file.path(rdsi_raw_data_dir, "aquamaps")
-am_dir_mol <- file.path(aquamaps_dir, "reprojected_mol")
-
-
-gall_peters <- "+proj=cea +lon_0=0 +x_0=0 +y_0=0 +lat_ts=45 +ellps=WGS84 +datum=WGS84 +units=m +no_defs"
-#raster template 
-base_rast <- rast(res=0.5)
-ext(base_rast) <- c(-180, 180, -90, 90)
-
+am_dir_mol <- file.path(aquamaps_dir, "reprojected_mol_csv")
 
 ### create cell id lookup
-loiczid_mol_r <- rast(here('prep/03_prep_spp_habitats/data/spatial/loiczid_mol.tif')) %>%
-  project(moll_template, method = "near")
-ocean_mol_r <- rast(here('prep/03_prep_spp_habitats/data/spatial/ocean_area_mol.tif')) %>%
-  project(moll_template, method = "near")
+loiczid_mol_r <- rast(here('prep/03_prep_spp_habitats/data/spatial/loiczid_mol.tif'))
+ocean_mol_r <- rast(here('prep/03_prep_spp_habitats/data/spatial/ocean_area_mol.tif'))
 bathy_mol_neritic <- rast(here('prep/03_prep_spp_habitats/data/spatial/bathy_mol_neritic.tif'))
 bathy_mol_shallow <- rast(here('prep/03_prep_spp_habitats/data/spatial/bathy_mol_shallow.tif'))
-test <- rast(here('prep/03_prep_spp_habitats/data/spatial/bathy_mol_neritic_test.tif'))
 
 cell_id_df <- data.frame(loiczid = values(loiczid_mol_r),
                          ocean_a = values(ocean_mol_r),
@@ -44,14 +43,15 @@ cell_id_df <- data.frame(loiczid = values(loiczid_mol_r),
   rename(loiczid = loiczid_mol, ocean_a = ocean_area_mol, neritic = bathy_mol_neritic, shallow = bathy_mol_shallow) %>%
   filter(!is.na(ocean_a))
 
-moll_template_xy <- as.data.frame(moll_template %>% mutate(value = 1), xy = TRUE) %>%
-  mutate(cell_id = 1:ncell(moll_template)) %>%
-  left_join(cell_id_df) %>%
-  filter(!is.na(ocean_a)) %>%
-  dplyr::select(x, y, cell_id)
+# moll_template_xy_ocean <- as.data.frame(moll_template %>% mutate(value = 1), xy = TRUE) %>%
+#   mutate(cell_id = 1:ncell(moll_template)) %>%
+#   left_join(cell_id_df) %>%
+#   filter(!is.na(ocean_a)) %>%
+#   dplyr::select(x, y, cell_id)
 
-# write_rds(moll_template_xy, here("prep/03_prep_spp_habitats/data/spatial/moll_template_xy.rds"))
+# write_rds(moll_template_xy_ocean, here("prep/03_prep_spp_habitats/data/spatial/moll_template_ocean_xy.rds"))
 
+moll_template_xy_ocean <- readRDS(here("prep/03_prep_spp_habitats/data/spatial/moll_template_ocean_xy.rds"))
 
 ### read in aquamaps data
 
@@ -61,8 +61,8 @@ hcaf_info <- read.csv(file.path(aquamaps_dir, 'hcaf_v7.csv')) %>%
   dplyr::select(loiczid, csquare_code) %>%
   distinct()
 
-am_spp_depth <- read.csv(file.path(aquamaps_dir, "aquamaps_0.6_depth_prepped.csv")) %>%
-  left_join(hcaf_info, by = c("CsquareCode" = "csquare_code"))
+am_spp_depth <- read.csv(file.path(aquamaps_dir, "aquamaps_0.6_depth_prepped.csv")) %>% # need to figure out how to make this smaller so it will read in quicker... takes ~10 mins just to read in this data because it is so large. 
+  left_join(hcaf_info, by = c("CsquareCode" = "csquare_code")) 
 
 
 ### Create flags for how to mask the aquamaps data
@@ -130,9 +130,9 @@ map_am_hcaf_to_moll <- function(s) {
     s_mol <- s_mol %>%
       dplyr::select(prob = Probability, cell_id) %>%
       mutate(presence = 1)
-    
+
     # s_mol_rast <- s_mol %>%
-    #   left_join(moll_template_xy) %>%
+    #   left_join(moll_template_xy_ocean) %>%
     #   dplyr::select(x, y, prob) %>%
     #   rast(., type = "xyz", crs = crs(moll_template))
     # 
@@ -143,6 +143,6 @@ map_am_hcaf_to_moll <- function(s) {
   }
 }
 
-tmp <- parallel::mclapply(spp_vec, map_am_hcaf_to_moll, mc.cores = 12)
+tmp <- parallel::mclapply(spp_vec, map_am_hcaf_to_moll, mc.cores = 4)
 
 

@@ -1,6 +1,7 @@
 
 library(terra)
 library(raster)
+library(tidyterra)
 
 #projections
 
@@ -37,5 +38,34 @@ crs <- "+proj=moll +lon_0=0 +x_0=0 +y_0=0 +ellps=WGS84 +units=m +no_defs"
 # Create the raster template
 moll_template <- rast(nrow=nrow, ncol=ncol, nlyr=nlyr, xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax,
           res=c(x_res, y_res), crs=crs)
+
+
+
+## make a lon/lat WGS 1km by 1km raster 
+
+# # Define the dimensions
+# nrow <- 180360
+# ncol <- 360720
+# nlyr <- 1
+# 
+# # Define the resolution
+# x_res <- 0.0009920722
+# y_res <- 0.0009920722
+# 
+# # Define the extent
+# xmin <- -180
+# xmax <- 180
+# ymin <- -90
+# ymax <- 90
+# 
+# # Define the coordinate reference system (CRS)
+# crs <- "EPSG:4326"
+# 
+# # Create the raster template
+# lon_lat_template <- rast(nrow=nrow, ncol=ncol, nlyr=nlyr, xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax,
+#                       res=c(x_res, y_res), crs=crs) %>%
+#   mutate(new = 1)
+# 
+# lon_lat_cell_id <- setValues(lon_lat_template, 1:ncell(lon_lat_template))
 
 
