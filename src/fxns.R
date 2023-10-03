@@ -4,33 +4,11 @@ library(rredlist)
 library(here)
 library(terra)
 library(tidyverse)
+library(parallel)
+library(data.table)
 
 
 source(here("src/directories.R"))
-
-
-#retriveing terra spatraster values with no na automatically (useful to run in purrr::map and other apply functions)
-no_na_values <- \(x){return(terra::values(x, na.rm=TRUE))}
-
-
-# Function for rasterizing country shapefiles
-
-write_country_raster <- \(this_country){
-  
-  this_country_filepath <- here(sprintf("data/spatial/00-country-rasters/%s.tif", this_country))
-  
-  if(file.exists(this_country_filepath)){
-    
-    this_country_map <- crop_countries_shp |> filter(iso_a3 == this_country) |> mutate(iso_n3 = as.double(iso_n3)) |>  st_transform(crs = equal_area_gp_proj)
-    
-    this_country_raster <- rasterize(x = vect(this_country_map), y = base_raster_ea)
-    
-    writeRaster(x = this_country_raster, filename = here(sprintf("data/spatial/00-country-rasters/%s.tif", this_country)), overwrite=TRUE)
-    
-  }
-}
-
-
 
 
 api_file <- file.path(iucn_dir, "api_key", "api_token.txt")
@@ -63,59 +41,61 @@ get_threat_api <- function(this_spp_id){
 }
 
 
-get_threat_api_casey <- function(this_spp_id){
-  
-  message(paste("processing taxonid #", this_spp_id))
-  
-  i <- 1; tries <- 5; success <- FALSE; delay=0.5; verbose=TRUE
-  
-  while(i <= tries & success == FALSE) {
-    if(verbose) {
-      message('try #', i)
-    }
-    
-    Sys.sleep(delay * i) #add delay for later tries
-    
-    threat_url <- sprintf("https://apiv3.iucnredlist.org/api/v3/threats/species/id/%s?token=%s", this_spp_id,  api_key)
-    
-    this_result <-jsonlite::fromJSON(threat_url)
-    
-    if (class(this_result) != 'try-error') {
-      success <- TRUE
-    } else {
-      warning(sprintf('try #%s: class(this_result) = %s\n', i, class(this_result)))
-    }
-    if(verbose) {
-      message('... successful? ', success)
-    }
-    i <- i + 1
-  }
-  if (class(this_result) == 'try-error') { ### multi tries and still try-error
-    api_return <- data.frame(spp_id  = this_spp_id,
-                             api_error = 'try-error after multiple attempts')
-  } else if (class(this_result$result) != 'data.frame') { ### result isn't data frame for some reason
-    api_return <- data.frame(spp_id  = this_spp_id,
-                             api_error = paste('non data.frame output: ', 
-                                               class(this_result$result), 
-                                               ' length = ', length(this_result$result)))
-  } else if (length(this_result$result) == 0) { ### result is empty
-    api_return <- data.frame(spp_id  = this_spp_id,
-                             api_error = 'zero length data.frame')
-  } else {
-    api_return <- this_result %>%
-      data.frame(stringsAsFactors = FALSE)
-  }  
-    
-  return(api_return)
-}
-
-
-
 
 ## Common functions+packages
 select <- dplyr::select
 summarise <- dplyr::summarise
 
+
+### Helper functions for gathering species rangemaps
+check_tryerror <- function(l) {
+  x <- sapply(l, class) %>% 
+    unlist() %>% as.vector()
+  return(any(stringr::str_detect(tolower(x), 'error')))
+} 
+
+get_one_map <- function(f) {
+  #f = "/mnt/rdsi/raw_data/aquamaps/reprojected_mol_csv/diomedea_sanfordi.csv"  
+  if(file.exists(f)) {
+    df <- read.csv(f)
+    
+      df <- df %>% filter(presence == 1) %>% dplyr::select(cell_id)
+
+    return(df)
+  } else {
+    warning('No map found for ', basename(f))
+    return(NULL)
+  }
+}
+
+
+collect_spp_rangemaps <- function(spp_vec, file_vec, idcol = 'species', parallel = TRUE) {
+ # spp_vec = unique(tx_maps_df$species)
+  # file_vec = unique(tx_maps_df$filepath)
+  ### give a vector of species names (or IDs) and filenames; 
+  ### default: read in using parallel::mclapply
+  message('Collecting ', n_distinct(file_vec), ' maps for ', 
+          n_distinct(spp_vec), ' species...')
+  if(parallel == TRUE) {
+    out_maps_list <- parallel::mclapply(file_vec, mc.cores = 12, FUN = get_one_map)
+  } else {
+    out_maps_list <- lapply(file_vec, FUN = get_one_map)
+  }
+  if(check_tryerror(out_maps_list)) {
+    stop('Try-error found when assembling species rangemaps!')
+  }
+  
+  
+  message('... Binding maps...')
+
+  out_maps_df <- out_maps_list %>%
+    setNames(spp_vec) %>%
+    purrr::compact() %>%
+    data.table::rbindlist(idcol = "species") %>%
+    distinct() 
+  
+  return(out_maps_df)
+}
 
 
 

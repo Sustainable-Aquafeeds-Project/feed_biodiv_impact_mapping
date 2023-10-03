@@ -428,7 +428,7 @@ total_prop <- read.csv(here("prep/02_feed/output/proportion_feed_per_country_sys
                 total_prop_econ = prop_produced_for_system_econ) %>%
   pivot_longer(cols = c("total_prop_ms", "total_prop_ge", "total_prop_econ"), names_to = "allocation_type", values_to = "total_prop") %>%
   mutate(allocation_type = case_when(
-    allocation_type == "total_prop_ge" ~ "gross energy",
+    allocation_type == "total_prop_ge" ~ "ge",
     allocation_type == "total_prop_ms" ~ "mass",
     TRUE ~ "economic"
   ))
@@ -462,7 +462,7 @@ todo <- total_prop %>%
   group_by(diet, GAEZ_category, ingredient, allocation_type) %>%
   summarise(sum_prop = sum(total_prop, na.rm = TRUE)) %>%
   ungroup() %>%
-  filter(sum_prop >0)
+  filter(sum_prop >0) 
 
 for(i in 1:dim(todo)[1]){
 #i=30

@@ -28,12 +28,18 @@ source(here("src/directories.R"))
 source(here("src/spatial.R"))
 
 select <- dplyr::select
+setwd(dirname(rstudioapi::getSourceEditorContext()$path)) # set working directory to where this script is located
+this_dir <- getwd()
 
-
-aoh_dir <- file.path(rdsi_raw_data_dir, "AOH_lumbierres/reprojected/")
+aoh_dir <- file.path(rdsi_raw_data_dir, "AOH_lumbierres/reprojected_csvs/")
 
 base_rast <- rast(res=0.5)
 ext(base_rast) <- c(-180, 180, -90, 90)
+
+# read in xy cell_id lookup table for land and ocean
+ocean_xy_moll <- readRDS(file.path(this_dir, "data/spatial/moll_template_ocean_xy.rds"))
+land_xy_moll <- readRDS(here(this_dir, "data/spatial/moll_template_land_xy.rds"))
+
 ```
 
 
@@ -187,34 +193,26 @@ Coragyps_atratus; Black Vulture have a lot of overlap with soy protein concentra
 countries_shp <- ne_countries(scale = 110, returnclass = "sf") |> st_transform(crs(moll_template)) %>%
   filter(continent %in% c("North America", "South America"))
 
-this_crop_ingredient_raster <- rast(here("prep/02_feed/output/resampled/plant-dominant/Soybean_soy protein concentrate_economic_A.tif"))
-plot(this_crop_ingredient_raster)
-global(this_crop_ingredient_raster, "sum", na.rm = TRUE) # 2795.964
-
-this_spp_rast <- rast(list.files(file.path(rdsi_raw_data_dir, "AOH_lumbierres/reprojected/"), full.names = TRUE, pattern = "Coragyps_atratus"))
-plot(this_spp_rast)
-
-spp_names <- file_path_sans_ext(basename(list.files(file.path(rdsi_raw_data_dir, "AOH_lumbierres/reprojected/"), full.names = TRUE, pattern = "Coragyps_atratus")))
-
-overlap_rast <- this_crop_ingredient_raster*this_spp_rast 
-
-names(overlap_rast) <- "American Black Vulture"
-
-plot(overlap_rast)
-global(overlap_rast, "sum", na.rm = TRUE) # 1820.562
+this_crop_ingredient_raster <- rast(here("prep/02_feed/output/resampled/plant-dominant/Soybean_soy protein concentrate_economic_A.tif")) %>%
+  as.data.frame(., xy = TRUE) %>%
+  filter(coef > 0)
+sum(this_crop_ingredient_raster$coef) # 2791.609
 
 
-overlap_df <- as.data.frame(overlap_rast, xy = TRUE) %>%
-  pivot_longer(cols = c(3), names_to = "species") %>%
-  filter(value > 0) %>%
-  mutate(aoh_orig = 100) %>%
-  mutate(p = ((aoh_orig - value)/aoh_orig)^0.25)
+this_spp_df <- read.csv(list.files(file.path(rdsi_raw_data_dir, "AOH_lumbierres/reprojected_mol_csv/"), full.names = TRUE, pattern = "Coragyps_atratus")) %>%
+  left_join(land_xy_moll) %>%
+  dplyr::select(x, y, presence)
+# %>%
+#   rast(., type = "xyz", crs = moll_template)
 
-names(this_spp_rast) <- "American Black Vulture"
-spp_aoh_df <- as.data.frame(this_spp_rast, xy = TRUE) %>%
-  pivot_longer(cols = c(3), names_to = "species")
-
-# crop_df <- as.data.frame(crop(this_crop_ingredient_raster, vect(countries_shp)), xy = TRUE) 
+overlap_df <- this_spp_df %>%
+  left_join(this_crop_ingredient_raster) %>%
+    filter(!is.na(coef)) %>%
+  mutate(aoh_orig = presence*100) %>%
+  mutate(value = coef*presence) %>%
+    mutate(p = ((aoh_orig - value)/aoh_orig)^0.25) %>%
+  mutate(prop_aoh_impacted = value/aoh_orig)  %>%
+  mutate(p_inverse = 1 - p) 
 
 ## check what the vulnerability is for this species
 
@@ -224,7 +222,7 @@ hab_suitability <- readRDS(here("prep/03_prep_spp_habitats/int/spp_habitat_suita
 
 ggplot() + 
   geom_sf(data = countries_shp, fill = "grey", colour = "white") + 
-   geom_raster(data = spp_aoh_df %>% filter(value >0), aes( x= x, y = y), color = "green") +
+   geom_raster(data = this_spp_df, aes( x= x, y = y)) +
    geom_raster(data = overlap_df %>% filter(value >0), aes( x= x, y = y, fill = value)) + 
   # facet_wrap(~species) +
   labs(fill = expression(paste(km^{2}, " impacted")), title = "How does SPC harvest affect AOH?", subtitle = "Economic allocation; Plant-Dominant; American Black Vulture", caption = "Black areas are the original AOH") + 
@@ -235,11 +233,34 @@ ggplot() +
 
 ggplot() + 
   geom_sf(data = countries_shp, fill = "grey", colour = "white") + 
-   geom_raster(data = spp_aoh_df %>% filter(value >0), aes( x= x, y = y), color = "green") +
-   geom_raster(data = overlap_df %>% filter(value >0), aes( x= x, y = y, fill = p)) + 
+   geom_raster(data = this_spp_df, aes( x= x, y = y)) + 
+  geom_raster(data = overlap_df %>% filter(value >0), aes( x= x, y = y, fill = p)) + 
   # facet_wrap(~species) +
   labs(fill = "Likelihood of Persistence", title = "How does SPC harvest affect AOH?", subtitle = "Economic allocation; Plant-Dominant; American Black Vulture", caption = "Black areas are the original AOH") + 
   scale_fill_gradientn(colors = rev(RColorBrewer::brewer.pal(n=9, name = "YlOrRd"))) +
+  theme_minimal() +
+      theme(
+          axis.title = element_blank()) 
+
+
+ggplot() + 
+  geom_sf(data = countries_shp, fill = "grey", colour = "white") + 
+   geom_raster(data = this_spp_df, aes( x= x, y = y)) + 
+  geom_raster(data = overlap_df %>% filter(value >0), aes( x= x, y = y, fill = p_inverse)) + 
+  # facet_wrap(~species) +
+  labs(fill = "Inverse Persistence", title = "How does SPC harvest affect AOH?", subtitle = "Economic allocation; Plant-Dominant; American Black Vulture", caption = "Black areas are the original AOH") + 
+  scale_fill_gradientn(colors = (RColorBrewer::brewer.pal(n=9, name = "YlOrRd"))) +
+  theme_minimal() +
+      theme(
+          axis.title = element_blank()) 
+
+ggplot() + 
+  geom_sf(data = countries_shp, fill = "grey", colour = "white") + 
+   geom_raster(data = this_spp_df, aes( x= x, y = y)) + 
+  geom_raster(data = overlap_df %>% filter(value >0), aes( x= x, y = y, fill = prop_aoh_impacted)) + 
+  # facet_wrap(~species) +
+  labs(fill = "Proportion AOH impacted", title = "How does SPC harvest affect AOH?", subtitle = "Economic allocation; Plant-Dominant; American Black Vulture", caption = "Black areas are the original AOH") + 
+  scale_fill_gradientn(colors = (RColorBrewer::brewer.pal(n=9, name = "YlOrRd"))) +
   theme_minimal() +
       theme(
           axis.title = element_blank()) 
@@ -255,92 +276,100 @@ Marine: Let's choose a species with lots of overlap
  
 
 ```{r}
-countries_shp <- ne_countries(scale = 110, returnclass = "sf") |> st_transform(crs(moll_template))
+countries_shp <- ne_countries(scale = 110, returnclass = "sf") |> st_transform(crs(moll_template)) %>%
+   # filter(continent %in% c("Europe"))
+  filter(subregion == "Northern Europe")
 
-this_ingredient_raster_pel <- rast(here("prep/02_feed/output/resampled/fish-dominant/forage fish_fish oil_economic_pelagic_bycatch_A.tif"))
-plot(log(this_ingredient_raster_pel+1))
-global(this_ingredient_raster_pel, "sum", na.rm = TRUE) # 328.1194
+this_ingredient_raster_pel <- rast(here("prep/02_feed/output/resampled/fish-dominant/forage fish_fish oil_economic_pelagic_bycatch_A.tif")) 
+
 
 this_ingredient_raster_ben <- rast(here("prep/02_feed/output/resampled/fish-dominant/forage fish_fish oil_economic_benthic_bycatch_A.tif"))
-plot(log(this_ingredient_raster_ben+1))
-global(this_ingredient_raster_ben, "sum", na.rm = TRUE) # 766.9572
 
-this_ingredient_raster <- this_ingredient_raster_pel + this_ingredient_raster_ben
+this_ingredient_raster <- this_ingredient_raster_pel + this_ingredient_raster_ben 
+
+this_ingredient_df <- as.data.frame(this_ingredient_raster, xy = TRUE) %>%
+  rename(catch = 3)
 
 
-aquamaps_dir <- file.path(rdsi_raw_data_dir, "aquamaps")
-am_spp_depth_df <- read.csv(file.path(aquamaps_dir, "aquamaps_0.6_depth_prepped.csv"))
+aquamaps_dir <- file.path(rdsi_raw_data_dir, "aquamaps/reprojected_mol_csv")
 
-this_spp_rast <- am_spp_depth_df %>%
-  filter(species == "mobula japanica") %>%
-      mutate(presence = 1) %>%
-  dplyr::select(CenterLong, CenterLat, presence) %>%
-  rast(., type = "xyz", crs = base_rast)  %>%
-  project(moll_template, method = "near")
+this_spp_df <- read.csv(file.path(aquamaps_dir, "trisopterus_esmarkii.csv")) %>%
+  left_join(ocean_xy_moll) %>%
+  dplyr::select(x, y, presence)
 
-plot(this_spp_rast)
 
 ## read in vulnerability values 
-marine_overlap <-  readRDS(here("prep/03_prep_spp_habitats/output/aoh_marine_overlap.rds")) %>%
-#  dplyr::select(-feed_filepath) %>%
+marine_vuln <-  readRDS(file.path(this_dir,"output/aoh_marine_overlap.rds")) %>%
   mutate(allocation = ifelse(allocation == "ge", "gross energy", allocation)) %>%
-  mutate(spp_type = ifelse(spp_type == "Microorganisms", "Marine microorganisms", spp_type)) %>%
-    mutate(spp_type = ifelse(spp_type == "Invertebrates", "Marine invertebrates", spp_type)) %>%
-  mutate(spp_type = ifelse(spp_type == "Reptiles and amphibians", "Marine reptiles and amphibians", spp_type)) %>%
   mutate(vulnerability = reg_vuln) %>%
-  filter(sciname == "Mobula japanica",
+  mutate(prop_aoh = affected_depth_reg_vuln/aoh_area_orig) %>%
+  filter(sciname == "Trisopterus esmarkii",
          allocation == "economic", 
          ingredient == "forage fish_fish oil", 
-         diet == "fish-dominant")
+         diet == "fish-dominant") %>%
+  pull(reg_vuln) %>%
+  unique()
 
-overlap_rast_pel <- this_ingredient_raster_pel*this_spp_rast*1
-global(overlap_rast_pel, "sum", na.rm = TRUE) # 8.977985
-overlap_rast_ben <- this_ingredient_raster_ben*this_spp_rast*1
-global(overlap_rast_ben, "sum", na.rm = TRUE) # 473.9052
 
-overlap_rast <- overlap_rast_pel + overlap_rast_ben
+overlap_df <- this_spp_df %>%
+  left_join(this_ingredient_df) %>%
+    filter(!is.na(catch)) %>%
+  filter(catch > 0) %>%
+  mutate(aoh_orig = presence*100) %>%
+  mutate(value = catch*presence*marine_vuln) %>%
+    mutate(p = ((aoh_orig - value)/aoh_orig)^0.25) %>%
+  mutate(prop_aoh_impacted = value/aoh_orig)  %>%
+  mutate(p_inverse = 1 - p) 
 
-overlap_df <- overlap_rast %>%
-  as.data.frame(xy = TRUE) %>%
-  mutate(species = "Spinetail devil ray")
 
-plot(log(overlap_rast+1))
-global(overlap_rast, "sum", na.rm = TRUE) # 202.0294
-
-spp_aoh_df <- this_spp_rast %>%
-  as.data.frame(xy = TRUE) %>%
-  mutate(species = "Spinetail devil ray")
+sum(overlap_df$value) # 55.44875
 
 
 ggplot() + 
   geom_sf(data = countries_shp, fill = "grey", colour = "white") + 
-   geom_raster(data = spp_aoh_df %>% filter(presence >0), aes( x= x, y = y), color = "green") +
-   geom_raster(data = overlap_df %>% filter(area_fmfo_bycatch >0), aes( x= x, y = y, fill = area_fmfo_bycatch)) + 
+   geom_raster(data = this_spp_df, aes( x= x, y = y)) +
+   geom_raster(data = overlap_df %>% filter(value >0), aes( x= x, y = y, fill = value)) + 
   # facet_wrap(~species) +
-  labs(fill = expression(paste(km^{2}, " impacted")), title = "How does fish oil harvest impact AOH?", subtitle = "Economic allocation; Fish-Dominant; Spinetail Devil Ray", caption = "Black areas are the original AOH") + 
+  labs(fill = expression(paste(km^{2}, " impacted")), title = "How does fish oil harvest affect AOH?", subtitle = "Economic allocation; Fish-Dominant; Norway Pout", caption = "Black areas are completely unaffected AOH cells") + 
   scale_fill_gradientn(colors = (RColorBrewer::brewer.pal(n=9, name = "YlOrRd"))) +
   theme_minimal() +
       theme(
           axis.title = element_blank()) 
 
-
-overlap_df <- overlap_rast %>%
-  as.data.frame(xy = TRUE) %>%
-  mutate(species = "Spinetail devil ray") %>%
-  filter(area_fmfo_bycatch > 0) %>%
-  mutate(aoh_orig = 100) %>%
-  mutate(p = ((aoh_orig - area_fmfo_bycatch)/aoh_orig)^0.25)
-
 ggplot() + 
   geom_sf(data = countries_shp, fill = "grey", colour = "white") + 
-   geom_raster(data = spp_aoh_df %>% filter(presence >0), aes( x= x, y = y), color = "green") +
-   geom_raster(data = overlap_df %>% filter(area_fmfo_bycatch >0), aes( x= x, y = y, fill = p)) + 
+   geom_raster(data = this_spp_df, aes( x= x, y = y)) + 
+  geom_raster(data = overlap_df %>% filter(value >0), aes( x= x, y = y, fill = p)) + 
   # facet_wrap(~species) +
-  labs(fill = "Likelihood of Persistence", title = "How does fish oil harvest impact AOH?", subtitle = "Economic allocation; Fish-Dominant; Spinetail Devil Ray", caption = "Black areas are the original AOH") + 
-  scale_fill_gradientn(colors = rev((RColorBrewer::brewer.pal(n=9, name = "YlOrRd")))) +
+  labs(fill = "Likelihood of Persistence", title = "How does fish oil harvest affect AOH?", subtitle = "Economic allocation; Fish-Dominant; Norway Pout", caption = "Black areas are completely unaffected AOH cells") + 
+  scale_fill_gradientn(colors = rev(RColorBrewer::brewer.pal(n=9, name = "YlOrRd"))) +
   theme_minimal() +
       theme(
           axis.title = element_blank()) 
+
+
+ggplot() + 
+  geom_sf(data = countries_shp, fill = "grey", colour = "white") + 
+   geom_raster(data = this_spp_df, aes( x= x, y = y)) + 
+  geom_raster(data = overlap_df %>% filter(value >0), aes( x= x, y = y, fill = p_inverse)) + 
+  # facet_wrap(~species) +
+  labs(fill = "Inverse Persistence", title = "How does fish oil harvest affect AOH?", subtitle = "Economic allocation; Fish-Dominant; Norway Pout", caption = "Black areas are completely unaffected AOH cells") + 
+  scale_fill_gradientn(colors = (RColorBrewer::brewer.pal(n=9, name = "YlOrRd"))) +
+  theme_minimal() +
+      theme(
+          axis.title = element_blank()) 
+
+ggplot() + 
+  geom_sf(data = countries_shp, fill = "grey", colour = "white") + 
+   geom_raster(data = this_spp_df, aes( x= x, y = y)) + 
+  geom_raster(data = overlap_df %>% filter(value >0), aes( x= x, y = y, fill = prop_aoh_impacted)) + 
+  # facet_wrap(~species) +
+  labs(fill = "Proportion AOH impacted", title = "How does fish oil harvest affect AOH?", subtitle = "Economic allocation; Fish-Dominant; Norway Pout", caption = "Black areas are completely unaffected AOH cells") + 
+  scale_fill_gradientn(colors = (RColorBrewer::brewer.pal(n=9, name = "YlOrRd"))) +
+  theme_minimal() +
+      theme(
+          axis.title = element_blank()) 
+
 
 
 

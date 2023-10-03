@@ -38,9 +38,11 @@ for(diet in c("fish-dominant", "plant-dominant")){
   # diet = "fish-dominant"
 directory <- sprintf("prep/02_feed/output/%s/", diet)
 
-files <- list.files(directory, full.names = TRUE)
+files <- list.files(here(directory), full.names = TRUE)
 
 filtered_files <- files[!grepl("fish oil|fish meal|archive", files)]
+
+filtered_files <- filtered_files[grepl("_ge_", filtered_files)]
 
 for(i in 1:length(filtered_files)){
   # i = 17

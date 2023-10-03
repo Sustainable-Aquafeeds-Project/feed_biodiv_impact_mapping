@@ -27,7 +27,8 @@ source(here("src/directories.R"))
 source(here("src/spatial.R"))
 
 select <- dplyr::select
-
+setwd(dirname(rstudioapi::getSourceEditorContext()$path)) # set working directory to where this script is located
+this_dir <- getwd()
 
 ```
 
@@ -62,6 +63,10 @@ birds_list <- read.csv(file.path(rdsi_raw_data_dir, "AOH_lumbierres/Birds_list_A
 
 
 total_spp_list <- rbind(mammals_list, birds_list)
+
+## save species list 
+write_rds(total_spp_list, file.path(this_dir, "int/terrestrial_species_list.rds"))
+
 
 ## now grab the names of the species from the raw data directory
 
@@ -102,8 +107,6 @@ plot(test_size)
 
 
 ```
-
-
 
 
 
