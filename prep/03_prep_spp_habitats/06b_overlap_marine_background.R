@@ -43,6 +43,7 @@ library(strex)
 library(janitor)
 library(readxl)
 library(rfishbase)
+library(glue)
 
 select <- dplyr::select
 setwd(dirname(rstudioapi::getSourceEditorContext()$path)) # set working directory to where this script is located
@@ -108,67 +109,74 @@ spp_info_df %>%
 # 3 allocations * 2 diets * 2 ingredients * 2 fish ingredient spp (forage vs trimmings) = 24 scenarios
 # 24 scenarios * 13 spp type * 3 raster types (mean, sd, nspp) = 936 total or 468 per diet
 
+## for fish species, need to split in half, and then take species weighted average. My server is memory limited and can't handle all 9k at once...  
 
 allocations <- unique(spp_info_df$allocation)
 diets <- unique(spp_info_df$diet)
 ingredients <- unique(spp_info_df$ingredient)
 fish_types <- unique(spp_info_df$fish_type)
 spp_types <- unique(spp_info_df$taxon)
+# indices_to_remove <- grep("Bird|Marine mammal|Marine plant|Reptiles and amphibians|arthropods|echinoderms|polychaetes|sponges", spp_types)
 indices_to_remove <- grep("fish", spp_types)
-spp_types <- spp_types[indices_to_remove]
+spp_types <- spp_types[-indices_to_remove] # remove fish category... we handle this separately in the next script `06c_overlap_fish_fix.R`
 
+for(fs_type in fish_types){
+  for(ingredient_type in ingredients){
+  
+  if(fs_type == "trimmings fish" & ingredient_type == "fish meal" |fs_type == "trimmings fish" & ingredient_type == "fish oil" |
+     fs_type == "forage fish" & ingredient_type == "fish meal, cut offs"| fs_type == "forage fish" & ingredient_type == "fish oil, cut offs") {
+    message('Not a category! ... skipping!')
+    next()
+  }
+  
 for(tx_type in spp_types){
-  ## note move this back down below when fish is done...
-  # tx_type = "Fish"
-  tx_maps_df <- spp_info_df %>%
-    filter(taxon == tx_type) %>%
-    dplyr::select(species, filepath) %>%
-    distinct()
-  
-  ### read in all spp maps for this taxon - 
-  message('Loading spp maps for taxon ', tx_type, '...')
-  tx_maps <- collect_spp_rangemaps(tx_maps_df$species, tx_maps_df$filepath)
-  
-  
-  message('Taxon ', tx_type, ' spp dataframe: ', nrow(tx_maps[["parent"]]), 
-          ' cell observations for ', nrow(tx_maps_df), ' species...')
   
   for(allocation_type in allocations){
    for(diet_type in diets){
-    for(ingredient_type in ingredients){
-      for(fs_type in fish_types){
 
 
           # allocation_type = "economic"
           # diet_type = "plant-dominant"
-          # ingredient_type = "fish oil, cut offs"
-          # fs_type = "trimmings fish"
-          
-          if(fs_type == "trimmings fish" & ingredient_type == "fish meal" |fs_type == "trimmings fish" & ingredient_type == "fish oil" |
-             fs_type == "forage fish" & ingredient_type == "fish meal, cut offs"| fs_type == "forage fish" & ingredient_type == "fish oil, cut offs") {
-            message('Not a category! ... skipping!')
-            next()
-          }
-          
+          # ingredient_type = "fish meal"
+          # fs_type = "forage fish"
+          # tx_type = "Bird"
+
           outf_mean <- sprintf(file.path(biodiv_dir, "output/impact_maps_by_taxon/%s/imp_unwt_%s_%s_%s_%s_mean.tif"), diet_type, fs_type, ingredient_type, allocation_type, tx_type)
           outf_sd <- sprintf(file.path(biodiv_dir, "output/impact_maps_by_taxon/%s/imp_unwt_%s_%s_%s_%s_sd.tif"), diet_type, fs_type, ingredient_type, allocation_type, tx_type)
           outf_nspp <- sprintf(file.path(biodiv_dir, "output/impact_maps_by_taxon/%s/imp_unwt_%s_%s_%s_%s_nspp.tif"), diet_type, fs_type, ingredient_type, allocation_type, tx_type)
+          
+          
+          outf_mean_df <- glue(file.path(this_dir, "int/aoh_impacts_marine/{tx_type}_{diet_type}_{fs_type}_{ingredient_type}_{allocation_type}.rds"))
+          
+          # if(all(file.exists(outf_mean_df))) {
+          #   message('Rasters exist for taxon ', tx_type, ' for bycatch stressor... skipping!')
+          #   next()
+          # }
           
           if(all(file.exists(outf_mean, outf_sd))) {
             message('Rasters exist for taxon ', tx_type, ' for bycatch stressor... skipping!')
             next()
           }
           
+          tx_maps_df <- spp_info_df %>%
+            filter(taxon == tx_type) %>%
+            dplyr::select(species, filepath) %>%
+            distinct()
+          
+          ### read in all spp maps for this taxon - 
+          message('Loading spp maps for taxon ', tx_type, '...')
+          tx_maps <- collect_spp_rangemaps_marine(tx_maps_df$species, tx_maps_df$filepath)
+          
+          
+          message('Taxon ', tx_type, ' spp dataframe: ', nrow(tx_maps[["parent"]]), 
+                  ' cell observations for ', nrow(tx_maps_df), ' species...')
+          
           tx_vuln_df <- spp_info_df %>%
             filter(taxon == tx_type,
                    allocation == allocation_type, 
                    diet == diet_type,
                    fish_type == fs_type, 
-                   ingredient == ingredient_type) 
-          
-          tx_maps_df <- tx_vuln_df %>%
-            dplyr::select(species, filepath) %>%
-            distinct()
+                   ingredient == ingredient_type)
           
 
           ## Read in bycatch and catch stressor maps, and create a dataframe of the results.  Assign species to one of three bins based on water column position trait.  Benthopelagic and reef associated spp will take an average of the two bycatch stressor maps.
@@ -198,7 +206,7 @@ for(tx_type in spp_types){
           
           ## Calculate mean impacts per species grouping 
           # For each species in the taxon, multiply bycatch or catch stressor map by the spp vulnerability to identify impact map for that species. Summarize across the entire taxon to mean, sd, and nspp.
-      
+          
           
           message('Processing mean/sd vulnerability by species in taxon ', tx_type, 
                   ' to bycatch/catch stressor...')
@@ -213,28 +221,43 @@ for(tx_type in spp_types){
           
           result_list <- parallel::mclapply(1:n_chunks, mc.cores = n_cores,
                                             FUN = function(n) { ### n <- 6
+                                
+                                              
+                                              ### n <- 6
                                               cell_id_min <- as.integer((n - 1) * chunk_size + 1)
                                               cell_id_max <- as.integer(n * chunk_size)
-                                              message('Summarizing bycatch stressor on taxon ', tx_type, 
+                                              message('Summarizing harvest stressor on taxon ', tx_type, 
                                                       ': cells ', cell_id_min, ' - ', cell_id_max, '...')
                                               
-                                              chunk_sum <- tx_maps %>%
+                                              chunk_sum_spp <- tx_maps %>%
                                                 filter(between(cell_id, cell_id_min, cell_id_max)) %>%
                                                 left_join(tx_vuln_df, by = c('species')) %>%
-                                                left_join(bycatch_cells_df, 
-                                                                by = c('cell_id', 'wcol')) %>%
-                                                left_join(catch_cells_df, 
+                                                left_join(bycatch_cells_df,
                                                           by = c('cell_id', 'wcol')) %>%
-                                               as.data.table() %>%
-                                              .[ , bycatch := ifelse(is.na(bycatch), 0, bycatch)] %>%
-                                              .[ , catch := ifelse(is.na(catch), 0, catch)] %>%
-                                              .[ , impact  := ifelse(catch_type == "bycatch", vuln_quartile * bycatch, vuln_quartile*catch)] %>%
-                                              .[ , impact  := 1 - ((100 - impact)/100)^0.25] %>%
-                                              .[ , .(impact_mean = mean(impact),
-                                                     impact_sd   = sd(impact),
-                                                     n_spp       = length(unique(species))),
-                                                 by = 'cell_id']
-                                            }) 
+                                                left_join(catch_cells_df,
+                                                          by = c('cell_id', 'wcol')) %>%
+                                                as.data.table() %>%
+                                                .[ , bycatch := ifelse(is.na(bycatch), 0, bycatch)] %>%
+                                                .[ , catch := ifelse(is.na(catch), 0, catch)] %>%
+                                                .[ , impact_km2  := ifelse(catch_type == "bycatch", vuln_quartile * bycatch, vuln_quartile*catch)] %>%
+                                                .[ , impact  := 1 - ((100 - impact_km2)/100)^0.25]
+                                              
+                                              
+                                              chunk_sum <- chunk_sum_spp %>%
+                                                .[ , .(impact_mean = mean(impact),
+                                                       impact_sd   = sd(impact),
+                                                       n_spp       = length(unique(species))),
+                                                   by = 'cell_id']
+                                              
+                                              
+                                              chunk_sum_spp_global <- chunk_sum_spp %>%
+                                                .[ , .(impact_total = sum(impact_km2)),
+                                                   by = 'species']
+                                              
+                                              return(list(chunk_sum_spp_global = chunk_sum_spp_global, chunk_sum = chunk_sum))
+                                            })
+          
+          
           
           
           
@@ -244,31 +267,54 @@ for(tx_type in spp_types){
           
           message('Binding results for taxon ', tx_type, '...')
           
-          result_df <- result_list %>%
-            data.table::rbindlist() %>%
-            filter(!is.na(cell_id)) %>% 
+          result_df <- rbindlist(lapply(result_list, function(x) x$chunk_sum)) %>%
+            filter(!is.na(cell_id)) %>%
             as.data.frame()
           
-          message('Creating and saving rasters for taxon ', tx_type, '...')
-          rast_mean <- result_df %>% 
-            dplyr::select(cell_id, impact_mean) %>% 
+          message('Creating and saving rasters for taxon ', tx_type, diet_type, allocation_type, fs_type, ingredient_type)
+          rast_mean <- result_df %>%
+            dplyr::select(cell_id, impact_mean) %>%
             left_join(moll_ocean_template) %>%
             dplyr::select(x, y, impact_mean) %>%
+            filter(impact_mean > 0) %>%
             rast(., type = "xyz")
-          rast_sd   <- result_df %>% 
-            dplyr::select(cell_id, impact_sd) %>% 
+
+          # my_palette <- c("#FED976",  "#FEB24C", "#FD8D3C", "#FC4E2A", "#E31A1C",
+          #                 "#BD0026", "#800026")
+          # scales::show_col(my_palette)
+          # ggplot(data = rast_mean) +
+          #   geom_tile(aes(x = x, y = y, fill = impact_mean)) +
+          #   scale_fill_gradientn(colors = my_palette)
+
+
+
+
+          rast_sd   <- result_df %>%
+            dplyr::select(cell_id, impact_sd) %>%
             left_join(moll_ocean_template) %>%
             dplyr::select(x, y, impact_sd) %>%
             rast(., type = "xyz")
-          rast_nspp <- result_df %>% 
-            dplyr::select(cell_id, n_spp) %>% 
+          rast_nspp <- result_df %>%
+            dplyr::select(cell_id, n_spp) %>%
             left_join(moll_ocean_template) %>%
             dplyr::select(x, y, n_spp) %>%
             rast(., type = "xyz")
-          
+
           writeRaster(rast_mean, outf_mean, overwrite = TRUE)
           writeRaster(rast_sd,   outf_sd, overwrite = TRUE)
           writeRaster(rast_nspp, outf_nspp, overwrite = TRUE)
+          
+          message('Creating and saving global df for taxon ', tx_type, '...')
+          
+          global_df <- rbindlist(lapply(result_list, function(x) x$chunk_sum_spp_global)) %>% 
+            as.data.frame() %>%
+            group_by(species) %>%
+            summarise(impact_total = sum(impact_total, na.rm = TRUE)) %>%
+            mutate(allocation = allocation_type, diet = diet_type, ingredient = glue("{fs_type}_{ingredient_type}")) 
+          
+          fish_ingredient_type = unique(global_df$ingredient)
+          
+          write_rds(global_df, glue(file.path(this_dir, "int/aoh_impacts_marine/{tx_type}_{diet_type}_{fish_ingredient_type}_{allocation_type}.rds")))
           
           
           }

@@ -40,6 +40,8 @@ ext(base_rast) <- c(-180, 180, -90, 90)
 ocean_xy_moll <- readRDS(file.path(this_dir, "data/spatial/moll_template_ocean_xy.rds"))
 land_xy_moll <- readRDS(here(this_dir, "data/spatial/moll_template_land_xy.rds"))
 
+impact_maps_dir <- file.path(rdsi_dir, "biodiversity_impacts/output")
+
 ```
 
 
@@ -75,7 +77,8 @@ terrestrial_overlap <- readRDS(here("prep/03_prep_spp_habitats/output/aoh_terres
   ungroup() %>%
     mutate(allocation = ifelse(allocation == "ge", "gross energy", allocation)) %>%
           # spp_depth_pos = NA) %>%
-  dplyr::select(-total_ingredient_km2) 
+  dplyr::select(-total_ingredient_km2) %>%
+  dplyr::select(sciname, aoh_affected, everything())
 
 
 all_overlap <- rbind(marine_overlap, terrestrial_overlap) %>%

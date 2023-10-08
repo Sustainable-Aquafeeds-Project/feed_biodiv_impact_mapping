@@ -13,12 +13,7 @@ Load libraries
 
 library(tidyverse)
 library(here)
-library(data.table)
-library(dtplyr)
 library(terra)
-library(raster)
-library(parallel)
-library(rnaturalearth)
 library(strex)
 library(janitor)
 

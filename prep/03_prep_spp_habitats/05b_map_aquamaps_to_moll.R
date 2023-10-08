@@ -77,6 +77,14 @@ am_spp_info <- am_spp_depth %>%
   dplyr::select(SpeciesID, species, mask) %>%
   distinct()
 
+# vuln_taxa <- read.csv(here("prep/03_prep_spp_habitats/data/spp_vuln_butt/vuln_gapfilled_tx.csv"))
+# taxa_seabirds <- vuln_taxa %>%
+#   filter(taxon == "seabirds") %>%
+#   distinct(species)
+# 
+# birds_spp_depth <- am_spp_depth %>%
+#   filter(species %in% c(unique(taxa_seabirds$species)))
+
 x <- list.files(am_dir_mol, full.names = TRUE)
 
 spp_done <- basename(x) %>% str_remove_all('.csv$') %>%

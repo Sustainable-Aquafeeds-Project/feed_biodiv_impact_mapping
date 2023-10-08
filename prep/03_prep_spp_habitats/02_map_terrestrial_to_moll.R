@@ -13,8 +13,6 @@
 library(tidyverse)
 library(tidyr)
 library(here)
-library(data.table)
-library(dtplyr)
 library(terra)
 library(parallel)
 library(strex)

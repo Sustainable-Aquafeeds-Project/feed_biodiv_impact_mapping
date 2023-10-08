@@ -1,6 +1,24 @@
 
 ## takes ~ 1.5 hours to complete! 
 
+
+# In this script we overlap [terrestrial area of habitat maps](https://www.nature.com/articles/s41597-022-01838-w) with our disturbance pressure maps created in the `02_feed` folder, and multiply by their vulnerability value. The goal of this script is to create impact maps, that is, the area of likely suitable habitat for each species that is exposured AND impacted to harvest of feed ingredients in salmon aquaculture. To do this, we: 
+#   
+#   - We have created maps of disturbance (km2) of harvest of crop aquafeed ingredients. They have these categories: 
+# - Ingredient type; 
+# - Allocation type; mass, energetic, or economic
+# - Diet type; feed formulation; plant-dominant or fish-dominant
+# - crop type
+# 
+# 
+# - Overlap re-projected and AOH species suitable habitat maps with the appropriate disturbance rasters. This will provide a km2 estimate of the amount of suitable habitat that is exposed to harvest of aquafeed ingredients.  
+# - multiply by each species vulnerability values to get impact and save
+
+
+# * Lumbierres et al. 2022: https://www.nature.com/articles/s41597-022-01838-w
+# * O'Hara et al. 2023 in prep 
+# * Casey C. O’Hara et al., At-risk marine biodiversity faces extensive, expanding, and intensifying human impacts.Science372,84-87(2021).DOI:10.1126/science.abe6731
+
 library(tidyverse)
 library(tidyr)
 library(here)
@@ -11,8 +29,7 @@ library(terra)
 library(parallel)
 library(strex)
 library(janitor)
-library(readxl)
-library(rfishbase)
+library(glue)
 
 select <- dplyr::select
 setwd(dirname(rstudioapi::getSourceEditorContext()$path)) # set working directory to where this script is located
@@ -35,7 +52,11 @@ moll_land_template <- readRDS(file.path(this_dir, "data/spatial/moll_template_la
 
 ## Setup spp map source and vulnerability data 
 spp_fp <- data.frame(filepath = list.files(file.path(terrestrial_dir, "reprojected_mol_csv"), full.names = TRUE)) %>%
-  mutate(species = str_remove_all(str_replace_all(str_after_last(filepath, "\\/"), "_", " "), ".csv"))
+  mutate(species_full = str_after_last(filepath, "\\/")) %>%
+  mutate(species = ifelse(str_detect(species_full, "_R.csv|_N.csv|_B.csv"), str_remove_all(species_full, "_R.csv|_N.csv|_B.csv"), species_full)) %>%
+  mutate(species = str_remove_all(species, ".csv")) %>%
+  mutate(species = str_replace_all(species, "_", " ")) %>%
+  mutate(species_full = str_remove_all(species_full, ".csv"))
 
 spp_info_df <- readRDS(file.path(this_dir, "int/terrestrial_spp_habitat_suitability.rds")) %>%
   left_join(spp_fp)
@@ -64,25 +85,21 @@ allocations <- c("economic", "ge", "mass")
 spp_types <- unique(spp_info_df$spp_type)
 diet_crop_ingredients <- unique(crop_ingredient_cats$diet_crop_ingredient)
 
+
+for(tx_type in spp_types){
+  
 for(allocation_type in allocations){
     for(diet_crop_ingredient_type in diet_crop_ingredients){
-        for(tx_type in spp_types){
 
-          # allocation_type = "ge"
-          # diet_crop_ingredient_type = "fish-dominant/Maize_corn gluten meal"
-          # tx_type = "Terrestrial mammal"
-          
+# allocation_type = "ge"
+# diet_crop_ingredient_type = "fish-dominant/Maize_corn gluten meal"
+# tx_type = "Terrestrial mammal"
+
           diet_type = str_before_first(diet_crop_ingredient_type, "/")
           ingredient_type = str_after_first(diet_crop_ingredient_type, "_")
           crop_type = str_after_first(str_before_first(diet_crop_ingredient_type, "_"), "/")
         
-          
-          tx_vuln_df <- spp_info_df %>%
-            filter(spp_type == tx_type) 
-          
-          tx_maps_df <- tx_vuln_df %>%
-            dplyr::select(species, filepath) %>%
-            distinct()
+
           
 
           ## Read in harvest stressor maps, and create a dataframe of the results.  
@@ -104,18 +121,35 @@ for(allocation_type in allocations){
           outf_sd <- sprintf(file.path(biodiv_dir, "output/impact_maps_by_taxon/%s/imp_unwt_%s_%s_%s_%s_sd.tif"), diet_type, crop_type, ingredient_type, allocation_type, tx_type)
           outf_nspp <- sprintf(file.path(biodiv_dir, "output/impact_maps_by_taxon/%s/imp_unwt_%s_%s_%s_%s_nspp.tif"), diet_type, crop_type, ingredient_type, allocation_type, tx_type)
 
+          
+          outf_mean_df <- glue(file.path(this_dir, "int/aoh_impacts_terrestrial/{tx_type}_{diet_type}_{crop_type}_{ingredient_type}_{allocation_type}.rds"))
+          # 
+          # if(all(file.exists(outf_mean_df))) {
+          #   message('rds exist for taxon ', tx_type, diet_type, allocation_type, ingredient_type, ' for harvest stressor... skipping!')
+          #   next()
+          # }
+          # 
+          
           if(all(file.exists(outf_mean, outf_sd))) {
             message('Rasters exist for taxon ', tx_type, crop_type, ingredient_type, diet_type, allocation_type, ' for harvest stressor... skipping!')
             next()
           }
           
-          ### read in all harvest stressor maps for this taxon - 
+          tx_vuln_df <- spp_info_df %>%
+            filter(spp_type == tx_type)
+          
+          tx_maps_df <- tx_vuln_df %>%
+            dplyr::select(species_full, filepath) %>%
+            distinct()
+          
+          ### read in all harvest stressor maps for this taxon -
           message('Loading aoh maps for taxon ', tx_type, '...')
-          tx_maps <- collect_spp_rangemaps(tx_maps_df$species, tx_maps_df$filepath)
+          tx_maps <- collect_spp_rangemaps_terrestrial(tx_maps_df$species_full, tx_maps_df$filepath)
           
           
-          message('Taxon ', tx_type, ' harvest stressor dataframe: ', nrow(tx_maps[["parent"]]), 
+          message('Taxon ', tx_type, ' harvest stressor dataframe: ', nrow(tx_maps[["parent"]]),
                   ' cell observations for ', nrow(tx_maps_df), ' species...')
+          
           
           message('Processing mean/sd vulnerability by species in taxon ', tx_type, 
                   ' to harvest stressor for ', allocation_type, diet_type, crop_type, ingredient_type)
@@ -127,19 +161,19 @@ for(allocation_type in allocations){
           chunk_size <- 500000
           n_chunks <- ceiling(6.6e6 / chunk_size)
           n_cores <- max(1, floor(n_chunks / ceiling(nrow(tx_maps[["parent"]])/3e7)))
-          
+
           result_list <- parallel::mclapply(1:n_chunks, mc.cores = n_cores,
                                             FUN = function(n) { ### n <- 6
                                               cell_id_min <- as.integer((n - 1) * chunk_size + 1)
                                               cell_id_max <- as.integer(n * chunk_size)
-                                              message('Summarizing harvest stressor on taxon ', tx_type, 
+                                              message('Summarizing harvest stressor on taxon ', tx_type,
                                                       ': cells ', cell_id_min, ' - ', cell_id_max, '...')
-                                              
+
                                               chunk_sum <- tx_maps %>%
-                                                # as.data.frame() %>% 
+                                                # as.data.frame() %>%
                                                 filter(between(cell_id, cell_id_min, cell_id_max)) %>%
-                                                left_join(tx_vuln_df, by = c('species')) %>%
-                                                left_join(harvest_cells_df, 
+                                                left_join(tx_vuln_df, by = c('species_full')) %>%
+                                                left_join(harvest_cells_df,
                                                                 by = c('cell_id')) %>%
                                                as.data.table() %>%
                                               .[ , harvest := ifelse(is.na(harvest), 0, harvest)] %>%
@@ -149,6 +183,42 @@ for(allocation_type in allocations){
                                                      impact_sd   = sd(impact),
                                                      n_spp       = length(unique(species))),
                                                  by = 'cell_id']
+                                            })
+          
+          
+          result_list <- parallel::mclapply(1:n_chunks, mc.cores = n_cores,
+                                            FUN = function(n) { 
+                                              
+                                              ### n <- 6
+                                              cell_id_min <- as.integer((n - 1) * chunk_size + 1)
+                                              cell_id_max <- as.integer(n * chunk_size)
+                                              message('Summarizing harvest stressor on taxon ', tx_type, 
+                                                      ': cells ', cell_id_min, ' - ', cell_id_max, '...')
+                                              
+                                              chunk_sum_spp <- tx_maps %>%
+                                                # as.data.frame() %>% 
+                                                filter(between(cell_id, cell_id_min, cell_id_max)) %>%
+                                                left_join(tx_vuln_df, by = c('species_full')) %>%
+                                                left_join(harvest_cells_df, 
+                                                          by = c('cell_id')) %>%
+                                                as.data.table() %>%
+                                                .[ , harvest := ifelse(is.na(harvest), 0, harvest)] %>%
+                                                .[ , impact_km2  := (1-cropland_suitability)*harvest] %>%
+                                                .[ , impact  := 1 - ((100 - impact_km2)/100)^0.25]
+                                                
+                                                
+                                                chunk_sum <- chunk_sum_spp %>%
+                                                .[ , .(impact_mean = mean(impact),
+                                                       impact_sd   = sd(impact),
+                                                       n_spp       = length(unique(species))),
+                                                   by = 'cell_id']
+                                              
+                                              
+                                              chunk_sum_spp_global <- chunk_sum_spp %>%
+                                                .[ , .(impact_total = sum(impact_km2)),
+                                                   by = 'species_full']
+                                              
+                                              return(list(chunk_sum_spp_global = chunk_sum_spp_global, chunk_sum = chunk_sum))
                                             }) 
           
           
@@ -158,36 +228,52 @@ for(allocation_type in allocations){
           }
           
           message('Binding results for taxon ', tx_type, '...')
+        
           
-          result_df <- result_list %>%
-            data.table::rbindlist() %>%
-            filter(!is.na(cell_id)) %>% 
+          result_df <- rbindlist(lapply(result_list, function(x) x$chunk_sum)) %>%
+            filter(!is.na(cell_id)) %>%
             as.data.frame()
-          
+
           message('Creating and saving rasters for taxon ', tx_type, '...')
-          rast_mean <- result_df %>% 
-            dplyr::select(cell_id, impact_mean) %>% 
+          rast_mean <- result_df %>%
+            dplyr::select(cell_id, impact_mean) %>%
             left_join(moll_land_template) %>%
             dplyr::select(x, y, impact_mean) %>%
             rast(., type = "xyz", crs = moll_template)
-          rast_sd   <- result_df %>% 
-            dplyr::select(cell_id, impact_sd) %>% 
+          rast_sd   <- result_df %>%
+            dplyr::select(cell_id, impact_sd) %>%
             left_join(moll_land_template) %>%
             dplyr::select(x, y, impact_sd) %>%
             rast(., type = "xyz", crs = moll_template)
-          rast_nspp <- result_df %>% 
-            dplyr::select(cell_id, n_spp) %>% 
+          rast_nspp <- result_df %>%
+            dplyr::select(cell_id, n_spp) %>%
             left_join(moll_land_template) %>%
             dplyr::select(x, y, n_spp) %>%
             rast(., type = "xyz", crs = moll_template)
-          
+
           writeRaster(rast_mean, outf_mean, overwrite = TRUE)
           writeRaster(rast_sd,   outf_sd, overwrite = TRUE)
           writeRaster(rast_nspp, outf_nspp, overwrite = TRUE)
+          
+          
+          message('Creating and saving global df for taxon ', tx_type, '...')
+          
+          global_df <- rbindlist(lapply(result_list, function(x) x$chunk_sum_spp_global)) %>% 
+            as.data.frame() %>%
+            group_by(species_full) %>%
+            summarise(impact_total = sum(impact_total, na.rm = TRUE)) %>%
+            mutate(allocation = allocation_type, diet_crop_ingredient = diet_crop_ingredient_type) %>%
+            mutate(diet = str_before_first(diet_crop_ingredient, "\\/")) %>%
+            mutate(crop_ingredient = str_after_first(diet_crop_ingredient, "\\/"))
+          
+          diet_type = unique(global_df$diet)
+          crop_ingredient_type <- unique(global_df$crop_ingredient)
+
+          write_rds(global_df, glue(file.path(this_dir, "int/aoh_impacts_terrestrial/{tx_type}_{diet_type}_{crop_ingredient_type}_{allocation_type}.rds")))
+  
           
           
           }
       }
     }
   
-
