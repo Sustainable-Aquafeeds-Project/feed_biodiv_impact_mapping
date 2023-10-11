@@ -117,9 +117,9 @@ for(allocation_type in allocations){
           ## Calculate mean impacts per species grouping 
           # Loop over each taxon; pull all rangemaps for that taxon. For each species in the taxon, multiply harvest stressor map by the spp vulnerability to identify impact map for that species. Summarize across the entire taxon to mean, sd, and nspp.
           
-          outf_mean <- sprintf(file.path(biodiv_dir, "output/impact_maps_by_taxon/%s/imp_unwt_%s_%s_%s_%s_mean.tif"), diet_type, crop_type, ingredient_type, allocation_type, tx_type)
-          outf_sd <- sprintf(file.path(biodiv_dir, "output/impact_maps_by_taxon/%s/imp_unwt_%s_%s_%s_%s_sd.tif"), diet_type, crop_type, ingredient_type, allocation_type, tx_type)
-          outf_nspp <- sprintf(file.path(biodiv_dir, "output/impact_maps_by_taxon/%s/imp_unwt_%s_%s_%s_%s_nspp.tif"), diet_type, crop_type, ingredient_type, allocation_type, tx_type)
+          outf_mean <- sprintf(file.path(biodiv_dir, "output/impact_maps_by_taxon_ingredient/%s/imp_unwt_%s_%s_%s_%s_mean.tif"), diet_type, crop_type, ingredient_type, allocation_type, tx_type)
+          outf_sd <- sprintf(file.path(biodiv_dir, "output/impact_maps_by_taxon_ingredient/%s/imp_unwt_%s_%s_%s_%s_sd.tif"), diet_type, crop_type, ingredient_type, allocation_type, tx_type)
+          outf_nspp <- sprintf(file.path(biodiv_dir, "output/impact_maps_by_taxon_ingredient/%s/imp_unwt_%s_%s_%s_%s_nspp.tif"), diet_type, crop_type, ingredient_type, allocation_type, tx_type)
 
           
           outf_mean_df <- glue(file.path(this_dir, "int/aoh_impacts_terrestrial/{tx_type}_{diet_type}_{crop_type}_{ingredient_type}_{allocation_type}.rds"))

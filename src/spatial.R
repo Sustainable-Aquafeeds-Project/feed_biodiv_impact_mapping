@@ -40,6 +40,10 @@ moll_template <- rast(nrow=nrow, ncol=ncol, nlyr=nlyr, xmin=xmin, xmax=xmax, ymi
           res=c(x_res, y_res), crs=crs)
 
 
+moll_template_xy <- data.frame(cell_id = 1:ncell(moll_template), as.data.frame(moll_template %>% tidyterra::mutate(val = 1), xy = TRUE)) %>%
+  dplyr::select(x, y, cell_id)
+
+
 
 ## make a lon/lat WGS 1km by 1km raster 
 

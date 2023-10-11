@@ -117,6 +117,21 @@ fish_types <- unique(spp_info_df_fish$fish_type)
 spp_types <- unique(spp_info_df_fish$taxon)
 
 for(tx_type in spp_types){
+  
+  ## read in taxon maps 
+  # tx_type = "fish2"
+  tx_maps_df <- spp_info_df_fish %>%
+    filter(taxon == tx_type) %>%
+    dplyr::select(species, filepath) %>%
+    distinct()
+  
+  ### read in all spp maps for this taxon - 
+  message('Loading spp maps for taxon ', tx_type, '...')
+  tx_maps <- collect_spp_rangemaps_marine(tx_maps_df$species, tx_maps_df$filepath)
+  
+  message('Taxon ', tx_type, ' spp dataframe: ', nrow(tx_maps[["parent"]]), 
+          ' cell observations for ', nrow(tx_maps_df), ' species...')
+  
   for(allocation_type in allocations){
    for(diet_type in diets){
     for(ingredient_type in ingredients){
@@ -150,19 +165,7 @@ for(tx_type in spp_types){
             next()
           }
           
-          ## read in taxon maps 
-          # tx_type = "fish2"
-          tx_maps_df <- spp_info_df_fish %>%
-            filter(taxon == tx_type) %>%
-            dplyr::select(species, filepath) %>%
-            distinct()
-          
-          ### read in all spp maps for this taxon - 
-          message('Loading spp maps for taxon ', tx_type, '...')
-          tx_maps <- collect_spp_rangemaps_marine(tx_maps_df$species, tx_maps_df$filepath)
-          
-          message('Taxon ', tx_type, ' spp dataframe: ', nrow(tx_maps[["parent"]]), 
-                  ' cell observations for ', nrow(tx_maps_df), ' species...')
+  
           
           tx_vuln_df <- spp_info_df_fish %>%
             filter(taxon == tx_type,
@@ -333,136 +336,136 @@ for(tx_type in spp_types){
 
 ## now combine the split fish1 and fish2 into one "fish" category. We take a regular spp weighted mean, add the nspp rasters, and calculate the pooled variance and sdev to get these. 
 
-# for(allocation_type in allocations){
-#   for(diet_type in diets){
-#     for(ingredient_type in ingredients){
-#       for(fs_type in fish_types){
-# 
-# # allocation_type = "economic"
-# # diet_type = "fish-dominant"
-# # ingredient_type = "fish meal, cut offs"
-# # fs_type = "trimmings fish"
-#         tx_type = "fish"
-# 
-#         if(fs_type == "trimmings fish" & ingredient_type == "fish meal" |fs_type == "trimmings fish" & ingredient_type == "fish oil" |
-#            fs_type == "forage fish" & ingredient_type == "fish meal, cut offs"| fs_type == "forage fish" & ingredient_type == "fish oil, cut offs") {
-#           message('Not a category! ... skipping!')
-#           next()
-#         }
-# 
-#        rast_mean_1 <- rast(sprintf(file.path(fish_dir, "%s/imp_unwt_%s_%s_%s_fish1_mean.tif"), diet_type, fs_type, ingredient_type, allocation_type)) 
-#        crs(rast_mean_1) <- crs(moll_template)
-#        rast_mean_1 <- rast_mean_1 %>%
-#          project(., moll_template, method = "near")
-#        
-#         rast_sd_1 <- rast(sprintf(file.path(fish_dir, "%s/imp_unwt_%s_%s_%s_fish1_sd.tif"), diet_type, fs_type, ingredient_type, allocation_type))
-#         crs(rast_sd_1) <- crs(moll_template)
-#         rast_sd_1 <- rast_sd_1 %>%
-#           project(., moll_template, method = "near")
-#         
-#         rast_nspp_1 <- rast(sprintf(file.path(fish_dir, "%s/imp_unwt_%s_%s_%s_fish1_nspp.tif"), diet_type, fs_type, ingredient_type, allocation_type))
-#         crs(rast_nspp_1) <- crs(moll_template)
-#         rast_nspp_1 <- rast_nspp_1 %>%
-#           project(., moll_template, method = "near")
-#         
-#         
-#         rast_mean_2 <- rast(sprintf(file.path(fish_dir, "%s/imp_unwt_%s_%s_%s_fish2_mean.tif"), diet_type, fs_type, ingredient_type, allocation_type))
-#         crs(rast_mean_2) <- crs(moll_template)
-#         rast_mean_2 <- rast_mean_2 %>%
-#           project(., moll_template, method = "near")
-#         
-#         rast_sd_2 <- rast(sprintf(file.path(fish_dir, "%s/imp_unwt_%s_%s_%s_fish2_sd.tif"), diet_type, fs_type, ingredient_type, allocation_type))
-#         crs(rast_sd_2) <- crs(moll_template)
-#         rast_sd_2 <- rast_sd_2 %>%
-#           project(., moll_template, method = "near")
-#         
-#         rast_nspp_2 <- rast(sprintf(file.path(fish_dir, "%s/imp_unwt_%s_%s_%s_fish2_nspp.tif"), diet_type, fs_type, ingredient_type, allocation_type))
-#         crs(rast_nspp_2) <- crs(moll_template)
-#         rast_nspp_2 <- rast_nspp_2 %>%
-#           project(., moll_template, method = "near")
-# 
-# 
-#         outf_mean <- sprintf(file.path(biodiv_dir, "output/impact_maps_by_taxon/%s/imp_unwt_%s_%s_%s_fish_mean.tif"), diet_type, fs_type, ingredient_type, allocation_type)
-#         outf_sd <- sprintf(file.path(biodiv_dir, "output/impact_maps_by_taxon/%s/imp_unwt_%s_%s_%s_fish_sd.tif"), diet_type, fs_type, ingredient_type, allocation_type)
-#         outf_nspp <- sprintf(file.path(biodiv_dir, "output/impact_maps_by_taxon/%s/imp_unwt_%s_%s_%s_fish_nspp.tif"), diet_type, fs_type, ingredient_type, allocation_type)
-# 
-# 
-#         if(all(file.exists(outf_mean, outf_sd))) {
-#           message('Rasters exist for taxon ', tx_type, ' for bycatch stressor... skipping!')
-#           next()
-#         }
-# 
-# 
-#         rast_nspp <- rast_nspp_1 + rast_nspp_2
-# 
-#         rast_mean <- (rast_mean_1*rast_nspp_1 + rast_mean_2*rast_nspp_2)/(rast_nspp)
-# 
-#         mean_df_1 <- rast_mean_1 %>%
-#           as.data.frame(xy = TRUE) %>%
-#           mutate(taxon = "fish1") %>%
-#           rename("imp_mean" = "impact_mean")
-# 
-#         sd_df_1 <- rast_sd_1 %>%
-#           as.data.frame(xy=TRUE) %>%
-#           mutate(taxon = "fish1") %>%
-#           rename("imp_sdev" = 3)
-# 
-#         nspp_df_1 <- rast_nspp_1 %>%
-#           as.data.frame(xy = TRUE) %>%
-#           mutate(taxon = "fish1") %>%
-#           rename("imp_nspp" = 3)
-# 
-#         mean_df_2 <- rast_mean_2 %>%
-#           as.data.frame(xy = TRUE) %>%
-#           mutate(taxon = "fish2") %>%
-#           rename("imp_mean" = "impact_mean")
-# 
-#         sd_df_2 <- rast_sd_2 %>%
-#           as.data.frame(xy=TRUE) %>%
-#           mutate(taxon = "fish2") %>%
-#           rename("imp_sdev" = 3)
-# 
-#         nspp_df_2 <- rast_nspp_2 %>%
-#           as.data.frame(xy = TRUE) %>%
-#           mutate(taxon = "fish2") %>%
-#           rename("imp_nspp" = 3)
-# 
-#         mean_df <- rbind(mean_df_1, mean_df_2) %>%
-#           left_join(moll_ocean_template, by = c("x", "y")) %>%
-#           dplyr::select(-x, -y)
-#         sdev_df <- rbind(sd_df_1, sd_df_2) %>%
-#           left_join(moll_ocean_template, by = c("x", "y")) %>%
-#           dplyr::select(-x, -y)
-#         nspp_df <- rbind(nspp_df_1, nspp_df_2) %>%
-#           left_join(moll_ocean_template, by = c("x", "y")) %>%
-#           dplyr::select(-x, -y)
-#         
-#         rm(mean_df_1, mean_df_2, sd_df_1, sd_df_2, nspp_df_1, nspp_df_2)
-# 
-#         big_df <- mean_df %>%
-#           full_join(sdev_df, by = c('taxon', 'cell_id')) %>%
-#           full_join(nspp_df, by = c('taxon', 'cell_id'))
-#         
-#         rm(mean_df, sdev_df, nspp_df)
-# 
-#         rast_sd <- big_df %>%
-#           group_by(cell_id) %>%
-#           summarize(imp_var = iterated_pooled_var(imp_mean, imp_sdev, imp_nspp),
-#                     imp_sdev = sqrt(imp_var)) %>%
-#           left_join(moll_ocean_template, by = "cell_id") %>%
-#           dplyr::select(x, y, imp_sdev) %>%
-#           rast(., type = "xyz", crs = moll_template)
-# 
-# 
-# 
-#         writeRaster(rast_mean, outf_mean, overwrite = TRUE)
-#         writeRaster(rast_sd,   outf_sd, overwrite = TRUE)
-#         writeRaster(rast_nspp, outf_nspp, overwrite = TRUE)
-# 
-# 
-# 
-#       }
-#     }
-#   }
-# }
+for(allocation_type in allocations){
+  for(diet_type in diets){
+    for(ingredient_type in ingredients){
+      for(fs_type in fish_types){
+
+# allocation_type = "economic"
+# diet_type = "fish-dominant"
+# ingredient_type = "fish meal, cut offs"
+# fs_type = "trimmings fish"
+        tx_type = "fish"
+
+        if(fs_type == "trimmings fish" & ingredient_type == "fish meal" |fs_type == "trimmings fish" & ingredient_type == "fish oil" |
+           fs_type == "forage fish" & ingredient_type == "fish meal, cut offs"| fs_type == "forage fish" & ingredient_type == "fish oil, cut offs") {
+          message('Not a category! ... skipping!')
+          next()
+        }
+
+       rast_mean_1 <- rast(sprintf(file.path(fish_dir, "%s/imp_unwt_%s_%s_%s_fish1_mean.tif"), diet_type, fs_type, ingredient_type, allocation_type))
+       crs(rast_mean_1) <- crs(moll_template)
+       rast_mean_1 <- rast_mean_1 %>%
+         project(., moll_template, method = "near")
+
+        rast_sd_1 <- rast(sprintf(file.path(fish_dir, "%s/imp_unwt_%s_%s_%s_fish1_sd.tif"), diet_type, fs_type, ingredient_type, allocation_type))
+        crs(rast_sd_1) <- crs(moll_template)
+        rast_sd_1 <- rast_sd_1 %>%
+          project(., moll_template, method = "near")
+
+        rast_nspp_1 <- rast(sprintf(file.path(fish_dir, "%s/imp_unwt_%s_%s_%s_fish1_nspp.tif"), diet_type, fs_type, ingredient_type, allocation_type))
+        crs(rast_nspp_1) <- crs(moll_template)
+        rast_nspp_1 <- rast_nspp_1 %>%
+          project(., moll_template, method = "near")
+
+
+        rast_mean_2 <- rast(sprintf(file.path(fish_dir, "%s/imp_unwt_%s_%s_%s_fish2_mean.tif"), diet_type, fs_type, ingredient_type, allocation_type))
+        crs(rast_mean_2) <- crs(moll_template)
+        rast_mean_2 <- rast_mean_2 %>%
+          project(., moll_template, method = "near")
+
+        rast_sd_2 <- rast(sprintf(file.path(fish_dir, "%s/imp_unwt_%s_%s_%s_fish2_sd.tif"), diet_type, fs_type, ingredient_type, allocation_type))
+        crs(rast_sd_2) <- crs(moll_template)
+        rast_sd_2 <- rast_sd_2 %>%
+          project(., moll_template, method = "near")
+
+        rast_nspp_2 <- rast(sprintf(file.path(fish_dir, "%s/imp_unwt_%s_%s_%s_fish2_nspp.tif"), diet_type, fs_type, ingredient_type, allocation_type))
+        crs(rast_nspp_2) <- crs(moll_template)
+        rast_nspp_2 <- rast_nspp_2 %>%
+          project(., moll_template, method = "near")
+
+
+        outf_mean <- sprintf(file.path(biodiv_dir, "output/impact_maps_by_taxon_ingredient/%s/imp_unwt_%s_%s_%s_fish_mean.tif"), diet_type, fs_type, ingredient_type, allocation_type)
+        outf_sd <- sprintf(file.path(biodiv_dir, "output/impact_maps_by_taxon_ingredient/%s/imp_unwt_%s_%s_%s_fish_sd.tif"), diet_type, fs_type, ingredient_type, allocation_type)
+        outf_nspp <- sprintf(file.path(biodiv_dir, "output/impact_maps_by_taxon_ingredient/%s/imp_unwt_%s_%s_%s_fish_nspp.tif"), diet_type, fs_type, ingredient_type, allocation_type)
+
+
+        if(all(file.exists(outf_mean, outf_sd))) {
+          message('Rasters exist for taxon ', tx_type, ' for bycatch stressor... skipping!')
+          next()
+        }
+
+
+        rast_nspp <- rast_nspp_1 + rast_nspp_2
+
+        rast_mean <- (rast_mean_1*rast_nspp_1 + rast_mean_2*rast_nspp_2)/(rast_nspp)
+
+        mean_df_1 <- rast_mean_1 %>%
+          as.data.frame(xy = TRUE) %>%
+          mutate(taxon = "fish1") %>%
+          rename("imp_mean" = "impact_mean")
+
+        sd_df_1 <- rast_sd_1 %>%
+          as.data.frame(xy=TRUE) %>%
+          mutate(taxon = "fish1") %>%
+          rename("imp_sdev" = 3)
+
+        nspp_df_1 <- rast_nspp_1 %>%
+          as.data.frame(xy = TRUE) %>%
+          mutate(taxon = "fish1") %>%
+          rename("imp_nspp" = 3)
+
+        mean_df_2 <- rast_mean_2 %>%
+          as.data.frame(xy = TRUE) %>%
+          mutate(taxon = "fish2") %>%
+          rename("imp_mean" = "impact_mean")
+
+        sd_df_2 <- rast_sd_2 %>%
+          as.data.frame(xy=TRUE) %>%
+          mutate(taxon = "fish2") %>%
+          rename("imp_sdev" = 3)
+
+        nspp_df_2 <- rast_nspp_2 %>%
+          as.data.frame(xy = TRUE) %>%
+          mutate(taxon = "fish2") %>%
+          rename("imp_nspp" = 3)
+
+        mean_df <- rbind(mean_df_1, mean_df_2) %>%
+          left_join(moll_ocean_template, by = c("x", "y")) %>%
+          dplyr::select(-x, -y)
+        sdev_df <- rbind(sd_df_1, sd_df_2) %>%
+          left_join(moll_ocean_template, by = c("x", "y")) %>%
+          dplyr::select(-x, -y)
+        nspp_df <- rbind(nspp_df_1, nspp_df_2) %>%
+          left_join(moll_ocean_template, by = c("x", "y")) %>%
+          dplyr::select(-x, -y)
+
+        rm(mean_df_1, mean_df_2, sd_df_1, sd_df_2, nspp_df_1, nspp_df_2)
+
+        big_df <- mean_df %>%
+          full_join(sdev_df, by = c('taxon', 'cell_id')) %>%
+          full_join(nspp_df, by = c('taxon', 'cell_id'))
+
+        rm(mean_df, sdev_df, nspp_df)
+
+        rast_sd <- big_df %>%
+          group_by(cell_id) %>%
+          summarize(imp_var = iterated_pooled_var(imp_mean, imp_sdev, imp_nspp),
+                    imp_sdev = sqrt(imp_var)) %>%
+          left_join(moll_ocean_template, by = "cell_id") %>%
+          dplyr::select(x, y, imp_sdev) %>%
+          rast(., type = "xyz", crs = moll_template)
+
+
+
+        writeRaster(rast_mean, outf_mean, overwrite = TRUE)
+        writeRaster(rast_sd,   outf_sd, overwrite = TRUE)
+        writeRaster(rast_nspp, outf_nspp, overwrite = TRUE)
+
+
+
+      }
+    }
+  }
+}
 

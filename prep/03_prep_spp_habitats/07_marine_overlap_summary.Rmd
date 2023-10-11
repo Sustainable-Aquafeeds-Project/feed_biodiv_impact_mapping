@@ -16,15 +16,11 @@ editor_options:
 
 library(tidyverse)
 library(here)
-library(sf)
-library(data.table)
-library(dtplyr)
 library(terra)
 library(parallel)
 library(strex)
 library(janitor)
 library(readxl)
-library(rfishbase)
 
 source(here("src/directories.R"))
 
@@ -35,187 +31,20 @@ aquamaps_dir <- file.path(rdsi_raw_data_dir, "aquamaps")
 
 ```
 
-NOTE: For benthopelagic the pelagic part will be multiplied by the pelagic % and the benthic multiplied by the benthic % (same for reef fish)
-
-```{r}
-
-foragefish_catch <- readRDS(file.path(watson_dir, "v5.0/int/all_catch_foragefish.rds"))
-
-foragefish_gears <- foragefish_catch %>%
-  filter(forage_id == 1) %>%
-  filter(FOFM_catch > 0) %>%
-  distinct(Gear, FGearCode, FleetGearName, VBDesc)
-
-forage_spp <- foragefish_catch %>%
-  filter(forage_id == 1) %>%
-  pull(TaxonName) %>%
-  unique()
-
-forage_catch_bycatch <- foragefish_catch %>%
-  filter(TaxonName %in% c(forage_spp)) %>%
-  group_by(water_col_position) %>%
-  dplyr::summarise(total_discards = DiscardsIND + DiscardsNIND, 
-                   total_catch = IUUIND + IUUNIND + ReportedIND + ReportedNIND + DiscardsIND + DiscardsNIND) %>%
-  summarise(total_discards = sum(total_discards), 
-            total_catch = sum(total_catch)) %>%
-  ungroup() %>%
-  mutate(prop_discards = total_discards/total_catch) %>%
-  mutate(prop_all_fofm_catch = total_catch/sum(total_catch))
-
-test_high_bycatch <- forage_catch_bycatch %>%
-  filter(prop_discards >= 0.1) %>%
-  pull(prop_all_fofm_catch) %>%
-  sum()
-
-# ok so ~19% of forage catch has a relatively high bycatch proportions (range from 0.1 to 0.34), the rest have values <0.03 of catch within the targeted forage fish species are bycatch.
-
-## lets look at trimmings fish now 
-
-trimmingsfish_catch <- readRDS(file.path(watson_dir, "v5.0/int/all_catch_trimmingsfish.rds"))
-
-trimmingsfish_gears <- trimmingsfish_catch %>%
-  filter(trimmingsfish == 1) %>%
-  filter(trimmings_catch > 0) %>%
-  distinct(Gear, FGearCode, FleetGearName, VBDesc)
-
-trimmings_spp <- trimmingsfish_catch %>%
-  filter(trimmingsfish == 1) %>%
-  pull(TaxonName) %>%
-  unique()
-
-trimmings_catch_bycatch <- trimmingsfish_catch %>%
-  filter(TaxonName %in% c(trimmings_spp)) %>%
-  group_by(water_col_position) %>%
-  dplyr::summarise(total_discards = DiscardsIND + DiscardsNIND, 
-                   total_catch = IUUIND + IUUNIND + ReportedIND + ReportedNIND + DiscardsIND + DiscardsNIND) %>%
-  summarise(total_discards = sum(total_discards), 
-            total_catch = sum(total_catch)) %>%
-  ungroup() %>%
-  mutate(prop_discards = total_discards/total_catch) %>%
-  mutate(prop_all_fofm_catch = total_catch/sum(total_catch))
-
-test_high_bycatch <- trimmings_catch_bycatch %>%
-  filter(prop_discards >= 0.1) %>%
-  pull(prop_all_fofm_catch) %>%
-  sum()
-
-## only 11% have high bycatch! even better than forage...
-
-
-all_catch_bycatch <- forage_catch_bycatch %>%
-  dplyr::select(water_col_position, forage_prop_bycatch = prop_discards) %>%
-  left_join(trimmings_catch_bycatch %>% dplyr::select(water_col_position, trimmings_prop_bycatch = prop_discards))
-
-```
-
-
 
 Read in vulnerability data from [Butt et al. 2022](https://esajournals.onlinelibrary.wiley.com/doi/10.1002/ecs2.3919) and match to Aquamaps species. 
  - ~57% of the Aquamaps species do not have vulnerability scores. We will need to gapfill these. We will gapfill using the same method that the source data used (by genus and then family.)
 
 ```{r}
-vuln_taxa <- read.csv(here("prep/03_prep_spp_habitats/data/spp_vuln_butt/vuln_gapfilled_tx.csv"))
-
-unique(vuln_taxa$gapfill) # ok so they only had to gapfill by genus and then family
-# [1] "none"   "family" "genus" 
-
-
-aquamaps_spp <- read.csv(file.path(aquamaps_dir, "GTE10_SPECIESOCCURSUM/speciesoccursum_gte10.csv"))
-
-
-aquamaps_spp_clean <- aquamaps_spp %>%
-  mutate(species = paste0(tolower(Genus), " ", Species)) %>%
-  mutate(spp_type = case_when(
-    Kingdom == "Plantae" | Phylum %in% c("Ochrophyta") ~ "Marine plant",
-    str_detect(SpeciesID, "Fis-") ~ "Fish",
-    Class == "Mammalia" ~ "Marine mammal",
-    Class == "Aves" ~ "Bird",
-    Class %in% c("Reptilia", "Amphibia") ~ "Reptiles and amphibians", 
-    Phylum %in% c("Mollusca", "Arthropoda", "Cnidaria", "Echinodermata", "Annelida", "Bryozoa", "Brachiopoda", "Porifera", "Phoronida", "Nemertea", "Chaetognatha", "Platyhelminthes", "Priapulida", "Acanthocephala", "Ctenophora", "Echiura", "Kamptozoa", "Gastrotricha", "Gnathostomulida", "Hemichordata", "Nematoda", "Rotifera", "Sipuncula", "Kamptozoa") | Class %in% c("Appendicularia", "Ascidiacea", "Thaliacea", "Cephalochordata", "Thaliacea") ~ "Invertebrates", 
-    Kingdom %in% c("Protozoa", "Bacteria") | Phylum == "Sagenista" ~ "Microorganisms"
+vuln_taxa <- readRDS(file.path(rdsi_dir, "biodiversity_impacts/int/spp_vuln_depth_info.rds")) %>%
+  unite("ingredient", c(fish_type, ingredient), sep = "_") %>%
+  mutate(ingredient = case_when(
+    ingredient == "trimmings fish_fish meal" ~ "trimmings fish_fish meal, cut offs",
+    ingredient == "trimmings fish_fish oil" ~ "trimmings fish_fish oil, cut offs",
+    TRUE ~ ingredient
   ))
 
-test <- aquamaps_spp_clean %>% filter(is.na(spp_type)) # 0... good
 
-aquamaps_spp_vuln_taxa <- aquamaps_spp_clean %>%
-  left_join(vuln_taxa) %>%
-  mutate(class = ifelse(is.na(class), Class, class),
-         order = ifelse(is.na(order), Order, order),
-         family = ifelse(is.na(family), Family, family),
-         genus = ifelse(is.na(genus), Genus, genus)) %>%
-  dplyr::select(species, class, order, family, genus, gapfill, vuln_gf_id, SpeciesID, SpecCode, FBname, spp_type)
-
-summary(aquamaps_spp_vuln_taxa)
-
-# 13687/23699 = 0.5775349 don't have vulnerability scores... we could gapfill the same way they did by genus and then family. We'll try that and see if it fills everything in. If not, we will gapfill by order and then class as a last resort.  
-
-vuln_scores <- read.csv(here("prep/03_prep_spp_habitats/data/spp_vuln_butt/vuln_gapfilled_score.csv")) %>%
-  dplyr::select(vuln_gf_id, bycatch, biomass_removal)
-
-aquamaps_vuln_scores <- aquamaps_spp_vuln_taxa %>%
-  left_join(vuln_scores) %>%
- mutate(across(class:genus, tolower)) %>%
-  group_by(genus) %>%
-  mutate(genus_mean_bycatch_gf = mean(bycatch, na.rm = TRUE),
-         genus_mean_biomass_gf = mean(biomass_removal, na.rm = TRUE)) %>%
-  ungroup() %>%
-  group_by(family) %>%
-  mutate(family_mean_bycatch_gf = mean(bycatch, na.rm = TRUE),
-         family_mean_biomass_gf = mean(biomass_removal, na.rm = TRUE)) %>%
-  ungroup() %>%
-  group_by(order) %>%
-  mutate(order_mean_bycatch_gf = mean(bycatch, na.rm = TRUE),
-         order_mean_biomass_gf = mean(biomass_removal, na.rm = TRUE)) %>%
-  ungroup() %>%
-  group_by(class) %>%
-  mutate(class_mean_bycatch_gf = mean(bycatch, na.rm = TRUE),
-         class_mean_biomass_gf = mean(biomass_removal, na.rm = TRUE)) %>%
-  ungroup() %>%
-  group_by(spp_type) %>%
-  mutate(large_taxa_mean_bycatch_gf = mean(bycatch, na.rm = TRUE),
-         large_taxa_mean_biomass_gf = mean(biomass_removal, na.rm = TRUE)) %>%
-  ungroup() %>%
-  mutate(bycatch_gf = 
-           case_when(is.na(bycatch) & !is.na(genus_mean_bycatch_gf) ~ genus_mean_bycatch_gf,
-                     is.na(bycatch) & is.na(genus_mean_bycatch_gf) & !is.na(family_mean_bycatch_gf) ~ family_mean_bycatch_gf, 
-                     is.na(bycatch) & is.na(genus_mean_bycatch_gf) & is.na(family_mean_bycatch_gf) & !is.na(order_mean_bycatch_gf) ~ order_mean_bycatch_gf,
-                     is.na(bycatch) & is.na(genus_mean_bycatch_gf) & is.na(family_mean_bycatch_gf) & is.na(order_mean_bycatch_gf) & !is.na(class_mean_bycatch_gf) ~ class_mean_bycatch_gf,
-                     is.na(bycatch) & is.na(genus_mean_bycatch_gf) & is.na(family_mean_bycatch_gf) & is.na(order_mean_bycatch_gf) & is.na(class_mean_bycatch_gf) & !is.na(large_taxa_mean_bycatch_gf) ~ large_taxa_mean_bycatch_gf,
-                     spp_type == "Microorganisms" ~ 0,
-                     TRUE ~ bycatch
-                     )) %>% 
-           mutate(biomass_removal_gf = 
-           case_when(is.na(biomass_removal) & !is.na(genus_mean_biomass_gf) ~ genus_mean_biomass_gf,
-                     is.na(biomass_removal) & is.na(genus_mean_biomass_gf) & !is.na(family_mean_biomass_gf) ~ family_mean_biomass_gf, 
-                     is.na(biomass_removal) & is.na(genus_mean_biomass_gf) & is.na(family_mean_biomass_gf) & !is.na(order_mean_biomass_gf) ~ order_mean_biomass_gf,
-                     is.na(biomass_removal) & is.na(genus_mean_biomass_gf) & is.na(family_mean_biomass_gf) & is.na(order_mean_biomass_gf) & !is.na(class_mean_biomass_gf) ~ class_mean_biomass_gf,
-                     is.na(biomass_removal) & is.na(genus_mean_biomass_gf) & is.na(family_mean_biomass_gf) & is.na(order_mean_biomass_gf) & is.na(class_mean_biomass_gf) & !is.na(large_taxa_mean_biomass_gf) ~ large_taxa_mean_biomass_gf,
-                     spp_type == "Microorganisms" ~ 0,
-                     TRUE ~ biomass_removal
-                     ))  %>%
-    mutate(gapfill_flag_bycatch = 
-           case_when(is.na(bycatch) & !is.na(genus_mean_bycatch_gf) ~ "genus",
-                     is.na(bycatch) & is.na(genus_mean_bycatch_gf) & !is.na(family_mean_bycatch_gf) ~ "family", 
-                     is.na(bycatch) & is.na(genus_mean_bycatch_gf) & is.na(family_mean_bycatch_gf) & !is.na(order_mean_bycatch_gf) ~ "order",
-                     is.na(bycatch) & is.na(genus_mean_bycatch_gf) & is.na(family_mean_bycatch_gf) & is.na(order_mean_bycatch_gf) & !is.na(class_mean_bycatch_gf) ~ "class",
-                     is.na(bycatch) & is.na(genus_mean_bycatch_gf) & is.na(family_mean_bycatch_gf) & is.na(order_mean_bycatch_gf) & is.na(class_mean_bycatch_gf) & !is.na(large_taxa_mean_bycatch_gf) ~ "Larger taxonomic group",
-                     spp_type == "Microorganisms" ~ "Microorganism not affected",
-                     TRUE ~ "none"
-                     )) %>% 
-      mutate(gapfill_flag_biomass = 
-           case_when(is.na(biomass_removal) & !is.na(genus_mean_biomass_gf) ~ "genus",
-                     is.na(biomass_removal) & is.na(genus_mean_biomass_gf) & !is.na(family_mean_biomass_gf) ~ "family", 
-                     is.na(biomass_removal) & is.na(genus_mean_biomass_gf) & is.na(family_mean_biomass_gf) & !is.na(order_mean_biomass_gf) ~ "order",
-                     is.na(biomass_removal) & is.na(genus_mean_biomass_gf) & is.na(family_mean_biomass_gf) & is.na(order_mean_biomass_gf) & !is.na(class_mean_biomass_gf) ~ "class",
-                     is.na(biomass_removal) & is.na(genus_mean_biomass_gf) & is.na(family_mean_biomass_gf) & is.na(order_mean_biomass_gf) & is.na(class_mean_biomass_gf) & !is.na(large_taxa_mean_biomass_gf) ~ "Larger taxonomic group",
-                     spp_type == "Microorganisms" ~ "Microorganism not affected",
-                     TRUE ~ "none"
-                     )) %>%
-  dplyr::select(species, class, order, family, genus, vuln_gf_id, SpeciesID, SpecCode, FBname, spp_type, bycatch_gf, biomass_removal_gf)
-
-summary(aquamaps_vuln_scores)
-hist(aquamaps_vuln_scores$bycatch_gf) # really concentrated around 0.3/0.4... I bet adding this will reduce affected area by quite a bit.
-hist(aquamaps_vuln_scores$biomass_removal_gf) # much higher.. makes sense 
 ```
 
 Pull total amount of ocean area fished (km2) for each allocation, diet, and aquafeed ingredient
@@ -245,105 +74,63 @@ Now lets read in the intermediate overlay data, and apply our vulnerability metr
 
 ```{r}
 
-overlay_df <- purrr::map_df(list.files(here("prep/03_prep_spp_habitats/int/aoh_overlay_chunks_marine_old"), full.names = TRUE, recursive = TRUE), readRDS) %>%
+aquamaps_spp <- read.csv(file.path(rdsi_raw_data_dir, "aquamaps/GTE10_SPECIESOCCURSUM/speciesoccursum_gte10.csv"))
+
+overlay_df <- purrr::map_df(list.files(here("prep/03_prep_spp_habitats/int/aoh_overlay_chunks_marine"), full.names = TRUE, recursive = TRUE), readRDS) %>%
   rename(SpeciesID = sciname) %>%
   left_join(aquamaps_spp)
 
 length(unique(overlay_df$SpeciesID)) # 23694
-spp_to_run <- setdiff(unique(aquamaps_spp$SpeciesID), unique(overlay_df$SpeciesID)) # there are 5 missing. Will fix this later.
-setdiff(unique(overlay_df$SpeciesID), unique(aquamaps_spp$SpeciesID)) # 0 good
 
-23694*3*2*2*2*2 == nrow(overlay_df) # TRUE perfect! So we have all of the combinations we need. (Just need to fix those 5 species at some point...)
+impact_df <- purrr::map_df(list.files(here("prep/03_prep_spp_habitats/int/aoh_impacts_marine"), full.names = TRUE, recursive = TRUE), readRDS) %>%
+  left_join(aquamaps_spp %>% 
+              unite(Genus, Species, sep = " ", col = "species") %>%
+              mutate(species = tolower(species))
+              ) 
 
-forage_spp <- read.csv(here("data/raw_data/fisheries/forage_fish_list_final.csv")) %>%
-    mutate(species = tolower(sci_name)) # ok so some of these are family level... will need to fix that eventually...
+length(unique(impact_df$SpeciesID)) # 23637 missing 62 spp
+
+setdiff(unique(aquamaps_spp$SpeciesID), unique(impact_df$SpeciesID))
+
+spp_to_run <- setdiff(unique(aquamaps_spp$SpeciesID), unique(impact_df$SpeciesID)) 
+
+test <- aquamaps_spp %>% filter(SpeciesID %in% spp_to_run) # ok they are all bacteria and protozoa, which we don't include... 
+
+
+impact_vuln <- impact_df %>%
+  dplyr::group_by(species, diet, allocation, ingredient) %>%
+  summarise(impact_total = sum(impact_total, na.rm = TRUE)) %>%
+  ungroup() %>% 
+  left_join(vuln_taxa) %>%
+  dplyr::select(sciname= species, diet, allocation, ingredient, impact_total, vulnerability = vuln_quartile, spp_type = taxon, impact_total)
   
-trimmings_spp <- read_csv(here("data/raw_data/biomar/trimmings_spp_list.csv")) %>% 
-  mutate(species = tolower(scientific_name)) 
+summary(impact_vuln) # no Nas in vulnerability
+
+saveRDS(impact_vuln, here("prep/03_prep_spp_habitats/output/aoh_marine_impact.rds"))
 
 
-overlay_vuln <- overlay_df %>%
-  left_join(aquamaps_vuln_scores) %>%
-  left_join(all_catch_bycatch, by = c("dist_depth_pos" = "water_col_position")) %>%
-    mutate(vuln_depth = ifelse(str_detect(ingredient, "trimmings"), trimmings_prop_bycatch, forage_prop_bycatch)) %>%
-  mutate(trim_spp = ifelse(species %in% c(trimmings_spp$species), 1, NA),
-         for_spp = ifelse(species %in% c(forage_spp$species), 1, NA)) %>%
-  mutate(vuln = case_when(
-    trim_spp == 1 & for_spp == 1 ~ biomass_removal_gf,
-    trim_spp == 1 & is.na(for_spp) & str_detect(ingredient, "forage fish") ~ bycatch_gf,
-    trim_spp == 1 & str_detect(ingredient, "trimmings fish") ~ biomass_removal_gf, 
-    for_spp == 1 & is.na(trim_spp) & str_detect(ingredient, "trimmings fish") ~ bycatch_gf,
-    for_spp == 1 & str_detect(ingredient, "forage fish") ~ biomass_removal_gf,
-    TRUE ~ bycatch_gf
-  )) %>%
-  mutate(vuln_quartile = case_when(
-    vuln <0.25 ~ 0,
-    vuln <= 0.75 & vuln >= 0.25 ~ 0.5, 
-    vuln > 0.75 ~ 1
-  )) %>% 
-   mutate(vuln_0.5 = case_when(
-    vuln <0.25 ~ 0,
-    vuln <= 0.75 & vuln >= 0.25 ~ 0.25, 
-    vuln > 0.75 ~ 0.5
-  )) %>%
-  mutate(affected_reg_vuln = aoh_overlap*vuln_quartile) %>%
-  mutate(affected_rescale_vuln = aoh_overlap*vuln_0.5) %>%
-  mutate(affected_depth = ifelse(!(species %in% c(trimmings_spp$species, forage_spp$species)), aoh_overlap*vuln_depth, aoh_overlap)) %>%
-  mutate(affected_depth_reg_vuln = ifelse(!(species %in% c(trimmings_spp$species, forage_spp$species)), aoh_overlap*vuln_depth*vuln_quartile, aoh_overlap*vuln_quartile)) %>%
-  mutate(affected_depth_rescale_vuln = ifelse(!(species %in% c(trimmings_spp$species, forage_spp$species)), aoh_overlap*vuln_depth*vuln_0.5, aoh_overlap*vuln_0.5)) %>% 
-  dplyr::select(Genus, Species, spp_type, diet, allocation, ingredient, spp_depth_pos, aoh_area_orig, reg_vuln = vuln_quartile, vuln_rescale = vuln_0.5, vuln_depth, aoh_overlap, affected_reg_vuln, affected_rescale_vuln, affected_depth, affected_depth_reg_vuln, affected_depth_rescale_vuln) %>%
-  mutate(sciname = paste(Genus, Species)) %>%
-  dplyr::select(-Genus, -Species)
-
-
-saveRDS(overlay_vuln, here("prep/03_prep_spp_habitats/output/aoh_marine_overlap.rds"))
-
-test <- readRDS(here("prep/03_prep_spp_habitats/output/aoh_marine_overlap.rds"))
-
-terrestrial_overlap <- readRDS(here("prep/03_prep_spp_habitats/output/aoh_terrestrial_mammals_birds_overlap.rds"))
+## take al look at some stuff
+terrestrial_overlap <- readRDS(here("prep/03_prep_spp_habitats/output/aoh_terrestrial_mammals_birds_impact.rds"))
 colnames(terrestrial_overlap)
-# [1] "aoh_filename"         "sciname"              "bird_type"            "diet"                 "allocation"          
-#  [6] "crop_ingredient"      "aoh_crop_overlap"     "aoh_area_orig"        "feed_filepath"        "aoh_filepath"        
-# [11] "order"                "iucn_rl_cat"          "cropland_suitability" "aoh_affected"         "aoh_unaffected"      
-# [16] "total_cropland"       "class" 
+
 
 test_terr <- terrestrial_overlap %>%
   filter(diet == "plant-dominant",
          allocation == "mass")
 
-sum(test_terr$aoh_affected, na.rm = TRUE) # 1000315
-mean(test_terr$aoh_affected, na.rm = TRUE) # 3.171222
+sum(test_terr$impact_total, na.rm = TRUE) # 847173.8
+mean(test_terr$impact_total, na.rm = TRUE) # 4.202438
+
+test_marine <- impact_vuln %>%
+    filter(diet == "plant-dominant",
+         allocation == "mass")
+
+sum(test_marine$impact_total, na.rm = TRUE) # 145315.6
+mean(test_marine$impact_total, na.rm = TRUE) # 1.536951
+
 
 ```
 
-Do some testing 
-
-```{r}
-
-test <- overlay_vuln %>%
-  filter(diet == "plant-dominant",
-         allocation == "mass", 
-         ingredient == "forage fish_fish meal")
-
-sum(test$aoh_overlap, na.rm = TRUE) # 934851.3
-
-# 3342859 km2... that's a lot compared to crops! But there are more species, with larger AOH ranges, and more dispersed harvesting area
-
-sum(test$affected_reg_vuln, na.rm = TRUE) # 450772.2
-sum(test$affected_rescale_vuln, na.rm = TRUE) # 225386.1 
-sum(test$affected_depth, na.rm = TRUE) # 100037.3 
-sum(test$affected_depth_reg_vuln, na.rm = TRUE) # 45095 
-sum(test$affected_depth_rescale_vuln, na.rm = TRUE) # 22547.5 
-
-
-mean(test$affected_reg_vuln, na.rm = TRUE) # 9.53995 km2 mean
-mean(test$affected_rescale_vuln, na.rm = TRUE) # 4.769975 km2 mean 
-mean(test$affected_depth, na.rm = TRUE) # 2.117147 km2 mean 
-mean(test$affected_depth_reg_vuln, na.rm = TRUE) # 0.9543714 km2 mean 
-mean(test$affected_depth_rescale_vuln, na.rm = TRUE) # 0.4771857 km2 mean 
-
-
-``` 
 
 
 
