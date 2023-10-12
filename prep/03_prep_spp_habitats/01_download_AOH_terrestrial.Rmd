@@ -1,9 +1,14 @@
 ---
-title: "Overlapping species AOH with feed crops"
+title: "Download terrestrial Area of Habitat (AOH) data"
 output: html_document
 editor_options: 
   chunk_output_type: console
 ---
+
+## Data sources 
+
+* Lumbierres et al. 2022: https://www.nature.com/articles/s41597-022-01838-w
+
 
 ## Setup
 

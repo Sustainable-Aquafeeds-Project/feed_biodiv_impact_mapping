@@ -1,23 +1,23 @@
-
 ## takes ~ 1.5 hours to complete! 
-
 
 # In this script we overlap [terrestrial area of habitat maps](https://www.nature.com/articles/s41597-022-01838-w) with our disturbance pressure maps created in the `02_feed` folder, and multiply by their vulnerability value. The goal of this script is to create impact maps, that is, the area of likely suitable habitat for each species that is exposured AND impacted to harvest of feed ingredients in salmon aquaculture. To do this, we: 
 #   
-#   - We have created maps of disturbance (km2) of harvest of crop aquafeed ingredients. They have these categories: 
-# - Ingredient type; 
-# - Allocation type; mass, energetic, or economic
-# - Diet type; feed formulation; plant-dominant or fish-dominant
-# - crop type
-# 
-# 
-# - Overlap re-projected and AOH species suitable habitat maps with the appropriate disturbance rasters. This will provide a km2 estimate of the amount of suitable habitat that is exposed to harvest of aquafeed ingredients.  
-# - multiply by each species vulnerability values to get impact and save
+# - We have created maps of disturbance (km2) of harvest of crop aquafeed ingredients. They have these categories: 
+#   - Ingredient type; faba beans, guar meal, soybean meal, wheat meal, etc.
+#   - Allocation type; mass, energetic, or economic
+#   - Diet type; feed formulation; plant-dominant or fish-dominant
+#   - crop type; pulses, soybeans, wheat, etc. 
+ 
 
+# - Overlap re-projected and AOH species suitable habitat maps with the appropriate disturbance rasters. This will provide a km2 estimate of the amount of suitable habitat that is exposed to harvest of aquafeed ingredients.  
+# - multiply by each species vulnerability values (downloaded in script 3a) to get impact and save
+
+# Code partially adapted from O'Hara et al. 2023 in prep 
 
 # * Lumbierres et al. 2022: https://www.nature.com/articles/s41597-022-01838-w
 # * O'Hara et al. 2023 in prep 
-# * Casey C. O’Hara et al., At-risk marine biodiversity faces extensive, expanding, and intensifying human impacts.Science372,84-87(2021).DOI:10.1126/science.abe6731
+
+## Setup
 
 library(tidyverse)
 library(tidyr)
@@ -49,6 +49,8 @@ biodiv_dir <- file.path(rdsi_dir, "biodiversity_impacts")
 gall_peters <- "+proj=cea +lon_0=0 +x_0=0 +y_0=0 +lat_ts=45 +ellps=WGS84 +datum=WGS84 +units=m +no_defs"
 
 moll_land_template <- readRDS(file.path(this_dir, "data/spatial/moll_template_land_xy.rds"))
+
+## For loop
 
 ## Setup spp map source and vulnerability data 
 spp_fp <- data.frame(filepath = list.files(file.path(terrestrial_dir, "reprojected_mol_csv"), full.names = TRUE)) %>%

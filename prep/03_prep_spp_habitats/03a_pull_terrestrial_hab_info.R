@@ -1,8 +1,10 @@
 ## Pull terrestrial habitat suitability information from the IUCN
 # Habitat suitability is derived from IUCN habitat classifications: Whether each species can survive and reproduce in agricultural land, defined as unsuitable (0), marginal (0.5), suitable (1).
-# 
+# Run as background job if you'd like
+
 # Method adapted from Williams et al. 2021.
 
+## Data sources
 # * Williams et al. 2021: https://www.nature.com/articles/s41893-020-00656-5#Sec30
 # * IUCN. 2022. The IUCN Red List of Threatened Species. Version 2022-2. https://www.iucnredlist.org.
 

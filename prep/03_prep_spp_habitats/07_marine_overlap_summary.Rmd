@@ -9,6 +9,7 @@ editor_options:
 
 ## Summary 
 
+In this script we prep a dataset of total global impacted habitat per marine species, ingredient, and allocation approach.
 
 ## Setup 
 

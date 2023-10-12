@@ -7,7 +7,10 @@
 # # Methods
 # 
 # For each species, reproject to mollweide and save as a csv with just the new Mollweide ID cell values, per species.
-# 
+
+## Data sources 
+# * Lumbierres et al. 2022: https://www.nature.com/articles/s41597-022-01838-w
+
 
 ### SETUP
 library(tidyverse)

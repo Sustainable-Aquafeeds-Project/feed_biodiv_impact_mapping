@@ -5,6 +5,11 @@ editor_options:
   chunk_output_type: console
 ---
 
+## Summary
+
+In this script we prep dataframes of total global amount of impacted habitat per terrestrial species.
+
+
 ## Setup
 
 Load libraries
@@ -38,21 +43,12 @@ Bind all chunked data together, tidy, and save
 
 ```{r}
 
-overlay_df <- purrr::map_df(list.files(here("prep/03_prep_spp_habitats/int/aoh_overlay_chunks_terrestrial/"), full.names = TRUE), readRDS) %>% 
-  filter(!(ingredient %in% c("forage fish_fish meal", "forage fish_fish oil", "trimmings fish_fish meal, cut offs", "trimmings fish_fish oil, cut offs"))) %>% # filter out marine ingredients, as there should be no overlap.. this is just a mistake from the last run
-  separate_wider_delim(sciname, delim = "_", names = c("genus", "species", "bird_type"), too_few = "align_start") %>%
-  unite(sciname, c(genus, species))
-
-length(unique(overlay_df$sciname)) # 16133 - perfect! 
-
 impact_df <-  purrr::map_df(list.files(here("prep/03_prep_spp_habitats/int/aoh_impacts_terrestrial/"), full.names = TRUE), readRDS) %>%
   separate_wider_delim(species_full, delim = "_", names = c("genus", "species", "bird_type"), too_few = "align_start") %>%
   unite(sciname, c(genus, species))
 
 
 length(unique(impact_df$sciname)) # 15507 hmmm.. missing ~600 species
-
-setdiff(overlay_df$sciname, impact_df$sciname)
 
 # now lets clean up the data a bit 
 

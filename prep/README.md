@@ -22,15 +22,15 @@ Inputs:
 Outputs: 
 * crop_ingredient_allocation_factors.csv
 
-## 01_crops_mapspam/
-GOAL: This folder contains scripts that wrangles GAEZ production data. It rescales the 2015 mapspam data to match the mean of 2019, 2020, and 2021 FAOSTAT crop production data. 
+## 01_crops_prep/
+GOAL: This folder contains scripts that wrangles GAEZ production data. It rescales the 2015 GAEZ data to match the mean of 2019, 2020, and 2021 FAOSTAT crop production data. 
 
 
 ## 02_feed/
-GOAL: This folder contains scripts that estimate the raw material origins of salmon aquaculture feeds using energetic and mass allocation. 
+GOAL: This folder contains scripts that estimate the raw material origins of salmon aquaculture feeds using economic, energetic, and mass allocation. 
 
 ## 03_prep_spp_habitats/
 
-Goal: Contains scripts that prep Area of Habitat (AOH) maps and Aquamaps suitable habitat maps to the correct resolution and projection (10km by 10km, WGS84 Mollweide) and overlays these with the raw material origins feed maps to determine amount of habitat disturbed by salmon aquafeed production.
+Goal: Contains scripts that prep Area of Habitat (AOH) maps and Aquamaps suitable habitat maps to the correct resolution and projection (10km by 10km, WGS84 Mollweide) and overlays these with the raw material origins feed maps and species vulnerabilities to determine amount of habitat impcated by salmon aquafeed production.
 
 

@@ -5,6 +5,19 @@ editor_options:
   chunk_output_type: console
 ---
 
+## Summary
+
+In this script we summarize the impact rasters created in 03b, 06a and 06b by finding the mean, standard deviation (pooled variance), and number of species:
+
+ - Across all taxon and ingredients
+ - Across all taxon per each ingredient
+ - Across all ingredients per each taxon
+ 
+## Datasources
+
+ - O'hara et al. 2023 in prep
+    - Code largely adapted from Casey. 
+
 ## Setup
 
 Load libraries
@@ -596,74 +609,6 @@ for (raster_file in ingredient_maps_mean_list) {
 
 ingredient_maps_mean
 plot(log(ingredient_maps_mean*1000000+1))
-
-
-```
-
-
-Do some checking.. view rasters to make sure that they all look ok 
-
-```{r}
-allocation_types <- c("mass")
-impact_type = "mean"
-diet_types <- c("plant-dominant", "fish-dominant")
-
-for(allocation in allocation_types){
-  for(diet in diet_types){
-  
-    # allocation = "ge"
-    # diet = "plant-dominant"
-    
-    files <- list.files(impact_maps_dir, pattern = sprintf("imp_unwt_.*_%s_.*_%s\\.tif", allocation, impact_type), recursive = TRUE, full.names = TRUE)
-    
-
-files <- files[grep(diet, files)]
-   
-     rasters_list <- lapply(files, function(raster_file) {
-  raster_obj <- rast(raster_file)
-  crs(raster_obj) <- crs(moll_template)
-  raster_obj <- project(raster_obj, moll_template)
-  return(raster_obj)
-})
-     
- rasters <- rast(rasters_list)
-rast_names <- str_remove_all(str_remove_all(str_after_nth(basename(files), "_", 2), paste0("_", allocation)), paste0("_", impact_type, ".tif")) 
-    
-
-names(rasters) <- rast_names
-rasters[rasters == 0] <- NA
-
-my_palette <- c("#FED976",  "#FEB24C", "#FD8D3C", "#FC4E2A", "#E31A1C",
-"#BD0026", "#800026")
-scales::show_col(my_palette)
-
-
-test <- rasters %>% 
-  as.data.frame(xy=TRUE) %>%
-  pivot_longer(names_to = "type", values_to = "value", cols = c(3:ncol(.)))
- #  pivot_longer(names_to = "type", values_to = "value", cols = c(3:80))
-   # pivot_longer(names_to = "type", values_to = "value", cols = c(3:64))
-
-
-for(plot_type in unique(test$type)){
-
-  # plot_type = "CropsNES_coconut oil_Bird"
-  
-ggplot(data = test %>% filter(type == plot_type)) +
-  geom_tile(aes(x = x, y = y, fill = value)) + 
-    scale_fill_gradientn(colors = my_palette) +
-    labs(title = glue("{plot_type}"))
-
- ggsave(glue(file.path(this_dir, "int/plots/{diet}/{allocation}/{impact_type}_{plot_type}.png")), units=c("in"))
-
-}
-
-
-  }
-}
-
-
-
 
 
 ```
