@@ -90,6 +90,20 @@ diet_crop_ingredients <- unique(crop_ingredient_cats$diet_crop_ingredient)
 
 for(tx_type in spp_types){
   
+  tx_vuln_df <- spp_info_df %>%
+    filter(spp_type == tx_type)
+  
+  tx_maps_df <- tx_vuln_df %>%
+    dplyr::select(species_full, filepath) %>%
+    distinct()
+  
+  ### read in all harvest stressor maps for this taxon -
+  message(glue('Loading aoh maps for taxon {tx_type}'))
+  tx_maps <- collect_spp_rangemaps_terrestrial(tx_maps_df$species_full, tx_maps_df$filepath)
+  
+  
+  message('Taxon ', tx_type, ' harvest stressor dataframe: ', nrow(tx_maps[["parent"]]),
+          ' cell observations for ', nrow(tx_maps_df), ' species...')
 for(allocation_type in allocations){
     for(diet_crop_ingredient_type in diet_crop_ingredients){
 
@@ -125,32 +139,13 @@ for(allocation_type in allocations){
 
           
           outf_mean_df <- glue(file.path(this_dir, "int/aoh_impacts_terrestrial/{tx_type}_{diet_type}_{crop_type}_{ingredient_type}_{allocation_type}.rds"))
-          # 
-          # if(all(file.exists(outf_mean_df))) {
-          #   message('rds exist for taxon ', tx_type, diet_type, allocation_type, ingredient_type, ' for harvest stressor... skipping!')
-          #   next()
-          # }
-          # 
+
           
           if(all(file.exists(outf_mean, outf_sd))) {
             message('Rasters exist for taxon ', tx_type, crop_type, ingredient_type, diet_type, allocation_type, ' for harvest stressor... skipping!')
             next()
           }
           
-          tx_vuln_df <- spp_info_df %>%
-            filter(spp_type == tx_type)
-          
-          tx_maps_df <- tx_vuln_df %>%
-            dplyr::select(species_full, filepath) %>%
-            distinct()
-          
-          ### read in all harvest stressor maps for this taxon -
-          message('Loading aoh maps for taxon ', tx_type, '...')
-          tx_maps <- collect_spp_rangemaps_terrestrial(tx_maps_df$species_full, tx_maps_df$filepath)
-          
-          
-          message('Taxon ', tx_type, ' harvest stressor dataframe: ', nrow(tx_maps[["parent"]]),
-                  ' cell observations for ', nrow(tx_maps_df), ' species...')
           
           
           message('Processing mean/sd vulnerability by species in taxon ', tx_type, 
@@ -206,7 +201,8 @@ for(allocation_type in allocations){
                                                 as.data.table() %>%
                                                 .[ , harvest := ifelse(is.na(harvest), 0, harvest)] %>%
                                                 .[ , impact_km2  := (1-cropland_suitability)*harvest] %>%
-                                                .[ , impact  := 1 - ((100 - impact_km2)/100)^0.25]
+                                                .[ , impact  := 1 - ((100 - impact_km2)/100)^0.25] %>%
+                                                .[impact>0]
                                                 
                                                 
                                                 chunk_sum <- chunk_sum_spp %>%
@@ -226,17 +222,17 @@ for(allocation_type in allocations){
           
           
           if(check_tryerror(result_list)) {
-            stop('Something went wrong with calculations for taxon ', tx_type, '!')
+            stop('Something went wrong with calculations for taxon {tx_type} {allocation_type} {diet_crop_ingredient_type}')
           }
           
-          message('Binding results for taxon ', tx_type, '...')
+          message(glue('Binding results for taxon {tx_type} {allocation_type} {diet_crop_ingredient_type}'))
         
           
           result_df <- rbindlist(lapply(result_list, function(x) x$chunk_sum)) %>%
             filter(!is.na(cell_id)) %>%
             as.data.frame()
 
-          message('Creating and saving rasters for taxon ', tx_type, '...')
+          message(glue('Creating and saving rasters for taxon {tx_type} {allocation_type} {diet_crop_ingredient_type}'))
           rast_mean <- result_df %>%
             dplyr::select(cell_id, impact_mean) %>%
             left_join(moll_land_template) %>%
@@ -258,7 +254,7 @@ for(allocation_type in allocations){
           writeRaster(rast_nspp, outf_nspp, overwrite = TRUE)
           
           
-          message('Creating and saving global df for taxon ', tx_type, '...')
+          message(glue('Creating and saving global df for taxon {tx_type} {allocation_type} {diet_crop_ingredient_type}'))
           
           global_df <- rbindlist(lapply(result_list, function(x) x$chunk_sum_spp_global)) %>% 
             as.data.frame() %>%

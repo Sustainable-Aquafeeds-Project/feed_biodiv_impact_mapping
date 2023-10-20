@@ -42,7 +42,9 @@ salmon_production <- production %>%
 diet <- read_csv(here("prep/02_feed/data/aquaculture_diet_composition.csv"))
 
 fcrs <- read.csv(here("prep/02_feed/data/FCR.csv")) %>%
-  mutate(species = "salmon") # should i just use 1.2 here like Rich did? 
+  mutate(species = "salmon") %>% # should i just use 1.2 here like Rich did? 
+    mutate(country = trimws(country))
+
 
 ```
 
@@ -54,13 +56,17 @@ Where country information from tacon and metian is not available use global aver
 
 
 ```{r}
+## add in FCR scenarios here
+
 feed_demand <- 
   salmon_production %>%
+  mutate(country = trimws(country)) %>%
   left_join(fcrs, by = c("country", "species")) %>%
   mutate(eFCR_min = if_else(is.na(eFCR_min), true = fcrs %>% filter(country=="Globe") %>% pull(eFCR_mean), false = eFCR_min),
          eFCR_max = if_else(is.na(eFCR_max), true = fcrs %>% filter(country=="Globe") %>% pull(eFCR_mean), false = eFCR_max),
          eFCR_mean = if_else(is.na(eFCR_mean), true = fcrs %>% filter(country=="Globe") %>% pull(eFCR_mean), false = eFCR_mean)) %>% 
-  mutate(feed_demand = value*eFCR_min)
+  mutate(feed_demand = value*eFCR_min) %>%
+  mutate(feed_demand_efficient = value*1)
 
 saveRDS(feed_demand, here("prep/02_feed/data/demand/global_feed_demand.rds"))
 ```
@@ -73,14 +79,16 @@ Now calculate ingredient demand per diet and for each salmon producing country. 
 tonnes_consumption <- feed_demand %>%
   left_join(diet, by=c("iso3c", "species")) %>%
   mutate(ingredient_demand = feed_demand * prop_diet) %>%
+  mutate(ingredient_demand_efficient = feed_demand_efficient * prop_diet) %>%
   mutate(product = "meat") %>%
-  dplyr::select(iso3c, animal= species, system = production_system, product, ingredient = raw_name, ingredient_demand, diet) 
+  dplyr::select(iso3c, animal= species, system = production_system, product, ingredient = raw_name, ingredient_demand, ingredient_demand_efficient, diet) 
 
 write_csv(tonnes_consumption, here("prep/02_feed/data/demand/total_aquaculture_ingredient_demand.csv")) 
 
 tonnes_consumption %>%
   group_by(ingredient, diet) %>%
-  summarise(total_ingredient_demand = sum(ingredient_demand, na.rm = TRUE)) %>%
+  summarise(total_ingredient_demand = sum(ingredient_demand, na.rm = TRUE),
+            total_ingredient_demand_efficient = sum(ingredient_demand_efficient, na.rm = TRUE)) %>%
   ungroup() %>%
   write.csv(here("prep/02_feed/data/demand/total_global_ingredient_demand.csv"), row.names = FALSE)
 

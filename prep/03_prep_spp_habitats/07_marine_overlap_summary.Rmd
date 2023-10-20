@@ -77,11 +77,6 @@ Now lets read in the intermediate overlay data, and apply our vulnerability metr
 
 aquamaps_spp <- read.csv(file.path(rdsi_raw_data_dir, "aquamaps/GTE10_SPECIESOCCURSUM/speciesoccursum_gte10.csv"))
 
-overlay_df <- purrr::map_df(list.files(here("prep/03_prep_spp_habitats/int/aoh_overlay_chunks_marine"), full.names = TRUE, recursive = TRUE), readRDS) %>%
-  rename(SpeciesID = sciname) %>%
-  left_join(aquamaps_spp)
-
-length(unique(overlay_df$SpeciesID)) # 23694
 
 impact_df <- purrr::map_df(list.files(here("prep/03_prep_spp_habitats/int/aoh_impacts_marine"), full.names = TRUE, recursive = TRUE), readRDS) %>%
   left_join(aquamaps_spp %>% 
@@ -89,13 +84,13 @@ impact_df <- purrr::map_df(list.files(here("prep/03_prep_spp_habitats/int/aoh_im
               mutate(species = tolower(species))
               ) 
 
-length(unique(impact_df$SpeciesID)) # 23637 missing 62 spp
+length(unique(impact_df$SpeciesID)) # 19949 missing some spp.. however, we filtered out the species that aren't vulnerable, so this makes sense (see check that I did in the terrestrial overlap summary RMD)
 
 setdiff(unique(aquamaps_spp$SpeciesID), unique(impact_df$SpeciesID))
 
 spp_to_run <- setdiff(unique(aquamaps_spp$SpeciesID), unique(impact_df$SpeciesID)) 
 
-test <- aquamaps_spp %>% filter(SpeciesID %in% spp_to_run) # ok they are all bacteria and protozoa, which we don't include... 
+test <- vuln_taxa %>% filter(SpeciesID %in% spp_to_run) # ok, all species that aren't vulnerable or there is no overlap/impact
 
 
 impact_vuln <- impact_df %>%

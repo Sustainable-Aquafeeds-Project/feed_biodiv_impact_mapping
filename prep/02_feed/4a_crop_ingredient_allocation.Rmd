@@ -47,7 +47,9 @@ Total consumption by animals per country in MAPSPAM crops
 consumption <- read_csv(here("prep/02_feed/data/demand/total_aquaculture_ingredient_demand.csv")) %>%
   mutate(animal_system = paste(animal, system, product, sep="_")) %>%
   rename(source_ingredient = ingredient) %>%
-  select(iso3c_consuming = iso3c, animal_system, diet, source_ingredient, consuming_ingredient_consumed_tonnes = ingredient_demand) 
+  pivot_longer(cols = c("ingredient_demand", "ingredient_demand_efficient"), names_to = "demand_type", values_to = "consuming_ingredient_consumed_tonnes") %>%
+  mutate(demand_type = ifelse(demand_type == "ingredient_demand", "regular", "efficient")) %>% 
+  select(iso3c_consuming = iso3c, animal_system, diet, source_ingredient, demand_type, consuming_ingredient_consumed_tonnes) 
 
 ## need to match `consumption` ingredients to equivalent crop.. need lookup table 
 
@@ -58,7 +60,7 @@ feed_cats <- read_xlsx(here("data/tidy_data/plant_ingredient_codes.xlsx")) %>% #
 
 consumption_spam_gaez <- consumption %>%
   left_join(feed_cats, by = c("source_ingredient" = "ingredient")) %>%
-  filter(!is.na(raw_material))
+  filter(!is.na(raw_material)) # filter out fish and microingredients, handle these later
 
 setdiff(unique(consumption$source_ingredient), unique(feed_cats$ingredient)) ## this is only fish ingredients and microingredients, which we don't care about for crops (because they aren't crops!)
 

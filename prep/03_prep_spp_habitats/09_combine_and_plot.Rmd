@@ -21,7 +21,13 @@ library(strex)
 library(janitor)
 library(sf)
 library(tools)
-library(rredlist)
+library(khroma)
+library(scales)
+library(fields)
+library(patchwork)
+library(cowplot)
+library(glue)
+library(viridis)
 
 source(here("src/directories.R"))
 
@@ -48,63 +54,42 @@ impact_maps_dir <- file.path(rdsi_dir, "biodiversity_impacts/output")
 Read in marine and terrestrial dfs and combine
 
 ```{r}
-marine_overlap <- readRDS(here("prep/03_prep_spp_habitats/output/aoh_marine_overlap.rds")) %>%
-#  dplyr::select(-feed_filepath) %>%
-  mutate(allocation = ifelse(allocation == "ge", "gross energy", allocation)) %>%
-  mutate(spp_type = ifelse(spp_type == "Microorganisms", "Marine microorganisms", spp_type)) %>%
-    mutate(spp_type = ifelse(spp_type == "Invertebrates", "Marine invertebrates", spp_type)) %>%
-  mutate(spp_type = ifelse(spp_type == "Reptiles and amphibians", "Marine reptiles and amphibians", spp_type)) %>%
-  mutate(suitability = vuln_rescale*vuln_depth) %>%
-  dplyr::rename(aoh_affected = affected_depth_reg_vuln) %>% # change this according to affected method
+marine_overlap <- readRDS(here("prep/03_prep_spp_habitats/output/aoh_marine_impact.rds")) %>%
   group_by(sciname, spp_type, diet, allocation, ingredient) %>%
-  summarise(aoh_area_orig = mean(aoh_area_orig, na.rm = TRUE),
-            suitability = mean(suitability, na.rm = TRUE), 
-            aoh_overlap = sum(aoh_overlap, na.rm = TRUE),
-            aoh_affected = sum(aoh_affected, na.rm = TRUE)) %>%
-  dplyr::select(sciname, spp_type, diet, allocation, ingredient, aoh_area_orig, suitability, aoh_overlap, aoh_affected) %>%
-  ungroup()
-  
-  ## biggest orig = 271017242
-
-
-terrestrial_overlap <- readRDS(here("prep/03_prep_spp_habitats/output/aoh_terrestrial_mammals_birds_overlap.rds")) %>% 
-  group_by(sciname, diet, allocation, ingredient, spp_type) %>%
-  summarise(suitability = mean(suitability, na.rm = TRUE),
-            aoh_overlap = sum(aoh_overlap, na.rm = TRUE),
-            aoh_area_orig = mean(aoh_area_orig, na.rm = TRUE),
-            aoh_affected = sum(aoh_affected, na.rm = TRUE),
-            total_ingredient_km2 = mean(total_ingredient_km2, na.rm = TRUE)) %>%
+  summarise(vulnerability = mean(vulnerability, na.rm = TRUE), 
+            impact_total = sum(impact_total, na.rm = TRUE)) %>%
   ungroup() %>%
-    mutate(allocation = ifelse(allocation == "ge", "gross energy", allocation)) %>%
-          # spp_depth_pos = NA) %>%
-  dplyr::select(-total_ingredient_km2) %>%
-  dplyr::select(sciname, aoh_affected, everything())
+    dplyr::select(sciname, spp_type, diet, allocation, ingredient, vulnerability, impact_total)
 
 
-all_overlap <- rbind(marine_overlap, terrestrial_overlap) %>%
-  filter(spp_type != "Marine microorganisms") %>%
-  mutate(persistence = ((aoh_area_orig - aoh_affected)/aoh_area_orig)^0.25) 
+terrestrial_overlap <- readRDS(here("prep/03_prep_spp_habitats/output/aoh_terrestrial_mammals_birds_impact.rds")) %>% 
+  group_by(sciname, diet, allocation, ingredient, spp_type) %>%
+  summarise(vulnerability = 1 - mean(suitability, na.rm = TRUE),
+            impact_total = sum(impact_total, na.rm = TRUE)) %>%
+  ungroup() %>%
+    dplyr::select(sciname, spp_type, diet, allocation, ingredient, vulnerability, impact_total)
+
+all_overlap <- rbind(marine_overlap, terrestrial_overlap)
 
 ```
 
 Lets make plots, just using economic allocation. 
 
 ```{r}
-all_overlap <- rbind(marine_overlap, terrestrial_overlap) %>%
-  filter(spp_type != "Marine microorganisms") %>%
+all_overlap <- all_overlap %>%
   filter(allocation == "economic")
 
 
 ## total AOH affected   
 summary_df <- all_overlap %>%
   group_by(diet, allocation, ingredient) %>%
-  summarise(total_aoh_affected = sum(aoh_affected, na.rm = TRUE)) %>%
+  summarise(impact_total = sum(impact_total, na.rm = TRUE)) %>%
   ungroup()
 
-summary_df$ordered_ingredient <- with(summary_df, reorder(ingredient, total_aoh_affected, FUN = function(x) sum(x)))
+summary_df$ordered_ingredient <- with(summary_df, reorder(ingredient, impact_total, FUN = function(x) sum(x)))
 
 
-ggplot(summary_df, aes(x = ordered_ingredient, y = total_aoh_affected)) + 
+ggplot(summary_df, aes(x = ordered_ingredient, y = impact_total)) + 
   geom_bar(stat = "identity") +
   theme_minimal() +
   facet_grid(diet~allocation, scales = "free_y") +
@@ -116,26 +101,26 @@ ggplot(summary_df, aes(x = ordered_ingredient, y = total_aoh_affected)) +
 ## Split by class total AOH
 summary_df <- all_overlap %>%
   group_by(diet, allocation, ingredient, spp_type) %>%
-  summarise(total_aoh_affected = sum(aoh_affected, na.rm = TRUE)) %>%
+  summarise(impact_total = sum(impact_total, na.rm = TRUE)) %>%
   ungroup() 
 
-summary_df$ordered_ingredient <- with(summary_df, reorder(ingredient, total_aoh_affected, FUN = function(x) sum(x)))
+summary_df$ordered_ingredient <- with(summary_df, reorder(ingredient, impact_total, FUN = function(x) sum(x)))
 
-# good place to find hex colors: https://encycolorpedia.com/81938c
-category_colors <- c("#ffd59a", # Bird 
-                    "#1E90FF",   # Fish (Dodger Blue)
-                    "#00CED1",   # Marine invertebrates (Dark Turquoise)
-                    "#81938c",   # Marine mammal
-                    "#5faf3b",   # Marine plant
-                    "#ba9bb8", # Reptiles + amphibians 
-                    "#97a356" # Terrestrial mammals
-                    )  
 
-ggplot(summary_df, aes(x = ordered_ingredient, y = total_aoh_affected, fill = spp_type)) +
+muted <- color("muted")
+light <- color("light")
+light <- unname(c(light(9)))[c(2,3,4,6,9)]
+muted <- unname(c(muted(9)))
+
+muted_palette <- c(muted, light)
+
+
+ggplot(summary_df, aes(x = ordered_ingredient, y = impact_total, fill = spp_type)) +
     geom_bar(stat = "identity", position = "dodge") +
   facet_grid(diet ~ allocation, scales = "free_y") +
   labs(title = "Global AOH Affected (39822 species)", x = "Raw material and Ingredient", y = expression(paste("Total AOH Affected (", km^{2}, ")")), fill = NULL) +
-  scale_fill_manual(values = category_colors) +
+  # scale_fill_manual(values = category_colors) +
+  scale_fill_manual(values = muted_palette) + 
   theme_minimal() + 
   coord_flip()  + 
     theme(axis.text.x = element_text(angle = -90, hjust = 1)) # Adjust the 'angle' value as needed
@@ -145,18 +130,16 @@ ggplot(summary_df, aes(x = ordered_ingredient, y = total_aoh_affected, fill = sp
 ## Split by class average AOH
 summary_df <- all_overlap %>%
   group_by(diet, allocation, ingredient, spp_type) %>%
-  summarise(mean_aoh_affected = mean(aoh_affected, na.rm = TRUE),
-            sd_aoh_affected = sd(aoh_affected, na.rm = TRUE)) %>%
+  summarise(impact_total = mean(impact_total, na.rm = TRUE)) %>%
   ungroup() 
 
-summary_df$ordered_ingredient <- with(summary_df, reorder(ingredient, mean_aoh_affected, FUN = function(x) sum(x)))
+summary_df$ordered_ingredient <- with(summary_df, reorder(ingredient, impact_total, FUN = function(x) sum(x)))
 
-ggplot(summary_df, aes(x = ordered_ingredient, y = mean_aoh_affected, fill = spp_type)) +
+ggplot(summary_df, aes(x = ordered_ingredient, y = impact_total, fill = spp_type)) +
     geom_bar(stat = "identity", position = "dodge") +
-# geom_errorbar(aes(ymin = mean_aoh_affected, ymax = mean_aoh_affected + sd_aoh_affected), position = position_dodge(width = 0.9), width = 0.25) + 
   facet_grid(diet ~ allocation, scales = "free_y") +
   labs(title = "Average AOH Affected (39822 species)", x = "Raw material and Ingredient", y = expression(paste("Average AOH Affected (", km^{2}, ")")), fill = NULL) +
-    scale_fill_manual(values = category_colors) +
+    scale_fill_manual(values = muted_palette) +
   theme_minimal() + 
   coord_flip() 
 
@@ -165,217 +148,331 @@ ggplot(summary_df, aes(x = ordered_ingredient, y = mean_aoh_affected, fill = spp
 ## Split by class average AOH .. 
 summary_df <- all_overlap %>%
   group_by(diet, allocation, spp_type) %>%
-  summarise(mean_aoh_affected = mean(aoh_affected, na.rm = TRUE),
-            sd_aoh_affected = sd(aoh_affected, na.rm = TRUE),
-            mean_aoh_orig = mean(aoh_area_orig, na.rm = TRUE)) %>%
-  ungroup()
+  mutate(species_count = n_distinct(sciname)) %>%
+  summarise(nspp =  n_distinct(sciname), 
+            impact_mean = mean(impact_total, na.rm = TRUE)) %>%
+  ungroup() %>%
+  mutate(impact_nspp_mean = impact_mean*nspp)
 
-summary_df$spp_type <- with(summary_df, reorder(spp_type, mean_aoh_affected, FUN = function(x) sum(x)))
+summary_df$spp_type <- with(summary_df, reorder(spp_type, impact_mean, FUN = function(x) sum(x)))
 
 
-ggplot(summary_df, aes(x = spp_type, y = mean_aoh_affected, fill = spp_type)) +
+ggplot(summary_df, aes(x = spp_type, y = impact_mean, fill = spp_type)) +
     geom_bar(stat = "identity", position = "dodge") +
-# geom_errorbar(aes(ymin = mean_aoh_affected, ymax = mean_aoh_affected + sd_aoh_affected), position = position_dodge(width = 0.9), width = 0.25) + 
   facet_grid(diet ~ allocation, scales = "free") +
-  labs(x = "Raw material and Ingredient", y = expression(paste("Average AOH Affected (", km^{2}, ")")), fill = NULL) +
   theme_minimal() + 
-    # scale_fill_manual(values = c("#00CED1", "#1E90FF",  "#5faf3b", "#81938c", "#97a356", "#ffd59a")) +
+  scale_fill_manual(values = muted_palette) + 
     labs(title = "Average AOH Affected (39822 species)", x = "Species Class", y = expression(paste("Average AOH Affected (", km^{2}, ")")), fill = NULL) +
-
   coord_flip()
 
 ```
 
 
-Make species specific plots! 
+Maps!
 
-Coragyps_atratus; Black Vulture have a lot of overlap with soy protein concentrate under plant-dominant and economic allocation.
-
-
-```{r}
-countries_shp <- ne_countries(scale = 110, returnclass = "sf") |> st_transform(crs(moll_template)) %>%
-  filter(continent %in% c("North America", "South America"))
-
-this_crop_ingredient_raster <- rast(here("prep/02_feed/output/resampled/plant-dominant/Soybean_soy protein concentrate_economic_A.tif")) %>%
-  as.data.frame(., xy = TRUE) %>%
-  filter(coef > 0)
-sum(this_crop_ingredient_raster$coef) # 2791.609
-
-
-this_spp_df <- read.csv(list.files(file.path(rdsi_raw_data_dir, "AOH_lumbierres/reprojected_mol_csv/"), full.names = TRUE, pattern = "Coragyps_atratus")) %>%
-  left_join(land_xy_moll) %>%
-  dplyr::select(x, y, presence)
-# %>%
-#   rast(., type = "xyz", crs = moll_template)
-
-overlap_df <- this_spp_df %>%
-  left_join(this_crop_ingredient_raster) %>%
-    filter(!is.na(coef)) %>%
-  mutate(aoh_orig = presence*100) %>%
-  mutate(value = coef*presence) %>%
-    mutate(p = ((aoh_orig - value)/aoh_orig)^0.25) %>%
-  mutate(prop_aoh_impacted = value/aoh_orig)  %>%
-  mutate(p_inverse = 1 - p) 
-
-## check what the vulnerability is for this species
-
-hab_suitability <- readRDS(here("prep/03_prep_spp_habitats/int/spp_habitat_suitability.rds")) %>% 
-  filter(species == "Coragyps atratus") #suitability is 0, meaning vulnerability is 1. 
-
-
-ggplot() + 
-  geom_sf(data = countries_shp, fill = "grey", colour = "white") + 
-   geom_raster(data = this_spp_df, aes( x= x, y = y)) +
-   geom_raster(data = overlap_df %>% filter(value >0), aes( x= x, y = y, fill = value)) + 
-  # facet_wrap(~species) +
-  labs(fill = expression(paste(km^{2}, " impacted")), title = "How does SPC harvest affect AOH?", subtitle = "Economic allocation; Plant-Dominant; American Black Vulture", caption = "Black areas are the original AOH") + 
-  scale_fill_gradientn(colors = (RColorBrewer::brewer.pal(n=9, name = "YlOrRd"))) +
-  theme_minimal() +
-      theme(
-          axis.title = element_blank()) 
-
-ggplot() + 
-  geom_sf(data = countries_shp, fill = "grey", colour = "white") + 
-   geom_raster(data = this_spp_df, aes( x= x, y = y)) + 
-  geom_raster(data = overlap_df %>% filter(value >0), aes( x= x, y = y, fill = p)) + 
-  # facet_wrap(~species) +
-  labs(fill = "Likelihood of Persistence", title = "How does SPC harvest affect AOH?", subtitle = "Economic allocation; Plant-Dominant; American Black Vulture", caption = "Black areas are the original AOH") + 
-  scale_fill_gradientn(colors = rev(RColorBrewer::brewer.pal(n=9, name = "YlOrRd"))) +
-  theme_minimal() +
-      theme(
-          axis.title = element_blank()) 
-
-
-ggplot() + 
-  geom_sf(data = countries_shp, fill = "grey", colour = "white") + 
-   geom_raster(data = this_spp_df, aes( x= x, y = y)) + 
-  geom_raster(data = overlap_df %>% filter(value >0), aes( x= x, y = y, fill = p_inverse)) + 
-  # facet_wrap(~species) +
-  labs(fill = "Inverse Persistence", title = "How does SPC harvest affect AOH?", subtitle = "Economic allocation; Plant-Dominant; American Black Vulture", caption = "Black areas are the original AOH") + 
-  scale_fill_gradientn(colors = (RColorBrewer::brewer.pal(n=9, name = "YlOrRd"))) +
-  theme_minimal() +
-      theme(
-          axis.title = element_blank()) 
-
-ggplot() + 
-  geom_sf(data = countries_shp, fill = "grey", colour = "white") + 
-   geom_raster(data = this_spp_df, aes( x= x, y = y)) + 
-  geom_raster(data = overlap_df %>% filter(value >0), aes( x= x, y = y, fill = prop_aoh_impacted)) + 
-  # facet_wrap(~species) +
-  labs(fill = "Proportion AOH impacted", title = "How does SPC harvest affect AOH?", subtitle = "Economic allocation; Plant-Dominant; American Black Vulture", caption = "Black areas are the original AOH") + 
-  scale_fill_gradientn(colors = (RColorBrewer::brewer.pal(n=9, name = "YlOrRd"))) +
-  theme_minimal() +
-      theme(
-          axis.title = element_blank()) 
-
-
-```
-
-
-Make a plot! 
-
-Marine: Let's choose a species with lots of overlap
-
- 
+Global maps across ingredients and taxon 
 
 ```{r}
-countries_shp <- ne_countries(scale = 110, returnclass = "sf") |> st_transform(crs(moll_template)) %>%
-   # filter(continent %in% c("Europe"))
-  filter(subregion == "Northern Europe")
+d_brown <- "#515256"
+m_brown <- "#B27B54"
+l_brown <- "#BC995F"
+green <- "#A8B072"
+yellow<- "#EFCE71"
+l_yellow <- "#F7F6C1"
 
-this_ingredient_raster_pel <- rast(here("prep/02_feed/output/resampled/fish-dominant/forage fish_fish oil_economic_pelagic_bycatch_A.tif")) 
+jv_pal <- c(l_yellow, yellow, green, l_brown, m_brown, d_brown)
+
+continuous_pal <-  colorRampPalette(jv_pal, space="Lab", bias = 3.5)(10000)
+image(volcano, asp=1, col=continuous_pal)
+
+light_gray <- "#F8F9FA"
+final_palette <- c(light_gray, continuous_pal)
+image(volcano, asp=1, col=final_palette)
+
+palette_red <- c(final_palette, "#B90000")
+image(volcano, asp=1, col=palette_red)
+
+# jv_pal_new <- jv_pal[7000:length(continuous_pal)]
+# image(volcano, asp=1, col=jv_pal_new)
+
+light_gray <- "#F8F9FA"
+final_palette <- c(light_gray, continuous_pal)
+scales::show_col(final_palette)
+
+countries_shp <- ne_countries(scale = 110, returnclass = "sf") |> st_transform(crs(moll_template))
+
+YlOrBr <- color("YlOrBr")
+# plot_scheme(YlOrBr(9), colours = TRUE, size = 0.9)
+
+## only need to save RDS when impact maps info has changed
+allocations <- c("economic", "ge", "mass")
+
+# for(allocation_type in allocations){
+# 
+#  # allocation_type = "mass"
+# 
+# global_maps_list <- list.files(file.path(impact_maps_dir, "impact_maps_across_taxon_ingredient"), pattern = allocation_type, recursive = TRUE, full.names = TRUE)
+# 
+# global_maps_mean <- rast(global_maps_list)
+# names(global_maps_mean) <- file_path_sans_ext(str_after_nth(global_maps_list, "\\/", 6))
+# 
+# 
+# all_df <- as.data.frame(global_maps_mean, xy = TRUE) %>%
+#   pivot_longer(cols = c(3:8), values_to = "value", names_to = "type") %>%
+#   separate_wider_delim(type, delim = "/", names = c("diet", "calc_type")) %>%
+#   mutate(value =  ifelse(str_detect(calc_type, "mean"), log(value*1000000 + 1), value)) %>%
+#   rename(long = x, lat = y)
+# 
+# for(i in unique(all_df$calc_type)){
+# 
+#   # i = "economic_mean"
+# 
+#   loop_df <- all_df %>%
+#     filter(calc_type == i) %>%
+#     filter(!is.na(value))
+# 
+# # write_rds(all_df, glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_ingredient/{allocation_type}.rds.gz")))
+# 
+# data.table::fwrite(loop_df, glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_ingredient/{i}.rds.gz")))
+# 
+# }
+# }
 
 
-this_ingredient_raster_ben <- rast(here("prep/02_feed/output/resampled/fish-dominant/forage fish_fish oil_economic_benthic_bycatch_A.tif"))
 
-this_ingredient_raster <- this_ingredient_raster_pel + this_ingredient_raster_ben 
-
-this_ingredient_df <- as.data.frame(this_ingredient_raster, xy = TRUE) %>%
-  rename(catch = 3)
-
-
-aquamaps_dir <- file.path(rdsi_raw_data_dir, "aquamaps/reprojected_mol_csv")
-
-this_spp_df <- read.csv(file.path(aquamaps_dir, "trisopterus_esmarkii.csv")) %>%
-  left_join(ocean_xy_moll) %>%
-  dplyr::select(x, y, presence)
-
-
-## read in vulnerability values 
-marine_vuln <-  readRDS(file.path(this_dir,"output/aoh_marine_overlap.rds")) %>%
-  mutate(allocation = ifelse(allocation == "ge", "gross energy", allocation)) %>%
-  mutate(vulnerability = reg_vuln) %>%
-  mutate(prop_aoh = affected_depth_reg_vuln/aoh_area_orig) %>%
-  filter(sciname == "Trisopterus esmarkii",
-         allocation == "economic", 
-         ingredient == "forage fish_fish oil", 
-         diet == "fish-dominant") %>%
-  pull(reg_vuln) %>%
+allocation_types <- c("mass", "economic", "ge")  
+calc_types <- c("mean", "nspp", "sd")
+types_df <- expand.grid(allocation_types, calc_types) %>%
+  unite(new_var, Var1:Var2, sep = "_") %>%
+  pull(new_var) %>%
   unique()
 
+diets <- c("fish-dominant", "plant-dominant")
 
-overlap_df <- this_spp_df %>%
-  left_join(this_ingredient_df) %>%
-    filter(!is.na(catch)) %>%
-  filter(catch > 0) %>%
-  mutate(aoh_orig = presence*100) %>%
-  mutate(value = catch*presence*marine_vuln) %>%
-    mutate(p = ((aoh_orig - value)/aoh_orig)^0.25) %>%
-  mutate(prop_aoh_impacted = value/aoh_orig)  %>%
-  mutate(p_inverse = 1 - p) 
+for(type in types_df){
+  
+  # type = "economic_mean"
+  
+ filepath <- glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_ingredient/{type}.rds.gz"))
 
-
-sum(overlap_df$value) # 55.44875
-
-
-ggplot() + 
-  geom_sf(data = countries_shp, fill = "grey", colour = "white") + 
-   geom_raster(data = this_spp_df, aes( x= x, y = y)) +
-   geom_raster(data = overlap_df %>% filter(value >0), aes( x= x, y = y, fill = value)) + 
-  # facet_wrap(~species) +
-  labs(fill = expression(paste(km^{2}, " impacted")), title = "How does fish oil harvest affect AOH?", subtitle = "Economic allocation; Fish-Dominant; Norway Pout", caption = "Black areas are completely unaffected AOH cells") + 
-  scale_fill_gradientn(colors = (RColorBrewer::brewer.pal(n=9, name = "YlOrRd"))) +
+loop_df <-  fread(filepath) 
+  
+## create maps in separate plots, force common scale between them
+maps <- map(.x = diets, 
+            .f = function(x, y) 
+  ggplot() + 
+  geom_tile(data = loop_df  %>% filter(diet == x), aes(x= long, y = lat, fill = value)) +  # (exp(value) - 1) / 1000000)
+      # scale_fill_gradientn(colors = YlOrBr(9), na.value = "white") +  # Set the color for missing values (NA) to white
+   scale_fill_gradientn(colors = final_palette, na.value = "white") +
+   #  scale_fill_viridis(direction = -1) + 
+              geom_sf(data = countries_shp, fill = NA, colour = "grey") + 
   theme_minimal() +
       theme(
-          axis.title = element_blank()) 
+          axis.title = element_blank(),
+          axis.text = element_blank(),
+          axis.ticks = element_blank())
+            )
 
-ggplot() + 
-  geom_sf(data = countries_shp, fill = "grey", colour = "white") + 
-   geom_raster(data = this_spp_df, aes( x= x, y = y)) + 
-  geom_raster(data = overlap_df %>% filter(value >0), aes( x= x, y = y, fill = p)) + 
-  # facet_wrap(~species) +
-  labs(fill = "Likelihood of Persistence", title = "How does fish oil harvest affect AOH?", subtitle = "Economic allocation; Fish-Dominant; Norway Pout", caption = "Black areas are completely unaffected AOH cells") + 
-  scale_fill_gradientn(colors = rev(RColorBrewer::brewer.pal(n=9, name = "YlOrRd"))) +
+ggsave(glue(here(this_dir, "output/plots/{type}_plot.png")), plot = plot_grid(plotlist = maps, labels = glue("{diets}:{type}"), label_size = 10, nrow = 2), width = 10, height = 8, bg = "white")
+
+}
+
+# test <- rast("/mnt/rdsi/biodiversity_impacts/output/impact_maps_across_taxon_ingredient/plant-dominant/economic_mean.tif")
+# test[test <= 0.00001] <- NA
+# plot(test, col = "red")
+```
+
+Global maps across ingredients per taxon 
+
+```{r}
+
+allocations <- c("economic", "ge", "mass")
+calc_types <- c("mean", "sd", "nspp")
+taxon <- all_overlap %>% filter(spp_type != "polychaetes") %>% pull(spp_type) %>% unique()
+
+## this part only needs to be run if the source maps changed! 
+# for(allocation_type in allocations){
+#     for(taxa_type in taxon){
+#       for(type in calc_types){
+# 
+#  # allocation_type = "economic"
+#  #  taxa_type = "sponges"
+# 
+#       out_fstem <- glue(file.path(impact_maps_dir, "csvs/impact_maps_by_taxon_across_ingredient/{allocation_type}_{taxa_type}_{type}.rds.gz"))
+# 
+#       # if(file.exists(out_fstem)){
+#       # 
+#       #   message(glue("skipping {allocation_type}_{taxa_type}_{type}"))
+#       #   next()
+#       # 
+#       # }
+# 
+# global_maps_list <- list.files(file.path(impact_maps_dir, "impact_maps_by_taxon_across_ingredient"), pattern = glue("{allocation_type}_{taxa_type}"), recursive = TRUE, full.names = TRUE)
+# 
+# stack_rast <- rast()
+# 
+# for(file in global_maps_list){
+#   # file <- global_maps_list[[1]]
+# 
+#   rast_1 <- rast(file) %>%
+#     project(., moll_template, method = "near")
+# 
+#   stack_rast <- c(stack_rast, rast_1)
+# }
+# 
+# names(stack_rast) <- file_path_sans_ext(str_after_nth(global_maps_list, "\\/", 6))
+# 
+# 
+# all_df <- as.data.frame(stack_rast, xy = TRUE) %>%
+#   pivot_longer(cols = c(3:ncol(.)), values_to = "value", names_to = "type") %>%
+#   filter(!is.na(value)) %>%
+#   separate_wider_delim(type, delim = "/", names = c("diet", "taxa_calc_type")) %>%
+#   separate_wider_delim(taxa_calc_type, delim = "_", names = c("allocation", "taxa", "calc_type")) %>%
+#   mutate(value =  ifelse(str_detect(calc_type, "mean"), log(value*1000000 + 1), value)) %>%
+#   rename(long = x, lat = y)
+# 
+# for(i in unique(all_df$calc_type)){
+# 
+#   loop_df <- all_df %>%
+#     filter(calc_type == i) %>%
+#     filter(!is.na(value))
+# 
+#   data.table::fwrite(loop_df, glue(file.path(impact_maps_dir, "csvs/impact_maps_by_taxon_across_ingredient/{allocation_type}_{taxa_type}_{i}.rds.gz")))
+# 
+#       }
+#     }
+#   }
+# }
+     
+  
+  
+for(allocation_type in allocations){
+    for(taxa_type in taxon){
+      for(type in calc_types){
+
+        # allocation_type = "economic"
+        # taxa_type = "Bird"
+        # type = "mean"
+        
+        all_df <- fread(glue(file.path(impact_maps_dir, "csvs/impact_maps_by_taxon_across_ingredient/{allocation_type}_{taxa_type}_{type}.rds.gz"))) %>%
+          filter(!is.na(value))
+        
+diets <- unique(all_df$diet)
+  
+## create maps in separate plots, force common scale between them
+maps <- map(.x = diets, 
+            .f = function(x, y) 
+  ggplot() + 
+  geom_tile(data = all_df  %>% filter(diet == x), aes(x= long, y = lat, fill = value)) + 
+      # scale_fill_gradientn(colors = YlOrBr(9), na.value = "white") +  # Set the color for missing values (NA) to white
+   scale_fill_gradientn(colors = final_palette, na.value = "white") +
+   #  scale_fill_viridis(direction = -1) + 
+              geom_sf(data = countries_shp, fill = NA, colour = "grey") + 
   theme_minimal() +
       theme(
-          axis.title = element_blank()) 
+          axis.title = element_blank(),
+          axis.text = element_blank(),
+          axis.ticks = element_blank())
+            )
 
 
-ggplot() + 
-  geom_sf(data = countries_shp, fill = "grey", colour = "white") + 
-   geom_raster(data = this_spp_df, aes( x= x, y = y)) + 
-  geom_raster(data = overlap_df %>% filter(value >0), aes( x= x, y = y, fill = p_inverse)) + 
-  # facet_wrap(~species) +
-  labs(fill = "Inverse Persistence", title = "How does fish oil harvest affect AOH?", subtitle = "Economic allocation; Fish-Dominant; Norway Pout", caption = "Black areas are completely unaffected AOH cells") + 
-  scale_fill_gradientn(colors = (RColorBrewer::brewer.pal(n=9, name = "YlOrRd"))) +
-  theme_minimal() +
-      theme(
-          axis.title = element_blank()) 
+ggsave(glue(here(this_dir, "output/plots/by_taxa/{allocation_type}_{taxa_type}_{type}_plot.png")), plot = plot_grid(plotlist = maps, labels = glue("{diets}:{allocation_type}:{taxa_type}:{type}"), label_size = 10, nrow = 2), width = 10, height = 8, bg = "white")
 
-ggplot() + 
-  geom_sf(data = countries_shp, fill = "grey", colour = "white") + 
-   geom_raster(data = this_spp_df, aes( x= x, y = y)) + 
-  geom_raster(data = overlap_df %>% filter(value >0), aes( x= x, y = y, fill = prop_aoh_impacted)) + 
-  # facet_wrap(~species) +
-  labs(fill = "Proportion AOH impacted", title = "How does fish oil harvest affect AOH?", subtitle = "Economic allocation; Fish-Dominant; Norway Pout", caption = "Black areas are completely unaffected AOH cells") + 
-  scale_fill_gradientn(colors = (RColorBrewer::brewer.pal(n=9, name = "YlOrRd"))) +
-  theme_minimal() +
-      theme(
-          axis.title = element_blank()) 
-
-
-
+    }
+  }
+}
 
 ```
+
+Global maps by ingredients across taxon 
+
+```{r}
+
+allocations <- c("economic", "ge", "mass")
+calc_types <- c("mean", "sd", "nspp")
+ingredients <- all_overlap %>% pull(ingredient) %>% unique()
+
+## commented out code only needs to be run if the source impact maps are updated! 
+# for(allocation_type in allocations){
+#   for(ingredient_type in ingredients){
+# 
+#       # ingredient_type = "Soybean_soybean meal"
+#       # allocation_type = "economic"
+#       # type = "mean"
+# 
+# global_maps_list <- list.files(file.path(impact_maps_dir, "impact_maps_across_taxon_by_ingredient"), pattern = glue("{allocation_type}_{ingredient_type}"), recursive = TRUE, full.names = TRUE)
+
+# stack_rast <- rast()
+# 
+# for(file in global_maps_list){
+#   # file <- global_maps_list[[1]]
+# 
+#   rast_1 <- rast(file) %>%
+#     project(., moll_template, method = "near")
+# 
+#   stack_rast <- c(stack_rast, rast_1)
+# }
+# 
+# names(stack_rast) <- file_path_sans_ext(str_after_nth(global_maps_list, "\\/", 6))
+# 
+# 
+# all_df <- as.data.frame(stack_rast, xy = TRUE) %>%
+#   pivot_longer(cols = c(3:ncol(.)), values_to = "value", names_to = "type") %>%
+#   separate_wider_delim(type, delim = "/", names = c("diet", "ingredient_calc_type")) %>%
+#     separate_wider_delim(ingredient_calc_type, delim = "_", names = c("allocation", "raw_material", "ingredient", "calc_type")) %>%
+#   mutate(value =  ifelse(str_detect(calc_type, "mean"), log(value*1000000 + 1), value)) %>%
+#   rename(long = x, lat = y) %>%
+#   filter(!is.na(value)) %>%
+#   unite("crop_ingredient", c(raw_material:ingredient), sep = "_", remove = FALSE)
+# 
+# for(i in unique(all_df$calc_type)){
+#   # i = "mean"
+# 
+#   loop_df <- all_df %>%
+#     filter(calc_type == i) %>%
+#     filter(!is.na(value))
+# 
+#   data.table::fwrite(loop_df, glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_by_ingredient/{allocation_type}_{ingredient_type}_{i}.rds.gz")))
+# 
+#    }
+#   }
+# }
+
+
+for(allocation_type in allocations){
+    for(ingredient_type in ingredients){
+      for(type in calc_types){
+        
+      # ingredient_type = "Soybean_soybean meal"
+      # allocation_type = "economic"
+      # type = "mean"
+        
+                all_df <- fread(glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_by_ingredient/{allocation_type}_{ingredient_type}_{type}.rds.gz"))) 
+ 
+diets <- unique(all_df$diet)
   
-  
+## create maps in separate plots, force common scale between them
+maps <- map(.x = diets, 
+            .f = function(x, y) 
+  ggplot() + 
+  geom_tile(data = all_df  %>% filter(diet == x), aes(x= long, y = lat, fill = value)) + 
+      # scale_fill_gradientn(colors = YlOrBr(9), na.value = "white") +  # Set the color for missing values (NA) to white
+   scale_fill_gradientn(colors = final_palette, na.value = "white") +
+   #  scale_fill_viridis(direction = -1) + 
+              geom_sf(data = countries_shp, fill = NA, colour = "grey") + 
+  theme_minimal() +
+      theme(
+          axis.title = element_blank(),
+          axis.text = element_blank(),
+          axis.ticks = element_blank())
+            )
+
+ggsave(glue(here(this_dir, "output/plots/by_ingredient/{allocation_type}_{ingredient_type}_{type}_plot.png")), plot = plot_grid(plotlist = maps, labels = glue("{diets}:{allocation_type}:{ingredient_type}:{type}"), label_size = 10, nrow = 2), width = 10, height = 8, bg = "white")
+
+    
+    }
+  }
+}
+
+```
+

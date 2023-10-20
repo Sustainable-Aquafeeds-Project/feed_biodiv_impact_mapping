@@ -75,6 +75,7 @@ species_list <- c(unique(impact_df_tidy$sciname))
 
 writeLines(species_list, here("prep/03_prep_spp_habitats/int/species_list.txt"))
 
+
 ```
 
 
@@ -115,6 +116,28 @@ aoh_df <- impact_df_tidy %>%
   rename(suitability = cropland_suitability)
 
 saveRDS(aoh_df, here("prep/03_prep_spp_habitats/output/aoh_terrestrial_mammals_birds_impact.rds")) # save rds to save space
+
+test <- aoh_df %>%
+  ungroup() %>%
+  dplyr::select(spp_type, sciname) %>%
+  group_by(spp_type) %>%
+  summarise(n_distinct(sciname)) ## ok missing a lot of species... is this because they aren't vulnerable? 
+
+test_ag <- ag_suitability %>% 
+  group_by(spp_type, cropland_suitability) %>%
+  summarise(n_distinct(species))
+
+2962 + 613 # 3575 species not vulnerable
+
+7328+4548 # 11876
+
+11876 + 3575 # 15451 total species 
+
+## paper reports: 
+10651 + 5481 # 16132.. ok so missing ~600 species.. not as bad as I thought 
+
+length(unique(ag_suitability$species)) # 16133
+
 
 ```
 
