@@ -467,15 +467,26 @@ todo <- total_prop %>%
   summarise(sum_prop = sum(total_prop, na.rm = TRUE)) %>%
   ungroup() %>%
   filter(sum_prop >0) 
+# todo <- filter(todo, diet == "fish-dominant")
+
+# parallelize this? 
+
+# 
 
 for(i in 1:dim(todo)[1]){
-#i=30
+# i=1
 crop_gaez <- todo$GAEZ_category[i]
 product_type <- todo$ingredient[i]
 diet_type = todo$diet[i]
 allocation = todo$allocation_type[i]
 fcr <- todo$fcr_type[i]
 
+
+
+if(all(file.exists(sprintf(here("prep/02_feed/output/%s/%s/%s_%s_%s_A.tif"), diet_type, fcr, crop_gaez, product_type, allocation), sprintf(here("prep/02_feed/output/%s/%s/%s_%s_%s_P.tif"), diet_type, fcr, crop_gaez, product_type, allocation)))){
+  cat("skipping because area and production rasters both exist!")
+  next()
+}
 
 # total country feed production
 feed_crop <- filter(total_prop, GAEZ_category==crop_gaez, diet == diet_type, fcr_type == fcr, ingredient == product_type , allocation_type == allocation) %>%
