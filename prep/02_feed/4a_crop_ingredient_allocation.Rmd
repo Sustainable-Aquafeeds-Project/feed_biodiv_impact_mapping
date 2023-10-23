@@ -47,9 +47,9 @@ Total consumption by animals per country in MAPSPAM crops
 consumption <- read_csv(here("prep/02_feed/data/demand/total_aquaculture_ingredient_demand.csv")) %>%
   mutate(animal_system = paste(animal, system, product, sep="_")) %>%
   rename(source_ingredient = ingredient) %>%
-  pivot_longer(cols = c("ingredient_demand", "ingredient_demand_efficient"), names_to = "demand_type", values_to = "consuming_ingredient_consumed_tonnes") %>%
-  mutate(demand_type = ifelse(demand_type == "ingredient_demand", "regular", "efficient")) %>% 
-  select(iso3c_consuming = iso3c, animal_system, diet, source_ingredient, demand_type, consuming_ingredient_consumed_tonnes) 
+  pivot_longer(cols = c("ingredient_demand", "ingredient_demand_efficient"), names_to = "fcr_type", values_to = "consuming_ingredient_consumed_tonnes") %>%
+  mutate(fcr_type = ifelse(fcr_type == "ingredient_demand", "regular", "efficient")) %>% 
+  select(iso3c_consuming = iso3c, animal_system, diet, source_ingredient, fcr_type, consuming_ingredient_consumed_tonnes) 
 
 ## need to match `consumption` ingredients to equivalent crop.. need lookup table 
 
@@ -92,14 +92,14 @@ Take a look at the data
 ```{r}
 
 feed_source <- ingredient_production_location %>%
-  group_by(iso3c_producing, diet, animal_system, GAEZ_category, source_ingredient) %>%
+  group_by(iso3c_producing, diet, fcr_type, animal_system, GAEZ_category, source_ingredient) %>%
   summarize(consumed_ingredient_tonnes = sum(producing_ingredient_consumed_tonnes)) %>% 
   ungroup()
 
 
 
 tmp <- filter(feed_source, animal_system == "salmon_aquaculture_meat") %>%
-    group_by(source_ingredient, diet) %>%
+    group_by(source_ingredient, diet, fcr_type) %>%
   slice_max(order_by = consumed_ingredient_tonnes, n = 15) %>%
   ungroup() %>%
   filter(consumed_ingredient_tonnes > 0)
@@ -108,7 +108,7 @@ tmp <- filter(feed_source, animal_system == "salmon_aquaculture_meat") %>%
 ggplot(data = tmp %>%
          filter(diet == "plant-dominant"), aes(x = consumed_ingredient_tonnes, y = reorder_within(iso3c_producing, consumed_ingredient_tonnes, GAEZ_category))) + 
   geom_bar(stat = "identity") + 
-  facet_wrap(~source_ingredient, scales = "free") + 
+  facet_grid(fcr_type~source_ingredient, scales = "free") + 
   labs(x = "Tonnes of raw ingredient produced", y = "Country") + 
   theme_bw() + 
   theme(axis.text.x = element_text(angle = 30, vjust = 0.5)) 
@@ -119,14 +119,14 @@ ggsave(here("prep/02_feed/plots/total_ingredient_feed_origins_plant.png"), units
 
 ## STEP 2: Use allocation methods to account for crop loss and coproducts to get a better idea of the amount of crops actually going to aquaculture feeds (instead of ingredients)
 
-Ok now we need to convert the ingredient to crop raw material using the conversion factors that Rich has put together.. we do mass and energetic allocation both 
+Ok now we need to convert the ingredient to crop raw material using the conversion factors that Rich has put together.. we do mass, economic, and energetic allocation  
 
 
 ```{r}
 ## join ingredient demand and allocation data to generate crop raw material demand
  
 ingredient_production <- ingredient_production_location %>%
-  group_by(iso3c_producing, GAEZ_category, diet, source_ingredient, raw_material, FAOSTAT_name, FAO_code, map_spam_code) %>%
+  group_by(iso3c_producing, GAEZ_category, diet, fcr_type, source_ingredient, raw_material, FAOSTAT_name, FAO_code, map_spam_code) %>%
   summarise(producing_ingredient_consumed_tonnes = sum(producing_ingredient_consumed_tonnes, na.rm = TRUE)) %>%
   ungroup()
  
@@ -136,14 +136,14 @@ allocation_factors <- read_xlsx(here("data/tidy_data/allocation/crop_ingredient_
   distinct()
 
 
-#join the ingredient demand by diet to the producer data so for each ingredient there will be an raw material demand per source, and diet scenario. Create new raw_material demand column by dividing total ingredient demand by the conversion factor (i.e. the ingredient extraction rate from the raw material in the first place)
+#join the ingredient demand by diet to the producer data so for each ingredient there will be a raw material demand per source, fcr type, and diet scenario. Create new raw_material demand column by dividing total ingredient demand by the conversion factor (i.e. the ingredient extraction rate from the raw material in the first place)
 
 crop_raw_material_demand <- ingredient_production %>%
   left_join(allocation_factors, by = c("source_ingredient" = "ingredient", "FAO_code")) %>% 
   mutate(total_crop_demand_ge = producing_ingredient_consumed_tonnes*ge_allocation_factor,
          total_crop_demand_ms = producing_ingredient_consumed_tonnes*mass_allocation_factor,
          total_crop_demand_econ = producing_ingredient_consumed_tonnes*econ_allocation_factor) %>%
-  group_by(iso3c_producing, diet, source_ingredient, FAOSTAT_name, FAO_code) %>%
+  group_by(iso3c_producing, diet, fcr_type, source_ingredient, FAOSTAT_name, FAO_code) %>%
   summarise(total_crop_demand_ms = sum(total_crop_demand_ms, na.rm = TRUE),
             total_crop_demand_ge = sum(total_crop_demand_ge, na.rm = TRUE),
             total_crop_demand_econ = sum(total_crop_demand_econ, na.rm = TRUE)) %>%
@@ -201,23 +201,25 @@ NOTE: if our production data were perfect these complicated steps would be unnec
 
 Identify the countries/crops with total production rates (across all systems) that exceed total production
 
+NOTE: We are skipping these steps, as we don't care if the production rates exceed total production. This is a MODELING project, so we don't care if the results reflect real-world production levels. We will use the uncapped proportions for our calculations.
+
 ```{r}
 ## step 1 ID regions where consumption exceeds production
 
-production_exceed <- proportion %>%
-  group_by(iso3c_producing, diet, GAEZ_category, source_ingredient) %>%
-  mutate(tonnes_produced_country_ms = sum(total_crop_demand_ms),
-         tonnes_produced_country_ge = sum(total_crop_demand_ge),
-         tonnes_produced_country_econ = sum(total_crop_demand_econ)) %>%
-  ungroup() %>%
-  rowwise() %>%
-  mutate(extra_crop_tonnes_ms = tonnes_producing_crop - tonnes_produced_country_ms,
-         extra_crop_tonnes_ge = tonnes_producing_crop - tonnes_produced_country_ge,
-         extra_crop_tonnes_econ = tonnes_producing_crop - tonnes_produced_country_econ) %>%
-  mutate(percent_exceed_ms = ifelse(tonnes_producing_crop == 0, 0, tonnes_produced_country_ms/tonnes_producing_crop),
-         percent_exceed_ge = ifelse(tonnes_producing_crop == 0, 0, tonnes_produced_country_ge/tonnes_producing_crop),
-         percent_exceed_econ = ifelse(tonnes_producing_crop == 0, 0, tonnes_produced_country_econ/tonnes_producing_crop)) %>%
-    data.frame()
+# production_exceed <- proportion %>%
+#   group_by(iso3c_producing, diet, fcr_type, GAEZ_category, source_ingredient) %>%
+#   mutate(tonnes_produced_country_ms = sum(total_crop_demand_ms),
+#          tonnes_produced_country_ge = sum(total_crop_demand_ge),
+#          tonnes_produced_country_econ = sum(total_crop_demand_econ)) %>%
+#   ungroup() %>%
+#   rowwise() %>%
+#   mutate(extra_crop_tonnes_ms = tonnes_producing_crop - tonnes_produced_country_ms,
+#          extra_crop_tonnes_ge = tonnes_producing_crop - tonnes_produced_country_ge,
+#          extra_crop_tonnes_econ = tonnes_producing_crop - tonnes_produced_country_econ) %>%
+#   mutate(percent_exceed_ms = ifelse(tonnes_producing_crop == 0, 0, tonnes_produced_country_ms/tonnes_producing_crop),
+#          percent_exceed_ge = ifelse(tonnes_producing_crop == 0, 0, tonnes_produced_country_ge/tonnes_producing_crop),
+#          percent_exceed_econ = ifelse(tonnes_producing_crop == 0, 0, tonnes_produced_country_econ/tonnes_producing_crop)) %>%
+#     data.frame()
 
 ```
 
@@ -226,27 +228,27 @@ Adjust proportion of consumption to not exceed production by more than 5%
 
 ```{r}
 
-corrected_prop <- production_exceed %>%
-  mutate(prop_of_production_within_iso_ms = ifelse(tonnes_produced_country_ms == 0, 0, total_crop_demand_ms/tonnes_produced_country_ms),
-         prop_of_production_within_iso_ge = ifelse(tonnes_produced_country_ge == 0, 0, total_crop_demand_ge/tonnes_produced_country_ge),
-         prop_of_production_within_iso_econ = ifelse(tonnes_produced_country_econ == 0, 0, total_crop_demand_econ/tonnes_produced_country_econ)) %>%  # calculate proportion of crop each system eats within a country
-  mutate(prop_produced_for_system_adjust_ms = ifelse(percent_exceed_ms >1 , 
-                                        ifelse(percent_exceed_ms > 1.05, prop_of_production_within_iso_ms*1.05, prop_of_production_within_iso_ms*percent_exceed_ms),
-                                        prop_produced_for_system_ms),
-         prop_produced_for_system_adjust_ge = ifelse(percent_exceed_ge >1 , 
-                                        ifelse(percent_exceed_ge > 1.05, prop_of_production_within_iso_ge*1.05, prop_of_production_within_iso_ge*percent_exceed_ge),
-                                        prop_produced_for_system_ge),
-         prop_produced_for_system_adjust_econ = ifelse(percent_exceed_econ >1 , 
-                                        ifelse(percent_exceed_econ > 1.05, prop_of_production_within_iso_econ*1.05, prop_of_production_within_iso_econ*percent_exceed_econ),
-                                        prop_produced_for_system_econ))
-
-summary(corrected_prop)
-filter(corrected_prop, iso3c_producing=="BEL", SPAM_super=="soyb")
-
-corrected_prop %>%
-  group_by(iso3c_producing, diet, SPAM_super, source_ingredient) %>%
-  summarize(total_adj_prop = sum(prop_produced_for_system_adjust_ge),
-            total_prop = sum(prop_produced_for_system_ge))
+# corrected_prop <- production_exceed %>%
+#   mutate(prop_of_production_within_iso_ms = ifelse(tonnes_produced_country_ms == 0, 0, total_crop_demand_ms/tonnes_produced_country_ms),
+#          prop_of_production_within_iso_ge = ifelse(tonnes_produced_country_ge == 0, 0, total_crop_demand_ge/tonnes_produced_country_ge),
+#          prop_of_production_within_iso_econ = ifelse(tonnes_produced_country_econ == 0, 0, total_crop_demand_econ/tonnes_produced_country_econ)) %>%  # calculate proportion of crop each system eats within a country
+#   mutate(prop_produced_for_system_adjust_ms = ifelse(percent_exceed_ms >1 , 
+#                                         ifelse(percent_exceed_ms > 1.05, prop_of_production_within_iso_ms*1.05, prop_of_production_within_iso_ms*percent_exceed_ms),
+#                                         prop_produced_for_system_ms),
+#          prop_produced_for_system_adjust_ge = ifelse(percent_exceed_ge >1 , 
+#                                         ifelse(percent_exceed_ge > 1.05, prop_of_production_within_iso_ge*1.05, prop_of_production_within_iso_ge*percent_exceed_ge),
+#                                         prop_produced_for_system_ge),
+#          prop_produced_for_system_adjust_econ = ifelse(percent_exceed_econ >1 , 
+#                                         ifelse(percent_exceed_econ > 1.05, prop_of_production_within_iso_econ*1.05, prop_of_production_within_iso_econ*percent_exceed_econ),
+#                                         prop_produced_for_system_econ))
+# 
+# summary(corrected_prop)
+# filter(corrected_prop, iso3c_producing=="BEL", SPAM_super=="soyb")
+# 
+# corrected_prop %>%
+#   group_by(iso3c_producing, diet, SPAM_super, source_ingredient) %>%
+#   summarize(total_adj_prop = sum(prop_produced_for_system_adjust_ge),
+#             total_prop = sum(prop_produced_for_system_ge))
 
 
 
@@ -257,82 +259,82 @@ For each animal system determine tonnes that was included and excluded.  The exc
 
 ```{r}
 
-tonnes_included_system <- corrected_prop %>%
-  mutate(included_tonnes_ms = prop_produced_for_system_adjust_ms * tonnes_producing_crop, 
-         included_tonnes_ge = prop_produced_for_system_adjust_ge * tonnes_producing_crop,
-         included_tonnes_econ = prop_produced_for_system_adjust_econ * tonnes_producing_crop) %>%
-  mutate(lost_crop_tonnes_ms = total_crop_demand_ms - included_tonnes_ms,
-         lost_crop_tonnes_ge = total_crop_demand_ge - included_tonnes_ge,
-         lost_crop_tonnes_econ = total_crop_demand_ge - included_tonnes_econ) %>%
-  mutate(included_prop_ms = ifelse(tonnes_producing_crop == 0 , 0, included_tonnes_ms/tonnes_producing_crop),
-         included_prop_ge = ifelse(tonnes_producing_crop == 0 , 0, included_tonnes_ge/tonnes_producing_crop),
-         included_prop_econ = ifelse(tonnes_producing_crop == 0 , 0, included_tonnes_econ/tonnes_producing_crop))
-summary(tonnes_included_system)
-
-# check, sum of included and excluded should equal sum of all consumption
-tmp <- tonnes_included_system %>%
-  group_by(GAEZ_category, diet) %>%
-  summarize(included_crop = sum(included_tonnes_ms, na.rm=TRUE),
-            excluded_crop = sum(lost_crop_tonnes_ms, na.rm=TRUE)) %>% 
-  mutate(prop_redistributed = excluded_crop/(excluded_crop + included_crop)) %>%
-           data.frame()  %>%
-  filter(diet == "plant-dominant")
-
-sum(tmp$included_crop)/(sum(tmp$included_crop) + sum(tmp$excluded_crop)) # 86% for plant ge, 99% for fish ge. 99% for fish ms, 92% for plant ms
-
-
-tonnes_lost_system <- tonnes_included_system %>%
-  group_by(GAEZ_category, diet, source_ingredient) %>%
-  summarize(lost_crop_tonnes_ms = sum(lost_crop_tonnes_ms, na.rm=TRUE),
-            lost_crop_tonnes_ge = sum(lost_crop_tonnes_ge, na.rm=TRUE),
-            lost_crop_tonnes_econ = sum(lost_crop_tonnes_econ, na.rm=TRUE))
-
-
-#calculate extra crop tonnes in each country, and determine what proportion of extra each country accounts for
-tonnes_extra_crop <- corrected_prop %>%
-  dplyr::select(iso3c_producing, diet, SPAM_super, GAEZ_category, extra_crop_tonnes_ms, tonnes_producing_crop, extra_crop_tonnes_ge, extra_crop_tonnes_econ, source_ingredient) %>%
-  unique() %>%
-  mutate(extra_crop_tonnes_ms = ifelse(extra_crop_tonnes_ms<0, 0, extra_crop_tonnes_ms),
-         extra_crop_tonnes_ge = ifelse(extra_crop_tonnes_ge<0, 0, extra_crop_tonnes_ge),
-         extra_crop_tonnes_econ = ifelse(extra_crop_tonnes_econ<0, 0, extra_crop_tonnes_econ)) %>%
-  group_by(SPAM_super) %>%
-  mutate(excess_crop_global_ms = sum(extra_crop_tonnes_ms),
-         excess_crop_global_ge = sum(extra_crop_tonnes_ge),
-         excess_crop_global_econ = sum(extra_crop_tonnes_econ)) %>%
-  rowwise() %>%
-  mutate(prop_excess_crop_ms = ifelse(excess_crop_global_ms == 0, 0, extra_crop_tonnes_ms/excess_crop_global_ms),
-         prop_excess_crop_ge = ifelse(excess_crop_global_ge == 0, 0, extra_crop_tonnes_ge/excess_crop_global_ge),
-         prop_excess_crop_econ = ifelse(excess_crop_global_ge == 0, 0, extra_crop_tonnes_econ/excess_crop_global_econ))
-
-# distribute the tonnes lost for each crop/system based on each countries extra production
-excess_prop <- merge(tonnes_extra_crop, tonnes_lost_system) %>%
-  mutate(tonnes_dispersed_ms = prop_excess_crop_ms * lost_crop_tonnes_ms,
-         tonnes_dispersed_ge = prop_excess_crop_ge * lost_crop_tonnes_ge,
-         tonnes_dispersed_econ = prop_excess_crop_econ * lost_crop_tonnes_econ) %>%
-  mutate(prop_dispersed_ms = ifelse(tonnes_producing_crop == 0, 0, tonnes_dispersed_ms/tonnes_producing_crop),
-         prop_dispersed_ge = ifelse(tonnes_producing_crop == 0, 0, tonnes_dispersed_ge/tonnes_producing_crop),
-         prop_dispersed_econ = ifelse(tonnes_producing_crop == 0, 0, tonnes_dispersed_econ/tonnes_producing_crop))
-
-
-### NOTE: you can get higher total props for countries with very small proportions. This happens only for soybeans and for small production areas.
-## this explores this:
-
-excess_excess_prop <- excess_prop %>%
-  mutate(extra_dispersed_tonnes_ms = tonnes_dispersed_ms - extra_crop_tonnes_ms,
-         extra_dispersed_tonnes_ge = tonnes_dispersed_ge - extra_crop_tonnes_ge,
-         extra_dispersed_tonnes_econ = tonnes_dispersed_econ - extra_crop_tonnes_econ) %>%
-  mutate(extra_dispersed_tonnes_ms = ifelse(prop_dispersed_ms > 1, extra_dispersed_tonnes_ms, 0),
-         extra_dispersed_tonnes_ge = ifelse(prop_dispersed_ge > 1, extra_dispersed_tonnes_ge, 0),
-         extra_dispersed_tonnes_econ = ifelse(prop_dispersed_econ > 1, extra_dispersed_tonnes_econ, 0)) %>%
-  left_join(crop_production_global, by = "GAEZ_category") %>%
-  mutate(prop_global_crop_production = tonnes_producing_crop/tonnes_global) %>%
-  group_by(GAEZ_category, diet, source_ingredient) %>%
-  mutate(extra_dispersed_tonnes_by_system_crop_ms = sum(extra_dispersed_tonnes_ms),
-         extra_dispersed_tonnes_by_system_crop_ge = sum(extra_dispersed_tonnes_ge),
-         extra_dispersed_tonnes_by_system_crop_econ = sum(extra_dispersed_tonnes_econ))
-  
-
-filter(excess_excess_prop, prop_dispersed_econ>1) %>% data.frame()
+# tonnes_included_system <- corrected_prop %>%
+#   mutate(included_tonnes_ms = prop_produced_for_system_adjust_ms * tonnes_producing_crop, 
+#          included_tonnes_ge = prop_produced_for_system_adjust_ge * tonnes_producing_crop,
+#          included_tonnes_econ = prop_produced_for_system_adjust_econ * tonnes_producing_crop) %>%
+#   mutate(lost_crop_tonnes_ms = total_crop_demand_ms - included_tonnes_ms,
+#          lost_crop_tonnes_ge = total_crop_demand_ge - included_tonnes_ge,
+#          lost_crop_tonnes_econ = total_crop_demand_ge - included_tonnes_econ) %>%
+#   mutate(included_prop_ms = ifelse(tonnes_producing_crop == 0 , 0, included_tonnes_ms/tonnes_producing_crop),
+#          included_prop_ge = ifelse(tonnes_producing_crop == 0 , 0, included_tonnes_ge/tonnes_producing_crop),
+#          included_prop_econ = ifelse(tonnes_producing_crop == 0 , 0, included_tonnes_econ/tonnes_producing_crop))
+# summary(tonnes_included_system)
+# 
+# # check, sum of included and excluded should equal sum of all consumption
+# tmp <- tonnes_included_system %>%
+#   group_by(GAEZ_category, diet, fcr_type) %>%
+#   summarize(included_crop = sum(included_tonnes_ms, na.rm=TRUE),
+#             excluded_crop = sum(lost_crop_tonnes_ms, na.rm=TRUE)) %>% 
+#   mutate(prop_redistributed = excluded_crop/(excluded_crop + included_crop)) %>%
+#            data.frame()  %>%
+#   filter(diet == "plant-dominant")
+# 
+# sum(tmp$included_crop)/(sum(tmp$included_crop) + sum(tmp$excluded_crop)) # 86% for plant ge, 99% for fish ge. 99% for fish ms, 92% for plant ms
+# 
+# 
+# tonnes_lost_system <- tonnes_included_system %>%
+#   group_by(GAEZ_category, diet, source_ingredient, fcr_type) %>%
+#   summarize(lost_crop_tonnes_ms = sum(lost_crop_tonnes_ms, na.rm=TRUE),
+#             lost_crop_tonnes_ge = sum(lost_crop_tonnes_ge, na.rm=TRUE),
+#             lost_crop_tonnes_econ = sum(lost_crop_tonnes_econ, na.rm=TRUE))
+# 
+# 
+# #calculate extra crop tonnes in each country, and determine what proportion of extra each country accounts for
+# tonnes_extra_crop <- corrected_prop %>%
+#   dplyr::select(iso3c_producing, diet, fcr_type, SPAM_super, GAEZ_category, extra_crop_tonnes_ms, tonnes_producing_crop, extra_crop_tonnes_ge, extra_crop_tonnes_econ, source_ingredient) %>%
+#   unique() %>%
+#   mutate(extra_crop_tonnes_ms = ifelse(extra_crop_tonnes_ms<0, 0, extra_crop_tonnes_ms),
+#          extra_crop_tonnes_ge = ifelse(extra_crop_tonnes_ge<0, 0, extra_crop_tonnes_ge),
+#          extra_crop_tonnes_econ = ifelse(extra_crop_tonnes_econ<0, 0, extra_crop_tonnes_econ)) %>%
+#   group_by(SPAM_super) %>%
+#   mutate(excess_crop_global_ms = sum(extra_crop_tonnes_ms),
+#          excess_crop_global_ge = sum(extra_crop_tonnes_ge),
+#          excess_crop_global_econ = sum(extra_crop_tonnes_econ)) %>%
+#   rowwise() %>%
+#   mutate(prop_excess_crop_ms = ifelse(excess_crop_global_ms == 0, 0, extra_crop_tonnes_ms/excess_crop_global_ms),
+#          prop_excess_crop_ge = ifelse(excess_crop_global_ge == 0, 0, extra_crop_tonnes_ge/excess_crop_global_ge),
+#          prop_excess_crop_econ = ifelse(excess_crop_global_ge == 0, 0, extra_crop_tonnes_econ/excess_crop_global_econ))
+# 
+# # distribute the tonnes lost for each crop/system based on each countries extra production
+# excess_prop <- merge(tonnes_extra_crop, tonnes_lost_system) %>%
+#   mutate(tonnes_dispersed_ms = prop_excess_crop_ms * lost_crop_tonnes_ms,
+#          tonnes_dispersed_ge = prop_excess_crop_ge * lost_crop_tonnes_ge,
+#          tonnes_dispersed_econ = prop_excess_crop_econ * lost_crop_tonnes_econ) %>%
+#   mutate(prop_dispersed_ms = ifelse(tonnes_producing_crop == 0, 0, tonnes_dispersed_ms/tonnes_producing_crop),
+#          prop_dispersed_ge = ifelse(tonnes_producing_crop == 0, 0, tonnes_dispersed_ge/tonnes_producing_crop),
+#          prop_dispersed_econ = ifelse(tonnes_producing_crop == 0, 0, tonnes_dispersed_econ/tonnes_producing_crop))
+# 
+# 
+# ### NOTE: you can get higher total props for countries with very small proportions. This happens only for soybeans and for small production areas.
+# ## this explores this:
+# 
+# excess_excess_prop <- excess_prop %>%
+#   mutate(extra_dispersed_tonnes_ms = tonnes_dispersed_ms - extra_crop_tonnes_ms,
+#          extra_dispersed_tonnes_ge = tonnes_dispersed_ge - extra_crop_tonnes_ge,
+#          extra_dispersed_tonnes_econ = tonnes_dispersed_econ - extra_crop_tonnes_econ) %>%
+#   mutate(extra_dispersed_tonnes_ms = ifelse(prop_dispersed_ms > 1, extra_dispersed_tonnes_ms, 0),
+#          extra_dispersed_tonnes_ge = ifelse(prop_dispersed_ge > 1, extra_dispersed_tonnes_ge, 0),
+#          extra_dispersed_tonnes_econ = ifelse(prop_dispersed_econ > 1, extra_dispersed_tonnes_econ, 0)) %>%
+#   left_join(crop_production_global, by = "GAEZ_category") %>%
+#   mutate(prop_global_crop_production = tonnes_producing_crop/tonnes_global) %>%
+#   group_by(GAEZ_category, diet, fcr_type, source_ingredient) %>%
+#   mutate(extra_dispersed_tonnes_by_system_crop_ms = sum(extra_dispersed_tonnes_ms),
+#          extra_dispersed_tonnes_by_system_crop_ge = sum(extra_dispersed_tonnes_ge),
+#          extra_dispersed_tonnes_by_system_crop_econ = sum(extra_dispersed_tonnes_econ))
+#   
+# 
+# filter(excess_excess_prop, prop_dispersed_econ>1) %>% data.frame()
 
 ```
 
@@ -341,77 +343,77 @@ Combine the included and lost proportions for each system and country for plotti
 
 ```{r}
 
-assigned_prop <- tonnes_included_system  %>%
-  dplyr::select(iso3c_producing, diet, source_ingredient, SPAM_super, GAEZ_category, prop_produced_for_system_ms = included_prop_ms, prop_produced_for_system_ge = included_prop_ge, prop_produced_for_system_econ = included_prop_econ)
-excess_prop <- excess_prop %>%
-  dplyr::select(iso3c_producing, diet, source_ingredient, SPAM_super, GAEZ_category, prop_extra_for_system_ms = prop_dispersed_ms, prop_extra_for_system_ge = prop_dispersed_ge, prop_extra_for_system_econ = prop_dispersed_econ)
-
-total_prop <- left_join(assigned_prop, excess_prop, by=c("iso3c_producing", "diet", "GAEZ_category", "source_ingredient")) %>%
-  rowwise() %>%
-  mutate(total_prop_ms = prop_produced_for_system_ms + prop_extra_for_system_ms,
-         total_prop_ge = prop_produced_for_system_ge + prop_extra_for_system_ge,
-         total_prop_econ = prop_produced_for_system_econ + prop_extra_for_system_econ)
-summary(total_prop)
-filter(total_prop, iso3c_producing=="AFG" & GAEZ_category=="Soybean") %>% data.frame()
+# assigned_prop <- tonnes_included_system  %>%
+#   dplyr::select(iso3c_producing, diet, fcr_type, source_ingredient, SPAM_super, GAEZ_category, prop_produced_for_system_ms = included_prop_ms, prop_produced_for_system_ge = included_prop_ge, prop_produced_for_system_econ = included_prop_econ)
+# excess_prop <- excess_prop %>%
+#   dplyr::select(iso3c_producing, diet, fcr_type, source_ingredient, SPAM_super, GAEZ_category, prop_extra_for_system_ms = prop_dispersed_ms, prop_extra_for_system_ge = prop_dispersed_ge, prop_extra_for_system_econ = prop_dispersed_econ)
+# 
+# total_prop <- left_join(assigned_prop, excess_prop, by=c("iso3c_producing", "diet", "fcr_type", "GAEZ_category", "source_ingredient")) %>%
+#   rowwise() %>%
+#   mutate(total_prop_ms = prop_produced_for_system_ms + prop_extra_for_system_ms,
+#          total_prop_ge = prop_produced_for_system_ge + prop_extra_for_system_ge,
+#          total_prop_econ = prop_produced_for_system_econ + prop_extra_for_system_econ)
+# summary(total_prop)
+# filter(total_prop, iso3c_producing=="AFG" & GAEZ_category=="Soybean") %>% data.frame()
 
 ```
 
 Checking
 ```{r}
 
-summary(total_prop) # ok for total prop to be a bit above 1
-
-filter(total_prop, prop_produced_for_system_ge>1)
-
-## check: should match original consumption:
-production_global <- feed_source %>%
-  group_by(diet, source_ingredient, GAEZ_category) %>%
-  summarize(obs_tonnes_ms = sum(total_crop_demand_ms, na.rm=TRUE),
-            obs_tonnes_ge = sum(total_crop_demand_ge, na.rm=TRUE),
-            obs_tonnes_econ = sum(total_crop_demand_econ, na.rm=TRUE))
-
-check <- left_join(total_prop, crop_production_df) %>%
-  mutate(total_tonnes_ms = total_prop_ms*tonnes_producing_crop,
-         total_tonnes_ge = total_prop_ge*tonnes_producing_crop,
-         total_tonnes_econ = total_prop_econ*tonnes_producing_crop) %>%
-  group_by(diet, source_ingredient, GAEZ_category) %>%
-  summarize(est_tonnes_ms = sum(total_tonnes_ms, na.rm=TRUE),
-            est_tonnes_ge = sum(total_tonnes_ge, na.rm=TRUE),
-            est_tonnes_econ = sum(total_tonnes_econ, na.rm=TRUE)) %>%
-  left_join(production_global) %>%
-  rowwise() %>%
-  mutate(difference_ms = obs_tonnes_ms - est_tonnes_ms,
-         difference_ge = obs_tonnes_ge - est_tonnes_ge,
-         difference_econ = obs_tonnes_econ - est_tonnes_econ)
-
-# these should be similar
-check %>%
-  group_by(GAEZ_category) %>%
-  summarize(est_tonnes_ms =sum(est_tonnes_ms),
-            obs_tonnes_ms = sum(obs_tonnes_ms),
-            est_tonnes_ge =sum(est_tonnes_ge),
-            obs_tonnes_ge = sum(obs_tonnes_ge)) %>% data.frame()
-
-plot(log(check$est_tonnes_ms+1), log(check$obs_tonnes_ms+1))
-abline(0,1, col="red") # these should look about the same!
-plot(log(check$est_tonnes_ge+1), log(check$obs_tonnes_ge+1))
-abline(0,1, col="red") # these should look about the same!
-plot(log(check$est_tonnes_econ+1), log(check$obs_tonnes_econ+1))
-abline(0,1, col="red") # these should look about the same!
-
-
-plot(check$est_tonnes_ms, check$obs_tonnes_ms+1)
-abline(0,1, col="red") # these should look about the same!
-
-plot(check$est_tonnes_ge, check$obs_tonnes_ge+1)
-abline(0,1, col="red") # these should look about the same!
+# summary(total_prop) # ok for total prop to be a bit above 1
+# 
+# filter(total_prop, prop_produced_for_system_ge>1)
+# 
+# ## check: should match original consumption:
+# production_global <- feed_source %>%
+#   group_by(diet, source_ingredient, GAEZ_category, fcr_type) %>%
+#   summarize(obs_tonnes_ms = sum(total_crop_demand_ms, na.rm=TRUE),
+#             obs_tonnes_ge = sum(total_crop_demand_ge, na.rm=TRUE),
+#             obs_tonnes_econ = sum(total_crop_demand_econ, na.rm=TRUE))
+# 
+# check <- left_join(total_prop, crop_production_df) %>%
+#   mutate(total_tonnes_ms = total_prop_ms*tonnes_producing_crop,
+#          total_tonnes_ge = total_prop_ge*tonnes_producing_crop,
+#          total_tonnes_econ = total_prop_econ*tonnes_producing_crop) %>%
+#   group_by(diet, source_ingredient, GAEZ_category) %>%
+#   summarize(est_tonnes_ms = sum(total_tonnes_ms, na.rm=TRUE),
+#             est_tonnes_ge = sum(total_tonnes_ge, na.rm=TRUE),
+#             est_tonnes_econ = sum(total_tonnes_econ, na.rm=TRUE)) %>%
+#   left_join(production_global) %>%
+#   rowwise() %>%
+#   mutate(difference_ms = obs_tonnes_ms - est_tonnes_ms,
+#          difference_ge = obs_tonnes_ge - est_tonnes_ge,
+#          difference_econ = obs_tonnes_econ - est_tonnes_econ)
+# 
+# # these should be similar
+# check %>%
+#   group_by(GAEZ_category) %>%
+#   summarize(est_tonnes_ms =sum(est_tonnes_ms),
+#             obs_tonnes_ms = sum(obs_tonnes_ms),
+#             est_tonnes_ge =sum(est_tonnes_ge),
+#             obs_tonnes_ge = sum(obs_tonnes_ge)) %>% data.frame()
+# 
+# plot(log(check$est_tonnes_ms+1), log(check$obs_tonnes_ms+1))
+# abline(0,1, col="red") # these should look about the same!
+# plot(log(check$est_tonnes_ge+1), log(check$obs_tonnes_ge+1))
+# abline(0,1, col="red") # these should look about the same!
+# plot(log(check$est_tonnes_econ+1), log(check$obs_tonnes_econ+1))
+# abline(0,1, col="red") # these should look about the same!
+# 
+# 
+# plot(check$est_tonnes_ms, check$obs_tonnes_ms+1)
+# abline(0,1, col="red") # these should look about the same!
+# 
+# plot(check$est_tonnes_ge, check$obs_tonnes_ge+1)
+# abline(0,1, col="red") # these should look about the same!
 
 ```
 
 
 ```{r}
 
-write_csv(total_prop, here("prep/02_feed/output/proportion_feed_per_country_system_diet_limited.csv"))
+# write_csv(total_prop, here("prep/02_feed/output/proportion_feed_per_country_system_diet_limited.csv"))
 
 ```
 
@@ -426,7 +428,7 @@ Then rasterize this information to get rasters describing the amount of tonnages
 ```{r}
 
 total_prop <- read.csv(here("prep/02_feed/output/proportion_feed_per_country_system_diet.csv")) %>%
-  dplyr::select(SPAM_super = SPAM_super, GAEZ_category, diet, ingredient = source_ingredient, iso3c_producing, total_prop_ms = prop_produced_for_system_ms, total_prop_ge = prop_produced_for_system_ge,
+  dplyr::select(SPAM_super = SPAM_super, GAEZ_category, diet, fcr_type, ingredient = source_ingredient, iso3c_producing, total_prop_ms = prop_produced_for_system_ms, total_prop_ge = prop_produced_for_system_ge,
                 total_prop_econ = prop_produced_for_system_econ) %>%
   pivot_longer(cols = c("total_prop_ms", "total_prop_ge", "total_prop_econ"), names_to = "allocation_type", values_to = "total_prop") %>%
   mutate(allocation_type = case_when(
@@ -457,11 +459,11 @@ rgns <- read_csv(file.path(food_systems_data_dir, "food_rgns_xy.csv"))
 ## start loop here
 #################
 
-todo <- unique(dplyr::select(total_prop, diet, GAEZ_category, ingredient, allocation_type))
+todo <- unique(dplyr::select(total_prop, diet, fcr_type, GAEZ_category, ingredient, allocation_type))
 
 
 todo <- total_prop %>%
-  group_by(diet, GAEZ_category, ingredient, allocation_type) %>%
+  group_by(diet, fcr_type, GAEZ_category, ingredient, allocation_type) %>%
   summarise(sum_prop = sum(total_prop, na.rm = TRUE)) %>%
   ungroup() %>%
   filter(sum_prop >0) 
@@ -472,10 +474,11 @@ crop_gaez <- todo$GAEZ_category[i]
 product_type <- todo$ingredient[i]
 diet_type = todo$diet[i]
 allocation = todo$allocation_type[i]
+fcr <- todo$fcr_type[i]
 
 
 # total country feed production
-feed_crop <- filter(total_prop, GAEZ_category==crop_gaez, diet == diet_type, ingredient == product_type , allocation_type == allocation) %>%
+feed_crop <- filter(total_prop, GAEZ_category==crop_gaez, diet == diet_type, fcr_type == fcr, ingredient == product_type , allocation_type == allocation) %>%
   dplyr::select(iso3c = iso3c_producing, prop_feed = total_prop)
 
 # proportion crop grown for feed per country
@@ -495,7 +498,7 @@ tonnes_crop_feed_raster <- tonnes_crop_raster*prop_feed_crop_raster
 
 # plot(log(tonnes_crop_feed_raster+1))
 
-writeRaster(tonnes_crop_feed_raster, filename= sprintf(here("prep/02_feed/output/%s/%s_%s_%s_P.tif"), diet_type, crop_gaez, product_type, allocation), overwrite=TRUE)
+writeRaster(tonnes_crop_feed_raster, filename= sprintf(here("prep/02_feed/output/%s/%s/%s_%s_%s_P.tif"), diet_type, fcr, crop_gaez, product_type, allocation), overwrite=TRUE)
 
 # country yield estimates
 
@@ -532,26 +535,29 @@ area_crop_feed_raster <- (tonnes_crop_feed_raster/yield_feed_crop_raster)/100 # 
 # plot(area_crop_feed_raster)
 # global(area_crop_feed_raster, "sum", na.rm = TRUE) # 3428.596 km2 of soybean for SPC for plant-dominant??; 1746.714 km2 for SBM fish dominant?
 
-writeRaster(area_crop_feed_raster, filename= sprintf(here("prep/02_feed/output/%s/%s_%s_%s_A.tif"), diet_type, crop_gaez, product_type, allocation), overwrite=TRUE)
+writeRaster(area_crop_feed_raster, filename= sprintf(here("prep/02_feed/output/%s/%s/%s_%s_%s_A.tif"), diet_type, fcr, crop_gaez, product_type, allocation), overwrite=TRUE)
 
 
 }
 
 # take a look 
 
-test_names <- str_replace_all(str_before_last(list.files(here("prep/02_feed/output/plant-dominant/"), pattern = "mass_A.tif"), ".tif"), "_", ":")
+demand_test <- consumption %>%
+  filter(diet == "plant-dominant", fcr_type == "regular")
+sum(demand_test$consuming_ingredient_consumed_tonnes) # 3182323
 
-test <- rast(list.files(here("prep/02_feed/output/plant-dominant/"), full.names = TRUE, pattern = "mass_A.tif"))
+test_names <- str_replace_all(str_before_last(list.files(here("prep/02_feed/output/plant-dominant/regular"), pattern = "mass_A.tif"), ".tif"), "_", ":")
+
+test <- rast(list.files(here("prep/02_feed/output/plant-dominant/regular"), full.names = TRUE, pattern = "mass_A.tif"))
 
 names(test) <- test_names
 plot(log(test+1))
 test_df <- as.data.frame(global(test, "sum", na.rm = TRUE))
-sum(test_df$sum) # 10438.04 km2 of cropland for salmon aquaculture feeds? 
-# 2929747 tonnes of crops for salmon aquaculture feeds 
-# 2804335 demanded.. so pretty close there. 
-2929747/10438.04 # 280.6798 tonnes/km2 
-10438.04/2929747 # 0.003562779 km2/tonne 
-(10438.04*1000000)/(2929747*1000) # 3.562779 m2 per kg.. EU chicken meat is 5.59 m2 per kg
+sum(test_df$sum) # 9240.518 km2 of cropland for salmon aquaculture feeds? 
+# 3182323 demanded.
+3182323/9240.518 # 344.3879 tonnes/km2 
+9240.518/3182323 # 0.002903702 km2/tonne 
+(9240.518*1000000)/(3182323*1000) # 2.903702 m2 per kg.. EU chicken meat is 5.59 m2 per kg
 
 ```
  
@@ -563,7 +569,7 @@ feed_source <- read.csv(here("prep/02_feed/data/demand/ingredient_crop_demand_pr
   left_join(feed_cats, by = c("source_ingredient" = "ingredient", "FAOSTAT_name", "FAO_code")) %>%
   dplyr::select(-raw_material) %>%
   dplyr::rename("GAEZ_category" = "gaez_code", "ingredient" = "source_ingredient") %>%
-  group_by(iso3c_producing, diet, GAEZ_category, ingredient) %>%
+  group_by(iso3c_producing, diet, fcr_type, GAEZ_category, ingredient) %>%
   summarize(produced_ingredient_tonnes_ms = sum(total_crop_demand_ms),
             produced_ingredient_tonnes_ge = sum(total_crop_demand_ge)) %>% 
   ungroup()
@@ -571,7 +577,7 @@ feed_source <- read.csv(here("prep/02_feed/data/demand/ingredient_crop_demand_pr
 
 
 tmp <- filter(feed_source) %>%
-    group_by(ingredient, diet) %>%
+    group_by(ingredient, diet, fcr_type) %>%
   slice_max(order_by = produced_ingredient_tonnes_ge, n = 15) %>%
   ungroup() %>%
   filter(produced_ingredient_tonnes_ge > 0)
@@ -580,12 +586,12 @@ tmp <- filter(feed_source) %>%
 ggplot(data = tmp %>%
          filter(diet == "fish-dominant"), aes(x = produced_ingredient_tonnes_ge, y = reorder_within(iso3c_producing, produced_ingredient_tonnes_ge, GAEZ_category))) + 
   geom_bar(stat = "identity") + 
-  facet_wrap(~ingredient, scales = "free") + 
+  facet_grid(fcr_type~ingredient, scales = "free") + 
   labs(x = "Tonnes of crop produced for ingredient", y = "Country") + 
   theme_bw() + 
   theme(axis.text.x = element_text(angle = 30, vjust = 0.5)) 
 
-ggsave(here("prep/02_feed/plots/total_crop_feed_origins_fish_energetic.png"), units = "in", height = 11, width = 11)
+ggsave(here("prep/02_feed/plots/total_crop_feed_origins_fish_energetic.png"), units = "in", height = 20, width = 20)
 ```
 
 

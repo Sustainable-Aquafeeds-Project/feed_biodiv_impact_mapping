@@ -69,6 +69,7 @@ feed_demand <-
   mutate(feed_demand_efficient = value*1)
 
 saveRDS(feed_demand, here("prep/02_feed/data/demand/global_feed_demand.rds"))
+feed_demand <- readRDS(here("prep/02_feed/data/demand/global_feed_demand.rds"))
 ```
 
 
