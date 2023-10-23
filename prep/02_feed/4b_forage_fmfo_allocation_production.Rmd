@@ -9,10 +9,10 @@ editor_options:
 
 ## Summary
 
-GOAL: Get proportion of fish oil and fish meal live weight equivalents that is consumed by salmon aquaculture in each country per species. Allocate to live weight fish using mass and energetic allocation rates.
+GOAL: Get proportion of fish oil and fish meal live weight equivalents that is consumed by salmon aquaculture in each country per species. Allocate to live weight fish using mass, economic, and energetic allocation rates.
 
 
-Outputs: a raster for each fish oil and fish meal, under each diet scenario, describing the harvest of each FMFO live weight equivalents (tonnes) that are consumed in each country by salmon aquaculture systems.
+Outputs: a raster for each fish oil and fish meal, under each diet scenario, under each fcr scenario, describing the harvest of each FMFO live weight equivalents (tonnes) that are consumed in each country by salmon aquaculture systems.
 
 ```{r}
 # load relevant packages, etc.
@@ -129,9 +129,12 @@ write.csv(baci_filt, file.path(rdsi_raw_data_dir, "BACI_data/BACI_FMFO_codes.csv
 ## step 1
 country_demand <- read_csv(here("prep/02_feed/data/demand/total_aquaculture_ingredient_demand.csv")) %>%
   filter(ingredient %in% c("fish meal, forage fish", "fish oil, forage fish")) %>%
-  mutate(ingredient = ifelse(ingredient == "fish meal, forage fish", "fish meal", "fish oil"))
+  mutate(ingredient = ifelse(ingredient == "fish meal, forage fish", "fish meal", "fish oil")) %>%
+    pivot_longer(cols = c("ingredient_demand", "ingredient_demand_efficient"), names_to = "fcr_type", values_to = "demand") %>%
+  mutate(fcr_type = ifelse(fcr_type == "ingredient_demand", "regular", "efficient")) %>% 
+  select(iso3c, animal, diet, ingredient, fcr_type, ingredient_demand = demand) 
 
-sum(country_demand$ingredient_demand) # 2129803
+sum(country_demand$ingredient_demand) # 3484838/2 # checks out
 
 ```
 
@@ -182,7 +185,7 @@ demand_trade <- country_demand %>%
 unique(demand_trade$iso3c)
 length(unique(demand_trade$partner_iso3c)) # 113 countries
 
-sum(demand_trade$tonnes_ingredient_demand_traded, na.rm = TRUE) # 2129803 
+sum(demand_trade$tonnes_ingredient_demand_traded, na.rm = TRUE) # 3484838/2 # looks good
 ```
 
 
@@ -194,11 +197,11 @@ Group by exporter country to get total amount of FO or FM ingredients they expor
 
 ## step 4
 demand_trade_origin <- demand_trade %>%
-  group_by(partner_iso3c, ingredient, diet) %>%
+  group_by(partner_iso3c, ingredient, diet, fcr_type) %>%
   summarise(total_ingredient_tonnes_traded = sum(tonnes_ingredient_demand_traded, na.rm = TRUE)) %>% 
   ungroup()
 
-sum(demand_trade_origin$total_ingredient_tonnes_traded) # 2129803
+sum(demand_trade_origin$total_ingredient_tonnes_traded) # 3484838/2
 
 ```
 
@@ -309,7 +312,7 @@ forage_fofm_origins_meal <- forage_catch_iso %>%
   dplyr::select(iso3c, CommonName, TaxonName, prop_of_iso_total) %>%
   left_join(demand_trade_origin %>% filter(ingredient == "fish meal"), by = c("iso3c" = "partner_iso3c")) %>%
   mutate(tonnes_fofm_spp = total_ingredient_tonnes_traded*prop_of_iso_total) %>%
-  dplyr::select(iso3c, CommonName, TaxonName, ingredient, diet, tonnes_fofm_spp) %>%
+  dplyr::select(iso3c, CommonName, TaxonName, ingredient, diet, fcr_type, tonnes_fofm_spp) %>%
   filter(!is.na(tonnes_fofm_spp))
 
 
@@ -317,15 +320,15 @@ forage_fofm_origins_oil <- forage_catch_iso_no_krill %>%
   dplyr::select(iso3c, CommonName, TaxonName, prop_of_iso_total) %>%
   left_join(demand_trade_origin %>% filter(ingredient == "fish oil"), by = c("iso3c" = "partner_iso3c")) %>%
   mutate(tonnes_fofm_spp = total_ingredient_tonnes_traded*prop_of_iso_total) %>%
-  dplyr::select(iso3c, CommonName, TaxonName, ingredient, diet, tonnes_fofm_spp) %>%
+  dplyr::select(iso3c, CommonName, TaxonName, ingredient, diet, fcr_type, tonnes_fofm_spp) %>%
   filter(!is.na(tonnes_fofm_spp))
 
 forage_fofm_origins <- rbind(forage_fofm_origins_meal, forage_fofm_origins_oil)
 
 sum(forage_fofm_origins$tonnes_fofm_spp)
-# 2109317
+# 3449307/2
 
-sum(country_demand$ingredient_demand) # 2129803 missing ~20k tonnes... 
+sum(country_demand$ingredient_demand) # 3484838 missing ~35k tonnes... 
 
 ```
 
@@ -440,11 +443,11 @@ forage_fofm_allocation <- forage_fofm_origins %>%
     TRUE ~ "economic"
   )) %>%
   mutate(tonnes_fofm_spp_live_weight = tonnes_fofm_spp*allocation_value) %>%
-  dplyr::select(iso3c, CommonName, TaxonName, ingredient, diet, tonnes_fofm_spp, allocation_type, allocation_value, tonnes_fofm_spp_live_weight)
+  dplyr::select(iso3c, CommonName, TaxonName, ingredient, diet, fcr_type, tonnes_fofm_spp, allocation_type, allocation_value, tonnes_fofm_spp_live_weight)
 
-sum(forage_fofm_allocation$tonnes_fofm_spp_live_weight) # 24689331/3 = 8229777 seems excessive, ~3.8x more than the demand. Do fish weigh 4x more than meal and oil? 
+sum(forage_fofm_allocation$tonnes_fofm_spp_live_weight) # 40291603/3 = 13430534 seems excessive, ~3.8x more than the demand. Do fish weigh 4x more than meal and oil? 
 
-8229777/2129803 # 3.864102
+13430534/3484838 # 3.853991
 
 mean(forage_fofm_allocation$allocation_value) # 3.879534 yeah, they do. 
 
@@ -476,14 +479,14 @@ foragefish_rgn_totals_oil <- forage_catch_iso_no_krill %>%
 foragefish_rgn_totals <- rbind(foragefish_rgn_totals_meal, foragefish_rgn_totals_oil)
 
 forage_fofm_allocation_totals <- forage_fofm_allocation %>%
-  group_by(iso3c, ingredient, diet, TaxonName, allocation_type) %>%
+  group_by(iso3c, ingredient, diet, fcr_type, TaxonName, allocation_type) %>%
   summarise(total_tonnes_fofm_lw = sum(tonnes_fofm_spp_live_weight, na.rm = TRUE)) %>%
               ungroup()
 
 FOFM_props <- left_join(foragefish_rgn_totals, forage_fofm_allocation_totals) %>%
   filter(!is.na(diet)) %>% # filter out NAs since these countries dont produce any fofm catch for salmon feeds
   mutate(prop = ifelse(FOFM_catch == 0, 0, total_tonnes_fofm_lw/FOFM_catch)) %>%
-  dplyr::select(iso3c, ingredient, diet, TaxonName, allocation_type, prop) %>%
+  dplyr::select(iso3c, ingredient, diet, fcr_type, TaxonName, allocation_type, prop) %>%
   filter(!is.na(iso3c)) ## SAVE THIS FILE AND IN NEXT SCRIPT WE CAN ADD NPP ADJUSTMENT AND SAVE RASTERS
 
 write_rds(FOFM_props, here("prep/02_feed/data/embodied_FMFO_forage_rgns.rds"))
@@ -493,25 +496,28 @@ diets <- unique(FOFM_props$diet)
 allocations <- unique(FOFM_props$allocation_type)
 ingredients <- unique(FOFM_props$ingredient)
 depth_positions <- c("benthic", "pelagic")
+fcrs <- unique(FOFM_props$fcr_type)
 
 for(diet_type in diets){
+  for(fcr in fcrs){
   for(allocation in allocations){
     for(ingredient_type in ingredients){
       for(pos in depth_positions){
 
-    # diet_type = "plant-dominant"
-    # allocation = "mass"
-    # ingredient_type = "fish meal"
-    #  pos = "benthic"
-    #     
+# diet_type = "plant-dominant"
+# allocation = "mass"
+# ingredient_type = "fish meal"
+#  pos = "benthic"
+#  fcr = "regular"
 
   watson_raster_template <- terra::rast(ncol=720, nrow=360, vals=c(1:259200))
 
   system_prop <- FOFM_props %>%
     dplyr::filter(diet == diet_type,
                   allocation_type == allocation,
-                  ingredient == ingredient_type) %>%
-    dplyr::select(iso3c, diet, TaxonName, ingredient, prop)
+                  ingredient == ingredient_type, 
+                  fcr_type == fcr) %>%
+    dplyr::select(iso3c, diet, fcr_type, TaxonName, ingredient, prop)
   
   ## first do regular catch
   
@@ -530,9 +536,9 @@ for(diet_type in diets){
   forage_fish_system_catch <- rast(foragefish_system_catch, type = "xyz", crs = crs(watson_raster_template)) %>%
     project(watson_raster_template)
 
-# plot(log(forage_fish_system + 1))
+# plot(log(forage_fish_system_catch + 1))
 
-    writeRaster(forage_fish_system_catch, sprintf(here("prep/02_feed/output/%s/forage fish_%s_%s_%s_catch_P.tif"), diet_type, ingredient_type, allocation, pos), overwrite = TRUE)
+    writeRaster(forage_fish_system_catch, sprintf(here("prep/02_feed/output/%s/%s/forage fish_%s_%s_%s_catch_P.tif"), diet_type, fcr, ingredient_type, allocation, pos), overwrite = TRUE)
     
     ## now do bycatch 
     foragefish_system_bycatch <- left_join(foragefish, system_prop, by = c("iso3c", "TaxonName")) %>%
@@ -553,40 +559,51 @@ for(diet_type in diets){
 # plot(log(forage_fish_system_bycatch + 1))
   print(global(forage_fish_system_bycatch, "sum", na.rm = TRUE)/global(forage_fish_system_catch, "sum", na.rm = TRUE))
 
-    writeRaster(forage_fish_system_bycatch, sprintf(here("prep/02_feed/output/%s/forage fish_%s_%s_%s_bycatch_P.tif"), diet_type, ingredient_type, allocation, pos), overwrite = TRUE)
+    writeRaster(forage_fish_system_bycatch, sprintf(here("prep/02_feed/output/%s/%s/forage fish_%s_%s_%s_bycatch_P.tif"), diet_type, fcr, ingredient_type, allocation, pos), overwrite = TRUE)
 
       }
     }
+   }
   }
 }
 
 
+forage_files <- list.files(here("prep/02_feed/output/plant-dominant/regular/"), pattern = "fish", full.names = TRUE)
 
-forage_fish_new <- forage_files[grepl("benthic|pelagic", forage_files)]
+new_rasts <- rast(forage_files)
 
-new_rasts <- rast(forage_fish_new)
-
-new_names <- basename(forage_fish_new)
+new_names <- basename(forage_files)
 
 names(new_rasts) <- new_names
 
 plot(log(new_rasts+1))
 
-global(new_rasts, "sum", na.rm = TRUE)
+data.frame(test <- global(new_rasts, "sum", na.rm = TRUE)) %>% sum() #  6575817/3 # 2191939 lines up pretty well
 
-#                                                    sum
-# forage fish_fish meal_economic_benthic_P.tif  125450.2
-# forage fish_fish meal_economic_pelagic_P.tif 2539630.9
-# forage fish_fish meal_ge_benthic_P.tif        117905.3
-# forage fish_fish meal_ge_pelagic_P.tif       2377701.0
-# forage fish_fish meal_mass_benthic_P.tif      132974.0
-# forage fish_fish meal_mass_pelagic_P.tif     2705639.0
-# forage fish_fish oil_economic_benthic_P.tif   343827.3
-# forage fish_fish oil_economic_pelagic_P.tif  2814663.7
-# forage fish_fish oil_ge_benthic_P.tif         417406.6
-# forage fish_fish oil_ge_pelagic_P.tif        3359412.4
-# forage fish_fish oil_mass_benthic_P.tif       283617.9
-# forage fish_fish oil_mass_pelagic_P.tif      2325870.0
+# forage fish_fish meal_economic_benthic_bycatch_P.tif   16591.54
+# forage fish_fish meal_economic_benthic_catch_P.tif     44675.05
+# forage fish_fish meal_economic_pelagic_bycatch_P.tif   18020.47
+# forage fish_fish meal_economic_pelagic_catch_P.tif    908444.08
+# forage fish_fish meal_ge_benthic_bycatch_P.tif         15630.05
+# forage fish_fish meal_ge_benthic_catch_P.tif           41977.50
+# forage fish_fish meal_ge_pelagic_bycatch_P.tif         17037.46
+# forage fish_fish meal_ge_pelagic_catch_P.tif          850898.46
+# forage fish_fish meal_mass_benthic_bycatch_P.tif       17539.77
+# forage fish_fish meal_mass_benthic_catch_P.tif         47368.21
+# forage fish_fish meal_mass_pelagic_bycatch_P.tif       19011.99
+# forage fish_fish meal_mass_pelagic_catch_P.tif        967367.24
+# forage fish_fish oil_economic_benthic_bycatch_P.tif    48150.65
+# forage fish_fish oil_economic_benthic_catch_P.tif     128699.32
+# forage fish_fish oil_economic_pelagic_bycatch_P.tif    18638.53
+# forage fish_fish oil_economic_pelagic_catch_P.tif     998906.70
+# forage fish_fish oil_ge_benthic_bycatch_P.tif          58488.66
+# forage fish_fish oil_ge_benthic_catch_P.tif           156248.46
+# forage fish_fish oil_ge_pelagic_bycatch_P.tif          22330.95
+# forage fish_fish oil_ge_pelagic_catch_P.tif          1193083.47
+# forage fish_fish oil_mass_benthic_bycatch_P.tif        39701.15
+# forage fish_fish oil_mass_benthic_catch_P.tif         106158.23
+# forage fish_fish oil_mass_pelagic_bycatch_P.tif        15294.85
+# forage fish_fish oil_mass_pelagic_catch_P.tif         825554.50
 
 
 
