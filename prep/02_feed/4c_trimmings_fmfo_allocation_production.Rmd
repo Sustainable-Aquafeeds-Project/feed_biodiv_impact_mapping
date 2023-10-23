@@ -601,6 +601,9 @@ for(diet_type in diets){
 
 trim_files <- list.files(here("prep/02_feed/output/fish-dominant/regular"), pattern = "fish oil|fish meal|trimmings", full.names = TRUE)
 
+trim_files <- trim_files[grep("_P", trim_files)]
+trim_files <- trim_files[grep("trimmings fish", trim_files)]
+
 new_rasts <- rast(trim_files)
 
 new_names <- basename(trim_files)

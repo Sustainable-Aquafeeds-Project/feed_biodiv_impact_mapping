@@ -580,7 +580,8 @@ for(diet_type in diets){
 }
 
 
-forage_files <- list.files(here("prep/02_feed/output/plant-dominant/regular/"), pattern = "fish", full.names = TRUE)
+forage_files <- list.files(here("prep/02_feed/output/plant-dominant/regular/"), pattern = "bycatch_P|catch_P", full.names = TRUE)
+forage_files <- forage_files[grep("forage fish", forage_files)]
 
 new_rasts <- rast(forage_files)
 
@@ -588,7 +589,7 @@ new_names <- basename(forage_files)
 
 names(new_rasts) <- new_names
 
-plot(log(new_rasts+1))
+# plot(log(new_rasts+1))
 
 data.frame(test <- global(new_rasts, "sum", na.rm = TRUE)) %>% sum() #  6575817/3 # 2191939 lines up pretty well
 
