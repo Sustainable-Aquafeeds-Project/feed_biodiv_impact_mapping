@@ -34,15 +34,15 @@ Reproject and aggregate the ingredient crop rasters. It runs quick since they ar
 ```{r}
 
 for(diet in c("fish-dominant", "plant-dominant")){
+  for(fcr in c("regular", "efficient")){
   
   # diet = "fish-dominant"
-directory <- sprintf("prep/02_feed/output/%s/", diet)
+  #   fcr = "regular"
+directory <- sprintf("prep/02_feed/output/%s/%s", diet, fcr)
 
 files <- list.files(here(directory), full.names = TRUE)
 
 filtered_files <- files[!grepl("fish oil|fish meal|archive", files)]
-
-filtered_files <- filtered_files[grepl("_ge_", filtered_files)]
 
 for(i in 1:length(filtered_files)){
   # i = 17
@@ -65,9 +65,10 @@ for(i in 1:length(filtered_files)){
   print(global(crop_rast, "sum", na.rm = TRUE)) # layer 20373.72
   
   ## perfect... 
-  writeRaster(crop_reproject_fix, sprintf(here("prep/02_feed/output/resampled/%s/%s"), diet, file_name), overwrite = TRUE)
+  writeRaster(crop_reproject_fix, sprintf(here("prep/02_feed/output/resampled/%s/%s/%s"), diet,fcr, file_name), overwrite = TRUE)
   }
 
+  }
 }
 ```
 
@@ -76,17 +77,18 @@ Reproject and disaggregate the ingredient fish rasters to 10km res.
 
 ```{r}
 
-for(diet in c("fish-dominant", "plant-dominant")){
+for(diet in c("plant-dominant")){
+  for(fcr in c("regular", "efficient")){
   
-  # diet = "fish-dominant"
-directory <- sprintf("prep/02_feed/output/%s/", diet)
+  # diet = "plant-dominant"
+directory <- sprintf("prep/02_feed/output/%s/%s", diet, fcr)
 
 files <- list.files(directory, full.names = TRUE)
 
 filtered_files <- files[grepl("fish oil|fish meal", files)]
 
 for(i in 1:length(filtered_files)){
-  
+  # i = 6
   file <- filtered_files[i]
   file_name <- basename(file)
   
@@ -106,11 +108,21 @@ for(i in 1:length(filtered_files)){
   print(global(fish_rast, "sum", na.rm = TRUE)) # layer 3381631
   
   ## perfect... 
-  writeRaster(fish_reproject_fix, sprintf(here("prep/02_feed/output/resampled/%s/%s"), diet, file_name), overwrite = TRUE)
+  writeRaster(fish_reproject_fix, sprintf(here("prep/02_feed/output/resampled/%s/%s/%s"), diet, fcr, file_name), overwrite = TRUE)
+  
+    }
   }
-
 }
 
+test <- rast(here("prep/02_feed/output/plant-dominant/regular/forage fish_fish oil_economic_benthic_catch_A.tif"))
+plot(test)
+global(test, "sum", na.rm = TRUE)
+
+test_fis <- list.files(here("prep/02_feed/output/fish-dominant"), full.names = TRUE, recursive = TRUE)
+test_fis_res <-  list.files(here("prep/02_feed/output/resampled/fish-dominant"), full.names = TRUE, recursive = TRUE)
+
+test_plant <- list.files(here("prep/02_feed/output/plant-dominant"), full.names = TRUE, recursive = TRUE)
+test_plant_res <-  list.files(here("prep/02_feed/output/resampled/plant-dominant"), full.names = TRUE, recursive = TRUE) # ok missing some here...
 ```
 
 
@@ -125,59 +137,6 @@ global(spc_mass_plant, "sum", na.rm = TRUE) # 3315.874 km2 of soybean for SPC gl
 all_crop_rast_mass <- rast(list.files(here("prep/02_feed/output/resampled/plant-dominant/"), pattern = "mass_A.tif", full.names = TRUE))
 
 names(all_crop_rast_mass) <- list.files(here("prep/02_feed/output/resampled/plant-dominant/"), pattern = "mass_A.tif")
-
-test <- as.data.frame(global(all_crop_rast_mass, "sum", na.rm = TRUE)) %>%
-  rename(km2 = sum)
-sum(test$km2) # 10435.71 km2 of cropland globally for salmon aquaculture feeds...
-
-# EU chicken paper estimates 67000 km2 of cropland for chicken feed and 5.59 m2 per kg
-file_list <- list.files(here("prep/02_feed/output/resampled/plant-dominant/"), pattern = "mass_P.tif", full.names = TRUE)
-
-file_list <- file_list[!grepl("fish", file_list)]
-
-all_crop_rast_mass_P <- rast(file_list)
-
-test <- as.data.frame(global(all_crop_rast_mass_P, "sum", na.rm = TRUE))
-sum(test$sum) # 2927252 tonnes of cropland globally for salmon aquaculture feeds...
-
-
-2927252/10435.71 # = 280.5034 tonnes/km2
-
-10435.71/2927252 # = 0.003565019 km2/tonne
-
-(10874.02*1000000)/(2925089*1000) # = 3.717501 m2 per kg
-
-
-test_soy <- rast(file.path(mapspam_dir, "spam2010V2r0_global_A_SOYB_A.tif"))
-
-plot(test_soy/100)
-
-global(test_soy, "sum", na.rm = TRUE)/100 # 979068.3
-
-
-3436/979068.3
-
-```
-
-
-Compare to Kuempel et al. and halpern et al
-
-```{r}
-
-chicken_salmon <- read.csv(here("prep/02_feed/data/sum_pressures_country.csv"))
-
-salmon_feed_disturbance <- chicken_salmon %>%
-  filter(stressor == "disturbance", 
-         animal_system == "salmon", 
-         source == "feedcrop")
-
-
-halpern <- read.csv(file.path(rdsi_raw_data_dir, "food-systems-project/rgn_raw_summary.csv")) %>%
-  filter(pressure == "disturbance", 
-         organism == "salmon", 
-         category == "feedcrop") 
-
-sum(halpern$sum) # 7525.14
 
 ```
 
