@@ -115,6 +115,7 @@ allocations <- unique(spp_info_df$allocation)
 diets <- unique(spp_info_df$diet)
 ingredients <- unique(spp_info_df$ingredient)
 fish_types <- unique(spp_info_df$fish_type)
+fcrs <- c("regular", "efficient")
 spp_types <- unique(spp_info_df$taxon)
 # indices_to_remove <- grep("Bird|Marine mammal|Marine plant|Reptiles and amphibians|arthropods|echinoderms|polychaetes|sponges", spp_types)
 indices_to_remove <- grep("fish|polychaetes", spp_types)
@@ -130,7 +131,7 @@ for(fs_type in fish_types){
   }
   
 for(tx_type in spp_types){
-  
+  for(fcr in fcrs){
   for(allocation_type in allocations){
    for(diet_type in diets){
 
@@ -307,5 +308,6 @@ for(tx_type in spp_types){
           }
       }
     }
+   }
   }
 }

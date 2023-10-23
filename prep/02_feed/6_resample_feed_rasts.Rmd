@@ -82,11 +82,15 @@ for(diet in c("plant-dominant")){
   for(fcr in c("regular", "efficient")){
   
   # diet = "plant-dominant"
+  #  fcr = "regular"
 directory <- sprintf("prep/02_feed/output/%s/%s", diet, fcr)
 
 files <- list.files(directory, full.names = TRUE)
 
 filtered_files <- files[grepl("fish oil|fish meal", files)]
+filtered_files <- filtered_files[grep("_A", filtered_files)]
+
+# 2*2*3*2*2 = 48 files.. makes sense
 
 for(i in 1:length(filtered_files)){
   # i = 6
