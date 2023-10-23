@@ -62,7 +62,7 @@ all_spp_list <- rbind(mammals_list, birds_list)
 
 
 impact_df_tidy <- impact_df %>%
-    group_by(sciname, diet, allocation, crop_ingredient) %>%
+    group_by(sciname, diet, fcr_type, allocation, crop_ingredient) %>%
   summarise(impact_total = sum(impact_total, na.rm = TRUE)) %>%
   mutate(aoh_filepath = paste0(aoh_dir, sciname), 
          feed_filepath = sprintf(here("prep/02_feed/output/resampled/%s/%s_%s_A.tif"), diet, crop_ingredient, allocation)) %>%

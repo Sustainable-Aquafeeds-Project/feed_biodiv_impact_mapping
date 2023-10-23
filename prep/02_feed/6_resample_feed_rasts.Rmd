@@ -82,7 +82,7 @@ for(diet in c("plant-dominant")){
   for(fcr in c("regular", "efficient")){
   
   # diet = "plant-dominant"
-  #  fcr = "regular"
+  #  fcr = "efficient"
 directory <- sprintf("prep/02_feed/output/%s/%s", diet, fcr)
 
 files <- list.files(directory, full.names = TRUE)
@@ -92,7 +92,7 @@ filtered_files <- filtered_files[grep("_A", filtered_files)]
 
 # 2*2*3*2*2 = 48 files.. makes sense
 
-for(i in 1:length(filtered_files)){
+for(i in 1:24){
   # i = 6
   file <- filtered_files[i]
   file_name <- basename(file)
@@ -126,8 +126,13 @@ global(test, "sum", na.rm = TRUE)
 test_fis <- list.files(here("prep/02_feed/output/fish-dominant"), full.names = TRUE, recursive = TRUE)
 test_fis_res <-  list.files(here("prep/02_feed/output/resampled/fish-dominant"), full.names = TRUE, recursive = TRUE)
 
-test_plant <- list.files(here("prep/02_feed/output/plant-dominant"), full.names = TRUE, recursive = TRUE)
-test_plant_res <-  list.files(here("prep/02_feed/output/resampled/plant-dominant"), full.names = TRUE, recursive = TRUE) # ok missing some here...
+## check 
+
+test_plant <- list.files(here("prep/02_feed/output/plant-dominant/regular"), full.names = TRUE, recursive = TRUE)
+test_plant <- test_plant[grep("_A.tif", test_plant)]
+test_plant_res <-  list.files(here("prep/02_feed/output/resampled/plant-dominant/regular"), full.names = TRUE, recursive = TRUE) # ok missing some here...
+test_plant_res <- test_plant_res[grep("_A.tif", test_plant_res)]
+
 ```
 
 

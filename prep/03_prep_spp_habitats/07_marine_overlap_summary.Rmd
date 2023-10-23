@@ -94,11 +94,11 @@ test <- vuln_taxa %>% filter(SpeciesID %in% spp_to_run) # ok, all species that a
 
 
 impact_vuln <- impact_df %>%
-  dplyr::group_by(species, diet, allocation, ingredient) %>%
+  dplyr::group_by(species, diet, fcr_type, allocation, ingredient) %>%
   summarise(impact_total = sum(impact_total, na.rm = TRUE)) %>%
   ungroup() %>% 
   left_join(vuln_taxa) %>%
-  dplyr::select(sciname= species, diet, allocation, ingredient, impact_total, vulnerability = vuln_quartile, spp_type = taxon, impact_total)
+  dplyr::select(sciname= species, diet, fcr_type, allocation, ingredient, impact_total, vulnerability = vuln_quartile, spp_type = taxon, impact_total)
   
 summary(impact_vuln) # no Nas in vulnerability
 
