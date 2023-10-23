@@ -115,6 +115,7 @@ diets <- unique(spp_info_df_fish$diet)
 ingredients <- unique(spp_info_df_fish$ingredient)
 fish_types <- unique(spp_info_df_fish$fish_type)
 spp_types <- unique(spp_info_df_fish$taxon)
+fcrs <- c("regular", "efficient")
 
 for(tx_type in spp_types){
   
@@ -134,6 +135,7 @@ for(tx_type in spp_types){
   
   for(allocation_type in allocations){
    for(diet_type in diets){
+     for(fcr in fcrs){
     for(ingredient_type in ingredients){
       for(fs_type in fish_types){
 
@@ -149,16 +151,16 @@ for(tx_type in spp_types){
             next()
           }
           
-          outf_mean <- sprintf(file.path(fish_dir, "%s/imp_unwt_%s_%s_%s_%s_mean.tif"), diet_type, fs_type, ingredient_type, allocation_type, tx_type)
-          outf_sd <- sprintf(file.path(fish_dir, "%s/imp_unwt_%s_%s_%s_%s_sd.tif"), diet_type, fs_type, ingredient_type, allocation_type, tx_type)
-          outf_nspp <- sprintf(file.path(fish_dir, "%s/imp_unwt_%s_%s_%s_%s_nspp.tif"), diet_type, fs_type, ingredient_type, allocation_type, tx_type)
+          outf_mean <- sprintf(file.path(fish_dir, "%s/%s/imp_unwt_%s_%s_%s_%s_mean.tif"), diet_type, fcr, fs_type, ingredient_type, allocation_type, tx_type)
+          outf_sd <- sprintf(file.path(fish_dir, "%s/%s/imp_unwt_%s_%s_%s_%s_sd.tif"), diet_type, fcr, fs_type, ingredient_type, allocation_type, tx_type)
+          outf_nspp <- sprintf(file.path(fish_dir, "%s/%s/imp_unwt_%s_%s_%s_%s_nspp.tif"), diet_type,fcr, fs_type, ingredient_type, allocation_type, tx_type)
           
           if(all(file.exists(outf_mean, outf_sd))) {
-             message('Rasters exist for taxon ', tx_type, allocation_type, diet_type, ingredient_type, fs_type, ' for catch/bycatch stressor... skipping!')
+             message('Rasters exist for taxon ', tx_type, allocation_type, diet_type, fcr, ingredient_type, fs_type, ' for catch/bycatch stressor... skipping!')
             next()
           }
           
-          outf_mean_df <- glue(file.path(this_dir, "int/aoh_impacts_marine/{tx_type}_{diet_type}_{fs_type}_{ingredient_type}_{allocation_type}.rds"))
+          outf_mean_df <- glue(file.path(this_dir, "int/aoh_impacts_marine/{tx_type}_{diet_type}_{fcr}_{fs_type}_{ingredient_type}_{allocation_type}.rds"))
           
           # if(all(file.exists(outf_mean_df))) {
           #   message('Rasters exist for taxon ', tx_type, ' for bycatch stressor... skipping!')
@@ -176,12 +178,12 @@ for(tx_type in spp_types){
           
 
           ## Read in bycatch and catch stressor maps, and create a dataframe of the results.  Assign species to one of three bins based on water column position trait.  Benthopelagic and reef associated spp will take an average of the two bycatch stressor maps.
-          benth_catch_rast <- rast(sprintf(file.path(feed_rast_dir, "%s/%s_%s_%s_benthic_catch_A.tif"), diet_type, fs_type, ingredient_type, allocation_type))
-          pelag_catch_rast <- rast(sprintf(file.path(feed_rast_dir, "%s/%s_%s_%s_pelagic_catch_A.tif"), diet_type, fs_type, ingredient_type, allocation_type))
+          benth_catch_rast <- rast(sprintf(file.path(feed_rast_dir, "%s/%s/%s_%s_%s_benthic_catch_A.tif"), diet_type, fcr, fs_type, ingredient_type, allocation_type))
+          pelag_catch_rast <- rast(sprintf(file.path(feed_rast_dir, "%s/%s/%s_%s_%s_pelagic_catch_A.tif"), diet_type, fcr, fs_type, ingredient_type, allocation_type))
           bp_catch_rast <- (benth_catch_rast + pelag_catch_rast)/2
           
-          benth_bycatch_rast <- rast(sprintf(file.path(feed_rast_dir, "%s/%s_%s_%s_benthic_bycatch_A.tif"), diet_type, fs_type, ingredient_type, allocation_type))
-          pelag_bycatch_rast <- rast(sprintf(file.path(feed_rast_dir, "%s/%s_%s_%s_pelagic_bycatch_A.tif"), diet_type, fs_type, ingredient_type, allocation_type))
+          benth_bycatch_rast <- rast(sprintf(file.path(feed_rast_dir, "%s/%s/%s_%s_%s_benthic_bycatch_A.tif"), diet_type, fcr, fs_type, ingredient_type, allocation_type))
+          pelag_bycatch_rast <- rast(sprintf(file.path(feed_rast_dir, "%s/%s/%s_%s_%s_pelagic_bycatch_A.tif"), diet_type, fcr, fs_type, ingredient_type, allocation_type))
           bp_bycatch_rast <- (benth_bycatch_rast + pelag_bycatch_rast)/2
           
           catch_cells_df <- data.frame(ben = as.vector(values(benth_catch_rast)),
@@ -259,7 +261,7 @@ for(tx_type in spp_types){
             stop('Something went wrong with calculations for taxon ', tx_type, '!')
           }
           
-          message(glue('Binding results for {tx_type} {allocation_type} {ingredient_type} {fs_type} {diet_type}'))
+          message(glue('Binding results for {tx_type} {allocation_type} {ingredient_type} {fs_type} {diet_type} {fcr}'))
           
           
           result_df <- rbindlist(lapply(result_list, function(x) x$chunk_sum)) %>%
@@ -267,7 +269,7 @@ for(tx_type in spp_types){
             as.data.frame()
 
 
-          message('Creating and saving rasters for taxon ', tx_type, diet_type, allocation_type, fs_type, ingredient_type)
+          message('Creating and saving rasters for taxon ', tx_type, diet_type, fcr, allocation_type, fs_type, ingredient_type)
           rast_mean <- result_df %>%
             dplyr::select(cell_id, impact_mean) %>%
             left_join(moll_ocean_template) %>%
@@ -289,17 +291,17 @@ for(tx_type in spp_types){
           writeRaster(rast_nspp, outf_nspp, overwrite = TRUE)
           
           
-          message(glue('Creating and saving global df for taxon {tx_type} {allocation_type} {ingredient_type} {fs_type} {diet_type}'))
+          message(glue('Creating and saving global df for taxon {tx_type} {allocation_type} {ingredient_type} {fs_type} {diet_type} {fcr}'))
           
           global_df <- rbindlist(lapply(result_list, function(x) x$chunk_sum_spp_global)) %>% 
             as.data.frame() %>%
             group_by(species) %>%
             summarise(impact_total = sum(impact_total, na.rm = TRUE)) %>%
-            mutate(allocation = allocation_type, diet = diet_type, ingredient = glue("{fs_type}_{ingredient_type}")) 
+            mutate(allocation = allocation_type, diet = diet_type, fcr_type = fcr, ingredient = glue("{fs_type}_{ingredient_type}")) 
           
           fish_ingredient_type = unique(global_df$ingredient)
           
-          write_rds(global_df, glue(file.path(this_dir, "int/aoh_impacts_marine/{tx_type}_{diet_type}_{fish_ingredient_type}_{allocation_type}.rds")))
+          write_rds(global_df, glue(file.path(this_dir, "int/aoh_impacts_marine/{tx_type}_{diet_type}_{fcr}_{fish_ingredient_type}_{allocation_type}.rds")))
           
           }
       }
@@ -312,6 +314,7 @@ for(tx_type in spp_types){
 
 for(allocation_type in allocations){
   for(diet_type in diets){
+    for(fcr in fcrs){
     for(ingredient_type in ingredients){
       for(fs_type in fish_types){
 
@@ -319,6 +322,8 @@ for(allocation_type in allocations){
 # diet_type = "fish-dominant"
 # ingredient_type = "fish meal, cut offs"
 # fs_type = "trimmings fish"
+  #      fcr = "regular"
+        
         tx_type = "fish"
 
         if(fs_type == "trimmings fish" & ingredient_type == "fish meal" |fs_type == "trimmings fish" & ingredient_type == "fish oil" |
@@ -327,41 +332,41 @@ for(allocation_type in allocations){
           next()
         }
 
-       rast_mean_1 <- rast(sprintf(file.path(fish_dir, "%s/imp_unwt_%s_%s_%s_fish1_mean.tif"), diet_type, fs_type, ingredient_type, allocation_type))
+       rast_mean_1 <- rast(sprintf(file.path(fish_dir, "%s/%s/imp_unwt_%s_%s_%s_fish1_mean.tif"), diet_type, fcr, fs_type, ingredient_type, allocation_type))
        crs(rast_mean_1) <- crs(moll_template)
        rast_mean_1 <- rast_mean_1 %>%
          project(., moll_template, method = "near")
 
-        rast_sd_1 <- rast(sprintf(file.path(fish_dir, "%s/imp_unwt_%s_%s_%s_fish1_sd.tif"), diet_type, fs_type, ingredient_type, allocation_type))
+        rast_sd_1 <- rast(sprintf(file.path(fish_dir, "%s/%s/imp_unwt_%s_%s_%s_fish1_sd.tif"), diet_type, fcr, fs_type, ingredient_type, allocation_type))
         crs(rast_sd_1) <- crs(moll_template)
         rast_sd_1 <- rast_sd_1 %>%
           project(., moll_template, method = "near")
 
-        rast_nspp_1 <- rast(sprintf(file.path(fish_dir, "%s/imp_unwt_%s_%s_%s_fish1_nspp.tif"), diet_type, fs_type, ingredient_type, allocation_type))
+        rast_nspp_1 <- rast(sprintf(file.path(fish_dir, "%s/%s/imp_unwt_%s_%s_%s_fish1_nspp.tif"), diet_type, fcr, fs_type, ingredient_type, allocation_type))
         crs(rast_nspp_1) <- crs(moll_template)
         rast_nspp_1 <- rast_nspp_1 %>%
           project(., moll_template, method = "near")
 
 
-        rast_mean_2 <- rast(sprintf(file.path(fish_dir, "%s/imp_unwt_%s_%s_%s_fish2_mean.tif"), diet_type, fs_type, ingredient_type, allocation_type))
+        rast_mean_2 <- rast(sprintf(file.path(fish_dir, "%s/%s/imp_unwt_%s_%s_%s_fish2_mean.tif"), diet_type, fcr, fs_type, ingredient_type, allocation_type))
         crs(rast_mean_2) <- crs(moll_template)
         rast_mean_2 <- rast_mean_2 %>%
           project(., moll_template, method = "near")
 
-        rast_sd_2 <- rast(sprintf(file.path(fish_dir, "%s/imp_unwt_%s_%s_%s_fish2_sd.tif"), diet_type, fs_type, ingredient_type, allocation_type))
+        rast_sd_2 <- rast(sprintf(file.path(fish_dir, "%s/%s/imp_unwt_%s_%s_%s_fish2_sd.tif"), diet_type, fcr, fs_type, ingredient_type, allocation_type))
         crs(rast_sd_2) <- crs(moll_template)
         rast_sd_2 <- rast_sd_2 %>%
           project(., moll_template, method = "near")
 
-        rast_nspp_2 <- rast(sprintf(file.path(fish_dir, "%s/imp_unwt_%s_%s_%s_fish2_nspp.tif"), diet_type, fs_type, ingredient_type, allocation_type))
+        rast_nspp_2 <- rast(sprintf(file.path(fish_dir, "%s/%s/imp_unwt_%s_%s_%s_fish2_nspp.tif"), diet_type, fcr, fs_type, ingredient_type, allocation_type))
         crs(rast_nspp_2) <- crs(moll_template)
         rast_nspp_2 <- rast_nspp_2 %>%
           project(., moll_template, method = "near")
 
 
-        outf_mean <- sprintf(file.path(biodiv_dir, "output/impact_maps_by_taxon_ingredient/%s/imp_unwt_%s_%s_%s_fish_mean.tif"), diet_type, fs_type, ingredient_type, allocation_type)
-        outf_sd <- sprintf(file.path(biodiv_dir, "output/impact_maps_by_taxon_ingredient/%s/imp_unwt_%s_%s_%s_fish_sd.tif"), diet_type, fs_type, ingredient_type, allocation_type)
-        outf_nspp <- sprintf(file.path(biodiv_dir, "output/impact_maps_by_taxon_ingredient/%s/imp_unwt_%s_%s_%s_fish_nspp.tif"), diet_type, fs_type, ingredient_type, allocation_type)
+        outf_mean <- sprintf(file.path(biodiv_dir, "output/impact_maps_by_taxon_ingredient/%s/%s/imp_unwt_%s_%s_%s_fish_mean.tif"), diet_type, fcr, fs_type, ingredient_type, allocation_type)
+        outf_sd <- sprintf(file.path(biodiv_dir, "output/impact_maps_by_taxon_ingredient/%s/%s/imp_unwt_%s_%s_%s_fish_sd.tif"), diet_type, fcr, fs_type, ingredient_type, allocation_type)
+        outf_nspp <- sprintf(file.path(biodiv_dir, "output/impact_maps_by_taxon_ingredient/%s/%s/imp_unwt_%s_%s_%s_fish_nspp.tif"), diet_type, fcr, fs_type, ingredient_type, allocation_type)
 
 
         if(all(file.exists(outf_mean, outf_sd))) {
@@ -438,8 +443,9 @@ for(allocation_type in allocations){
 
 
 
+          }
+        }
       }
     }
   }
 }
-
