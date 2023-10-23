@@ -112,7 +112,7 @@ for(tx_type in spp_types){
 for(allocation_type in allocations){
     for(diet_fcr_crop_ingredient_type in diet_fcr_crop_ingredients){
 
-# allocation_type = "ge"
+# allocation_type = "economic"
 # diet_fcr_crop_ingredient_type = "fish-dominant/efficient/Maize_corn gluten meal"
 # tx_type = "Terrestrial mammal"
 
@@ -163,29 +163,6 @@ for(allocation_type in allocations){
           chunk_size <- 500000
           n_chunks <- ceiling(6.6e6 / chunk_size)
           n_cores <- max(1, floor(n_chunks / ceiling(nrow(tx_maps[["parent"]])/3e7)))
-
-          # result_list <- parallel::mclapply(1:n_chunks, mc.cores = n_cores,
-          #                                   FUN = function(n) { ### n <- 6
-          #                                     cell_id_min <- as.integer((n - 1) * chunk_size + 1)
-          #                                     cell_id_max <- as.integer(n * chunk_size)
-          #                                     message('Summarizing harvest stressor on taxon ', tx_type,
-          #                                             ': cells ', cell_id_min, ' - ', cell_id_max, '...')
-          # 
-          #                                     chunk_sum <- tx_maps %>%
-          #                                       # as.data.frame() %>%
-          #                                       filter(between(cell_id, cell_id_min, cell_id_max)) %>%
-          #                                       left_join(tx_vuln_df, by = c('species_full')) %>%
-          #                                       left_join(harvest_cells_df,
-          #                                                       by = c('cell_id')) %>%
-          #                                      as.data.table() %>%
-          #                                     .[ , harvest := ifelse(is.na(harvest), 0, harvest)] %>%
-          #                                     .[ , impact  := (1-cropland_suitability)*harvest] %>%
-          #                                     .[ , impact  := 1 - ((100 - impact)/100)^0.25] %>%
-          #                                     .[ , .(impact_mean = mean(impact),
-          #                                            impact_sd   = sd(impact),
-          #                                            n_spp       = length(unique(species))),
-          #                                        by = 'cell_id']
-          #                                   })
           
           
           result_list <- parallel::mclapply(1:n_chunks, mc.cores = n_cores,

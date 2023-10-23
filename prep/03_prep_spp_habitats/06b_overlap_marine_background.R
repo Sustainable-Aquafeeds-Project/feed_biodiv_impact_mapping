@@ -136,20 +136,20 @@ for(fs_type in fish_types){
         for(allocation_type in allocations){
           for(diet_type in diets){
             
-            
-            # allocation_type = "economic"
-            # diet_type = "plant-dominant"
-            # ingredient_type = "fish meal"
-            # fs_type = "forage fish"
-            # tx_type = "cephalopods"
-            #  fcr = "regular"
+# 
+#             allocation_type = "economic"
+#             diet_type = "plant-dominant"
+#             ingredient_type = "fish meal"
+#             fs_type = "forage fish"
+#             tx_type = "cephalopods"
+#              fcr = "regular"
             
             outf_mean <- sprintf(file.path(biodiv_dir, "output/impact_maps_by_taxon_ingredient/%s/%s/imp_unwt_%s_%s_%s_%s_mean.tif"), diet_type, fcr, fs_type, ingredient_type, allocation_type, tx_type)
             outf_sd <- sprintf(file.path(biodiv_dir, "output/impact_maps_by_taxon_ingredient/%s/%s/imp_unwt_%s_%s_%s_%s_sd.tif"), diet_type, fcr, fs_type, ingredient_type, allocation_type, tx_type)
             outf_nspp <- sprintf(file.path(biodiv_dir, "output/impact_maps_by_taxon_ingredient/%s/%s/imp_unwt_%s_%s_%s_%s_nspp.tif"), diet_type, fcr, fs_type, ingredient_type, allocation_type, tx_type)
             
             
-            outf_mean_df <- glue(file.path(this_dir, "int/aoh_impacts_marine/{tx_type}_{diet_type}_{fcr}_{fs_type}_{ingredient_type}_{allocation_type}.rds"))
+            outf_mean_df <- glue(file.path(biodiv_dir, "int/aoh_impacts_marine/{tx_type}_{diet_type}_{fcr}_{fs_type}_{ingredient_type}_{allocation_type}.rds"))
             
             
             if(all(file.exists(outf_mean, outf_sd))) {
