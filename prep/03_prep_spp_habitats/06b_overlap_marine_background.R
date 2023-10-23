@@ -48,7 +48,7 @@ library(glue)
 select <- dplyr::select
 setwd(dirname(rstudioapi::getSourceEditorContext()$path)) # set working directory to where this script is located
 this_dir <- getwd()
-feed_rast_dir <- here("prep/02_feed/output/resampled")
+# feed_rast_dir <- here("prep/02_feed/output/resampled")
 
 options(dplyr.summarise.inform = FALSE)
 source(here("src/directories.R"))
@@ -57,6 +57,7 @@ source(here("src/fxns.R"))
 
 aquamaps_dir <- file.path(rdsi_raw_data_dir, "aquamaps")
 biodiv_dir <- file.path(rdsi_dir, "biodiversity_impacts")
+feed_rast_dir <- file.path(biodiv_dir, "int/resampled_ingredient_rasts")
 
 
 gall_peters <- "+proj=cea +lon_0=0 +x_0=0 +y_0=0 +lat_ts=45 +ellps=WGS84 +datum=WGS84 +units=m +no_defs"
@@ -303,7 +304,7 @@ for(fs_type in fish_types){
             
             fish_ingredient_type = unique(global_df$ingredient)
             
-            write_rds(global_df, glue(file.path(this_dir, "int/aoh_impacts_marine/{tx_type}_{diet_type}_{fcr}_{fish_ingredient_type}_{allocation_type}.rds")))
+            write_rds(global_df, glue(file.path(biodiv_dir, "int/aoh_impacts_marine/{tx_type}_{diet_type}_{fcr}_{fish_ingredient_type}_{allocation_type}.rds")))
             
             
           }

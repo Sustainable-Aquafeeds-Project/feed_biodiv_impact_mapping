@@ -37,13 +37,16 @@ aoh_dir <- file.path(rdsi_raw_data_dir, "AOH_lumbierres/reprojected/")
 
 setwd(dirname(rstudioapi::getSourceEditorContext()$path)) # set working directory to where this script is located
 this_dir <- getwd()
+
+biodiv_dir <- file.path(rdsi_dir, "biodiversity_impacts")
+
 ```
 
 Bind all chunked data together, tidy, and save
 
 ```{r}
 
-impact_df <-  purrr::map_df(list.files(here("prep/03_prep_spp_habitats/int/aoh_impacts_terrestrial/"), full.names = TRUE), readRDS) %>%
+impact_df <-  purrr::map_df(list.files(file.path(biodiv_dir, "int/aoh_impacts_terrestrial/"), full.names = TRUE), readRDS) %>%
   separate_wider_delim(species_full, delim = "_", names = c("genus", "species", "bird_type"), too_few = "align_start") %>%
   unite(sciname, c(genus, species))
 

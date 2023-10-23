@@ -35,7 +35,7 @@ library(glue)
 select <- dplyr::select
 setwd(dirname(rstudioapi::getSourceEditorContext()$path)) # set working directory to where this script is located
 this_dir <- getwd()
-feed_rast_dir <- here("prep/02_feed/output/resampled")
+# feed_rast_dir <- here("prep/02_feed/output/resampled")
 
 options(dplyr.summarise.inform = FALSE)
 source(here("src/directories.R"))
@@ -45,6 +45,7 @@ source(here("src/fxns.R"))
 aquamaps_dir <- file.path(rdsi_raw_data_dir, "aquamaps")
 terrestrial_dir <- file.path(rdsi_raw_data_dir, "AOH_lumbierres")
 biodiv_dir <- file.path(rdsi_dir, "biodiversity_impacts")
+feed_rast_dir <- file.path(biodiv_dir, "int/resampled_ingredient_rasts")
 
 
 gall_peters <- "+proj=cea +lon_0=0 +x_0=0 +y_0=0 +lat_ts=45 +ellps=WGS84 +datum=WGS84 +units=m +no_defs"
@@ -273,7 +274,7 @@ for(allocation_type in allocations){
           fcr <- unique(global_df$fcr_type)
           crop_ingredient_type <- unique(global_df$crop_ingredient)
 
-          write_rds(global_df, glue(file.path(this_dir, "int/aoh_impacts_terrestrial/{tx_type}_{diet_type}_{fcr}_{crop_ingredient_type}_{allocation_type}.rds")))
+          write_rds(global_df, glue(file.path(biodiv_dir, "int/aoh_impacts_terrestrial/{tx_type}_{diet_type}_{fcr}_{crop_ingredient_type}_{allocation_type}.rds")))
   
           
           

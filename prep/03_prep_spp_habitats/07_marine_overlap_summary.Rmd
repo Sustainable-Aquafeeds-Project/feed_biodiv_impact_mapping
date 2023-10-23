@@ -29,6 +29,7 @@ source(here("src/spatial.R"))
 
 
 aquamaps_dir <- file.path(rdsi_raw_data_dir, "aquamaps")
+biodiv_dir <- file.path(rdsi_dir, "biodiversiy_impacts")
 
 ```
 
@@ -78,7 +79,7 @@ Now lets read in the intermediate overlay data, and apply our vulnerability metr
 aquamaps_spp <- read.csv(file.path(rdsi_raw_data_dir, "aquamaps/GTE10_SPECIESOCCURSUM/speciesoccursum_gte10.csv"))
 
 
-impact_df <- purrr::map_df(list.files(here("prep/03_prep_spp_habitats/int/aoh_impacts_marine"), full.names = TRUE, recursive = TRUE), readRDS) %>%
+impact_df <- purrr::map_df(list.files(file.path(biodiv_dir, "int/aoh_impacts_marine"), full.names = TRUE, recursive = TRUE), readRDS) %>%
   left_join(aquamaps_spp %>% 
               unite(Genus, Species, sep = " ", col = "species") %>%
               mutate(species = tolower(species))

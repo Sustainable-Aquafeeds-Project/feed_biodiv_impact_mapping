@@ -7,6 +7,9 @@ editor_options:
 
 Goal: Resample all crop and fish based feed rasters to 100km2 cells
 
+Note: I am saving all of these rasters on our RDSI server. I was encountering problems with trying to save so many files on github.
+
+
 ```{r}
 
 library(here)
@@ -80,17 +83,17 @@ Reproject and disaggregate the ingredient fish rasters to 10km res.
 
 ```{r}
 
-for(diet in c("plant-dominant")){
+for(diet in c("fish-dominant")){
   for(fcr in c("regular", "efficient")){
   
   # diet = "plant-dominant"
-  #  fcr = "efficient"
+  #  fcr = "regular"
 directory <- sprintf("prep/02_feed/output/%s/%s", diet, fcr)
 
 files <- list.files(directory, full.names = TRUE)
 
 filtered_files <- files[grepl("fish oil|fish meal", files)]
-filtered_files <- filtered_files[grep("_P", filtered_files)]
+# filtered_files <- filtered_files[grep("_P", filtered_files)]
 
 # 2*2*3*2*2 = 48 files.. makes sense
 
@@ -121,19 +124,16 @@ for(i in 1:length(filtered_files)){
   }
 }
 
-test <- rast(here("prep/02_feed/output/plant-dominant/regular/forage fish_fish oil_economic_benthic_catch_A.tif"))
-plot(test)
-global(test, "sum", na.rm = TRUE)
 
 test_fis <- list.files(here("prep/02_feed/output/fish-dominant"), full.names = TRUE, recursive = TRUE)
-test_fis_res <-  list.files(here("prep/02_feed/output/resampled/fish-dominant"), full.names = TRUE, recursive = TRUE)
+test_fis_res <-  list.files(file.path(biodiv_dir, "int/resampled_ingredient_rasts/fish-dominant"), full.names = TRUE, recursive = TRUE)
 
 ## check 
 
-test_plant <- list.files(here("prep/02_feed/output/plant-dominant/regular"), full.names = TRUE, recursive = TRUE)
-test_plant <- test_plant[grep("_A.tif", test_plant)]
-test_plant_res <-  list.files(here("prep/02_feed/output/resampled/plant-dominant/regular"), full.names = TRUE, recursive = TRUE) # ok missing some here...
-test_plant_res <- test_plant_res[grep("_A.tif", test_plant_res)]
+test_plant <- list.files(here("prep/02_feed/output/plant-dominant"), full.names = TRUE, recursive = TRUE)
+test_plant_res <-  list.files(file.path(biodiv_dir, "int/resampled_ingredient_rasts/plant-dominant"), full.names = TRUE, recursive = TRUE) # ok missing some here...
+
+# perfect 
 
 ```
 
