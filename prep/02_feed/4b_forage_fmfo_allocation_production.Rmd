@@ -491,6 +491,11 @@ FOFM_props <- left_join(foragefish_rgn_totals, forage_fofm_allocation_totals) %>
 
 write_rds(FOFM_props, here("prep/02_feed/data/embodied_FMFO_forage_rgns.rds"))
 
+FOFM_props <- readRDS(here("prep/02_feed/data/embodied_FMFO_forage_rgns.rds"))
+
+foragefish <- readRDS(file.path(watson_dir, "v5.0/int/all_catch_foragefish.rds"))
+watson_cells <- read.csv(file.path(watson_dir, "v5.0/Codes_cells.csv"))
+
 
 diets <- unique(FOFM_props$diet)
 allocations <- unique(FOFM_props$allocation_type)
@@ -510,6 +515,13 @@ for(diet_type in diets){
 #  pos = "benthic"
 #  fcr = "regular"
 
+        if(all(file.exists(sprintf(here("prep/02_feed/output/%s/%s/forage fish_%s_%s_%s_bycatch_P.tif"), diet_type, fcr, ingredient_type, allocation, pos), sprintf(here("prep/02_feed/output/%s/%s/forage fish_%s_%s_%s_catch_P.tif"), diet_type, fcr, ingredient_type, allocation, pos)))){
+
+          print(cat("rasters exists, skipping!"))
+          
+          next()
+        }
+        
   watson_raster_template <- terra::rast(ncol=720, nrow=360, vals=c(1:259200))
 
   system_prop <- FOFM_props %>%

@@ -1,6 +1,6 @@
 ---
 title: "Trimmings for feed"
-author: "Gage Clawson (NCEAS, IMAS)"
+author: "Gage Clawson (IMAS)"
 date: "May 25, 2023"
 output: html_document
 editor_options: 
@@ -81,21 +81,27 @@ watson_rgn <- watson_raw %>%
 
 ## step 1
 country_demand <- read_csv(here("prep/02_feed/data/demand/total_aquaculture_ingredient_demand.csv")) %>%
-  filter(ingredient %in% c("fish meal, cut offs", "fish oil, cut offs")) 
+  filter(ingredient %in% c("fish meal, cut offs", "fish oil, cut offs")) %>% 
+      pivot_longer(cols = c("ingredient_demand", "ingredient_demand_efficient"), names_to = "fcr_type", values_to = "demand") %>%
+  mutate(fcr_type = ifelse(fcr_type == "ingredient_demand", "regular", "efficient")) %>% 
+  select(iso3c, animal, diet, ingredient, fcr_type, ingredient_demand = demand) 
 
 
 forage_demand <- read_csv(here("prep/02_feed/data/demand/total_aquaculture_ingredient_demand.csv")) %>%
-  filter(ingredient %in% c("fish meal, forage fish", "fish oil, forage fish")) 
+  filter(ingredient %in% c("fish meal, forage fish", "fish oil, forage fish")) %>% 
+      pivot_longer(cols = c("ingredient_demand", "ingredient_demand_efficient"), names_to = "fcr_type", values_to = "demand") %>%
+  mutate(fcr_type = ifelse(fcr_type == "ingredient_demand", "regular", "efficient")) %>% 
+  select(iso3c, animal, diet, ingredient, fcr_type, ingredient_demand = demand) 
 
 
 
 
-sum(country_demand$ingredient_demand) # 660114.3
+sum(country_demand$ingredient_demand) # 1080096/2
 
 
-sum(forage_demand$ingredient_demand, na.rm = TRUE) # 2129803
+sum(forage_demand$ingredient_demand, na.rm = TRUE) # 3484838/2
 
-660114.3/2129803 # 0.3099415 trimmings demand represent ~30% of all FMFO in diet
+1080096/3484838 # 0.3099415 trimmings demand represent ~30% of all FMFO in diet
 
 5.3/(8.3+8.8) # 0.3099415 good, matches the Aas paper. So nothing wrong there... 
 ```
@@ -147,9 +153,9 @@ demand_trade <- country_demand %>%
   mutate(tonnes_ingredient_demand_traded = prop_import*ingredient_demand)
 
 sum(demand_trade$tonnes_ingredient_demand_traded, na.rm = TRUE)
-# 660114.3
+# 1080096
 sum(country_demand$ingredient_demand)
-# 660114.3
+# 1080096
 
 # perfect
 ```
@@ -161,11 +167,11 @@ Group by exporter country to get total amount of FO or FM ingredients from trimm
 
 ## step 4
 demand_trade_origin <- demand_trade %>%
-  group_by(partner_iso3c, ingredient, diet) %>%
+  group_by(partner_iso3c, ingredient, diet, fcr_type) %>%
   summarise(total_ingredient_tonnes_traded = sum(tonnes_ingredient_demand_traded, na.rm = TRUE)) %>% 
   ungroup()
 
-sum(demand_trade_origin$total_ingredient_tonnes_traded, na.rm = TRUE) # 660114.3 good, the same as above. 
+sum(demand_trade_origin$total_ingredient_tonnes_traded, na.rm = TRUE) # 1080096 good, the same as above. 
  
 ```
 
@@ -252,24 +258,25 @@ Apply these within country percentages to total country exported fish oil and fi
 trimmings_fofm_origins <- trimmings_catch_iso %>%
   dplyr::select(iso3c, CommonName, TaxonName, prop_of_iso_total) %>%
   left_join(demand_trade_origin, by = c("iso3c" = "partner_iso3c")) %>%
-  group_by(iso3c, ingredient, diet) %>%
+  group_by(iso3c, ingredient, diet, fcr_type) %>%
   mutate(total_ingredient = sum(total_ingredient_tonnes_traded)) %>%
   ungroup() %>%
   mutate(tonnes_fofm_trimmings_spp = total_ingredient_tonnes_traded*prop_of_iso_total) %>%
-  dplyr::select(iso3c, CommonName, TaxonName, ingredient, diet, tonnes_fofm_trimmings_spp) %>%
+  dplyr::select(iso3c, CommonName, TaxonName, ingredient, diet, fcr_type, tonnes_fofm_trimmings_spp) %>%
   filter(!is.na(tonnes_fofm_trimmings_spp))
 
-sum(trimmings_fofm_origins$tonnes_fofm_trimmings_spp, na.rm = TRUE) # 651674.8 losing ~9k bc of Uruguay is missing... they don't report catch for any of the trimmings spp we have... 
+sum(trimmings_fofm_origins$tonnes_fofm_trimmings_spp, na.rm = TRUE) # 1066676 losing ~13k bc of Uruguay is missing... they don't report catch for any of the trimmings spp we have... 
 
+1080096 - 1066676
 
 trimmings_test <- trimmings_fofm_origins %>%
-  group_by(iso3c, ingredient, diet) %>%
+  group_by(iso3c, ingredient, diet, fcr_type) %>%
   summarise(total = sum(tonnes_fofm_trimmings_spp))
 
 setdiff(demand_trade_origin$partner_iso3c, trimmings_test$iso3c) # [1] "BRN" "COD" "CRI" "HND" "KWT" "MAC" "SAU" "SOM" "URY"
 
 trim_test_2 <- demand_trade_origin %>% 
-  filter(partner_iso3c %in% c(setdiff(demand_trade_origin$partner_iso3c, trimmings_test$iso3c))) # yup this is because of these missing countries, without trimming spp
+  filter(partner_iso3c %in% c(setdiff(demand_trade_origin$partner_iso3c, trimmings_test$iso3c))) # yup this is because of these missing countries, without trimming spp reported in catch data...
 
 ```
 
@@ -461,13 +468,13 @@ trimmings_fofm_allocation <- trimmings_fofm_origins %>%
     TRUE ~ "economic"
   )) %>%
   mutate(tonnes_fofm_trimmings_spp_live_weight = tonnes_fofm_trimmings_spp*allocation_value) %>%
-  dplyr::select(iso3c, CommonName, TaxonName, ingredient, diet, tonnes_fofm_trimmings_spp, allocation_type, allocation_value, tonnes_fofm_trimmings_spp_live_weight)
+  dplyr::select(iso3c, CommonName, TaxonName, ingredient, diet, fcr_type, tonnes_fofm_trimmings_spp, allocation_type, allocation_value, tonnes_fofm_trimmings_spp_live_weight)
 
-sum(trimmings_fofm_allocation$tonnes_fofm_trimmings_spp_live_weight) # 3058633/3 = 1019544 Ok this makes sense. 
+sum(trimmings_fofm_allocation$tonnes_fofm_trimmings_spp_live_weight) # 4987290/3 = 1662430 Ok this makes sense. 
 
 mean(trimmings_fofm_allocation$allocation_value) # 1.429135
 
-1019544/652000 # 1.563718 perfect 
+1662430/1066676 # 1.558514 perfect 
 
 ```
 
@@ -489,14 +496,14 @@ trimmings_rgn_totals <- trimmings_catch_iso %>%
 
 
 trimmings_fofm_allocation_totals <- trimmings_fofm_allocation %>%
-  group_by(iso3c, ingredient, TaxonName, diet, allocation_type) %>%
+  group_by(iso3c, ingredient, TaxonName, diet, fcr_type, allocation_type) %>%
   summarise(total_tonnes_fofm_lw = sum(tonnes_fofm_trimmings_spp_live_weight, na.rm = TRUE)) %>%
               ungroup()
 
 trim_props <- left_join(trimmings_rgn_totals, trimmings_fofm_allocation_totals) %>%
   filter(!is.na(diet)) %>% # filter out NAs since these countries dont produce any trimmings catch for salmon feeds
   mutate(prop = ifelse(trim_fofm_catch == 0, 0, total_tonnes_fofm_lw/trim_fofm_catch)) %>%
-  dplyr::select(iso3c, ingredient, TaxonName, diet, allocation_type, prop) %>%
+  dplyr::select(iso3c, ingredient, TaxonName, diet, fcr_type, allocation_type, prop) %>%
   filter(!is.na(iso3c)) # weird iso3c with all 0s 
 
 write_rds(trim_props, here("prep/02_feed/data/embodied_FMFO_trimmings_rgns.rds"))
@@ -504,34 +511,43 @@ write_rds(trim_props, here("prep/02_feed/data/embodied_FMFO_trimmings_rgns.rds")
 
 trim_props <- readRDS(here("prep/02_feed/data/embodied_FMFO_trimmings_rgns.rds"))
 trimmingsfish <- readRDS(file.path(watson_dir, "v5.0/int/all_catch_trimmingsfish.rds"))
+watson_cells <- read.csv(file.path(watson_dir, "v5.0/Codes_cells.csv"))
 
 
 diets <- unique(trim_props$diet)
 allocations <- unique(trim_props$allocation_type)
 ingredients <- unique(trim_props$ingredient)
 depth_positions <- c("benthic", "pelagic")
+fcrs <- unique(trim_props$fcr_type)
 
 for(diet_type in diets){
+  for(fcr in fcrs){
   for(allocation in allocations){
     for(ingredient_type in ingredients){
       for(pos in depth_positions){
+# 
+#     diet_type = "plant-dominant"
+#     allocation = "mass"
+#     ingredient_type = "fish meal, cut offs"
+#      pos = "benthic"
+#       fcr = "regular"
         
-            # diet_type = "plant-dominant"
-    # allocation = "mass"
-    # ingredient_type = "fish meal, cut offs"
-    #  pos = "benthic"
-        
-        if(!file.exists(sprintf(here("prep/02_feed/output/%s/trimmings fish_%s_%s_%s_P.tif"), diet_type, ingredient_type, allocation, pos))){
-        
+                if(all(file.exists(sprintf(here("prep/02_feed/output/%s/%s/trimmings fish_%s_%s_%s_catch_P.tif"), diet_type, fcr, ingredient_type, allocation, pos), sprintf(here("prep/02_feed/output/%s/%s/trimmings fish_%s_%s_%s_bycatch_P.tif"), diet_type, fcr, ingredient_type, allocation, pos)))){
 
-    
+          print(cat("rasters exists, skipping!"))
+          
+          next()
+        }
+
+        
   watson_raster_template <- terra::rast(ncol=720, nrow=360, vals=c(1:259200))
   
   system_prop <- trim_props %>%
     dplyr::filter(diet == diet_type,
                   allocation_type == allocation,
-                  ingredient == ingredient_type) %>%
-    dplyr::select(iso3c, diet, TaxonName, ingredient, prop)
+                  ingredient == ingredient_type, 
+                  fcr_type == fcr) %>%
+    dplyr::select(iso3c, diet, fcr_type, TaxonName, ingredient, prop)
   
   trimmingsfish_system_catch <- left_join(trimmingsfish, system_prop) %>%
     filter(!is.na(ingredient)) %>%
@@ -548,9 +564,9 @@ for(diet_type in diets){
   trimmings_fish_system_catch <- rast(trimmingsfish_system_catch, type = "xyz", crs = crs(watson_raster_template)) %>%
     project(watson_raster_template)
 
-# plot(log(trimmings_fish_system + 1))
+# plot(log(trimmings_fish_system_catch + 1))
 
-    writeRaster(trimmings_fish_system_catch, sprintf(here("prep/02_feed/output/%s/trimmings fish_%s_%s_%s_catch_P.tif"), diet_type, ingredient_type, allocation, pos), overwrite = TRUE)
+    writeRaster(trimmings_fish_system_catch, sprintf(here("prep/02_feed/output/%s/%s/trimmings fish_%s_%s_%s_catch_P.tif"), diet_type, fcr, ingredient_type, allocation, pos), overwrite = TRUE)
     
     
       trimmingsfish_system_bycatch <- left_join(trimmingsfish, system_prop) %>%
@@ -568,28 +584,26 @@ for(diet_type in diets){
   trimmings_fish_system_bycatch <- rast(trimmingsfish_system_bycatch, type = "xyz", crs = crs(watson_raster_template)) %>%
     project(watson_raster_template)
 
-# plot(log(trimmings_fish_system + 1))
+# plot(log(trimmings_fish_system_bycatch + 1))
 
-    writeRaster(trimmings_fish_system_bycatch, sprintf(here("prep/02_feed/output/%s/trimmings fish_%s_%s_%s_bycatch_P.tif"), diet_type, ingredient_type, allocation, pos), overwrite = TRUE)
+    writeRaster(trimmings_fish_system_bycatch, sprintf(here("prep/02_feed/output/%s/%s/trimmings fish_%s_%s_%s_bycatch_P.tif"), diet_type, fcr, ingredient_type, allocation, pos), overwrite = TRUE)
     
     print(global(trimmings_fish_system_bycatch, "sum", na.rm = TRUE)/global(trimmings_fish_system_catch, "sum", na.rm = TRUE))
     
     
-        }else{
-          cat("file exists")
-        }
   
       }
     }
+   }
   }
 }
 
 
-trim_files <- list.files(here("prep/02_feed/output/fish-dominant"), pattern = "fish oil|fish meal|trimmings", full.names = TRUE)
+trim_files <- list.files(here("prep/02_feed/output/fish-dominant/regular"), pattern = "fish oil|fish meal|trimmings", full.names = TRUE)
 
 new_rasts <- rast(trim_files)
 
-new_names <- basename(trim_fish_new)
+new_names <- basename(trim_files)
 
 names(new_rasts) <- new_names
 
@@ -601,25 +615,11 @@ global(new_rasts, "sum", na.rm = TRUE)
 test <- trimmings_fofm_allocation %>%
   group_by(diet,
          allocation_type,
-         ingredient) %>%
+         ingredient, fcr_type) %>%
   summarise(sum = sum(tonnes_fofm_trimmings_spp_live_weight)) %>%
   ungroup()
 test
 
-#    diet           allocation_type ingredient              sum
-#    <chr>          <chr>           <chr>                 <dbl>
-#  1 fish-dominant  economic        fish meal, cut offs  56661.
-#  2 fish-dominant  economic        fish oil, cut offs   43884.
-#  3 fish-dominant  ge              fish meal, cut offs 549961.
-#  4 fish-dominant  ge              fish oil, cut offs  678742.
-#  5 fish-dominant  mass            fish meal, cut offs 527770.
-#  6 fish-dominant  mass            fish oil, cut offs  316429.
-#  7 plant-dominant economic        fish meal, cut offs  23076.
-#  8 plant-dominant economic        fish oil, cut offs   17873.
-#  9 plant-dominant ge              fish meal, cut offs 223984.
-# 10 plant-dominant ge              fish oil, cut offs  276433.
-# 11 plant-dominant mass            fish meal, cut offs 214946.
-# 12 plant-dominant mass            fish oil, cut offs  128873.
 
 
 ```
