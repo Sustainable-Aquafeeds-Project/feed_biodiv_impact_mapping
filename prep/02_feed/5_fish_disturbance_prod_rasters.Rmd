@@ -21,7 +21,6 @@ library(data.table)
 library(dtplyr)
 library(future)
 library(furrr)
-#library(doParallel)
 library(rfishbase)
 
 source(here("src/directories.R"))
@@ -409,6 +408,9 @@ watson_cells <- read.csv(file.path(watson_dir, "v5.0/Codes_cells.csv"))
 
 carbon_conversion <- 9
 
+# FOFM_props <- FOFM_props %>% 
+#   filter(fcr_type == "efficient") # just running efficient right now
+
 forage_npp <- foragefish %>% 
   left_join(FOFM_props, by = c("iso3c", "TaxonName")) %>%
   filter(!is.na(ingredient)) %>%
@@ -448,7 +450,8 @@ trim_tls <- read.csv(here("prep/02_feed/data/trimmings_fish_tls.csv"))
 
 trimmings_fish <- readRDS(file.path(watson_dir, "v5.0/int/all_catch_trimmingsfish.rds"))
 
-trim_props <- readRDS(here("prep/02_feed/data/embodied_FMFO_trimmings_rgns.rds"))
+trim_props <- readRDS(here("prep/02_feed/data/embodied_FMFO_trimmings_rgns.rds")) # %>%
+#   filter(fcr_type == "efficient")
 
 trim_npp <- 
  trimmings_fish %>% 
@@ -518,13 +521,13 @@ for(diet_type in diets){
       for(pos in depth_positions){
         for(fcr in fcrs){
       
-      # diet_type = "plant-dominant"
+      # diet_type = "fish-dominant"
       # ingredient_type = "fish meal"
-      # allocation = "mass"
+      # allocation = "economic"
       #  pos = "benthic"
-      #    fcr = "regular"
+      #    fcr = "efficient"
       
-      rast_xyz_df <- trim_npp %>%
+      rast_xyz_df <- all_fish_npp %>%
         filter(diet == diet_type,
                ingredient == ingredient_type,
                allocation_type == allocation,
@@ -532,7 +535,7 @@ for(diet_type in diets){
                fcr_type == fcr) %>%
         dplyr::select(LonCentre, LatCentre, area_fmfo)
       
-      rast_xyz_df_bycatch <- trim_npp %>%
+      rast_xyz_df_bycatch <- all_fish_npp %>%
         filter(diet == diet_type,
                ingredient == ingredient_type,
                allocation_type == allocation,
