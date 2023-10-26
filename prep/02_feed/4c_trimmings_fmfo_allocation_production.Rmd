@@ -96,12 +96,12 @@ forage_demand <- read_csv(here("prep/02_feed/data/demand/total_aquaculture_ingre
 
 
 
-sum(country_demand$ingredient_demand) # 1080096/2
+sum(country_demand$ingredient_demand) # 1105093/2
 
 
-sum(forage_demand$ingredient_demand, na.rm = TRUE) # 3484838/2
+sum(forage_demand$ingredient_demand, na.rm = TRUE) # 3565490/2
 
-1080096/3484838 # 0.3099415 trimmings demand represent ~30% of all FMFO in diet
+1105093/3484838 # 0.3099415 trimmings demand represent ~30% of all FMFO in diet
 
 5.3/(8.3+8.8) # 0.3099415 good, matches the Aas paper. So nothing wrong there... 
 ```
@@ -519,6 +519,7 @@ allocations <- unique(trim_props$allocation_type)
 ingredients <- unique(trim_props$ingredient)
 depth_positions <- c("benthic", "pelagic")
 fcrs <- unique(trim_props$fcr_type)
+fcrs <- c("efficient")
 
 for(diet_type in diets){
   for(fcr in fcrs){
@@ -532,12 +533,13 @@ for(diet_type in diets){
 #      pos = "benthic"
 #       fcr = "regular"
         
-                if(all(file.exists(sprintf(here("prep/02_feed/output/%s/%s/trimmings fish_%s_%s_%s_catch_P.tif"), diet_type, fcr, ingredient_type, allocation, pos), sprintf(here("prep/02_feed/output/%s/%s/trimmings fish_%s_%s_%s_bycatch_P.tif"), diet_type, fcr, ingredient_type, allocation, pos)))){
-
-          print(cat("rasters exists, skipping!"))
-          
-          next()
-        }
+        ## comment this in if u want to skip those already run
+        #         if(all(file.exists(sprintf(here("prep/02_feed/output/%s/%s/trimmings fish_%s_%s_%s_catch_P.tif"), diet_type, fcr, ingredient_type, allocation, pos), sprintf(here("prep/02_feed/output/%s/%s/trimmings fish_%s_%s_%s_bycatch_P.tif"), diet_type, fcr, ingredient_type, allocation, pos)))){
+        # 
+        #   print(cat("rasters exists, skipping!"))
+        #   
+        #   next()
+        # }
 
         
   watson_raster_template <- terra::rast(ncol=720, nrow=360, vals=c(1:259200))
