@@ -1,4 +1,4 @@
-## takes ~ 1.5 hours to complete! 
+## takes ~ 3.5 hours to complete! 
 
 # In this script we overlap [terrestrial area of habitat maps](https://www.nature.com/articles/s41597-022-01838-w) with our disturbance pressure maps created in the `02_feed` folder, and multiply by their vulnerability value. The goal of this script is to create impact maps, that is, the area of likely suitable habitat for each species that is exposured AND impacted to harvest of feed ingredients in salmon aquaculture. To do this, we: 
 #   

@@ -29,7 +29,7 @@ source(here("src/spatial.R"))
 
 
 aquamaps_dir <- file.path(rdsi_raw_data_dir, "aquamaps")
-biodiv_dir <- file.path(rdsi_dir, "biodiversiy_impacts")
+biodiv_dir <- file.path(rdsi_dir, "biodiversity_impacts")
 
 ```
 
@@ -85,7 +85,7 @@ impact_df <- purrr::map_df(list.files(file.path(biodiv_dir, "int/aoh_impacts_mar
               mutate(species = tolower(species))
               ) 
 
-length(unique(impact_df$SpeciesID)) # 19949 missing some spp.. however, we filtered out the species that aren't vulnerable, so this makes sense (see check that I did in the terrestrial overlap summary RMD)
+length(unique(impact_df$SpeciesID)) # 20335 missing some spp.. however, we filtered out the species that aren't vulnerable, so this makes sense (see check that I did in the terrestrial overlap summary RMD)
 
 setdiff(unique(aquamaps_spp$SpeciesID), unique(impact_df$SpeciesID))
 
@@ -113,17 +113,19 @@ colnames(terrestrial_overlap)
 
 test_terr <- terrestrial_overlap %>%
   filter(diet == "plant-dominant",
-         allocation == "mass")
+         allocation == "mass",
+         fcr_type == "regular")
 
-sum(test_terr$impact_total, na.rm = TRUE) # 847173.8
-mean(test_terr$impact_total, na.rm = TRUE) # 4.202438
+sum(test_terr$impact_total, na.rm = TRUE) # 754891.7
+mean(test_terr$impact_total, na.rm = TRUE) # 6.140526
 
 test_marine <- impact_vuln %>%
     filter(diet == "plant-dominant",
-         allocation == "mass")
+         allocation == "mass",
+         fcr_type == "regular")
 
-sum(test_marine$impact_total, na.rm = TRUE) # 145315.6
-mean(test_marine$impact_total, na.rm = TRUE) # 1.536951
+sum(test_marine$impact_total, na.rm = TRUE) # 135137.3
+mean(test_marine$impact_total, na.rm = TRUE) # 1.86824
 
 
 ```

@@ -1,4 +1,4 @@
-### Takes ~6 hours to run
+### Takes ~12? hours to run
 # In this script we overlap [Aquamaps probability of suitable habitat maps](https://www.aquamaps.org/) with our disturbance pressure maps created in the `02_feed` folder, and multiply by their vulnerability value. The goal of this script is to create impact maps, that is, the area of likely suitable habitat (>0.6 probability) for each species that is exposured AND impacted to harvest of forage or trimmings fish that is ultimately processed into FMFO. To do this, we: 
 #   
 #   - We have created maps of disturbance (km2) of harvest of forage and trimmings fish species that end up as FMFO. They have these categories: 
@@ -106,9 +106,9 @@ spp_info_df %>%
 ## only 9 marine birds?? 
 
 
-## will save a total of X rasters: 
-# 3 allocations * 2 diets * 2 ingredients * 2 fish ingredient spp (forage vs trimmings) = 24 scenarios
-# 24 scenarios * 13 spp type * 3 raster types (mean, sd, nspp) = 936 total or 468 per diet
+## will save a total of X rasters from this script: 
+# 3 allocations * 2 diets * 2 ingredients * 2 fish ingredient spp (forage vs trimmings) * 2 efficiencies = 48 scenarios
+# 48 scenarios * 12 spp type * 3 raster types (mean, sd, nspp) = 1728 total or 432 per diet per fcr
 
 ## for fish species, need to split in half, and then take species weighted average. My server is memory limited and can't handle all 9k at once...  
 
@@ -122,6 +122,22 @@ spp_types <- unique(spp_info_df$taxon)
 indices_to_remove <- grep("fish|polychaetes", spp_types)
 spp_types <- spp_types[-indices_to_remove] # remove fish category... we handle this separately in the next script `06c_overlap_fish_fix.R`
 
+
+for(tx_type in spp_types){
+  
+  tx_maps_df <- spp_info_df %>%
+    filter(taxon == tx_type) %>%
+    dplyr::select(species, filepath) %>%
+    distinct()
+  
+  ### read in all spp maps for this taxon - 
+  message(glue('Loading spp maps for taxon {tx_type}'))
+  tx_maps <- collect_spp_rangemaps_marine(tx_maps_df$species, tx_maps_df$filepath)
+  
+  
+  message('Taxon ', tx_type, ' spp dataframe: ', nrow(tx_maps[["parent"]]), 
+          ' cell observations for ', nrow(tx_maps_df), ' species...')
+  
 for(fs_type in fish_types){
   for(ingredient_type in ingredients){
     
@@ -130,11 +146,10 @@ for(fs_type in fish_types){
       message('Not a category! ... skipping!')
       next()
     }
-    
-    for(tx_type in spp_types){
-      for(fcr in fcrs){
+      
         for(allocation_type in allocations){
           for(diet_type in diets){
+            for(fcr in fcrs){
             
 # 
 #             allocation_type = "economic"
@@ -157,18 +172,6 @@ for(fs_type in fish_types){
               next()
             }
             
-            tx_maps_df <- spp_info_df %>%
-              filter(taxon == tx_type) %>%
-              dplyr::select(species, filepath) %>%
-              distinct()
-            
-            ### read in all spp maps for this taxon - 
-            message(glue('Loading spp maps for taxon {tx_type} {allocation_type} {ingredient_type} {fs_type} {diet_type}'))
-            tx_maps <- collect_spp_rangemaps_marine(tx_maps_df$species, tx_maps_df$filepath)
-            
-            
-            message('Taxon ', tx_type, ' spp dataframe: ', nrow(tx_maps[["parent"]]), 
-                    ' cell observations for ', nrow(tx_maps_df), ' species...')
             
             tx_vuln_df <- spp_info_df %>%
               filter(taxon == tx_type,

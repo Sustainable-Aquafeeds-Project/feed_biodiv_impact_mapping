@@ -1,40 +1,40 @@
 "ingredient","diet","total_ingredient_demand","total_ingredient_demand_efficient"
 "canola oil","fish-dominant",0,0
-"canola oil","plant-dominant",584378.704848,500825.23
+"canola oil","plant-dominant",584378.704848,525940.8343632
 "coconut oil","fish-dominant",0,0
-"coconut oil","plant-dominant",3175.971222,2721.87625
-"corn gluten meal","fish-dominant",127038.84888,108875.05
-"corn gluten meal","plant-dominant",22231.798554,19053.13375
-"faba beans","fish-dominant",63519.42444,54437.525
-"faba beans","plant-dominant",114334.963992,97987.545
-"fish meal, cut offs","fish-dominant",257338.739639732,220544.883649554
-"fish meal, cut offs","plant-dominant",104807.050326,89821.91625
-"fish meal, forage fish","fish-dominant",686236.639039287,588119.689732144
-"fish meal, forage fish","plant-dominant",279485.467536,239525.11
-"fish oil, cut offs","fish-dominant",155962.872508928,133663.565848214
-"fish oil, cut offs","plant-dominant",63519.42444,54437.525
-"fish oil, forage fish","fish-dominant",647245.920912054,554703.79827009
-"fish oil, forage fish","plant-dominant",263605.611426,225915.72875
+"coconut oil","plant-dominant",3175.971222,2858.3740998
+"corn gluten meal","fish-dominant",127038.84888,114334.963992
+"corn gluten meal","plant-dominant",22231.798554,20008.6186986
+"faba beans","fish-dominant",63519.42444,57167.481996
+"faba beans","plant-dominant",114334.963992,102901.4675928
+"fish meal, cut offs","fish-dominant",257338.739639732,231604.865675759
+"fish meal, cut offs","plant-dominant",104807.050326,94326.3452934
+"fish meal, forage fish","fish-dominant",686236.639039287,617612.975135358
+"fish meal, forage fish","plant-dominant",279485.467536,251536.9207824
+"fish oil, cut offs","fish-dominant",155962.872508928,140366.585258036
+"fish oil, cut offs","plant-dominant",63519.42444,57167.481996
+"fish oil, forage fish","fish-dominant",647245.920912054,582521.328820849
+"fish oil, forage fish","plant-dominant",263605.611426,237245.0502834
 "guar meal","fish-dominant",0,0
-"guar meal","plant-dominant",136566.762546,117040.67875
+"guar meal","plant-dominant",136566.762546,122910.0862914
 "linseed oil","fish-dominant",0,0
-"linseed oil","plant-dominant",41287.625886,35384.39125
-"micro ingredients","fish-dominant",63519.42444,54437.525
-"micro ingredients","plant-dominant",130214.820102,111596.92625
+"linseed oil","plant-dominant",41287.625886,37158.8632974
+"micro ingredients","fish-dominant",63519.42444,57167.481996
+"micro ingredients","plant-dominant",130214.820102,117193.3380918
 "other","fish-dominant",0,0
-"other","plant-dominant",12703.884888,10887.505
+"other","plant-dominant",12703.884888,11433.4963992
 "pea flour","fish-dominant",0,0
-"pea flour","plant-dominant",79399.28055,68046.90625
+"pea flour","plant-dominant",79399.28055,71459.352495
 "pea protein concentrate","fish-dominant",0,0
-"pea protein concentrate","plant-dominant",44463.597108,38106.2675
+"pea protein concentrate","plant-dominant",44463.597108,40017.2373972
 "soy oil","fish-dominant",0,0
-"soy oil","plant-dominant",12703.884888,10887.505
+"soy oil","plant-dominant",12703.884888,11433.4963992
 "soy protein concentrate","fish-dominant",0,0
-"soy protein concentrate","plant-dominant",663777.985398,568872.13625
-"soybean meal","fish-dominant",539915.10774,462718.9625
+"soy protein concentrate","plant-dominant",663777.985398,597400.1868582
+"soybean meal","fish-dominant",539915.10774,485923.596966
 "sunflower meal","fish-dominant",0,0
-"sunflower meal","plant-dominant",107983.021548,92543.7925
-"wheat","fish-dominant",222317.98554,190531.3375
-"wheat","plant-dominant",206438.12943,176921.95625
-"wheat gluten","fish-dominant",412876.25886,353843.9125
-"wheat gluten","plant-dominant",311245.179756,266743.8725
+"sunflower meal","plant-dominant",107983.021548,97184.7193932
+"wheat","fish-dominant",222317.98554,200086.186986
+"wheat","plant-dominant",206438.12943,185794.316487
+"wheat gluten","fish-dominant",412876.25886,371588.632974
+"wheat gluten","plant-dominant",311245.179756,280120.6617804

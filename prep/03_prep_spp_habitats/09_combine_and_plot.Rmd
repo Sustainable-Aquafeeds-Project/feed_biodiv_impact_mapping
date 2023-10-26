@@ -46,7 +46,10 @@ ext(base_rast) <- c(-180, 180, -90, 90)
 ocean_xy_moll <- readRDS(file.path(this_dir, "data/spatial/moll_template_ocean_xy.rds"))
 land_xy_moll <- readRDS(here(this_dir, "data/spatial/moll_template_land_xy.rds"))
 
-impact_maps_dir <- file.path(rdsi_dir, "biodiversity_impacts/output")
+biodiv_dir <- file.path(rdsi_dir, "biodiversity_impacts")
+
+impact_maps_dir <- file.path(biodiv_dir, "output")
+
 
 ```
 
@@ -55,19 +58,19 @@ Read in marine and terrestrial dfs and combine
 
 ```{r}
 marine_overlap <- readRDS(here("prep/03_prep_spp_habitats/output/aoh_marine_impact.rds")) %>%
-  group_by(sciname, spp_type, diet, allocation, ingredient) %>%
+  group_by(sciname, spp_type, diet, fcr_type, allocation, ingredient) %>%
   summarise(vulnerability = mean(vulnerability, na.rm = TRUE), 
             impact_total = sum(impact_total, na.rm = TRUE)) %>%
   ungroup() %>%
-    dplyr::select(sciname, spp_type, diet, allocation, ingredient, vulnerability, impact_total)
+    dplyr::select(sciname, spp_type, diet, fcr_type, allocation, ingredient, vulnerability, impact_total)
 
 
 terrestrial_overlap <- readRDS(here("prep/03_prep_spp_habitats/output/aoh_terrestrial_mammals_birds_impact.rds")) %>% 
-  group_by(sciname, diet, allocation, ingredient, spp_type) %>%
+  group_by(sciname, diet, fcr_type, allocation, ingredient, spp_type) %>%
   summarise(vulnerability = 1 - mean(suitability, na.rm = TRUE),
             impact_total = sum(impact_total, na.rm = TRUE)) %>%
   ungroup() %>%
-    dplyr::select(sciname, spp_type, diet, allocation, ingredient, vulnerability, impact_total)
+    dplyr::select(sciname, spp_type, diet, fcr_type, allocation, ingredient, vulnerability, impact_total)
 
 all_overlap <- rbind(marine_overlap, terrestrial_overlap)
 
@@ -82,7 +85,7 @@ all_overlap <- all_overlap %>%
 
 ## total AOH affected   
 summary_df <- all_overlap %>%
-  group_by(diet, allocation, ingredient) %>%
+  group_by(diet, fcr_type, allocation, ingredient) %>%
   summarise(impact_total = sum(impact_total, na.rm = TRUE)) %>%
   ungroup()
 
@@ -92,15 +95,15 @@ summary_df$ordered_ingredient <- with(summary_df, reorder(ingredient, impact_tot
 ggplot(summary_df, aes(x = ordered_ingredient, y = impact_total)) + 
   geom_bar(stat = "identity") +
   theme_minimal() +
-  facet_grid(diet~allocation, scales = "free_y") +
+  facet_grid(fcr_type ~ diet, scales = "free_y") +
     coord_flip() +
-  labs(title = "Global AOH Affected (39822 species)", x = "Raw material and Ingredient", y = expression(paste("Total AOH Affected (", km^{2}, ")"))) + 
+  labs(title = "Global AOH Affected (39822 species); Economic allocation", x = "Raw material and Ingredient", y = expression(paste("Total AOH Affected (", km^{2}, ")"))) + 
       theme(axis.text.x = element_text(angle = -90, hjust = 1)) # Adjust the 'angle' value as needed
 
 
 ## Split by class total AOH
 summary_df <- all_overlap %>%
-  group_by(diet, allocation, ingredient, spp_type) %>%
+  group_by(diet, fcr_type, allocation, ingredient, spp_type) %>%
   summarise(impact_total = sum(impact_total, na.rm = TRUE)) %>%
   ungroup() 
 
@@ -117,8 +120,8 @@ muted_palette <- c(muted, light)
 
 ggplot(summary_df, aes(x = ordered_ingredient, y = impact_total, fill = spp_type)) +
     geom_bar(stat = "identity", position = "dodge") +
-  facet_grid(diet ~ allocation, scales = "free_y") +
-  labs(title = "Global AOH Affected (39822 species)", x = "Raw material and Ingredient", y = expression(paste("Total AOH Affected (", km^{2}, ")")), fill = NULL) +
+  facet_grid(fcr_type ~ diet, scales = "free_y") +
+  labs(title = "Global AOH Affected (39822 species); Economic allocation", x = "Raw material and Ingredient", y = expression(paste("Total AOH Affected (", km^{2}, ")")), fill = NULL) +
   # scale_fill_manual(values = category_colors) +
   scale_fill_manual(values = muted_palette) + 
   theme_minimal() + 
@@ -129,7 +132,7 @@ ggplot(summary_df, aes(x = ordered_ingredient, y = impact_total, fill = spp_type
 
 ## Split by class average AOH
 summary_df <- all_overlap %>%
-  group_by(diet, allocation, ingredient, spp_type) %>%
+  group_by(diet, fcr_type, allocation, ingredient, spp_type) %>%
   summarise(impact_total = mean(impact_total, na.rm = TRUE)) %>%
   ungroup() 
 
@@ -137,7 +140,7 @@ summary_df$ordered_ingredient <- with(summary_df, reorder(ingredient, impact_tot
 
 ggplot(summary_df, aes(x = ordered_ingredient, y = impact_total, fill = spp_type)) +
     geom_bar(stat = "identity", position = "dodge") +
-  facet_grid(diet ~ allocation, scales = "free_y") +
+  facet_grid(fcr_type ~ diet, scales = "free_y") +
   labs(title = "Average AOH Affected (39822 species)", x = "Raw material and Ingredient", y = expression(paste("Average AOH Affected (", km^{2}, ")")), fill = NULL) +
     scale_fill_manual(values = muted_palette) +
   theme_minimal() + 
@@ -147,7 +150,7 @@ ggplot(summary_df, aes(x = ordered_ingredient, y = impact_total, fill = spp_type
 
 ## Split by class average AOH .. 
 summary_df <- all_overlap %>%
-  group_by(diet, allocation, spp_type) %>%
+  group_by(diet, fcr_type, allocation, spp_type) %>%
   mutate(species_count = n_distinct(sciname)) %>%
   summarise(nspp =  n_distinct(sciname), 
             impact_mean = mean(impact_total, na.rm = TRUE)) %>%
@@ -159,10 +162,10 @@ summary_df$spp_type <- with(summary_df, reorder(spp_type, impact_mean, FUN = fun
 
 ggplot(summary_df, aes(x = spp_type, y = impact_mean, fill = spp_type)) +
     geom_bar(stat = "identity", position = "dodge") +
-  facet_grid(diet ~ allocation, scales = "free") +
+  facet_grid(fcr_type ~ diet, scales = "free") +
   theme_minimal() + 
   scale_fill_manual(values = muted_palette) + 
-    labs(title = "Average AOH Affected (39822 species)", x = "Species Class", y = expression(paste("Average AOH Affected (", km^{2}, ")")), fill = NULL) +
+    labs(title = "Average AOH Affected (39822 species); Economic allocation", x = "Species Class", y = expression(paste("Average AOH Affected (", km^{2}, ")")), fill = NULL) +
   coord_flip()
 
 ```
@@ -207,36 +210,36 @@ YlOrBr <- color("YlOrBr")
 ## only need to save RDS when impact maps info has changed
 allocations <- c("economic", "ge", "mass")
 
-# for(allocation_type in allocations){
-# 
-#  # allocation_type = "mass"
-# 
-# global_maps_list <- list.files(file.path(impact_maps_dir, "impact_maps_across_taxon_ingredient"), pattern = allocation_type, recursive = TRUE, full.names = TRUE)
-# 
-# global_maps_mean <- rast(global_maps_list)
-# names(global_maps_mean) <- file_path_sans_ext(str_after_nth(global_maps_list, "\\/", 6))
-# 
-# 
-# all_df <- as.data.frame(global_maps_mean, xy = TRUE) %>%
-#   pivot_longer(cols = c(3:8), values_to = "value", names_to = "type") %>%
-#   separate_wider_delim(type, delim = "/", names = c("diet", "calc_type")) %>%
-#   mutate(value =  ifelse(str_detect(calc_type, "mean"), log(value*1000000 + 1), value)) %>%
-#   rename(long = x, lat = y)
-# 
-# for(i in unique(all_df$calc_type)){
-# 
-#   # i = "economic_mean"
-# 
-#   loop_df <- all_df %>%
-#     filter(calc_type == i) %>%
-#     filter(!is.na(value))
-# 
-# # write_rds(all_df, glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_ingredient/{allocation_type}.rds.gz")))
-# 
-# data.table::fwrite(loop_df, glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_ingredient/{i}.rds.gz")))
-# 
-# }
-# }
+for(allocation_type in allocations){
+
+ # allocation_type = "mass"
+
+global_maps_list <- list.files(file.path(impact_maps_dir, "impact_maps_across_taxon_ingredient"), pattern = allocation_type, recursive = TRUE, full.names = TRUE)
+
+global_maps_mean <- rast(global_maps_list)
+names(global_maps_mean) <- file_path_sans_ext(str_after_nth(global_maps_list, "\\/", 6))
+
+
+all_df <- as.data.frame(global_maps_mean, xy = TRUE) %>%
+  pivot_longer(cols = c(3:8), values_to = "value", names_to = "type") %>%
+  separate_wider_delim(type, delim = "/", names = c("diet", "fcr_type", "calc_type")) %>%
+  mutate(value =  ifelse(str_detect(calc_type, "mean"), log(value*1000000 + 1), value)) %>%
+  rename(long = x, lat = y)
+
+for(i in unique(all_df$calc_type)){
+
+  # i = "economic_mean"
+
+  loop_df <- all_df %>%
+    filter(calc_type == i) %>%
+    filter(!is.na(value))
+
+# write_rds(all_df, glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_ingredient/{allocation_type}.rds.gz")))
+
+data.table::fwrite(loop_df, glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_ingredient/{i}.rds.gz")))
+
+}
+}
 
 
 
@@ -248,6 +251,7 @@ types_df <- expand.grid(allocation_types, calc_types) %>%
   unique()
 
 diets <- c("fish-dominant", "plant-dominant")
+fcrs <- c("regular", "efficienct")
 
 for(type in types_df){
   
@@ -255,7 +259,13 @@ for(type in types_df){
   
  filepath <- glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_ingredient/{type}.rds.gz"))
 
-loop_df <-  fread(filepath) 
+loop_df <-  fread(filepath) # %>%
+ # mutate(fcr_type = "regular")
+
+# loop_df_2 <-  fread(filepath) %>%
+#  mutate(fcr_type = "efficient")
+
+loop_df <- rbind(loop_df, loop_df_2)
   
 ## create maps in separate plots, force common scale between them
 maps <- map(.x = diets, 
@@ -266,6 +276,7 @@ maps <- map(.x = diets,
    scale_fill_gradientn(colors = final_palette, na.value = "white") +
    #  scale_fill_viridis(direction = -1) + 
               geom_sf(data = countries_shp, fill = NA, colour = "grey") + 
+    facet_wrap(~fcr_type) + 
   theme_minimal() +
       theme(
           axis.title = element_blank(),
@@ -291,58 +302,58 @@ calc_types <- c("mean", "sd", "nspp")
 taxon <- all_overlap %>% filter(spp_type != "polychaetes") %>% pull(spp_type) %>% unique()
 
 ## this part only needs to be run if the source maps changed! 
-# for(allocation_type in allocations){
-#     for(taxa_type in taxon){
-#       for(type in calc_types){
-# 
-#  # allocation_type = "economic"
-#  #  taxa_type = "sponges"
-# 
-#       out_fstem <- glue(file.path(impact_maps_dir, "csvs/impact_maps_by_taxon_across_ingredient/{allocation_type}_{taxa_type}_{type}.rds.gz"))
-# 
-#       # if(file.exists(out_fstem)){
-#       # 
-#       #   message(glue("skipping {allocation_type}_{taxa_type}_{type}"))
-#       #   next()
-#       # 
-#       # }
-# 
-# global_maps_list <- list.files(file.path(impact_maps_dir, "impact_maps_by_taxon_across_ingredient"), pattern = glue("{allocation_type}_{taxa_type}"), recursive = TRUE, full.names = TRUE)
-# 
-# stack_rast <- rast()
-# 
-# for(file in global_maps_list){
-#   # file <- global_maps_list[[1]]
-# 
-#   rast_1 <- rast(file) %>%
-#     project(., moll_template, method = "near")
-# 
-#   stack_rast <- c(stack_rast, rast_1)
-# }
-# 
-# names(stack_rast) <- file_path_sans_ext(str_after_nth(global_maps_list, "\\/", 6))
-# 
-# 
-# all_df <- as.data.frame(stack_rast, xy = TRUE) %>%
-#   pivot_longer(cols = c(3:ncol(.)), values_to = "value", names_to = "type") %>%
-#   filter(!is.na(value)) %>%
-#   separate_wider_delim(type, delim = "/", names = c("diet", "taxa_calc_type")) %>%
-#   separate_wider_delim(taxa_calc_type, delim = "_", names = c("allocation", "taxa", "calc_type")) %>%
-#   mutate(value =  ifelse(str_detect(calc_type, "mean"), log(value*1000000 + 1), value)) %>%
-#   rename(long = x, lat = y)
-# 
-# for(i in unique(all_df$calc_type)){
-# 
-#   loop_df <- all_df %>%
-#     filter(calc_type == i) %>%
-#     filter(!is.na(value))
-# 
-#   data.table::fwrite(loop_df, glue(file.path(impact_maps_dir, "csvs/impact_maps_by_taxon_across_ingredient/{allocation_type}_{taxa_type}_{i}.rds.gz")))
-# 
-#       }
-#     }
-#   }
-# }
+for(allocation_type in allocations){
+    for(taxa_type in taxon){
+      for(type in calc_types){
+
+ # allocation_type = "economic"
+ #  taxa_type = "sponges"
+
+      out_fstem <- glue(file.path(impact_maps_dir, "csvs/impact_maps_by_taxon_across_ingredient/{allocation_type}_{taxa_type}_{type}.rds.gz"))
+
+      # if(file.exists(out_fstem)){
+      #
+      #   message(glue("skipping {allocation_type}_{taxa_type}_{type}"))
+      #   next()
+      #
+      # }
+
+global_maps_list <- list.files(file.path(impact_maps_dir, "impact_maps_by_taxon_across_ingredient"), pattern = glue("{allocation_type}_{taxa_type}"), recursive = TRUE, full.names = TRUE)
+
+stack_rast <- rast()
+
+for(file in global_maps_list){
+  # file <- global_maps_list[[1]]
+
+  rast_1 <- rast(file) %>%
+    project(., moll_template, method = "near")
+
+  stack_rast <- c(stack_rast, rast_1)
+}
+
+names(stack_rast) <- file_path_sans_ext(str_after_nth(global_maps_list, "\\/", 6))
+
+
+all_df <- as.data.frame(stack_rast, xy = TRUE) %>%
+  pivot_longer(cols = c(3:ncol(.)), values_to = "value", names_to = "type") %>%
+  filter(!is.na(value)) %>%
+  separate_wider_delim(type, delim = "/", names = c("diet", "fcr_type", "taxa_calc_type")) %>%
+  separate_wider_delim(taxa_calc_type, delim = "_", names = c("allocation", "taxa", "calc_type")) %>%
+  mutate(value =  ifelse(str_detect(calc_type, "mean"), log(value*1000000 + 1), value)) %>%
+  rename(long = x, lat = y)
+
+for(i in unique(all_df$calc_type)){
+
+  loop_df <- all_df %>%
+    filter(calc_type == i) %>%
+    filter(!is.na(value))
+
+  data.table::fwrite(loop_df, glue(file.path(impact_maps_dir, "csvs/impact_maps_by_taxon_across_ingredient/{allocation_type}_{taxa_type}_{i}.rds.gz")))
+
+      }
+    }
+  }
+}
      
   
   
@@ -368,6 +379,7 @@ maps <- map(.x = diets,
    scale_fill_gradientn(colors = final_palette, na.value = "white") +
    #  scale_fill_viridis(direction = -1) + 
               geom_sf(data = countries_shp, fill = NA, colour = "grey") + 
+    facet_wrap(~fcr_type) +
   theme_minimal() +
       theme(
           axis.title = element_blank(),
@@ -393,50 +405,50 @@ calc_types <- c("mean", "sd", "nspp")
 ingredients <- all_overlap %>% pull(ingredient) %>% unique()
 
 ## commented out code only needs to be run if the source impact maps are updated! 
-# for(allocation_type in allocations){
-#   for(ingredient_type in ingredients){
-# 
-#       # ingredient_type = "Soybean_soybean meal"
-#       # allocation_type = "economic"
-#       # type = "mean"
-# 
-# global_maps_list <- list.files(file.path(impact_maps_dir, "impact_maps_across_taxon_by_ingredient"), pattern = glue("{allocation_type}_{ingredient_type}"), recursive = TRUE, full.names = TRUE)
+for(allocation_type in allocations){
+  for(ingredient_type in ingredients){
 
-# stack_rast <- rast()
-# 
-# for(file in global_maps_list){
-#   # file <- global_maps_list[[1]]
-# 
-#   rast_1 <- rast(file) %>%
-#     project(., moll_template, method = "near")
-# 
-#   stack_rast <- c(stack_rast, rast_1)
-# }
-# 
-# names(stack_rast) <- file_path_sans_ext(str_after_nth(global_maps_list, "\\/", 6))
-# 
-# 
-# all_df <- as.data.frame(stack_rast, xy = TRUE) %>%
-#   pivot_longer(cols = c(3:ncol(.)), values_to = "value", names_to = "type") %>%
-#   separate_wider_delim(type, delim = "/", names = c("diet", "ingredient_calc_type")) %>%
-#     separate_wider_delim(ingredient_calc_type, delim = "_", names = c("allocation", "raw_material", "ingredient", "calc_type")) %>%
-#   mutate(value =  ifelse(str_detect(calc_type, "mean"), log(value*1000000 + 1), value)) %>%
-#   rename(long = x, lat = y) %>%
-#   filter(!is.na(value)) %>%
-#   unite("crop_ingredient", c(raw_material:ingredient), sep = "_", remove = FALSE)
-# 
-# for(i in unique(all_df$calc_type)){
-#   # i = "mean"
-# 
-#   loop_df <- all_df %>%
-#     filter(calc_type == i) %>%
-#     filter(!is.na(value))
-# 
-#   data.table::fwrite(loop_df, glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_by_ingredient/{allocation_type}_{ingredient_type}_{i}.rds.gz")))
-# 
-#    }
-#   }
-# }
+      # ingredient_type = "Soybean_soybean meal"
+      # allocation_type = "economic"
+      # type = "mean"
+
+global_maps_list <- list.files(file.path(impact_maps_dir, "impact_maps_across_taxon_by_ingredient"), pattern = glue("{allocation_type}_{ingredient_type}"), recursive = TRUE, full.names = TRUE)
+
+stack_rast <- rast()
+
+for(file in global_maps_list){
+  # file <- global_maps_list[[1]]
+
+  rast_1 <- rast(file) %>%
+    project(., moll_template, method = "near")
+
+  stack_rast <- c(stack_rast, rast_1)
+}
+
+names(stack_rast) <- file_path_sans_ext(str_after_nth(global_maps_list, "\\/", 6))
+
+
+all_df <- as.data.frame(stack_rast, xy = TRUE) %>%
+  pivot_longer(cols = c(3:ncol(.)), values_to = "value", names_to = "type") %>%
+  separate_wider_delim(type, delim = "/", names = c("diet", "fcr_type", "ingredient_calc_type")) %>%
+    separate_wider_delim(ingredient_calc_type, delim = "_", names = c("allocation", "raw_material", "ingredient", "calc_type")) %>%
+  mutate(value =  ifelse(str_detect(calc_type, "mean"), log(value*1000000 + 1), value)) %>%
+  rename(long = x, lat = y) %>%
+  filter(!is.na(value)) %>%
+  unite("crop_ingredient", c(raw_material:ingredient), sep = "_", remove = FALSE)
+
+for(i in unique(all_df$calc_type)){
+  # i = "mean"
+
+  loop_df <- all_df %>%
+    filter(calc_type == i) %>%
+    filter(!is.na(value))
+
+  data.table::fwrite(loop_df, glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_by_ingredient/{allocation_type}_{ingredient_type}_{i}.rds.gz")))
+
+   }
+  }
+}
 
 
 for(allocation_type in allocations){
@@ -460,6 +472,7 @@ maps <- map(.x = diets,
    scale_fill_gradientn(colors = final_palette, na.value = "white") +
    #  scale_fill_viridis(direction = -1) + 
               geom_sf(data = countries_shp, fill = NA, colour = "grey") + 
+    facet_wrap(~fcr_type) + 
   theme_minimal() +
       theme(
           axis.title = element_blank(),

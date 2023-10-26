@@ -93,7 +93,7 @@ server <- function(input, output) {
     
        ggplot() +
       geom_tile(data = all_df, aes(x= long, y = lat, fill = value)) +
-      facet_wrap(~diet) +
+      facet_grid(fcr_type~diet) +
          # scale_fill_gradientn(colors = YlOrBr(9), na.value = "white") +  # Set the color for missing values (NA) to white
          scale_fill_gradientn(colors = final_palette, na.value = "white") +
          #  scale_fill_viridis(direction = -1) + 
@@ -154,7 +154,7 @@ server <- function(input, output) {
     
     ggplot() + 
       geom_tile(data = all_df, aes(x= long, y = lat, fill = value)) + 
-      facet_wrap(~diet) + 
+      facet_grid(fcr_type~diet) + 
       # scale_fill_gradientn(colors = YlOrBr(9), na.value = "white") +  # Set the color for missing values (NA) to white
       scale_fill_gradientn(colors = final_palette, na.value = "white") +
       #  scale_fill_viridis(direction = -1) + 
@@ -185,7 +185,7 @@ server <- function(input, output) {
     
     ggplot() + 
       geom_tile(data = all_df, aes(x= long, y = lat, fill = value)) + 
-      facet_wrap(~diet) + 
+      facet_grid(fcr_type~diet) + 
       # scale_fill_gradientn(colors = YlOrBr(9), na.value = "white") +  # Set the color for missing values (NA) to white
    scale_fill_gradientn(colors = final_palette, na.value = "white") +
    #  scale_fill_viridis(direction = -1) + 
