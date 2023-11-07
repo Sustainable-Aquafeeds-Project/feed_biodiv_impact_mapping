@@ -1,4 +1,4 @@
-### Takes ~12? hours to run
+### Takes ~12 hours to run
 # In this script we overlap [Aquamaps probability of suitable habitat maps](https://www.aquamaps.org/) with our disturbance pressure maps created in the `02_feed` folder, and multiply by their vulnerability value. The goal of this script is to create impact maps, that is, the area of likely suitable habitat (>0.6 probability) for each species that is exposured AND impacted to harvest of forage or trimmings fish that is ultimately processed into FMFO. To do this, we: 
 #   
 #   - We have created maps of disturbance (km2) of harvest of forage and trimmings fish species that end up as FMFO. They have these categories: 
@@ -116,7 +116,7 @@ allocations <- unique(spp_info_df$allocation)
 diets <- unique(spp_info_df$diet)
 ingredients <- unique(spp_info_df$ingredient)
 fish_types <- unique(spp_info_df$fish_type)
-fcrs <- c("regular", "efficient")
+fcrs <- c("efficient")
 spp_types <- unique(spp_info_df$taxon)
 # indices_to_remove <- grep("Bird|Marine mammal|Marine plant|Reptiles and amphibians|arthropods|echinoderms|polychaetes|sponges", spp_types)
 indices_to_remove <- grep("fish|polychaetes", spp_types)
@@ -166,7 +166,7 @@ for(fs_type in fish_types){
             
             outf_mean_df <- glue(file.path(biodiv_dir, "int/aoh_impacts_marine/{tx_type}_{diet_type}_{fcr}_{fs_type}_{ingredient_type}_{allocation_type}.rds"))
             
-            
+            ## comment this out if u want to rerun everything without skipping
             if(all(file.exists(outf_mean, outf_sd))) {
               message('Rasters exist for taxon ', tx_type, allocation_type, diet_type, fcr, ingredient_type, fs_type, ' for catch/bycatch stressor... skipping!')
               next()

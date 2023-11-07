@@ -80,7 +80,7 @@ crop_ingredient_cats <- read.csv(here("prep/02_feed/output/proportion_feed_per_c
   distinct() %>%
   mutate(diet_fcr = paste(diet, fcr_type, sep = "/")) %>%
   mutate(diet_fcr_crop_ingredient = paste(diet_fcr, GAEZ_category, sep = "/")) %>%
-  mutate(diet_fcr_crop_ingredient = paste(diet_fcr_crop_ingredient, source_ingredient, sep = "_"))
+  mutate(diet_fcr_crop_ingredient = paste(diet_fcr_crop_ingredient, source_ingredient, sep = "_")) ## filter here if you only want to do regular or efficient scenario
 
 ## should end up with: 
 # plant-dominant: 13 ingredients * 3 allocations * 2 taxon * 3 raster types * 2 fcr types = 468 outputs
@@ -150,7 +150,7 @@ for(allocation_type in allocations){
             message('Rasters exist for taxon ', tx_type, crop_type, ingredient_type, diet_type, allocation_type, fcr, ' for harvest stressor... skipping!')
             next()
           }
-          
+
           
           
           message('Processing mean/sd vulnerability by species in taxon ', tx_type, 

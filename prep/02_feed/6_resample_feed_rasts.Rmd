@@ -39,7 +39,7 @@ Reproject and aggregate the ingredient crop rasters. It runs quick since they ar
 ```{r}
 
 for(diet in c("fish-dominant", "plant-dominant")){
-  for(fcr in c("regular", "efficient")){
+  for(fcr in c("efficient", "regular")){
   
   # diet = "fish-dominant"
   #   fcr = "efficient"
@@ -83,8 +83,8 @@ Reproject and disaggregate the ingredient fish rasters to 10km res.
 
 ```{r}
 
-for(diet in c("fish-dominant")){
-  for(fcr in c("regular", "efficient")){
+for(diet in c("fish-dominant", "plant-dominant")){
+  for(fcr in c("efficient", "regular")){
   
   # diet = "plant-dominant"
   #  fcr = "regular"
