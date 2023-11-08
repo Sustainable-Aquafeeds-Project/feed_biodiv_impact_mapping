@@ -295,8 +295,13 @@ ggsave(glue(here(this_dir, "output/plots/{type}_plot.png")), plot = plot_grid(pl
 
 for(type in types_df){
   
-  # type = "economic_mean"
-  
+  # type = "economic_nspp"
+  # 
+  # if(file.exists(glue(here(this_dir, "output/plots/delta/{type}_plot.png")))){
+  #   cat("exists")
+  #   next()
+  # }
+  # 
  filepath <- glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_ingredient/{type}.rds.gz"))
 
 delta_df <-  fread(filepath)
@@ -331,8 +336,13 @@ if(str_detect(type, "mean")){
 }
   
   
+if(str_detect(type, "nspp")){
+  limit <- c(min(delta_df$delta), max(delta_df$delta))
+  
+}else{
 limit <- c(quantile(delta_df$delta, 0.05), quantile(delta_df$delta, 0.9))
 # quantile(delta_df$delta)
+}
 
 ## create maps in separate plots, force common scale between them
   ggplot() + 
@@ -345,7 +355,8 @@ limit <- c(quantile(delta_df$delta, 0.05), quantile(delta_df$delta, 0.9))
       theme(
           axis.title = element_blank(),
           axis.text = element_blank(),
-          axis.ticks = element_blank())
+          axis.ticks = element_blank()) + 
+    labs(caption = str_replace(glue("{type}"), "_", "; "))
   ## make the delta a categorical variable for fish-dominant or plant-dominant? Regardless of magnitude? Set anything above the limit to be full red or blue? 
             
 
@@ -373,10 +384,10 @@ calc_types <- c("mean", "sd", "nspp")
 taxon <- all_overlap %>% filter(spp_type != "polychaetes") %>% pull(spp_type) %>% unique()
 
 ## this part only needs to be run if the source maps changed! 
-for(allocation_type in allocations){
-    for(taxa_type in taxon){
-      for(type in calc_types){
-
+# for(allocation_type in allocations){
+#     for(taxa_type in taxon){
+#       for(type in calc_types){
+#
  # allocation_type = "economic"
  #  taxa_type = "sponges"
 
@@ -393,54 +404,51 @@ global_maps_list <- list.files(file.path(impact_maps_dir, "impact_maps_by_taxon_
 
 stack_rast <- rast()
 
-for(file in global_maps_list){
-  # file <- global_maps_list[[1]]
-
-  rast_1 <- rast(file) %>%
-    project(., moll_template, method = "near")
-
-  stack_rast <- c(stack_rast, rast_1)
-}
-
-names(stack_rast) <- file_path_sans_ext(str_after_nth(global_maps_list, "\\/", 6))
-
-
-all_df <- as.data.frame(stack_rast, xy = TRUE) %>%
-  pivot_longer(cols = c(3:ncol(.)), values_to = "value", names_to = "type") %>%
-  filter(!is.na(value)) %>%
-  separate_wider_delim(type, delim = "/", names = c("diet", "fcr_type", "taxa_calc_type")) %>%
-  separate_wider_delim(taxa_calc_type, delim = "_", names = c("allocation", "taxa", "calc_type")) %>%
-  mutate(value =  ifelse(str_detect(calc_type, "mean"), log(value*1000000 + 1), value)) %>%
-  rename(long = x, lat = y)
-
-for(i in unique(all_df$calc_type)){
-  
-  # calc_type = "mean"
-  
-  # if(glue(file.path(impact_maps_dir, "csvs/impact_maps_by_taxon_across_ingredient/{allocation_type}_{taxa_type}_{i}.rds.gz")) %in% c(unique(done$f))){
-  #   
-  #   cat("file exists")
-  #   next()
-  # }
-
-  loop_df <- all_df %>%
-    filter(calc_type == i) %>%
-    filter(!is.na(value))
-
-  data.table::fwrite(loop_df, glue(file.path(impact_maps_dir, "csvs/impact_maps_by_taxon_across_ingredient/{allocation_type}_{taxa_type}_{i}.rds.gz")))
-
-      }
-    }
-  }
-}
+# for(file in global_maps_list){
+#   # file <- global_maps_list[[1]]
+# 
+#   rast_1 <- rast(file) %>%
+#     project(., moll_template, method = "near")
+# 
+#   stack_rast <- c(stack_rast, rast_1)
+# }
+# 
+# names(stack_rast) <- file_path_sans_ext(str_after_nth(global_maps_list, "\\/", 6))
+# 
+# 
+# all_df <- as.data.frame(stack_rast, xy = TRUE) %>%
+#   pivot_longer(cols = c(3:ncol(.)), values_to = "value", names_to = "type") %>%
+#   filter(!is.na(value)) %>%
+#   separate_wider_delim(type, delim = "/", names = c("diet", "fcr_type", "taxa_calc_type")) %>%
+#   separate_wider_delim(taxa_calc_type, delim = "_", names = c("allocation", "taxa", "calc_type")) %>%
+#   mutate(value =  ifelse(str_detect(calc_type, "mean"), log(value*1000000 + 1), value)) %>%
+#   rename(long = x, lat = y)
+# 
+# for(i in unique(all_df$calc_type)){
+#   
+#   # calc_type = "mean"
+#   
+#   # if(glue(file.path(impact_maps_dir, "csvs/impact_maps_by_taxon_across_ingredient/{allocation_type}_{taxa_type}_{i}.rds.gz")) %in% c(unique(done$f))){
+#   #   
+#   #   cat("file exists")
+#   #   next()
+#   # }
+# 
+#   loop_df <- all_df %>%
+#     filter(calc_type == i) %>%
+#     filter(!is.na(value))
+# 
+#   data.table::fwrite(loop_df, glue(file.path(impact_maps_dir, "csvs/impact_maps_by_taxon_across_ingredient/{allocation_type}_{taxa_type}_{i}.rds.gz")))
+# 
+#       }
+#     }
+#   }
+# }
      
 
 test <- data.frame(f = list.files(file.path(impact_maps_dir, "csvs/impact_maps_by_taxon_across_ingredient"), full.names = TRUE)) %>%
   mutate(time = file.info(f)$ctime,
          size = file.size(f)) 
-
-done <- test %>% 
-  filter(str_detect(time, "31"))
 
   
   
@@ -481,6 +489,96 @@ ggsave(glue(here(this_dir, "output/plots/by_taxa/{allocation_type}_{taxa_type}_{
   }
 }
 
+
+
+
+for(allocation_type in allocations){
+    for(taxa_type in taxon){
+      for(type in calc_types){
+  
+        # type = "mean"
+        # allocation_type = "economic"
+        # taxa_type = "arthropods"
+  
+  if(file.exists(glue(here(this_dir, "output/plots/delta/by_taxa/{allocation_type}_{taxa_type}_{type}_plot.png")))){
+    cat("exists")
+    next()
+  }
+  
+        all_df <- fread(glue(file.path(impact_maps_dir, "csvs/impact_maps_by_taxon_across_ingredient/{allocation_type}_{taxa_type}_{type}.rds.gz"))) %>%
+          filter(!is.na(value))
+
+if(str_detect(type, "mean")){
+  
+  delta_df <- all_df %>%
+    mutate(value = (exp(value) - 1) / 1000000) %>%
+      pivot_wider(names_from = c(diet, taxa), values_from = value) %>%
+    rename_with(
+      ~ case_when(
+        str_detect(., "fish-dominant") ~ "fish-dominant",
+        str_detect(., "plant-dominant") ~ "plant-dominant",
+        TRUE ~ .)
+      ) %>%
+    mutate(`fish-dominant` = ifelse(is.na(`fish-dominant`), 0, `fish-dominant`),
+           `plant-dominant` = ifelse(is.na(`plant-dominant`), 0, `plant-dominant`)) %>%
+    # group_by(long, lat, fcr_type, calc_type) %>%
+    # summarise(`fish-dominant` = mean(`fish-dominant`, na.rm = TRUE),
+    #           `plant-dominant` = mean(`plant-dominant`, na.rm = TRUE)) %>% 
+    # ungroup() %>% 
+  mutate(delta = (`fish-dominant` - `plant-dominant`)) %>%
+    mutate(delta_log = log(delta + 1)) %>%
+    mutate(delta_rescale = delta*1000000)
+  
+}else{
+    delta_df <- all_df %>%
+      pivot_wider(names_from = c(diet, taxa), values_from = value) %>%
+    rename_with(
+      ~ case_when(
+        str_detect(., "fish-dominant") ~ "fish-dominant",
+        str_detect(., "plant-dominant") ~ "plant-dominant",
+        TRUE ~ .)
+      ) %>%
+          mutate(`fish-dominant` = ifelse(is.na(`fish-dominant`), 0, `fish-dominant`),
+           `plant-dominant` = ifelse(is.na(`plant-dominant`), 0, `plant-dominant`)) %>%
+    #       group_by(long, lat, fcr_type, calc_type) %>%
+    # summarise(`fish-dominant` = mean(`fish-dominant`, na.rm = TRUE),
+    #           `plant-dominant` = mean(`plant-dominant`, na.rm = TRUE)) %>% 
+    # ungroup() %>% 
+  mutate(delta = (`fish-dominant` - `plant-dominant`)) %>%
+    mutate(delta_log = log(delta + 1)) %>%
+    mutate(delta_rescale = delta*1000000)
+}
+  
+  
+if(str_detect(type, "nspp")){
+  limit <- c(min(delta_df$delta), max(delta_df$delta))
+  
+}else{
+limit <- c(quantile(delta_df$delta, 0.05), quantile(delta_df$delta, 0.9))
+# quantile(delta_df$delta)
+}
+
+## create maps in separate plots, force common scale between them
+  ggplot() + 
+  geom_tile(data = delta_df %>% filter(delta != 0) , aes(x= long, y = lat, fill = delta)) +
+    scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0,  limit = limit, na.value = "white", oob=scales::squish) +
+       # scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0,  na.value = "white") +
+              geom_sf(data = countries_shp, fill = NA, colour = "grey") + 
+    facet_wrap(~fcr_type) + 
+  theme_minimal() +
+      theme(
+          axis.title = element_blank(),
+          axis.text = element_blank(),
+          axis.ticks = element_blank()) + 
+    labs(caption = glue("{allocation_type}; {taxa_type}; {type}"))
+  ## make the delta a categorical variable for fish-dominant or plant-dominant? Regardless of magnitude? Set anything above the limit to be full red or blue? 
+            
+
+ggsave(glue(here(this_dir, "output/plots/delta/by_taxa/{allocation_type}_{taxa_type}_{type}_plot.png")), width = 10, height = 8, bg = "white")
+
+}
+}
+}
 ```
 
 Global maps by ingredients across taxon 
@@ -541,9 +639,6 @@ test <- data.frame(f = list.files(file.path(impact_maps_dir, "csvs/impact_maps_a
   mutate(time = file.info(f)$ctime,
          size = file.size(f)) 
 
-done <- test %>% 
-  filter(str_detect(time, "31"))
-
 
 
 for(allocation_type in allocations){
@@ -580,6 +675,111 @@ ggsave(glue(here(this_dir, "output/plots/by_ingredient/{allocation_type}_{ingred
     
     }
   }
+}
+
+
+
+for(allocation_type in allocations){
+    for(ingredient_type in ingredients){
+      for(type in calc_types){
+  
+        # type = "mean"
+        # allocation_type = "economic"
+        # ingredient_type = "CropsNES_coconut oil"
+  
+  if(file.exists(glue(here(this_dir, "output/plots/delta/by_ingredient/{allocation_type}_{ingredient_type}_{type}_plot.png")))){
+    cat("exists")
+    next()
+  }
+  
+        all_df <- fread(glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_by_ingredient/{allocation_type}_{ingredient_type}_{type}.rds.gz"))) %>%
+          filter(!is.na(value)) %>%
+          dplyr::select(long, lat, fcr_type, allocation, crop_ingredient, calc_type, diet, value) %>%
+          filter(crop_ingredient == ingredient_type)
+
+if(str_detect(type, "mean")){
+  
+  delta_df <- all_df %>%
+    mutate(value = (exp(value) - 1) / 1000000) %>%
+      pivot_wider(names_from = c(diet, crop_ingredient), values_from = value) %>%
+    rename_with(
+      ~ case_when(
+        str_detect(., "fish-dominant") ~ "fish-dominant",
+        str_detect(., "plant-dominant") ~ "plant-dominant",
+        TRUE ~ .)
+      ) 
+  
+  if(!("fish-dominant" %in% c(colnames(delta_df)))){
+    
+    delta_df <- delta_df %>%
+      mutate(`fish-dominant` = 0)
+  }else if(!("plant-dominant" %in% c(colnames(delta_df)))){
+        delta_df <- delta_df %>%
+      mutate(`plant-dominant` = 0)
+  }
+  
+  delta_df <- delta_df %>% 
+  mutate(`fish-dominant` = coalesce(`fish-dominant`, 0),
+         `plant-dominant` = coalesce(`plant-dominant`, 0)) %>%
+  mutate(delta = (`fish-dominant` - `plant-dominant`)) %>%
+    mutate(delta_log = log(delta + 1)) %>%
+    mutate(delta_rescale = delta*1000000)
+  
+}else{
+    delta_df <- all_df %>%
+      pivot_wider(names_from = c(diet, crop_ingredient), values_from = value) %>%
+    rename_with(
+      ~ case_when(
+        str_detect(., "fish-dominant") ~ "fish-dominant",
+        str_detect(., "plant-dominant") ~ "plant-dominant",
+        TRUE ~ .)
+      ) 
+  
+  if(!("fish-dominant" %in% c(colnames(delta_df)))){
+    
+    delta_df <- delta_df %>%
+      mutate(`fish-dominant` = 0)
+  }else if(!("plant-dominant" %in% c(colnames(delta_df)))){
+        delta_df <- delta_df %>%
+      mutate(`plant-dominant` = 0)
+  }
+  
+  delta_df <- delta_df %>% 
+  mutate(`fish-dominant` = coalesce(`fish-dominant`, 0),
+         `plant-dominant` = coalesce(`plant-dominant`, 0)) %>%
+  mutate(delta = (`fish-dominant` - `plant-dominant`)) %>%
+    mutate(delta_log = log(delta + 1)) %>%
+    mutate(delta_rescale = delta*1000000)
+}
+  
+  
+if(str_detect(type, "nspp")){
+  limit <- c(min(delta_df$delta), max(delta_df$delta))
+  
+}else{
+limit <- c(quantile(delta_df$delta, 0.05), quantile(delta_df$delta, 0.9))
+# quantile(delta_df$delta)
+}
+
+## create maps in separate plots, force common scale between them
+  ggplot() + 
+  geom_tile(data = delta_df %>% filter(delta != 0) , aes(x= long, y = lat, fill = delta)) +
+    scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0,  limit = limit, na.value = "white", oob=scales::squish) +
+       # scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0,  na.value = "white") +
+              geom_sf(data = countries_shp, fill = NA, colour = "grey") + 
+    facet_wrap(~fcr_type) + 
+  theme_minimal() +
+      theme(
+          axis.title = element_blank(),
+          axis.text = element_blank(),
+          axis.ticks = element_blank()) + 
+    labs(caption = glue("{allocation_type}; {ingredient_type}; {type}"))
+            
+
+ggsave(glue(here(this_dir, "output/plots/delta/by_ingredient/{allocation_type}_{ingredient_type}_{type}_plot.png")), width = 10, height = 8, bg = "white")
+
+}
+}
 }
 
 ```
