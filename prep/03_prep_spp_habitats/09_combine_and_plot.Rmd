@@ -678,7 +678,7 @@ ggsave(glue(here(this_dir, "output/plots/delta/by_ingredient/{allocation_type}_{
 
 
 
-Lets make plots, just using economic allocation. 
+Lets make summary bar plots, just using economic allocation. 
 
 ```{r}
 all_overlap <- all_overlap %>%
