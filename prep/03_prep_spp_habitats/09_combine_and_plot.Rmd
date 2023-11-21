@@ -147,9 +147,6 @@ allocations <- c("economic", "ge", "mass")
 # }
 # }
 
-# test <- data.frame(f = list.files(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_ingredient/"), full.names = TRUE)) %>%
-#   mutate(time = file.info(f)$ctime,
-#          size = file.size(f))
 
 
 ## make plots showing impacts for each scenario 
@@ -223,10 +220,6 @@ if(str_detect(type, "mean")){
       pivot_wider(names_from = c(diet), values_from = value) %>%
     mutate(`fish-dominant` = ifelse(is.na(`fish-dominant`), 0, `fish-dominant`),
            `plant-dominant` = ifelse(is.na(`plant-dominant`), 0, `plant-dominant`)) %>%
-    # group_by(long, lat, fcr_type, calc_type) %>%
-    # summarise(`fish-dominant` = mean(`fish-dominant`, na.rm = TRUE),
-    #           `plant-dominant` = mean(`plant-dominant`, na.rm = TRUE)) %>% 
-    # ungroup() %>% 
   mutate(delta = (`fish-dominant` - `plant-dominant`)) %>%
     mutate(delta_log = log(delta + 1)) %>%
     mutate(delta_rescale = delta*1000000)
@@ -241,6 +234,9 @@ if(str_detect(type, "mean")){
     mutate(delta_rescale = delta*1000000)
 }
   
+# data.table::fwrite(delta_df, glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_ingredient/delta/{type}.rds.gz")))
+
+
   
 if(str_detect(type, "nspp")){
   limit <- c(min(delta_df$delta), max(delta_df$delta))
@@ -448,7 +444,8 @@ if(str_detect(type, "mean")){
     mutate(delta_rescale = delta*1000000)
 }
   
-  
+# data.table::fwrite(delta_df, glue(file.path(impact_maps_dir, "csvs/impact_maps_by_taxon_across_ingredient/delta/{allocation_type}_{taxa_type}_{type}.rds.gz")))
+
 if(str_detect(type, "nspp")){
   limit <- c(min(delta_df$delta), max(delta_df$delta))
   
@@ -648,6 +645,9 @@ if(str_detect(type, "mean")){
 }
   
   
+#   data.table::fwrite(loop_df, glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_by_ingredient/{allocation_type}_{ingredient_type}_{type}.rds.gz")))
+
+        
 if(str_detect(type, "nspp")){
   limit <- c(min(delta_df$delta), max(delta_df$delta))
   
