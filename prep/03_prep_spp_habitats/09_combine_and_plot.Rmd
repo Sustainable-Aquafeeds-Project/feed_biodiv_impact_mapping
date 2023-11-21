@@ -79,7 +79,8 @@ light_gray <- "#F8F9FA"
 final_palette <- c(light_gray, continuous_pal)
 scales::show_col(final_palette)
 
-countries_shp <- ne_countries(scale = 110, returnclass = "sf") |> st_transform(crs(moll_template)) # read in countries shapefile
+countries_shp <- ne_countries(scale = 110, returnclass = "sf") |> 
+  st_transform(crs(moll_template)) # read in countries shapefile
 
 ```
 
@@ -669,6 +670,150 @@ limit <- c(quantile(delta_df$delta, 0.05), quantile(delta_df$delta, 0.9))
             
 
 ggsave(glue(here(this_dir, "output/plots/delta/by_ingredient/{allocation_type}_{ingredient_type}_{type}_plot.png")), width = 10, height = 8, bg = "white")
+
+    }
+  }
+}
+
+```
+
+Global maps by raw material across taxon 
+
+```{r}
+
+allocations <- c("economic", "ge", "mass")
+calc_types <- c("mean", "sd", "nspp")
+ingredients <- all_overlap %>% pull(ingredient) %>% unique()
+raw_mats <- all_overlap %>% mutate(raw_material = str_before_first(ingredient, "_")) %>% 
+  pull(raw_material) %>% unique()
+
+## commented out code only needs to be run if the source impact maps are updated! 
+for(allocation_type in allocations){
+  for(raw_mat in raw_mats){
+    for(type in calc_types){
+
+    # ingredient_type = "Soybean_soybean meal"
+    # allocation_type = "economic"
+    # type = "mean"
+    #  raw_mat = "CropsNES"
+
+    all_files <- list.files(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_by_ingredient"), pattern = glue("{allocation_type}_{raw_mat}_.*._{type}"), full.names = TRUE)
+
+
+all_df <- map_dfr(all_files, ~fread(.x), header = TRUE)
+
+all_df_fin <- all_df %>% 
+  mutate(value = ifelse(calc_type == "mean", (exp(value) - 1) / 1000000, value)) %>%
+  group_by(long, lat, diet, fcr_type, allocation, raw_material, calc_type) %>% 
+  summarise(value = sum(value, na.rm = TRUE)) %>%
+  ungroup()
+
+# test <- all_df_fin %>% group_by(diet, fcr_type, allocation) %>% summarise(sum = sum(value, na.rm = TRUE))
+
+
+data.table::fwrite(all_df_fin, glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_by_raw_material/{allocation_type}_{raw_mat}_{type}.rds.gz")))
+
+
+delta_df <- all_df_fin %>%
+        pivot_wider(names_from = c(diet), values_from = value) 
+
+
+  if(!("fish-dominant" %in% c(colnames(delta_df)))){
+    
+    delta_df <- delta_df %>%
+      mutate(`fish-dominant` = 0)
+  }else if(!("plant-dominant" %in% c(colnames(delta_df)))){
+        delta_df <- delta_df %>%
+      mutate(`plant-dominant` = 0)
+  }
+
+delta_df <- delta_df %>% 
+  mutate(delta = (`fish-dominant` - `plant-dominant`)) 
+
+data.table::fwrite(delta_df, glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_by_raw_material/delta/{allocation_type}_{raw_mat}_{type}.rds.gz")))
+
+    }
+  }
+}
+
+
+
+for(allocation_type in allocations){
+    for(raw_mat in raw_mats){
+      for(type in calc_types){
+        
+      # raw_mat = "forage fish"
+      # allocation_type = "economic"
+      # type = "nspp"
+      
+                all_df <- fread(glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_by_raw_material/{allocation_type}_{raw_mat}_{type}.rds.gz"))) 
+ 
+diets <- unique(all_df$diet)
+  
+## create maps in separate plots, force common scale between them
+maps <- map(.x = diets, 
+            .f = function(x, y) 
+  ggplot() + 
+  geom_tile(data = all_df  %>% filter(diet == x), aes(x= long, y = lat, fill = value)) + 
+   scale_fill_gradientn(colors = final_palette, na.value = "white") +
+              geom_sf(data = countries_shp, fill = NA, colour = "grey") + 
+    facet_wrap(~fcr_type) + 
+  theme_minimal() +
+      theme(
+          axis.title = element_blank(),
+          axis.text = element_blank(),
+          axis.ticks = element_blank())
+            )
+
+ggsave(glue(here(this_dir, "output/plots/by_material/{allocation_type}_{raw_mat}_{type}_plot.png")), plot = plot_grid(plotlist = maps, labels = glue("{diets}:{allocation_type}:{raw_mat}:{type}"), label_size = 10, nrow = 2), width = 10, height = 8, bg = "white")
+
+    
+    }
+  }
+}
+
+
+# make delta plots! 
+
+for(allocation_type in allocations){
+    for(raw_mat in raw_mats){
+      for(type in calc_types){
+  
+        # type = "mean"
+        # allocation_type = "economic"
+        # raw_mat = "Soybean"
+  
+  # if(file.exists(glue(here(this_dir, "output/plots/delta/by_ingredient/{allocation_type}_{ingredient_type}_{type}_plot.png")))){
+  #   cat("exists")
+  #   next()
+  # }
+  
+        delta_df <- fread(glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_by_raw_material/delta/{allocation_type}_{raw_mat}_{type}.rds.gz"))) %>%
+          filter(!is.na(delta)) %>%
+          dplyr::select(long, lat, fcr_type, allocation, raw_material, calc_type, delta)
+  
+if(str_detect(type, "nspp")){
+  limit <- c(min(delta_df$delta), max(delta_df$delta))
+  
+}else{
+limit <- c(quantile(delta_df$delta, 0.05), quantile(delta_df$delta, 0.9))
+}
+
+## create maps in separate plots, force common scale between them
+  ggplot() + 
+  geom_tile(data = delta_df %>% filter(delta != 0) , aes(x= long, y = lat, fill = delta)) +
+    scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0,  limit = limit, na.value = "white", oob=scales::squish) +
+              geom_sf(data = countries_shp, fill = NA, colour = "grey") + 
+    facet_wrap(~fcr_type) + 
+  theme_minimal() +
+      theme(
+          axis.title = element_blank(),
+          axis.text = element_blank(),
+          axis.ticks = element_blank()) + 
+    labs(caption = glue("{allocation_type}; {raw_mat}; {type}"))
+            
+
+ggsave(glue(here(this_dir, "output/plots/delta/by_material/{allocation_type}_{raw_mat}_{type}_plot.png")), width = 10, height = 8, bg = "white")
 
     }
   }

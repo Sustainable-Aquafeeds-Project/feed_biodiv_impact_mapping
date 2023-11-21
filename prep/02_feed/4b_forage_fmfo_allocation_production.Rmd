@@ -117,7 +117,7 @@ write.csv(baci_filt, file.path(rdsi_raw_data_dir, "BACI_data/BACI_FMFO_codes.csv
        - Otherwise, use a global average of all species and regions 
 
  8. Divide the tonnes of fish oil and fish meal live weight equivalents by the total amount of forage catch in each country. This gives us a proportion of forage fish catch in each country that goes to FMFO. 
- 9. Join with Watson data, group by cell, and rasterize? Now we will have rasters describing the amount of forage fish catch that goes to fish oil or fish meal for salmon feed under each diet scenario under each allocation approach (mass or energetic). 
+ 9. Join with Watson data, group by cell, and rasterize. Now we will have rasters describing the amount of forage fish catch that goes to fish oil or fish meal for salmon feed under each diet scenario under each allocation approach (economic, mass, or energetic). 
  
  
 ### step 1 
