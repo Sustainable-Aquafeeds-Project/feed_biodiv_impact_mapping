@@ -106,6 +106,10 @@ terrestrial_overlap <- readRDS(here("prep/03_prep_spp_habitats/output/aoh_terres
 
 all_overlap <- rbind(marine_overlap, terrestrial_overlap)
 
+test <- all_overlap %>%
+  group_by(spp_type) %>%
+  summarise(spp_count = n_distinct(sciname))
+
 ```
 
 Maps!

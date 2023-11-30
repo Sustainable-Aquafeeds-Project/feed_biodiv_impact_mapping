@@ -93,5 +93,5 @@ tonnes_consumption %>%
   ungroup() %>%
   write.csv(here("prep/02_feed/data/demand/total_global_ingredient_demand.csv"), row.names = FALSE)
 
-
+test <- read.csv(here("prep/02_feed/data/demand/total_global_ingredient_demand.csv"))
 ```

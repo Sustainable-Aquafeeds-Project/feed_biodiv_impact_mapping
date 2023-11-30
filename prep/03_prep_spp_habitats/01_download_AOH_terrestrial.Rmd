@@ -8,6 +8,7 @@ editor_options:
 ## Data sources 
 
 * Lumbierres et al. 2022: https://www.nature.com/articles/s41597-022-01838-w
+* Eyres et al. 2023(4?): In prep. Files shared through email communication with Alison Eyres (ae491@cam.ac.uk) and Michael Winston Dales (mwd24@cam.ac.uk) at Cambridge University: https://www.cl.cam.ac.uk/research/eeg/4c/data/aoh/
 
 
 ## Setup
@@ -21,16 +22,20 @@ library(here)
 library(terra)
 library(strex)
 library(janitor)
+library(rredlist)
 
 source(here("src/directories.R"))
-
 source(here("src/spatial.R"))
+source(here("src/fxns.R"))
 
 select <- dplyr::select
 setwd(dirname(rstudioapi::getSourceEditorContext()$path)) # set working directory to where this script is located
 this_dir <- getwd()
 
 ```
+
+
+## Download the Lumbierres data 
 
 Check to make sure we downloaded all of the AOH species maps from https://datadryad.org/stash/dataset/doi:10.5061/dryad.02v6wwq48
 
@@ -109,9 +114,144 @@ plot(test_size)
 ```
 
 
+## Download the Eyres data
+
+run these bash in the terminal and you will be able to recursively download all species AOH files from https://www.cl.cam.ac.uk/research/eeg/4c/data/aoh/ to your specific folder (mine is "AOH_eyres")
+
+IUCN ids are the numbers which are attached
+
+This takes a really long time... run it overnight.
+
+```{bash eval = false}
+
+cd ../../raw_data/AOH_eyres
+wget -r -nH --cut-dirs=5 --no-parent --reject="index.html*" -N https://www.cl.cam.ac.uk/research/eeg/4c/data/aoh/
+
+```
+
+Get IUCN ids and spp names for the Eyres species (need to download them all first)
+
+```{r}
+
+out <- rl_sp(all=TRUE, key = api_key)
+vapply(out,"[[",1,"count") 
+all_df<-do.call(rbind,lapply(out,"[[","result"))
+
+write_rds(all_df, here("prep/03_prep_spp_habitats/data/iucn/all_iucn_spp.rds"))
+
+
+spp_ids <- data.frame(fn = grep(list.files(file.path("/mnt/rdsi/raw_data/AOH_eyres/"), recursive = TRUE), pattern = "reprojected", invert = TRUE, value = TRUE)) %>% # delete amphibians and add recursive for all species names
+  mutate(iucn_id = as.numeric(str_after_last(fn, "-") %>%
+  str_before_first(., ".tif")),
+  spp_type = str_before_first(fn, "\\/")) %>%
+  distinct(spp_type, iucn_id)
+
+all_df <- readRDS(here("prep/03_prep_spp_habitats/data/iucn/all_iucn_spp.rds"))
+
+eyres_ids <- spp_ids %>% 
+  left_join(all_df, by = c("iucn_id" = "taxonid")) # ok cool 
+
+spp_groups <- eyres_ids %>%
+  group_by(spp_type) %>%
+  summarise(n_group = n_distinct(iucn_id)) %>%
+  ungroup()
+
+test_nas <- eyres_ids %>%
+  filter(is.na(scientific_name)) ## missing names for 235 species
+
+# lets see if we can find some of these names using iucn redlist api 
+
+loop_list <- c()
+
+for(loop_id in unique(test_nas$iucn_id)){
+  
+  search_id <- rl_search(id = loop_id, key = api_key)
+  
+  loop_list <- c(loop_list, search_id)
+} # ok that didn't work.. maybe these just don't exist? Hopefully Michael will send me a species list. 
+
+write_rds(eyres_ids, here("prep/03_prep_spp_habitats/data/iucn/eyres_iucn_spp.rds"))
 
 
 
 
+```
+
+
+
+
+```{r}
+test <- read.csv("/mnt/rdsi/raw_data/AOH_eyres/reprojected_mol_csv/Seasonality.BREEDING-103702625.csv")
+
+
+test1 <- rast(list.files(file.path("/mnt/rdsi/raw_data/AOH_eyres"), recursive = TRUE, pattern = "Seasonality.RESIDENT-130481421.tif", full.names = TRUE))
+test1
+plot(test1)
+
+test_rast <- left_join(test, moll_template_xy) %>% 
+  dplyr::select(x,y,presence)
+# %>%
+#  mutate(presence = ifelse(is.na(presence), 0, presence)) %>%
+#   rast(., type = "xyz", crs = moll_template)
+  
+plot(test_rast)
+
+test_rast[test_rast == 1] <- 10000
+plot(test_rast)
+global(test_rast, "max")
+
+moll_template_xy_new <- moll_template %>% mutate(new_col = 1) %>%
+  as.data.frame(., xy = TRUE) %>% 
+  mutate(cell_id = 1:ncell(moll_template)) %>% 
+  filter(across(everything(), ~grepl("\\.", as.character(.))))
+
+moll_template_xy_land <- readRDS(here("prep/03_prep_spp_habitats/data/spatial/moll_template_land_xy.rds"))
+moll_template_xy_ocean <- readRDS(here("prep/03_prep_spp_habitats/data/spatial/moll_template_ocean_xy.rds"))
+
+ocean <- rast(here("prep/03_prep_spp_habitats/data/spatial/ocean_area_mol.tif"))
+ocean[is.na(ocean)] <- 0
+
+ocean_df <- ocean %>%
+  as.data.frame(., xy = TRUE) %>%
+   mutate(cell_id = 1:ncell(ocean)) %>% 
+  filter(grepl("\\.", as.character(x)))
+
+test2 <- rast(list.files(file.path("/mnt/rdsi/raw_data/AOH_eyres"), recursive = TRUE, pattern = "Seasonality.BREEDING-103702625.tif", full.names = TRUE))
+# test2[test2 == 0] <- NA
+plot(test2, col = "red")
+
+
+spp_csv <- test2 %>% 
+    project(moll_template, method = "near") %>%
+      as.data.frame(., xy = TRUE) %>%
+     rename(presence = 3) %>%
+    filter(presence > 0) %>%
+    mutate(presence = 1) %>%
+     inner_join(moll_template_xy_ocean) %>%
+     dplyr::select(x, y, presence) %>%
+  rast(., type = "xyz")
+  
+spp_csv <-  test2 %>%
+        aggregate(fact = 10, fun = "mean", na.rm = TRUE) %>%  
+        project(moll_template, method = "near") %>% 
+        as.data.frame(., xy = TRUE) %>%
+        rename(presence = 3) %>%
+        filter(presence >0) %>%
+        mutate(presence = 1) %>%
+        inner_join(moll_template_xy) %>%
+        dplyr::select(x,y,presence) %>%
+        rast(., type = "xyz", crs = moll_template)
+      
+      
+      
+      test3 <- rbind(test_rast, spp_csv) %>%
+                rast(., type = "xyz", crs = moll_template)
+        
+      plot(test3)
+      
+      
+      
+  
+```
 
 
