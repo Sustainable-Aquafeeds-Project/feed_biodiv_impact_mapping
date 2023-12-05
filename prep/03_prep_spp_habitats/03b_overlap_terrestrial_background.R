@@ -43,7 +43,7 @@ source(here("src/spatial.R"))
 source(here("src/fxns.R"))
 
 aquamaps_dir <- file.path(rdsi_raw_data_dir, "aquamaps")
-terrestrial_dir <- file.path(rdsi_raw_data_dir, "AOH_lumbierres")
+terrestrial_dir <- file.path(rdsi_raw_data_dir, "AOH_eyres")
 biodiv_dir <- file.path(rdsi_dir, "biodiversity_impacts")
 feed_rast_dir <- file.path(biodiv_dir, "int/resampled_ingredient_rasts")
 
@@ -52,28 +52,45 @@ gall_peters <- "+proj=cea +lon_0=0 +x_0=0 +y_0=0 +lat_ts=45 +ellps=WGS84 +datum=
 
 moll_land_template <- readRDS(file.path(this_dir, "data/spatial/moll_template_land_xy.rds"))
 
+iucn_ids_names <- readRDS(here(this_dir, "data/iucn/eyres_iucn_spp.rds"))
+
 ## For loop
 
 ## Setup spp map source and vulnerability data 
+# spp_fp <- data.frame(filepath = list.files(file.path(terrestrial_dir, "reprojected_mol_csv"), full.names = TRUE)) %>%
+#   mutate(species_full = str_after_last(filepath, "\\/")) %>%
+#   mutate(species = ifelse(str_detect(species_full, "_R.csv|_N.csv|_B.csv"), str_remove_all(species_full, "_R.csv|_N.csv|_B.csv"), species_full)) %>%
+#   mutate(species = str_remove_all(species, ".csv")) %>%
+#   mutate(species = str_replace_all(species, "_", " ")) %>%
+#   mutate(species_full = str_remove_all(species_full, ".csv"))
+
 spp_fp <- data.frame(filepath = list.files(file.path(terrestrial_dir, "reprojected_mol_csv"), full.names = TRUE)) %>%
   mutate(species_full = str_after_last(filepath, "\\/")) %>%
-  mutate(species = ifelse(str_detect(species_full, "_R.csv|_N.csv|_B.csv"), str_remove_all(species_full, "_R.csv|_N.csv|_B.csv"), species_full)) %>%
-  mutate(species = str_remove_all(species, ".csv")) %>%
-  mutate(species = str_replace_all(species, "_", " ")) %>%
-  mutate(species_full = str_remove_all(species_full, ".csv"))
+  mutate(species_id = as.numeric(str_remove_all(str_after_last(species_full, "-"), ".csv"))) %>%
+  left_join(iucn_ids_names, by = c("species_id" = "iucn_id")) %>%
+  dplyr::select(filepath, species_full = scientific_name, spp_type, species_id) %>%
+  mutate(spp_type = case_when(
+    spp_type == "mammals" ~ "Terrestrial mammal", 
+    spp_type == "birds" ~ "Bird",
+    spp_type == "reptiles" ~ "Reptiles",
+    spp_type == "amphibians" ~ "Amphibians"
+  ))
 
 spp_info_df <- readRDS(file.path(this_dir, "int/terrestrial_spp_habitat_suitability.rds")) %>%
-  left_join(spp_fp)
+  inner_join(spp_fp, by = c("species" = "species_full", "spp_type")) %>% # change this to left join ? 
+  rename(species_full = species)
 
 spp_info_df %>% 
   group_by(spp_type) %>%
-  summarize(nspp = n_distinct(species))
+  summarize(nspp = n_distinct(species_full))
 
-# # A tibble: 2 × 2
+# # A tibble: 4 × 2
 # spp_type            nspp
 # <chr>              <int>
-#   1 Bird               10651
-# 2 Terrestrial mammal  5482
+#   1 Amphibians          6792
+# 2 Bird               10024
+# 3 Reptiles            9279
+# 4 Terrestrial mammal  5501
 
 crop_ingredient_cats <- read.csv(here("prep/02_feed/output/proportion_feed_per_country_system_diet.csv")) %>%
   dplyr::select(diet, fcr_type, source_ingredient, GAEZ_category) %>%
@@ -93,7 +110,7 @@ diet_fcr_crop_ingredients <- unique(crop_ingredient_cats$diet_fcr_crop_ingredien
 
 for(tx_type in spp_types){
   
- # tx_type = "Terrestrial mammal"
+ # tx_type = "Amphibians"
   
   tx_vuln_df <- spp_info_df %>%
     filter(spp_type == tx_type)
@@ -107,6 +124,7 @@ for(tx_type in spp_types){
   tx_maps <- collect_spp_rangemaps_terrestrial(tx_maps_df$species_full, tx_maps_df$filepath)
   
   
+  
   message('Taxon ', tx_type, ' harvest stressor dataframe: ', nrow(tx_maps[["parent"]]),
           ' cell observations for ', nrow(tx_maps_df), ' species...')
 for(allocation_type in allocations){
@@ -114,7 +132,7 @@ for(allocation_type in allocations){
 
 # allocation_type = "economic"
 # diet_fcr_crop_ingredient_type = "fish-dominant/efficient/Maize_corn gluten meal"
-# tx_type = "Terrestrial mammal"
+# tx_type = "Amphibians"
 
           diet_type = str_before_first(diet_fcr_crop_ingredient_type, "/")
           ingredient_type = str_after_first(diet_fcr_crop_ingredient_type, "_")
@@ -146,10 +164,10 @@ for(allocation_type in allocations){
           outf_mean_df <- glue(file.path(this_dir, "int/aoh_impacts_terrestrial/{tx_type}_{diet_type}_{fcr}_{crop_type}_{ingredient_type}_{allocation_type}.rds"))
 
           
-          if(all(file.exists(outf_mean, outf_sd))) {
-            message('Rasters exist for taxon ', tx_type, crop_type, ingredient_type, diet_type, allocation_type, fcr, ' for harvest stressor... skipping!')
-            next()
-          }
+          # if(all(file.exists(outf_mean, outf_sd))) {
+          #   message('Rasters exist for taxon ', tx_type, crop_type, ingredient_type, diet_type, allocation_type, fcr, ' for harvest stressor... skipping!')
+          #   next()
+          # }
 
           
           
@@ -190,7 +208,7 @@ for(allocation_type in allocations){
                                                 chunk_sum <- chunk_sum_spp %>%
                                                 .[ , .(impact_mean = mean(impact),
                                                        impact_sd   = sd(impact),
-                                                       n_spp       = length(unique(species))),
+                                                       n_spp       = length(unique(species_full))),
                                                    by = 'cell_id']
                                               
                                               
@@ -217,17 +235,17 @@ for(allocation_type in allocations){
           message(glue('Creating and saving rasters for taxon {tx_type} {allocation_type} {diet_fcr_crop_ingredient_type}'))
           rast_mean <- result_df %>%
             dplyr::select(cell_id, impact_mean) %>%
-            left_join(moll_land_template) %>%
+            left_join(moll_template_xy) %>%
             dplyr::select(x, y, impact_mean) %>%
             rast(., type = "xyz", crs = moll_template)
           rast_sd   <- result_df %>%
             dplyr::select(cell_id, impact_sd) %>%
-            left_join(moll_land_template) %>%
+            left_join(moll_template_xy) %>%
             dplyr::select(x, y, impact_sd) %>%
             rast(., type = "xyz", crs = moll_template)
           rast_nspp <- result_df %>%
             dplyr::select(cell_id, n_spp) %>%
-            left_join(moll_land_template) %>%
+            left_join(moll_template_xy) %>%
             dplyr::select(x, y, n_spp) %>%
             rast(., type = "xyz", crs = moll_template)
 

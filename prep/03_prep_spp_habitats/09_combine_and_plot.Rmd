@@ -110,6 +110,10 @@ test <- all_overlap %>%
   group_by(spp_type) %>%
   summarise(spp_count = n_distinct(sciname))
 
+test <- all_overlap %>%
+  filter(spp_type == "Reptiles and amphibians") %>%
+  distinct(sciname)
+
 ```
 
 Maps!
@@ -171,7 +175,11 @@ for(type in types_df){
   
  filepath <- glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_ingredient/{type}.rds.gz"))
 
-loop_df <-  fread(filepath) # %>%
+loop_df <-  fread(filepath) 
+# %>%
+#               mutate(value = (exp(value) - 1) / 1000000)
+
+# %>%
  # mutate(fcr_type = "regular")
 
 # loop_df_2 <-  fread(filepath) %>%
@@ -183,7 +191,8 @@ loop_df <-  fread(filepath) # %>%
 maps <- map(.x = diets, 
             .f = function(x, y) 
   ggplot() + 
-  geom_tile(data = loop_df  %>% filter(diet == x), aes(x= long, y = lat, fill = value)) +  # (exp(value) - 1) / 1000000)
+  geom_tile(data = loop_df  %>% 
+              filter(diet == x), aes(x= long, y = lat, fill = value)) +  # mutate(exp(value) - 1) / 1000000)
       # scale_fill_gradientn(colors = YlOrBr(9), na.value = "white") +  # Set the color for missing values (NA) to white
    scale_fill_gradientn(colors = final_palette, na.value = "white") +
    #  scale_fill_viridis(direction = -1) + 

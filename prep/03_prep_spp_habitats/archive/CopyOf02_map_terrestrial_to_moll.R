@@ -48,8 +48,9 @@ spp_vec <- setdiff(spp_info, spp_done) %>% unique() %>% sort()
 # spp_vec = spp_done
 
 map_terrestrial_to_moll <- function(s) {
-  # s <- spp_vec[2]
-  i <- which(spp_vec == s)
+  # s <- spp_done[2]
+ # s <- "Zapornia_parva_R"
+  i <- which(spp_done == s)
   
   out_f <- file.path(lumbierres_dir_mol, paste0(s, ".csv"))
   

@@ -23,6 +23,8 @@ library(terra)
 library(strex)
 library(janitor)
 library(rredlist)
+library(sf)
+library(mapview)
 
 source(here("src/directories.R"))
 source(here("src/spatial.R"))
@@ -157,7 +159,10 @@ spp_groups <- eyres_ids %>%
   ungroup()
 
 test_nas <- eyres_ids %>%
-  filter(is.na(scientific_name)) ## missing names for 235 species
+  filter(is.na(scientific_name)) %>% ## missing names for 235 species
+  dplyr::select(spp_type, iucn_id)
+
+write.csv(test_nas, here("prep/03_prep_spp_habitats/data/iucn/missing_ids.csv"), row.names = FALSE)
 
 # lets see if we can find some of these names using iucn redlist api 
 
@@ -178,80 +183,63 @@ write_rds(eyres_ids, here("prep/03_prep_spp_habitats/data/iucn/eyres_iucn_spp.rd
 ```
 
 
-
+Data check after reprojection in `02_map_terrestrial_to_moll.R`
 
 ```{r}
-test <- read.csv("/mnt/rdsi/raw_data/AOH_eyres/reprojected_mol_csv/Seasonality.BREEDING-103702625.csv")
+new <- read.csv("/mnt/rdsi/raw_data/AOH_eyres/reprojected_mol_csv/Seasonality.RESIDENT-88149202.csv")
 
+new1 <- new %>% 
+    left_join(moll_template_xy) %>%
+  dplyr::select(x, y, presence) %>%
+  rast(., type = "xyz", crs = moll_template)
+plot(new1)
 
-test1 <- rast(list.files(file.path("/mnt/rdsi/raw_data/AOH_eyres"), recursive = TRUE, pattern = "Seasonality.RESIDENT-130481421.tif", full.names = TRUE))
-test1
-plot(test1)
+      
+old <- raster("/mnt/rdsi/raw_data/AOH_eyres/mammals/Seasonality.RESIDENT-88149202.tif") 
+# %>% 
+# projectRaster(., moll_template, method = "ngb")
 
-test_rast <- left_join(test, moll_template_xy) %>% 
-  dplyr::select(x,y,presence)
+# there are 0s in the files... is using nearest neighbor screwing with some of the smaller files? I'm not really sure... the big files seem ok. And taking out all of the 0s take forever. 
+
 # %>%
-#  mutate(presence = ifelse(is.na(presence), 0, presence)) %>%
-#   rast(., type = "xyz", crs = moll_template)
-  
-plot(test_rast)
+# classify(., cbind(-Inf, 0, NA), right=FALSE) # clamp, ifel, and classify in terra and raster all take a really long time...
+# clamp(., lower=0.000001, useValues=FALSE)
+# old[old == 0] <- NA
 
-test_rast[test_rast == 1] <- 10000
-plot(test_rast)
-global(test_rast, "max")
+plot(old)  
 
-moll_template_xy_new <- moll_template %>% mutate(new_col = 1) %>%
-  as.data.frame(., xy = TRUE) %>% 
-  mutate(cell_id = 1:ncell(moll_template)) %>% 
-  filter(across(everything(), ~grepl("\\.", as.character(.))))
-
-moll_template_xy_land <- readRDS(here("prep/03_prep_spp_habitats/data/spatial/moll_template_land_xy.rds"))
-moll_template_xy_ocean <- readRDS(here("prep/03_prep_spp_habitats/data/spatial/moll_template_ocean_xy.rds"))
-
-ocean <- rast(here("prep/03_prep_spp_habitats/data/spatial/ocean_area_mol.tif"))
-ocean[is.na(ocean)] <- 0
-
-ocean_df <- ocean %>%
-  as.data.frame(., xy = TRUE) %>%
-   mutate(cell_id = 1:ncell(ocean)) %>% 
-  filter(grepl("\\.", as.character(x)))
-
-test2 <- rast(list.files(file.path("/mnt/rdsi/raw_data/AOH_eyres"), recursive = TRUE, pattern = "Seasonality.BREEDING-103702625.tif", full.names = TRUE))
-# test2[test2 == 0] <- NA
-plot(test2, col = "red")
+# ok so big files seem to be ok... lets look at small files
 
 
-spp_csv <- test2 %>% 
-    project(moll_template, method = "near") %>%
-      as.data.frame(., xy = TRUE) %>%
-     rename(presence = 3) %>%
-    filter(presence > 0) %>%
-    mutate(presence = 1) %>%
-     inner_join(moll_template_xy_ocean) %>%
-     dplyr::select(x, y, presence) %>%
-  rast(., type = "xyz")
-  
-spp_csv <-  test2 %>%
+new <- read.csv("/mnt/rdsi/raw_data/AOH_eyres/reprojected_mol_csv/Seasonality.RESIDENT-77347251.csv")
+
+new1 <- new %>% 
+    left_join(moll_template_xy) %>%
+  dplyr::select(x, y, presence) %>%
+  st_as_sf(., coords = c("x", "y"), crs = crs(moll_template))
+
+mapview(new1)
+
+      
+old <- rast("/mnt/rdsi/raw_data/AOH_eyres/amphibians/Seasonality.RESIDENT-77347251.tif")     
+# old      
+plot(old)  
+
+old1 <- old %>%
         aggregate(fact = 10, fun = "mean", na.rm = TRUE) %>%  
-        project(moll_template, method = "near") %>% 
-        as.data.frame(., xy = TRUE) %>%
-        rename(presence = 3) %>%
-        filter(presence >0) %>%
-        mutate(presence = 1) %>%
-        inner_join(moll_template_xy) %>%
-        dplyr::select(x,y,presence) %>%
-        rast(., type = "xyz", crs = moll_template)
-      
-      
-      
-      test3 <- rbind(test_rast, spp_csv) %>%
-                rast(., type = "xyz", crs = moll_template)
-        
-      plot(test3)
-      
-      
-      
-  
+        project(., moll_template, method = "near") %>%
+  as.data.frame(., xy = TRUE) %>%
+  rename(presence = 3) %>%
+  filter(presence != 0) %>%
+  mutate(presence = 1 ) %>%
+  left_join(moll_template_xy) %>%
+  dplyr::select(x, y, presence) %>%
+  rast(., type = "xyz")
+
+plot(old1)
+
+# Let's rerun everything under 300 bytes with the aggregate method just to be sure. I don't think it will really make a difference. A few cells here and there. It is definitely working... just not as exact as I would like. 
+
 ```
 
 

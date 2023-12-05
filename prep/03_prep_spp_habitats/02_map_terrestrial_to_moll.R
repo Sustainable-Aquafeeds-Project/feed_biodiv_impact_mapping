@@ -16,6 +16,7 @@
 library(tidyverse)
 library(tidyr)
 library(here)
+library(raster)
 library(terra)
 library(parallel)
 library(strex)
@@ -32,6 +33,7 @@ eyres_dir_mol <- file.path(eyres_dir, "reprojected_mol_csv")
 
 ### create cell id lookup
 moll_template_xy_land <- readRDS(here("prep/03_prep_spp_habitats/data/spatial/moll_template_land_xy.rds"))
+moll_template_raster <- raster(moll_template)
 
 spp_info <- data.frame(aoh_files = basename(list.files(file.path(rdsi_raw_data_dir, "AOH_eyres"), full.names = TRUE, recursive = TRUE))) %>%
   filter(str_detect(aoh_files, ".tif")) %>%
@@ -46,34 +48,52 @@ spp_done <- basename(x) %>% str_remove_all('.csv$')
 spp_vec <- setdiff(spp_info, spp_done) %>% unique() %>% sort()
 # spp_vec <- spp_info
 
+
+# Specify the directories
+directories <- grep(list.files(eyres_dir, full.names = TRUE), pattern = "reprojected", value = TRUE, invert = TRUE)
+
+# Create a list to store the file names
+file_list <- list()
+
+# Loop through each directory and get the file names
+for (dir in directories) {
+  files <- list.files(path = dir, full.names = TRUE)
+  file_list[[dir]] <- files
+}
+
+# Flatten the list if needed
+all_files <- unlist(file_list)
+
 map_terrestrial_to_moll <- function(s) {
-  # s <- spp_vec[2119]
-    #s <- spp_vec[1]
-  
+  # s <- spp_vec[20]
     i <- which(spp_vec == s)
   
-  # test <- rast(file.path(eyres_dir, "amphibians/Seasonality.RESIDENT-54596.tif"))
+  # test <- rast(file.path(eyres_dir, "birds/Seasonality.BREEDING-22697109.tif"))
   
   out_f <- file.path(eyres_dir_mol, paste0(s, ".csv"))
   
   if(!file.exists(out_f)) {
     message('Processing map for ', s, '... (', i, ' of ', length(spp_vec), ')')
     
-   # spp_file <- sprintf(file.path(eyres_dir, "%s.tif"), s)
-    spp_file <- grep(list.files(eyres_dir, recursive = TRUE, pattern = glue("{s}"), full.names = TRUE), pattern = "reprojected", invert = TRUE, value = TRUE)
+    spp_file <- grep(all_files, pattern = glue("{s}.tif"), value = TRUE)
+  
+    #spp_file <- grep(list.files(eyres_dir, recursive = TRUE, pattern = glue("{s}"), full.names = TRUE), pattern = "reprojected", invert = TRUE, value = TRUE)
     
    # test <- rast(spp_file) %>% as.data.frame(., xy = TRUE) %>% rename("vals" = 3) %>% filter(vals > 0)
     
   # spp_rast <- rast(spp_file)
   # spp_rast[spp_rast > 0] <- 1    
 
-  spp_csv <- rast(spp_file) %>% 
-    project(moll_template, method = "near") %>%
+  spp_csv <- # rast(spp_file) %>% 
+    raster::raster(spp_file) %>%
+   raster::projectRaster(., moll_template_raster, method = "ngb") %>%
+   rast() %>%
+    # project(., moll_template, method = "near") %>%
       as.data.frame(., xy = TRUE) %>%
      rename(presence = 3) %>%
     filter(presence > 0) %>%
     mutate(presence = 1) %>%
-     inner_join(moll_template_xy) %>%
+    inner_join(moll_template_xy) %>%
      dplyr::select(-x, -y)
 
   # test <- spp_csv %>%
@@ -97,9 +117,12 @@ map_terrestrial_to_moll <- function(s) {
     #   dplyr::select(x, y, presence) %>%
     #   rast(., type = "xyz", crs = moll_template)
       
-      rast(spp_file) %>%
+    rast(spp_file) %>%
         aggregate(fact = 10, fun = "mean", na.rm = TRUE) %>%  
-        project(moll_template, method = "near") %>% 
+        raster() %>%
+        projectRaster(., moll_template, method = "ngb") %>% 
+        rast() %>%
+      # project(moll_template, method = "near") %>% 
         as.data.frame(., xy = TRUE) %>%
         rename(presence = 3) %>%
         filter(presence >0) %>%
@@ -107,6 +130,9 @@ map_terrestrial_to_moll <- function(s) {
         inner_join(moll_template_xy) %>%
         dplyr::select(-x, -y) %>%
         write_csv(., out_f)
+      
+  
+      
     }else{
       write_csv(spp_csv, out_f)
     }
