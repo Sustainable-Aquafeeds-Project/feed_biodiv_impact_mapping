@@ -325,6 +325,8 @@ length(results_df_fin$species) # 23699 perfect
 
 write.csv(results_df_fin, here("prep/03_prep_spp_habitats/int/spp_depth_info.csv"), row.names = FALSE) # save
 
+test <- read.csv(here("prep/03_prep_spp_habitats/int/spp_depth_info.csv"))
+
 
 am_spp_depth_df <- aquamaps_spp_df %>%
   left_join(results_df_fin)

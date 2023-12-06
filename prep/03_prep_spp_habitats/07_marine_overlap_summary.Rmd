@@ -49,31 +49,6 @@ vuln_taxa <- readRDS(file.path(rdsi_dir, "biodiversity_impacts/int/spp_vuln_dept
 
 ```
 
-Pull total amount of ocean area fished (km2) for each allocation, diet, and aquafeed ingredient
-
-```{r}
-# file_list <- list.files(here("prep/02_feed/output/resampled"), full.names = TRUE, recursive = TRUE, pattern = "fish_.*_A") # 36 - good
-# 
-# rast_list <- rast(file_list)
-# 
-# names_list <- basename(file_list)
-# 
-# 
-# fishing_km2 <- data.frame(feed_filepath = file_list, filename = names_list, total_km2 = global(rast_list, "sum", na.rm = TRUE)) %>%
-#   mutate(allocation = str_after_last(str_before_last(filename, "_"), "_"),
-#          ingredient = str_before_nth(filename, "_", 2),
-#          diet = str_after_last(str_before_last(feed_filepath, "\\/"), "\\/")) %>%
-#   dplyr::select(-filename) %>%
-#   rename(total_ingredient_km2 = sum)
-
-
-```
-
-Now lets read in the intermediate overlay data, and apply our vulnerability metrics to this. Some rules:
- - If the raster is a forage fish FMFO raster, and a targeted forage fish species, then vulnerability is 1. 
- - If the raster is a trimmings fish FMFO raster, and a targeted trimmings fish species, then the vulnerability is 1. 
- - Otherwise the vulnerability is that of the Butt et al. 2022 data. 
-
 ```{r}
 
 aquamaps_spp <- read.csv(file.path(rdsi_raw_data_dir, "aquamaps/GTE10_SPECIESOCCURSUM/speciesoccursum_gte10.csv"))
@@ -116,16 +91,16 @@ test_terr <- terrestrial_overlap %>%
          allocation == "mass",
          fcr_type == "regular")
 
-sum(test_terr$impact_total, na.rm = TRUE) # 754891.7
-mean(test_terr$impact_total, na.rm = TRUE) # 6.140526
+sum(test_terr$impact_total, na.rm = TRUE) # 400940.2
+mean(test_terr$impact_total, na.rm = TRUE) # 1.857908
 
 test_marine <- impact_vuln %>%
     filter(diet == "plant-dominant",
          allocation == "mass",
          fcr_type == "regular")
 
-sum(test_marine$impact_total, na.rm = TRUE) # 135137.3
-mean(test_marine$impact_total, na.rm = TRUE) # 1.86824
+sum(test_marine$impact_total, na.rm = TRUE) # 130228.9
+mean(test_marine$impact_total, na.rm = TRUE) # 1.845072
 
 
 ```

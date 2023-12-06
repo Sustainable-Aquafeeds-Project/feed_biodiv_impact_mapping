@@ -33,7 +33,7 @@ source(here("src/spatial.R"))
 select <- dplyr::select
 
 
-aoh_dir <- file.path(rdsi_raw_data_dir, "AOH_lumbierres/reprojected/")
+aoh_dir <- file.path(rdsi_raw_data_dir, "AOH_eyres/reprojected_mol_csv/")
 
 setwd(dirname(rstudioapi::getSourceEditorContext()$path)) # set working directory to where this script is located
 this_dir <- getwd()
@@ -47,21 +47,26 @@ Bind all chunked data together, tidy, and save
 ```{r}
 
 impact_df <-  purrr::map_df(list.files(file.path(biodiv_dir, "int/aoh_impacts_terrestrial/"), full.names = TRUE), readRDS) %>%
-  separate_wider_delim(species_full, delim = "_", names = c("genus", "species", "bird_type"), too_few = "align_start") %>%
-  unite(sciname, c(genus, species))
+  rename(sciname = species_full)
+ # separate_wider_delim(species_full, delim = "_", names = c("genus", "species", "bird_type"), too_few = "align_start") %>%
+  # unite(sciname, c(genus, species))
 
 
 length(unique(impact_df$sciname)) # 11876 hmmm.. missing ~5k species.. is this because they are unaffected species, and we only kept affected species? probably
 
 # now lets clean up the data a bit 
 
-mammals_list <- read.csv(here("prep/data/Mammals_list_AOH.csv")) %>%
-  dplyr::select(sciname = BINOMIAL, order = ORDER, iucn_rl_cat = Red_List_Category_2019)
+# mammals_list <- read.csv(here("prep/data/Mammals_list_AOH.csv")) %>%
+#   dplyr::select(sciname = BINOMIAL, order = ORDER, iucn_rl_cat = Red_List_Category_2019)
+# 
+# birds_list <- read.csv(here("prep/data/Birds_list_AOH.csv")) %>%
+#     dplyr::select(sciname = BINOMIAL, order = Order_, iucn_rl_cat = F2019_Iucn_Red_List_Category)
+# 
+# all_spp_list <- rbind(mammals_list, birds_list)
 
-birds_list <- read.csv(here("prep/data/Birds_list_AOH.csv")) %>%
-    dplyr::select(sciname = BINOMIAL, order = Order_, iucn_rl_cat = F2019_Iucn_Red_List_Category)
-
-all_spp_list <- rbind(mammals_list, birds_list)
+all_spp_list <- readRDS(here("prep/03_prep_spp_habitats/data/iucn/eyres_iucn_spp.rds")) %>%
+  dplyr::select(sciname = scientific_name, order = order_name, iucn_rl_cat = category) %>%
+  filter(!is.na(sciname))
 
 
 impact_df_tidy <- impact_df %>%
@@ -76,7 +81,7 @@ impact_df_tidy <- impact_df %>%
 
 species_list <- c(unique(impact_df_tidy$sciname))
 
-# writeLines(species_list, here("prep/03_prep_spp_habitats/int/species_list.txt"))
+# riteLines(species_list, here("prep/03_prep_spp_habitats/int/impacted_species_list.txt"))
 
 
 ```
@@ -112,13 +117,10 @@ ag_suitability <- readRDS(here("prep/03_prep_spp_habitats/int/terrestrial_spp_ha
 
 aoh_df <- impact_df_tidy %>%
   left_join(., ag_suitability, by = c("sciname" = "species")) %>%
-  # left_join(crops_km2) %>%
-  mutate(order = ifelse(is.na(order), "CHIROPTERA", order), # fix the spp with missing order
-         spp_type = ifelse(order %in% c(mammals_list$order), "Terrestrial mammal", "Bird")) %>% # identifier for class type
-  dplyr::select(-order) %>%
-  rename(suitability = cropland_suitability)
+  rename(suitability = cropland_suitability) %>%
+  mutate(vulnerability = 1 - suitability)
 
-saveRDS(aoh_df, here("prep/03_prep_spp_habitats/output/aoh_terrestrial_mammals_birds_impact.rds")) # save rds to save space
+saveRDS(aoh_df, here("prep/03_prep_spp_habitats/output/aoh_terrestrial_mammals_birds_impact.rds")) # save as rds to save space
 
 test <- aoh_df %>%
   ungroup() %>%
@@ -130,17 +132,32 @@ test_ag <- ag_suitability %>%
   group_by(spp_type, cropland_suitability) %>%
   summarise(n_distinct(species))
 
-2962 + 613 # 3575 species not vulnerable
+2927 + 626 + 1003 + 627 # 5183 not vulnerable
 
-7328+4548 # 11876
-
-11876 + 3575 # 15451 total species 
+31596 - 5183 # 26413 total species impacted (if there is overlap) 
 
 ## paper reports: 
-10651 + 5481 # 16132.. ok so missing ~600 species.. not as bad as I thought. Are the other 600 spp missing because they have no overlap? Probably. So we could say that 3575 terrestrial species are not vulnerable, and 600 species had no overlap at all. The remaining 11876 species had at least some impact. 
+length(unique(aoh_df$sciname)) # 22351... ok so 26413 - 22351 = 4062 species do not have any overlap.. that's possible. Many weren't reprojected, as their habitats were too small. 
 
-length(unique(ag_suitability$species)) # 16133
+length(unique(ag_suitability$species)) # 31596
+ag_suitability %>% filter(cropland_suitability != 1) %>% pull(species) %>% unique() %>% length() # 26413
 
+# how many do we assess? 
+
+all_spp_list <- readRDS(here("prep/03_prep_spp_habitats/data/iucn/eyres_iucn_spp.rds")) %>%
+  dplyr::select(sciname = scientific_name, order = order_name, iucn_rl_cat = category, spp_type) %>%
+  group_by(spp_type) %>%
+  summarise(n_distinct(sciname))
+
+all_spp_list
+
+# # A tibble: 4 × 2
+#   spp_type   `n_distinct(sciname)`
+#   <chr>                      <int>
+# 1 amphibians                  6793
+# 2 birds                      10025
+# 3 mammals                     5502
+# 4 reptiles                    9280
 
 ```
 
@@ -148,29 +165,7 @@ length(unique(ag_suitability$species)) # 16133
 Do some checks: 
 
 ```{r}
-check_bird <- aoh_df %>%
-  filter(sciname == "Accipiter brevipes")
 
-check_aoh_1 <- rast("/mnt/rdsi/raw_data/AOH_lumbierres/reprojected/Accipiter_badius_B.tif") %>%
-  filter(ex_Accipiter_badius_B != 0)
-plot(check_aoh_1)
-check_aoh_2 <- rast("/mnt/rdsi/raw_data/AOH_lumbierres/reprojected/Accipiter_badius_R.tif") %>%
-    filter(ex_Accipiter_badius_R != 0)
-plot(check_aoh_2)
-check_aoh_3  <- rast("/mnt/rdsi/raw_data/AOH_lumbierres/reprojected/Accipiter_badius_N.tif") %>%
-    filter(ex_Accipiter_badius_N != 0)
-plot(check_aoh_3)
-
-check_intersect <- intersect(check_aoh_1, check_aoh_2)
-plot(check_intersect)
-check_intersect <- intersect(check_aoh_1, check_aoh_3)
-plot(check_intersect)
-check_intersect <- intersect(check_aoh_2, check_aoh_3)
-plot(check_intersect) # ok so looks like there is no/minimal intersection... additionally, the paper indicates that they can be combined and are separate, non-overlapping habitats. So probably no double counting occurring thankfully. 
-
-  
-check <- aoh_df %>%
-  filter(aoh_affected >= total_cropland) # 0, makes sense! 
 ```
 
   

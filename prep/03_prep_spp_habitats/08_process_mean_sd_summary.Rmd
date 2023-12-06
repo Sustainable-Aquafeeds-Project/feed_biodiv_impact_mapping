@@ -245,21 +245,11 @@ tx_impact_map_df <- data.frame(f = list.files(file.path(impact_maps_dir, "impact
          a = str_before_first(str_after_nth(file_path_sans_ext(basename(f)), "_", 4), "_"),
          e = str_before_first(str_after_nth(f, "\\/", 7), "\\/"))
 
-already_done <- data.frame(f = list.files(file.path(impact_maps_dir, "impact_maps_across_taxon_by_ingredient"), full.names = TRUE, recursive = TRUE)) %>%
-  mutate(time = file.info(f)$ctime,
-         size = file.size(f)) %>%
-  mutate(type = ifelse(str_detect(f, "regular"), "regular", "efficient")) %>%
-  filter(type == "efficient")
-
-
-
-
-
 ## calculate means across taxa and ingredients; will end up with 1 raster per diet type and allocation type 
 
 allocations <- c("mass", "ge", "economic")
 diets <- c("fish-dominant", "plant-dominant")
-fcrs <- c("efficient") # add efficient for later
+fcrs <- c("efficient", "regular") 
  
 for(allocation_type in allocations){
   for(diet_type in diets){
@@ -310,17 +300,19 @@ for(allocation_type in allocations){
 
 allocations <- c("mass", "ge", "economic")
 diets <- c("fish-dominant", "plant-dominant")
-taxa <- tx_impact_map_df %>% filter(t != "polychaetes") %>% pull(t) %>% unique
-fcrs <- c("efficient")
+taxa <- tx_impact_map_df %>% filter(t != "polychaetes") %>% 
+  # filter(t %in% c("Terrestrial mammal", "Bird", "Reptiles", "Amphibians", "cnidaria", "corals")) %>% 
+  pull(t) %>% unique()
+fcrs <- c("efficient", "regular")
 
 for(allocation_type in allocations){
   for(diet_type in diets){
     for(fcr_type in fcrs){
     for(taxa_type in taxa){
 
-      # allocation_type = "economic"
-      # diet_type = "plant-dominant"
-      # taxa_type = "arthropods"
+      # allocation_type = "mass"
+      # diet_type = "fish-dominant"
+      # taxa_type = "cnidaria"
       # fcr_type = "regular"
     
     out_fstem_mean <- glue(file.path(impact_maps_dir, "impact_maps_by_taxon_across_ingredient/{diet_type}/{fcr_type}/{allocation_type}_{taxa_type}_mean.tif"))
@@ -330,7 +322,6 @@ for(allocation_type in allocations){
     if(all(file.exists(out_fstem_mean, out_fstem_nspp))){
       message(glue("skipping global mean calculations for {diet_type} diet; {allocation_type} allocation; {taxa_type} taxon because rasters exist"))
       next()
-
     }
 
     tx_impact_map_df_loop <- tx_impact_map_df %>%
@@ -343,6 +334,16 @@ for(allocation_type in allocations){
     
     big_df <- combine_taxa_maps(tx_impact_map_df_loop)
     
+    if(nrow(big_df) == 0){
+      
+      setValues(moll_template, NA) %>%
+        writeRaster(., out_fstem_mean, overwrite = TRUE)
+      
+            setValues(moll_template, NA) %>%
+        writeRaster(., out_fstem_nspp, overwrite = TRUE)
+      
+    }else{
+      
  process_mean_rasts(big_df) %>%
     inner_join(all_xy_moll, by = "cell_id") %>%
       dplyr::select(x, y, imp_mean) %>%
@@ -355,6 +356,8 @@ for(allocation_type in allocations){
       dplyr::select(x, y, imp_nspp) %>%
       rast(., type = "xyz", crs = moll_template) %>%
    writeRaster(., out_fstem_nspp, overwrite = TRUE)
+  
+    }
    
 # test <- rast(out_fstem)
   # plot(log(test*100000+1))
@@ -370,7 +373,7 @@ for(allocation_type in allocations){
 allocations <- c("mass", "ge", "economic")
 diets <- c("fish-dominant", "plant-dominant")
 ingredients <- unique(tx_impact_map_df$i)
-fcrs <- c("efficient")
+fcrs <- c("efficient", "regular")
 
 for(allocation_type in allocations){
   for(diet_type in diets){
@@ -385,11 +388,11 @@ for(allocation_type in allocations){
     out_fstem_mean <- glue(file.path(impact_maps_dir, "impact_maps_across_taxon_by_ingredient/{diet_type}/{fcr_type}/{allocation_type}_{ingredient_type}_mean.tif"))
     out_fstem_nspp <- glue(file.path(impact_maps_dir, "impact_maps_across_taxon_by_ingredient/{diet_type}/{fcr_type}/{allocation_type}_{ingredient_type}_nspp.tif"))
     
-    # if(all(file.exists(out_fstem_mean, out_fstem_nspp))){
-    #   message(glue("skipping global mean and nspp calculations for {diet_type} diet; {allocation_type} allocation; {ingredient_type} ingredients because rasters exist"))
-    #   next()
-    # 
-    # }
+    if(all(file.exists(out_fstem_mean, out_fstem_nspp))){
+      message(glue("skipping global mean and nspp calculations for {diet_type} diet; {allocation_type} allocation; {ingredient_type} ingredients because rasters exist"))
+      next()
+
+    }
 
     tx_impact_map_df_loop <- tx_impact_map_df %>%
       filter(a == allocation_type, 
@@ -452,9 +455,9 @@ tx_impact_map_df <- data.frame(f = list.files(file.path(impact_maps_dir, "impact
 
 ## calculate means across taxa and ingredients; will end up with 1 raster per diet type and allocation type 
 
-allocations <- c("mass", "ge", "economic")
-diets <- c("fish-dominant", "plant-dominant")
-fcrs <- c("efficient") # add efficient later
+allocations <- c( "economic", "ge", "mass")
+diets <- c("plant-dominant", "fish-dominant")
+fcrs <- c("efficient", "regular") 
 
 for(allocation_type in allocations){
   for(diet_type in diets){
@@ -467,11 +470,10 @@ for(allocation_type in allocations){
     
         out_fstem_sdev <- glue(file.path(impact_maps_dir, "impact_maps_across_taxon_ingredient/{diet_type}/{fcr_type}/{allocation_type}_sd.tif"))
 
-    if(all(file.exists(out_fstem_sdev))){
-      message(glue("skipping global sdev calculations for {diet_type}; {fcr_type} efficiency; {allocation_type} because rasters exist"))
-      next()
-
-    }
+    # if(all(file.exists(out_fstem_sdev))){
+    #   message(glue("skipping global sdev calculations for {diet_type}; {fcr_type} efficiency; {allocation_type} because rasters exist"))
+    #   next()
+    # }
 
     tx_impact_map_df_loop <- tx_impact_map_df %>%
       filter(a == allocation_type, 
@@ -498,8 +500,8 @@ for(allocation_type in allocations){
 
 allocations <- c("mass", "ge", "economic")
 diets <- c("fish-dominant", "plant-dominant")
-taxa <- tx_impact_map_df %>% filter(t != "polychaetes") %>% pull(t) %>% unique
-fcrs <- c("efficient") # add efficient later
+taxa <- tx_impact_map_df %>% filter(t != "polychaetes") %>% filter(t %in% c("Terrestrial mammal", "Bird", "Reptiles", "Amphibians", "cnidaria", "corals")) %>% pull(t) %>% unique()
+fcrs <- c("efficient", "regular") 
 
 for(allocation_type in allocations){
   for(diet_type in diets){
@@ -530,6 +532,14 @@ for(allocation_type in allocations){
     
     big_df <- combine_taxa_maps(tx_impact_map_df_loop)
     
+    
+        if(nrow(big_df) == 0){
+      
+      setValues(moll_template, NA) %>%
+        writeRaster(., out_fstem_sdev, overwrite = TRUE)
+
+    }else{
+    
  process_sdev_rasts(big_df) %>%
     inner_join(all_xy_moll, by = "cell_id") %>%
       dplyr::select(x, y, imp_sd) %>%
@@ -540,6 +550,7 @@ for(allocation_type in allocations){
 # test <- rast(out_fstem_sdev)
   # plot(log(test*100000+1))
 
+       }
      }
    }
   }
@@ -551,7 +562,7 @@ for(allocation_type in allocations){
 allocations <- c("mass", "ge", "economic")
 diets <- c("fish-dominant", "plant-dominant")
 ingredients <- unique(tx_impact_map_df$i)
-fcrs <- c("efficient") # add efficient later
+fcrs <- c("efficient", "regular") 
 
 for(allocation_type in allocations){
   for(diet_type in diets){

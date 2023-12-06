@@ -86,22 +86,24 @@ spp_info_df %>%
   group_by(taxon) %>%
   summarize(nspp = n_distinct(species))
 
-# # A tibble: 13 × 2
-# taxon                    nspp
-# <chr>                   <int>
-# 1 Bird                        9
-# 2 Marine mammal             118
-# 3 Marine plant              280
-# 4 Reptiles and amphibians    37
-# 5 arthropods               3886
-# 6 cephalopods               300
-# 7 corals                   1480
-# 8 echinoderms              1021
-# 9 elasmobranchs             695
-# 10 fish                     9235
-# 11 molluscs                 5515
-# 12 polychaetes               608
-# 13 sponges                   455
+# A tibble: 15 × 2
+# taxon          nspp
+# <chr>         <int>
+#   1 Amphibians        1
+# 2 Bird              9
+# 3 Marine mammal   118
+# 4 Marine plant    280
+# 5 Reptiles         36
+# 6 arthropods     3886
+# 7 cephalopods     300
+# 8 cnidaria       1231
+# 9 corals          249
+# 10 echinoderms    1021
+# 11 elasmobranchs   695
+# 12 fish           9235
+# 13 molluscs       5515
+# 14 polychaetes     608
+# 15 sponges         455
 
 ## only 9 marine birds?? 
 
@@ -116,15 +118,16 @@ allocations <- unique(spp_info_df$allocation)
 diets <- unique(spp_info_df$diet)
 ingredients <- unique(spp_info_df$ingredient)
 fish_types <- unique(spp_info_df$fish_type)
-fcrs <- c("efficient")
+fcrs <- c("efficient", "regular")
 spp_types <- unique(spp_info_df$taxon)
 # indices_to_remove <- grep("Bird|Marine mammal|Marine plant|Reptiles and amphibians|arthropods|echinoderms|polychaetes|sponges", spp_types)
 indices_to_remove <- grep("fish|polychaetes", spp_types)
 spp_types <- spp_types[-indices_to_remove] # remove fish category... we handle this separately in the next script `06c_overlap_fish_fix.R`
-
+spp_types <- spp_types[grep("corals|Amphibians|Reptiles|cnidaria", spp_types)]
 
 for(tx_type in spp_types){
   
+  # tx_type = "corals"
   tx_maps_df <- spp_info_df %>%
     filter(taxon == tx_type) %>%
     dplyr::select(species, filepath) %>%
@@ -151,13 +154,13 @@ for(fs_type in fish_types){
           for(diet_type in diets){
             for(fcr in fcrs){
             
-# 
-#             allocation_type = "economic"
-#             diet_type = "plant-dominant"
-#             ingredient_type = "fish meal"
-#             fs_type = "forage fish"
-#             tx_type = "cephalopods"
-#              fcr = "regular"
+
+            # allocation_type = "economic"
+            # diet_type = "fish-dominant"
+            # ingredient_type = "fish meal"
+            # fs_type = "forage fish"
+            # tx_type = "corals"
+            #  fcr = "efficient"
             
             outf_mean <- sprintf(file.path(biodiv_dir, "output/impact_maps_by_taxon_ingredient/%s/%s/imp_unwt_%s_%s_%s_%s_mean.tif"), diet_type, fcr, fs_type, ingredient_type, allocation_type, tx_type)
             outf_sd <- sprintf(file.path(biodiv_dir, "output/impact_maps_by_taxon_ingredient/%s/%s/imp_unwt_%s_%s_%s_%s_sd.tif"), diet_type, fcr, fs_type, ingredient_type, allocation_type, tx_type)
@@ -275,6 +278,15 @@ for(fs_type in fish_types){
               as.data.frame()
             
             message('Creating and saving rasters for taxon ', tx_type, diet_type, fcr, allocation_type, fs_type, ingredient_type)
+            
+            if(nrow(result_df) == 0){
+              
+              rast_mean <- setValues(moll_template, NA)
+              rast_sd <- rast_mean
+              rast_nspp <- rast_mean
+            
+              }else{
+            
             rast_mean <- result_df %>%
               dplyr::select(cell_id, impact_mean) %>%
               left_join(moll_ocean_template) %>%
@@ -287,11 +299,14 @@ for(fs_type in fish_types){
               left_join(moll_ocean_template) %>%
               dplyr::select(x, y, impact_sd) %>%
               rast(., type = "xyz")
+            
             rast_nspp <- result_df %>%
               dplyr::select(cell_id, n_spp) %>%
               left_join(moll_ocean_template) %>%
               dplyr::select(x, y, n_spp) %>%
               rast(., type = "xyz")
+            
+              }
             
             writeRaster(rast_mean, outf_mean, overwrite = TRUE)
             writeRaster(rast_sd,   outf_sd, overwrite = TRUE)
@@ -305,7 +320,7 @@ for(fs_type in fish_types){
               summarise(impact_total = sum(impact_total, na.rm = TRUE)) %>%
               mutate(allocation = allocation_type, diet = diet_type, fcr_type = fcr, ingredient = glue("{fs_type}_{ingredient_type}")) 
             
-            fish_ingredient_type = unique(global_df$ingredient)
+            fish_ingredient_type = glue("{fs_type}_{ingredient_type}")
             
             write_rds(global_df, glue(file.path(biodiv_dir, "int/aoh_impacts_marine/{tx_type}_{diet_type}_{fcr}_{fish_ingredient_type}_{allocation_type}.rds")))
             

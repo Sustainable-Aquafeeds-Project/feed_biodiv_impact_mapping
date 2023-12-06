@@ -164,10 +164,10 @@ for(allocation_type in allocations){
           outf_mean_df <- glue(file.path(this_dir, "int/aoh_impacts_terrestrial/{tx_type}_{diet_type}_{fcr}_{crop_type}_{ingredient_type}_{allocation_type}.rds"))
 
           
-          # if(all(file.exists(outf_mean, outf_sd))) {
-          #   message('Rasters exist for taxon ', tx_type, crop_type, ingredient_type, diet_type, allocation_type, fcr, ' for harvest stressor... skipping!')
-          #   next()
-          # }
+          if(all(file.exists(outf_mean, outf_sd))) {
+            message('Rasters exist for taxon ', tx_type, crop_type, ingredient_type, diet_type, allocation_type, fcr, ' for harvest stressor... skipping!')
+            next()
+          }
 
           
           

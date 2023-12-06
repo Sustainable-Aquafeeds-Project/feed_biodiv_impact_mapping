@@ -78,7 +78,8 @@ aquamaps_spp_clean <- aquamaps_spp %>%
     str_detect(SpeciesID, "Fis-") ~ "Fish",
     Class == "Mammalia" ~ "Marine mammal",
     Class == "Aves" ~ "Bird",
-    Class %in% c("Reptilia", "Amphibia") ~ "Reptiles and amphibians", 
+    Class %in% c("Reptilia") ~ "Reptiles",
+    Class %in% c("Amphibia") ~ "Amphibians",
     Phylum %in% c("Mollusca", "Arthropoda", "Cnidaria", "Echinodermata", "Annelida", "Bryozoa", "Brachiopoda", "Porifera", "Phoronida", "Nemertea", "Chaetognatha", "Platyhelminthes", "Priapulida", "Acanthocephala", "Ctenophora", "Echiura", "Kamptozoa", "Gastrotricha", "Gnathostomulida", "Hemichordata", "Nematoda", "Rotifera", "Sipuncula", "Kamptozoa") | Class %in% c("Appendicularia", "Ascidiacea", "Thaliacea", "Cephalochordata", "Thaliacea") ~ "Invertebrates", 
     Kingdom %in% c("Protozoa", "Bacteria") | Phylum == "Sagenista" ~ "Microorganisms"
   )) %>%
@@ -97,7 +98,8 @@ aquamaps_spp_vuln_taxa <- aquamaps_spp_clean %>%
   mutate(taxon = case_when(
    is.na(taxon) & Phylum == "Mollusca" ~ "molluscs",
    is.na(taxon) & Class == "Polychaeta" ~ "polychaetes",
-   is.na(taxon) & spp_type == "Reptiles and amphibians" ~ "Reptiles and amphibians",
+   is.na(taxon) & spp_type == "Reptiles" ~ "Reptiles",
+   is.na(taxon) & spp_type == "Amphibians" ~ "Amphibians",
     is.na(taxon) & spp_type == "Marine mammal" ~ "Marine mammal",
    is.na(taxon) & spp_type == "Bird" ~ "Bird",
    is.na(taxon) & Phylum == "Porifera" ~ "sponges",
@@ -105,7 +107,7 @@ aquamaps_spp_vuln_taxa <- aquamaps_spp_clean %>%
   is.na(taxon) &  Phylum == "Echinodermata" ~ "echinoderms",
   is.na(taxon) &  Phylum == "Arthropoda" ~ "arthropods",
   is.na(taxon) &  Class == "Cephalopoda" ~ "cephalopods",
-   is.na(taxon) & Phylum == "Cnidaria" ~ "corals",
+   is.na(taxon) & Phylum == "Cnidaria" ~ "cnidaria",
    is.na(taxon) & Class == "Actinopterygii" ~ "fish",
    is.na(taxon) & spp_type == "Marine plant" ~ spp_type,
   TRUE ~ taxon
@@ -119,7 +121,7 @@ aquamaps_spp_vuln_taxa <- aquamaps_spp_clean %>%
     taxon == "crustacea_arthropods" ~ "arthropods",
     taxon == "marine_mammals" ~ "Marine mammal", 
     taxon == "seabirds" ~ "Bird", 
-    taxon == "reptiles" ~ "Reptiles and amphibians", 
+    taxon == "reptiles" ~ "Reptiles", 
     TRUE ~ taxon
   )) %>% 
   dplyr::select(species, class, order, family, genus, gapfill, vuln_gf_id, SpeciesID, SpecCode, FBname, spp_type, taxon)
@@ -194,7 +196,9 @@ aquamaps_vuln_scores <- aquamaps_spp_vuln_taxa %>%
                      spp_type == "Microorganisms" ~ "Microorganism not affected",
                      TRUE ~ "none"
                      )) %>%
-  dplyr::select(species, SpeciesID, SpecCode, FBname, spp_type, taxon, bycatch_gf, biomass_removal_gf) 
+  dplyr::select(species, SpeciesID, SpecCode, FBname, spp_type, taxon, bycatch_gf, biomass_removal_gf) %>%
+  mutate(bycatch_gf = ifelse(species == "rhinella marina", 0.75, bycatch_gf),
+         biomass_removal_gf = ifelse(species == "rhinella marina", 0.75, biomass_removal_gf)) # assign the missing toad score to be the mean of the reptiles
 
 summary(aquamaps_vuln_scores)
 hist(aquamaps_vuln_scores$bycatch_gf) # really concentrated around 0.3/0.4... I bet adding this will reduce affected area by quite a bit.
