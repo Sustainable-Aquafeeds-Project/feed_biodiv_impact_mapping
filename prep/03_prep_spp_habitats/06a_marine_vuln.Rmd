@@ -135,7 +135,7 @@ test <- aquamaps_spp_vuln_taxa %>%
 # 13687/23699 = 0.5775349 don't have vulnerability scores... we could gapfill the same way they did by genus and then family. We'll try that and see if it fills everything in. If not, we will gapfill by order and then class as a last resort.  
 
 vuln_scores <- read.csv(here("prep/03_prep_spp_habitats/data/spp_vuln_butt/vuln_gapfilled_score.csv")) %>%
-  dplyr::select(vuln_gf_id, bycatch, biomass_removal)
+  dplyr::select(vuln_gf_id, bycatch, biomass_removal, habitat_loss_degradation)
 
 aquamaps_vuln_scores <- aquamaps_spp_vuln_taxa %>%
   left_join(vuln_scores) %>%
@@ -196,6 +196,10 @@ aquamaps_vuln_scores <- aquamaps_spp_vuln_taxa %>%
                      spp_type == "Microorganisms" ~ "Microorganism not affected",
                      TRUE ~ "none"
                      )) %>%
+  mutate(bycatch_gf = ifelse(taxon == "corals", habitat_loss_degradation, bycatch_gf),
+         biomass_removal_gf = ifelse(taxon == "corals", habitat_loss_degradation, biomass_removal_gf),
+         gapfill_flag_biomass = ifelse(taxon == "corals", "none",  gapfill_flag_biomass),
+         gapfill_flag_bycatch = ifelse(taxon == "corals", "none", gapfill_flag_bycatch)) %>%
   dplyr::select(species, SpeciesID, SpecCode, FBname, spp_type, taxon, bycatch_gf, biomass_removal_gf) %>%
   mutate(bycatch_gf = ifelse(species == "rhinella marina", 0.75, bycatch_gf),
          biomass_removal_gf = ifelse(species == "rhinella marina", 0.75, biomass_removal_gf)) # assign the missing toad score to be the mean of the reptiles

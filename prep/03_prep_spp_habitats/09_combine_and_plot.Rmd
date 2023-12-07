@@ -28,6 +28,8 @@ library(patchwork)
 library(cowplot)
 library(glue)
 library(viridis)
+library(RColorBrewer)
+library(ggpubr)
 
 source(here("src/directories.R"))
 
@@ -81,6 +83,14 @@ scales::show_col(final_palette)
 
 countries_shp <- ne_countries(scale = 110, returnclass = "sf") |> 
   st_transform(crs(moll_template)) # read in countries shapefile
+
+
+muted <- color("muted")
+light <- color("light")
+light <- unname(c(light(9)))[c(1,2,3,4,5,6,7,8,9)]
+muted <- unname(c(muted(9)))[c(5,6,7,8,9)]
+
+muted_palette <- c(muted, light) # this gives the number of raw material... for bar charts at the bottom
 
 ```
 
@@ -312,10 +322,8 @@ allocations <- c("economic", "ge", "mass")
 calc_types <- c("mean", "sd", "nspp")
 taxon <- all_overlap %>% 
   filter(spp_type != "polychaetes") %>% 
-  filter(spp_type %in% c("Reptiles", "Amphibians", "corals", "cnidaria")) %>%
+  filter(spp_type == "corals") %>%
   pull(spp_type) %>% unique()
-
-taxon <- c(taxon, "corals")
 
 ## this part only needs to be run if the source maps changed! 
 for(allocation_type in allocations){
@@ -323,7 +331,7 @@ for(allocation_type in allocations){
       for(type in calc_types){
 
 # allocation_type = "economic"
-#  taxa_type = "sponges"
+#  taxa_type = "corals"
 
       out_fstem <- glue(file.path(impact_maps_dir, "csvs/impact_maps_by_taxon_across_ingredient/{allocation_type}_{taxa_type}_{type}.rds.gz"))
 
@@ -436,11 +444,11 @@ for(allocation_type in allocations){
         # allocation_type = "economic"
         # taxa_type = "arthropods"
   
-  if(file.exists(glue(here(this_dir, "output/plots/delta/by_taxa/{allocation_type}_{taxa_type}_{type}_plot.png")))){
-    cat("exists")
-    next()
-  }
-  
+  # if(file.exists(glue(here(this_dir, "output/plots/delta/by_taxa/{allocation_type}_{taxa_type}_{type}_plot.png")))){
+  #   cat("exists")
+  #   next()
+  # }
+  # 
         all_df <- fread(glue(file.path(impact_maps_dir, "csvs/impact_maps_by_taxon_across_ingredient/{allocation_type}_{taxa_type}_{type}.rds.gz"))) %>%
           filter(!is.na(value))
 
@@ -513,7 +521,9 @@ Global maps by ingredients across taxon
 
 allocations <- c("economic", "ge", "mass")
 calc_types <- c("mean", "sd", "nspp")
-ingredients <- all_overlap %>% pull(ingredient) %>% unique()
+ingredients <- all_overlap %>% 
+  filter(str_detect(ingredient, "fish")) %>% 
+  pull(ingredient) %>% unique()
 
 ## commented out code only needs to be run if the source impact maps are updated! 
 for(allocation_type in allocations){
@@ -716,6 +726,7 @@ allocations <- c("economic", "ge", "mass")
 calc_types <- c("mean", "sd", "nspp")
 ingredients <- all_overlap %>% pull(ingredient) %>% unique()
 raw_mats <- all_overlap %>% mutate(raw_material = str_before_first(ingredient, "_")) %>% 
+  filter(raw_material %in% c("forage fish", "trimmings fish")) %>% 
   pull(raw_material) %>% unique()
 
 ## commented out code only needs to be run if the source impact maps are updated! 
@@ -856,9 +867,7 @@ ggsave(glue(here(this_dir, "output/plots/delta/by_material/{allocation_type}_{ra
 
 Lets make summary bar plots, just using economic allocation. 
 
-
 ```{r}
-
 ## first lets plot by raw material, a stacked bar chart with total AOH impacted
 
 summary_df <- all_overlap %>% 
@@ -869,13 +878,6 @@ summary_df <- all_overlap %>%
 
 summary_df$raw_material <- with(summary_df, reorder(raw_material, impact_total, FUN = function(x) sum(x)))
 
-
-muted <- color("muted")
-light <- color("light")
-light <- unname(c(light(9)))[c(1,2,3,4,5,6,7,8,9)]
-muted <- unname(c(muted(9)))[c(5,6,7,8,9)]
-
-muted_palette <- c(muted, light)
 
 
 ggplot(summary_df, aes(x = raw_material, y = impact_total, fill = spp_type)) +
@@ -910,14 +912,6 @@ summary_df <- all_overlap %>%
 summary_df$raw_material <- with(summary_df, reorder(raw_material, impact_w_mean, FUN = function(x) sum(x)))
 
 
-muted <- color("muted")
-light <- color("light")
-light <- unname(c(light(9)))[c(1,2,3,4,5,6,7,8,9)]
-muted <- unname(c(muted(9)))[c(5,6,7,8,9)]
-
-muted_palette <- c(muted, light)
-
-
 ggplot(summary_df, aes(x = raw_material, y = impact_w_mean, fill = spp_type)) +
     geom_bar(stat = "identity") +
   facet_grid(fcr_type ~ diet, scales = "free_y") +
@@ -928,7 +922,144 @@ ggplot(summary_df, aes(x = raw_material, y = impact_w_mean, fill = spp_type)) +
   coord_flip()  + 
     theme(axis.text.x = element_text(angle = -90, hjust = 1)) # Adjust the 'angle' value as needed
 
+## lets read in each mean extinction risk raster as data frame and make mean plots per species and raw material for economic allocation
+
+allocations <- c("economic", "mass", "ge")
+fcr_types <- c("regular", "efficient")
+diet_types <- c("plant-dominant", "fish-dominant")
+spp_types <- all_overlap %>% 
+  filter(spp_type != "polychaetes") %>% 
+  pull(spp_type) %>% unique()
+
+ingredient_types <- all_overlap %>% 
+  pull(ingredient) %>% unique()
+
+
+
+for(allocation_type in allocations){
+  for(fcr_type in fcr_types){
+    for(diet_type in diet_types){
+      for(spp_type in spp_types){
+        for(ingredient_type in ingredient_types){
+          
+# diet_type = "fish-dominant"
+# fcr_type = "regular"
+# allocation_type = "economic"
+# spp_type = "Amphibians"
+# ingredient_type = "Soybean_soybean meal"
+          
+          if(length(list.files(file.path(glue(impact_maps_dir, "/impact_maps_by_taxon_ingredient/{diet_type}/{fcr_type}")), pattern = glue("{ingredient_type}_{allocation_type}_{spp_type}_mean.tif"), full.names = TRUE)) > 0 ){
+        
+        
+        map_df <- rast(list.files(file.path(glue(impact_maps_dir, "/impact_maps_by_taxon_ingredient/{diet_type}/{fcr_type}")), pattern = glue("{ingredient_type}_{allocation_type}_{spp_type}_mean.tif"), full.names = TRUE)) %>%
+          as.data.frame(.) %>%
+          group_by() %>%
+          summarise(mean_ext_risk = mean(impact_mean, na.rm = TRUE)) %>%
+          mutate(allocation = allocation_type, 
+                 diet = diet_type, 
+                 fcr = fcr_type, 
+                 spp_type = spp_type, 
+                 ingredient_raw_material = ingredient_type)
+        
+        
+        write.csv(map_df, file.path(glue(impact_maps_dir, "/csvs/impact_maps_by_taxon_ingredient_summary/mean_impacts_{spp_type}_{allocation_type}_{diet_type}_{fcr_type}_{ingredient_type}.csv")), row.names = FALSE)
+        
+          }else{
+            next()
+          }
+        
+        }
+      }
+    }
+  }
+}
+
+
+
+# now lets join all of those together into one dataframe and save 
+
+csv_files <- list.files(file.path(impact_maps_dir, "csvs/impact_maps_by_taxon_ingredient_summary"), pattern = ".csv", full.names = TRUE)
+
+list_of_dfs <- lapply(csv_files, read.csv)
+
+combined_impact_df <- do.call(rbind, list_of_dfs)
+
+summary_df <- combined_impact_df %>%
+    separate_wider_delim(ingredient_raw_material, delim = "_", names = c("raw_material", "ingredient")) %>%
+  group_by(diet, fcr, allocation, raw_material, spp_type) %>%
+  summarise(
+            mean_ext_risk = mean(mean_ext_risk, na.rm = TRUE)) %>%
+  ungroup() %>%
+  filter(allocation == "economic")
+  
+
+summary_df$raw_material <- with(summary_df, reorder(raw_material, mean_ext_risk, FUN = function(x) sum(x)))
+
+
+ggplot(summary_df, aes(x = raw_material, y = mean_ext_risk, fill = spp_type)) +
+    geom_bar(stat = "identity") +
+  facet_grid(fcr ~ diet, scales = "free_y") +
+  labs(title = "Species weighted mean extinction risk (55236 species); Economic allocation", x = "Raw material", y = "Species weighted mean extinction risk", fill = NULL, caption = "B") +
+  # scale_fill_manual(values = category_colors) +
+  scale_fill_manual(values = muted_palette) + 
+  theme_minimal() + 
+  coord_flip()  + 
+    theme(axis.text.x = element_text(angle = -90, hjust = 1)) # Adjust the 'angle' value as needed
+
+
+
 ```
+
+
+Plot showing diet percentages 
+
+```{r}
+diet_comps <- read.csv(here("prep/02_feed/data/aquaculture_diet_composition.csv")) %>%
+  distinct(raw_name, prop_diet, diet) %>%
+  filter(prop_diet > 0)
+
+# check sums 
+diet_comps %>% filter(diet == "fish-dominant") %>% pull(prop_diet) %>% sum()
+diet_comps %>% filter(diet == "plant-dominant") %>% pull(prop_diet) %>% sum()
+
+
+ingredient_levels <- c( "Fish meal, forage fish",  "Fish oil, forage fish", "Fish meal, trimmings", "Fish oil, trimmings", "Soybean meal", "Corn gluten meal" , "Faba beans" , "Wheat gluten" ,"Wheat" , "Soy protein concentrate",  "Guar meal",  "Pea protein concentrate", "Sunflower meal", "Canola oil", "Linseed oil", "Soy oil", "Pea flour", "Coconut oil", "Micro ingredients")
+
+
+
+both_diets <- diet_comps %>% 
+  mutate(raw_name = str_replace_all(raw_name, "cut offs", "trimmings")) %>%
+      mutate(hjust = if_else(condition = diet == "fish-dominant", true = 1, false = 0)) |> 
+    mutate(label_x_pos = if_else(diet =="fish-dominant", true =0.5, false = 2.5)) |> 
+  mutate(diet = if_else(condition = diet == "fish-dominant", true = "Fish-\ndominant", false = "Plant-\ndominant")) %>% 
+   mutate(diet = factor(diet, levels = rev(c("Plant-\ndominant", "Fish-\ndominant")))) %>%
+  filter(raw_name != "other") %>%
+  mutate(ingredients = str_to_sentence(raw_name)) %>% 
+  mutate(ingredients = factor(ingredients, levels = rev(ingredient_levels))) 
+
+
+ggplot(data = both_diets,
+       aes(x = diet , y = prop_diet, fill = ingredients))+
+  geom_col()+
+  scale_fill_manual(values =  c("darkgoldenrod4", rev(colorRampPalette(brewer.pal(n=9, name = "Greens"))(14)),  brewer.pal(n=5, name = "Blues")[c(2:5)]))+
+  theme_pubr()+
+  theme(legend.title = element_blank(),
+        legend.text = element_text(size=7),
+        text = element_text(size=8),
+        legend.position = "right",
+        #legend.box.spacing = unit(-0.1, "cm"),
+        panel.grid = element_blank(),
+        legend.key.size = unit(0.25, "cm")
+        )+
+  labs(x = "Feed scenario", y = "Proportion")+
+  guides(fill = guide_legend(byrow=TRUE, reverse = FALSE, ncol = 1))
+
+ggsave(filename = here("prep/03_prep_spp_habitats/output/plots/feed_composition.jpg"), dpi = 600, width = 10, height = 9, units = "cm")
+
+
+```
+
+
 
 
 

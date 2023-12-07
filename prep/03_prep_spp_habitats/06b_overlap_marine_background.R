@@ -123,7 +123,7 @@ spp_types <- unique(spp_info_df$taxon)
 # indices_to_remove <- grep("Bird|Marine mammal|Marine plant|Reptiles and amphibians|arthropods|echinoderms|polychaetes|sponges", spp_types)
 indices_to_remove <- grep("fish|polychaetes", spp_types)
 spp_types <- spp_types[-indices_to_remove] # remove fish category... we handle this separately in the next script `06c_overlap_fish_fix.R`
-spp_types <- spp_types[grep("corals|Amphibians|Reptiles|cnidaria", spp_types)]
+spp_types <- spp_types[grep("corals", spp_types)]
 
 for(tx_type in spp_types){
   
@@ -170,10 +170,10 @@ for(fs_type in fish_types){
             outf_mean_df <- glue(file.path(biodiv_dir, "int/aoh_impacts_marine/{tx_type}_{diet_type}_{fcr}_{fs_type}_{ingredient_type}_{allocation_type}.rds"))
             
             ## comment this out if u want to rerun everything without skipping
-            if(all(file.exists(outf_mean, outf_sd))) {
-              message('Rasters exist for taxon ', tx_type, allocation_type, diet_type, fcr, ingredient_type, fs_type, ' for catch/bycatch stressor... skipping!')
-              next()
-            }
+            # if(all(file.exists(outf_mean, outf_sd))) {
+            #   message('Rasters exist for taxon ', tx_type, allocation_type, diet_type, fcr, ingredient_type, fs_type, ' for catch/bycatch stressor... skipping!')
+            #   next()
+            # }
             
             
             tx_vuln_df <- spp_info_df %>%
