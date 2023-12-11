@@ -1,0 +1,63 @@
+---
+title: "Rasterize spatial regions"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+Here we establish the map and list of regions.
+
+```{r setup, include=FALSE}
+
+library(fasterize)
+library(sf)
+library(tidyverse)
+library(terra)
+library(here)
+library(mapview)
+
+source(here("src/directories.R"))
+source(here("src/spatial.R"))
+
+```
+
+
+Read in ocean EEZs from the Ocean Health Index (https://mazu.nceas.ucsb.edu/data/), and rasterize this to our mollweide projection. The OHI dataset contains all countries (landlocked and coastal).
+
+```{r}
+ohi_regions <- st_read(file.path(rdsi_raw_data_dir, "ohi/regions_gcs.shp"))
+
+# template raster create
+ohi_map_raster <- dplyr::select(ohi_regions, rgn_id) %>%
+  mutate(rgn_id = as.numeric(rgn_id)) %>%
+  st_transform(., crs = crs(moll_template))
+
+ohi_rgn_raster <- rast(fasterize::fasterize(ohi_map_raster, raster(moll_template), field="rgn_id"))
+plot(ohi_rgn_raster)
+
+writeRaster(ohi_rgn_raster, here("data/spatial/output/rgns.tif"), overwrite = TRUE)
+
+
+ohi_regions_df <- ohi_regions %>%
+  st_drop_geometry() %>%
+  mutate(rgn_id = as.numeric(rgn_id)) %>%
+  dplyr::select(iso3c = rgn_key, rgn_id, Country = rgn_nam) %>%
+  unique() %>%
+  mutate(iso3c = ifelse(between(rgn_id, 260,277), "HSX", iso3c)) %>%
+  mutate(rgn_id = case_when(iso3c == "AZE" ~  258,
+                            iso3c == "KAZ" ~ 257, 
+                            iso3c == "TKM" ~ 256,
+                            TRUE ~ rgn_id))
+
+write.csv(ohi_regions_df, here("data/spatial/output/region_ids.csv"), row.names = FALSE)
+
+# convert raster to dataframe for easier manipulation
+rgn_df <- ohi_rgn_raster %>%
+  as.data.frame(., xy = TRUE) %>%
+  rename(rgn_id = layer) %>%
+  left_join(ohi_regions_df)
+
+write_csv(rgn_df, file.path(rdsi_dir, "/biodiversity_impacts/spatial/rgns_xy_all.csv"))
+
+```
+

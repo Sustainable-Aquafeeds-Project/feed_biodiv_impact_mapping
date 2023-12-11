@@ -43,33 +43,18 @@ moll_template <- rast(nrow=nrow, ncol=ncol, nlyr=nlyr, xmin=xmin, xmax=xmax, ymi
 moll_template_xy <- data.frame(cell_id = 1:ncell(moll_template), as.data.frame(moll_template %>% tidyterra::mutate(val = 1), xy = TRUE)) %>%
   dplyr::select(x, y, cell_id)
 
+## reproject the global food systems EEZ and land raster to be 10km mollweide and extract to get a csv 
 
-
-## make a lon/lat WGS 1km by 1km raster 
-
-# # Define the dimensions
-# nrow <- 180360
-# ncol <- 360720
-# nlyr <- 1
+# land_eez_rgns <- rast(file.path("/mnt/rdsi/raw_data/food-systems-project/land_eez_rgns.tif"))
 # 
-# # Define the resolution
-# x_res <- 0.0009920722
-# y_res <- 0.0009920722
+# land_eez_rgns_mol <- project(land_eez_rgns, moll_template, method = "bilinear")
 # 
-# # Define the extent
-# xmin <- -180
-# xmax <- 180
-# ymin <- -90
-# ymax <- 90
+# plot(land_eez_rgns)
+# plot(land_eez_rgns_mol)
 # 
-# # Define the coordinate reference system (CRS)
-# crs <- "EPSG:4326"
+# land_eez_rgns_mol_df <- land_eez_rgns_mol %>%
+#   as.data.frame(., xy = TRUE)
+#  # left_join(rgn_ids, by = c("land_eez_rgns" = "ID_0"))
 # 
-# # Create the raster template
-# lon_lat_template <- rast(nrow=nrow, ncol=ncol, nlyr=nlyr, xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax,
-#                       res=c(x_res, y_res), crs=crs) %>%
-#   mutate(new = 1)
-# 
-# lon_lat_cell_id <- setValues(lon_lat_template, 1:ncell(lon_lat_template))
-
+# write_rds(land_eez_rgns_mol_df, here("prep/03_prep_spp_habitats/data/spatial/land_eez_rgns_mol_xy.rds"))
 
