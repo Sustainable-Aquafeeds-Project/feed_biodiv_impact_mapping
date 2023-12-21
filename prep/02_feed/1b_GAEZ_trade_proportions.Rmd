@@ -595,8 +595,7 @@ write_csv(trade_data, here("prep/02_feed/data/FAO_GAEZcrop_trade_data.csv"))
 test <- read.csv(here("prep/02_feed/data/archive/FAO_MAPSPAMcrop_trade_data.csv")) %>%
   filter(iso3c_consuming == "MYS")
 
-test2 <- read.csv(here("prep/02_feed/data/FAO_GAEZcrop_trade_data.csv")) %>%
-  filter(iso3c_consuming == "MYS")
+test2 <- read.csv(here("prep/02_feed/data/FAO_GAEZcrop_trade_data.csv")) 
 
 ## most everything looks the same... need to figure out cassava, cotton, and oilpalmfruit
 

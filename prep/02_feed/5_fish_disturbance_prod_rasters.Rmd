@@ -509,11 +509,11 @@ depth_positions <- unique(all_fish_npp$water_col_position)
 fcrs <- unique(all_fish_npp$fcr_type)
 
 ## had to run trim_npp and forage_npp separately due to memory constraints...
-# diets <- unique(trim_npp$diet)
-# ingredients <- unique(trim_npp$ingredient)
-# allocations <- unique(trim_npp$allocation_type)
-# depth_positions <- unique(trim_npp$water_col_position)
-# fcrs <- unique(trim_npp$fcr_type)
+diets <- unique(trim_npp$diet)
+ingredients <- unique(trim_npp$ingredient)
+allocations <- unique(trim_npp$allocation_type)
+depth_positions <- unique(trim_npp$water_col_position)
+fcrs <- unique(trim_npp$fcr_type)
 
 for(diet_type in diets){
   for(ingredient_type in ingredients){

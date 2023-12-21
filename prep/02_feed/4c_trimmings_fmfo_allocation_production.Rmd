@@ -265,9 +265,8 @@ trimmings_fofm_origins <- trimmings_catch_iso %>%
   dplyr::select(iso3c, CommonName, TaxonName, ingredient, diet, fcr_type, tonnes_fofm_trimmings_spp) %>%
   filter(!is.na(tonnes_fofm_trimmings_spp))
 
-sum(trimmings_fofm_origins$tonnes_fofm_trimmings_spp, na.rm = TRUE) # 1066676 losing ~13k bc of Uruguay is missing... they don't report catch for any of the trimmings spp we have... 
+sum(trimmings_fofm_origins$tonnes_fofm_trimmings_spp, na.rm = TRUE) # 1091781 losing ~13k bc of Uruguay is missing... they don't report catch for any of the trimmings spp we have... 
 
-1080096 - 1066676
 
 trimmings_test <- trimmings_fofm_origins %>%
   group_by(iso3c, ingredient, diet, fcr_type) %>%
@@ -470,11 +469,11 @@ trimmings_fofm_allocation <- trimmings_fofm_origins %>%
   mutate(tonnes_fofm_trimmings_spp_live_weight = tonnes_fofm_trimmings_spp*allocation_value) %>%
   dplyr::select(iso3c, CommonName, TaxonName, ingredient, diet, fcr_type, tonnes_fofm_trimmings_spp, allocation_type, allocation_value, tonnes_fofm_trimmings_spp_live_weight)
 
-sum(trimmings_fofm_allocation$tonnes_fofm_trimmings_spp_live_weight) # 4987290/3 = 1662430 Ok this makes sense. 
+sum(trimmings_fofm_allocation$tonnes_fofm_trimmings_spp_live_weight) # 5071584/3 = 1690528 Ok this makes sense. 
 
 mean(trimmings_fofm_allocation$allocation_value) # 1.429135
 
-1662430/1066676 # 1.558514 perfect 
+1690528/1091781 # 1.548413 seems fine 
 
 ```
 
@@ -513,6 +512,14 @@ trim_props <- readRDS(here("prep/02_feed/data/embodied_FMFO_trimmings_rgns.rds")
 trimmingsfish <- readRDS(file.path(watson_dir, "v5.0/int/all_catch_trimmingsfish.rds"))
 watson_cells <- read.csv(file.path(watson_dir, "v5.0/Codes_cells.csv"))
 
+# trimmingsfish_2 <- trimmingsfish %>% 
+#   filter(trimmings_catch > 0) %>%
+#   filter(iso3c %in% c(unique(trim_props$iso3c)))
+#   group_by(LonCentre, LatCentre) %>%
+#   summarise(catch = sum(trimmings_catch, na.rm = TRUE)) %>%
+#   ungroup()
+
+  
 
 diets <- unique(trim_props$diet)
 allocations <- unique(trim_props$allocation_type)
@@ -526,12 +533,12 @@ for(diet_type in diets){
   for(allocation in allocations){
     for(ingredient_type in ingredients){
       for(pos in depth_positions){
-# 
-#     diet_type = "plant-dominant"
-#     allocation = "mass"
-#     ingredient_type = "fish meal, cut offs"
-#      pos = "benthic"
-#       fcr = "regular"
+
+    # diet_type = "fish-dominant"
+    # allocation = "economic"
+    # ingredient_type = "fish meal, cut offs"
+    #  pos = "pelagic"
+    #   fcr = "regular"
         
         ## comment this in if u want to skip those already run
         #         if(all(file.exists(sprintf(here("prep/02_feed/output/%s/%s/trimmings fish_%s_%s_%s_catch_P.tif"), diet_type, fcr, ingredient_type, allocation, pos), sprintf(here("prep/02_feed/output/%s/%s/trimmings fish_%s_%s_%s_bycatch_P.tif"), diet_type, fcr, ingredient_type, allocation, pos)))){
