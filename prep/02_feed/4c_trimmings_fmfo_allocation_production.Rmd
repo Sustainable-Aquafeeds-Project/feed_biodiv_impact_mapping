@@ -610,8 +610,9 @@ for(diet_type in diets){
 
 trim_files <- list.files(here("prep/02_feed/output/fish-dominant/regular"), pattern = "fish oil|fish meal|trimmings", full.names = TRUE)
 
-trim_files <- trim_files[grep("_P", trim_files)]
+trim_files <- trim_files[grep("_A", trim_files)]
 trim_files <- trim_files[grep("trimmings fish", trim_files)]
+trim_files <- trim_files[grep("economic", trim_files)]
 
 new_rasts <- rast(trim_files)
 
@@ -622,6 +623,10 @@ names(new_rasts) <- new_names
 # plot(log(new_rasts+1))
 
 global(new_rasts, "sum", na.rm = TRUE)
+
+test <- app(new_rasts, "sum", na.rm = TRUE)
+
+test[test == 0] <- NA
 
 
 test <- trimmings_fofm_allocation %>%
