@@ -87,29 +87,6 @@ species_list <- c(unique(impact_df_tidy$sciname))
 ```
 
 
-
-
-Pull total amount of cropland (km2) for each allocation, diet, and aquafeed ingredient
-
-```{r}
-# file_list <- list.files(here("prep/02_feed/output/resampled"), full.names = TRUE, recursive = TRUE, pattern = "_A") # 36 - good
-# 
-# rast_list <- rast(file_list)
-# 
-# names_list <- basename(file_list)
-# 
-# 
-# crops_km2 <- data.frame(feed_filepath = file_list, filename = names_list, total_cropland = global(rast_list, "sum", na.rm = TRUE)) %>%
-#   mutate(allocation = str_after_last(str_before_last(filename, "_"), "_"),
-#          ingredient = str_before_nth(filename, "_", 2),
-#          diet = str_after_last(str_before_last(feed_filepath, "\\/"), "\\/")) %>%
-#   dplyr::select(-filename) %>%
-#   rename(total_ingredient_km2 = sum)
-
-
-```
-
-
 Bind species' tolerances to the full aoh impacted dataframe. 
 
 ```{r}
@@ -158,13 +135,6 @@ all_spp_list
 # 2 birds                      10025
 # 3 mammals                     5502
 # 4 reptiles                    9280
-
-```
-
-  
-Do some checks: 
-
-```{r}
 
 ```
 

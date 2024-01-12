@@ -182,6 +182,29 @@ Determine each countries' breakdown of trimmings species catch by flag country (
 ```{r}
 ## step 5 
 
+#get xyz file for the FAO areas in 0.5 resolution (catch data resolution)
+fao_areas_shp <- 
+  read_sf("https://www.fao.org/fishery/geoserver/fifao/ows?service=WFS&request=GetFeature&version=1.0.0&typeName=fifao:FAO_AREAS_CWP_NOCOASTLINE&outputFormat=json") |> filter(F_LEVEL == "MAJOR") |> 
+  mutate(F_AREA = as.numeric(F_AREA)) |> 
+  group_by(F_AREA) |> 
+  group_split()
+
+fao_xyz <- 
+  
+  map_df(.x = fao_areas_shp, .f = \(this_area){
+  
+  this_area_shp <- this_area
+  
+  this_area_raster <- terra::rasterize(x = vect(this_area_shp), y = rast(res = 0.5), field = this_area_shp$F_AREA)
+  
+  this_area_xyz <- terra::as.data.frame(x = this_area_raster, xy = TRUE)  |> mutate(fao_area_name = this_area_shp$NAME_EN)
+  
+  return(this_area_xyz)
+  
+}) |> rename(fao_area_code = layer,
+             LonCentre = x,
+             LatCentre = y)
+
 # read in gear data and classify gears into benthic or pelagic
 gear_df <- read.csv(file.path(watson_dir, "v5.0/Codes_gear.csv")) %>%
   janitor::clean_names()
@@ -196,9 +219,11 @@ gear_clean_df <- gear_df %>%
 
 benthic_gears <- c('trawl', 'dredge', 'trap')
 
-trimmings_spp <- read_csv(here("data/raw_data/biomar/trimmings_spp_list.csv")) # i supplemented this to include all sardine and anchovy species, as the biomar report just reports "Sardinella spp" and "Anchoveta" as a wide group. 
+trimmings_spp <- read_csv(here("data/raw_data/biomar/trimmings_spp_list.csv")) %>% 
+  filter(!(common_name %in% c("Bali sardinella", "Goldstripe sardinella", "Japanese sardinella"))) # i supplemented this to include all sardine and anchovy species, as the biomar report just reports "Sardinella spp" and "Anchoveta" as a wide group. However, they specifically say that pacific sardines are not used for trimmings, so i will filter those species out here
 
-watson_cells <- read.csv(file.path(watson_dir, "v5.0/Codes_cells.csv"))
+watson_cells <- read.csv(file.path(watson_dir, "v5.0/Codes_cells.csv")) %>%
+  left_join(fao_xyz)
 
 
 codes_country <- read.csv(file.path(watson_dir, "v5.0/Codes_country.csv")) # read in country codes 
@@ -209,6 +234,32 @@ codes_country <- read.csv(file.path(watson_dir, "v5.0/Codes_country.csv")) # rea
 trimmingsfish <- 
   watson_raw |> 
   mutate(trimmingsfish = ifelse(CommonName %in% c(trimmings_spp$common_name) | TaxonName %in% c(trimmings_spp$scientific_name), 1, NA)) %>%
+  left_join(watson_cells)
+
+trimmingsfish_cats <- trimmingsfish %>%
+  filter(trimmingsfish == 1) %>%
+  distinct(CommonName, TaxonName)
+
+# write csv of trimmings fish species and add species specific FAO areas from BioMar sustainability report
+write.csv(trimmingsfish_cats, here("prep/02_feed/data/trimmingsfish_species_watson.csv"), row.names = FALSE)
+# now i've exported this to excel and manually added each FAO area and reading back in 
+trimmingsfish_cats <- read.csv(here("prep/02_feed/data/trimmingsfish_species_fao_areas.csv"))
+
+  trimmingsfish <- trimmingsfish %>% 
+  mutate(trimmingsfish = 
+           case_when(
+             trimmingsfish == 1 & CommonName %in% c("Atlantic mackerel") & fao_area_code %in% c(27, 34) ~ 1,
+             trimmingsfish == 1 & CommonName %in% c("European pilchard") & fao_area_code %in% c(27, 34, 37, 87) ~ 1,
+           trimmingsfish == 1 & CommonName %in% c("Skipjack tuna", "Albacore", "Yellowfin tuna", "Tuna") & fao_area_code %in% c(87, 57) ~ 1,
+           trimmingsfish == 1 & CommonName %in% c("European anchovy", "Sardinella", "Brazilian sardinella") & fao_area_code %in% c(34, 37) ~ 1,
+           trimmingsfish == 1 & CommonName %in% c("Chub mackerel") & fao_area_code %in% c(87, 77, 71) ~ 1,
+           trimmingsfish == 1 & CommonName %in% c("Anchovies", "Japanese anchovy", "Pacific anchoveta", "Indo-Pacific anchovies", "Californian anchovy", "Cape anchovy", "Atlantic anchoveta") & fao_area_code %in% c(47, 77, 37, 27, 34, 87, 61) ~ 1,
+          trimmingsfish == 1 & CommonName %in% c("Atlantic herring", "Atlantic cod", "Capelin", "Blue whiting") & fao_area_code %in% c(27) ~ 1,
+          trimmingsfish == 1 & CommonName %in% c("Alaska pollack") & fao_area_code %in% c(67) ~ 1,
+          trimmingsfish == 1 & CommonName %in% c("Anchoveta") & fao_area_code %in% c(87) ~ 1,
+          trimmingsfish == 1 & CommonName %in% c("Round sardinella", "Madeiran sardinella") & fao_area_code %in% c(27, 34, 37, 87) ~ 1,
+          trimmingsfish == 1 & CommonName %in% c("Herrings sardines anchovies") & fao_area_code %in% c(34, 37, 47, 77, 27, 87, 61) ~ 1,
+          TRUE ~ NA)) %>%
   left_join(watson_rgn, by = c("CountryName" = "country", "CNumber")) %>%
   mutate(catch = ReportedIND + ReportedNIND) %>%
   mutate(trimmings_catch = catch*trimmingsfish) %>%
@@ -252,9 +303,6 @@ Apply these within country percentages to total country exported fish oil and fi
      
 ```{r}
 ## step 6 
-
-
-
 trimmings_fofm_origins <- trimmings_catch_iso %>%
   dplyr::select(iso3c, CommonName, TaxonName, prop_of_iso_total) %>%
   left_join(demand_trade_origin, by = c("iso3c" = "partner_iso3c")) %>%
@@ -265,7 +313,7 @@ trimmings_fofm_origins <- trimmings_catch_iso %>%
   dplyr::select(iso3c, CommonName, TaxonName, ingredient, diet, fcr_type, tonnes_fofm_trimmings_spp) %>%
   filter(!is.na(tonnes_fofm_trimmings_spp))
 
-sum(trimmings_fofm_origins$tonnes_fofm_trimmings_spp, na.rm = TRUE) # 1091781 losing ~13k bc of Uruguay is missing... they don't report catch for any of the trimmings spp we have... 
+sum(trimmings_fofm_origins$tonnes_fofm_trimmings_spp, na.rm = TRUE) # 1087952 losing ~13k bc of Uruguay is missing... they don't report catch for any of the trimmings spp we have... 
 
 
 trimmings_test <- trimmings_fofm_origins %>%
@@ -469,11 +517,13 @@ trimmings_fofm_allocation <- trimmings_fofm_origins %>%
   mutate(tonnes_fofm_trimmings_spp_live_weight = tonnes_fofm_trimmings_spp*allocation_value) %>%
   dplyr::select(iso3c, CommonName, TaxonName, ingredient, diet, fcr_type, tonnes_fofm_trimmings_spp, allocation_type, allocation_value, tonnes_fofm_trimmings_spp_live_weight)
 
-sum(trimmings_fofm_allocation$tonnes_fofm_trimmings_spp_live_weight) # 5071584/3 = 1690528 Ok this makes sense. 
+sum(trimmings_fofm_allocation$tonnes_fofm_trimmings_spp_live_weight) # 5100000/3 = 1700000 Ok this makes sense. Weird that it is an exactly even number.. but the numbers check out... see below. 
 
-mean(trimmings_fofm_allocation$allocation_value) # 1.429135
+sum(trimmings_fofm_allocation$tonnes_fofm_trimmings_spp) # 3263857/3 = 1087952 Ok this makes sense. 
 
-1690528/1091781 # 1.548413 seems fine 
+mean(trimmings_fofm_allocation$allocation_value) # 1.459467
+
+1700000/1087952 # 1.562569 seems fine 
 
 ```
 
@@ -512,21 +562,11 @@ trim_props <- readRDS(here("prep/02_feed/data/embodied_FMFO_trimmings_rgns.rds")
 trimmingsfish <- readRDS(file.path(watson_dir, "v5.0/int/all_catch_trimmingsfish.rds"))
 watson_cells <- read.csv(file.path(watson_dir, "v5.0/Codes_cells.csv"))
 
-# trimmingsfish_2 <- trimmingsfish %>% 
-#   filter(trimmings_catch > 0) %>%
-#   filter(iso3c %in% c(unique(trim_props$iso3c)))
-#   group_by(LonCentre, LatCentre) %>%
-#   summarise(catch = sum(trimmings_catch, na.rm = TRUE)) %>%
-#   ungroup()
-
-  
-
 diets <- unique(trim_props$diet)
 allocations <- unique(trim_props$allocation_type)
 ingredients <- unique(trim_props$ingredient)
 depth_positions <- c("benthic", "pelagic")
 fcrs <- unique(trim_props$fcr_type)
-fcrs <- c("efficient")
 
 for(diet_type in diets){
   for(fcr in fcrs){
@@ -567,7 +607,8 @@ for(diet_type in diets){
     summarise(tonnes = sum(trimmings_catch_foodsystem, na.rm = TRUE)) %>%
     ungroup() %>%
     left_join(watson_cells) %>%
-    dplyr::select(LonCentre, LatCentre, tonnes)
+    dplyr::select(LonCentre, LatCentre, tonnes) %>%
+    filter(tonnes > 0)
   
 
   trimmings_fish_system_catch <- rast(trimmingsfish_system_catch, type = "xyz", crs = crs(watson_raster_template)) %>%
@@ -610,7 +651,7 @@ for(diet_type in diets){
 
 trim_files <- list.files(here("prep/02_feed/output/fish-dominant/regular"), pattern = "fish oil|fish meal|trimmings", full.names = TRUE)
 
-trim_files <- trim_files[grep("_A", trim_files)]
+trim_files <- trim_files[grep("_P", trim_files)]
 trim_files <- trim_files[grep("trimmings fish", trim_files)]
 trim_files <- trim_files[grep("economic", trim_files)]
 

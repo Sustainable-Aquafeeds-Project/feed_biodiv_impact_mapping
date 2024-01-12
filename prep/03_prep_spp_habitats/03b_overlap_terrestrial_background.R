@@ -160,14 +160,18 @@ for(allocation_type in allocations){
           outf_sd <- sprintf(file.path(biodiv_dir, "output/impact_maps_by_taxon_ingredient/%s/%s/imp_unwt_%s_%s_%s_%s_sd.tif"), diet_type, fcr, crop_type, ingredient_type, allocation_type, tx_type)
           outf_nspp <- sprintf(file.path(biodiv_dir, "output/impact_maps_by_taxon_ingredient/%s/%s/imp_unwt_%s_%s_%s_%s_nspp.tif"), diet_type, fcr, crop_type, ingredient_type, allocation_type, tx_type)
 
+          outf_mean_prop <- sprintf(file.path(biodiv_dir, "output/impact_maps_by_taxon_ingredient/%s/%s/prop_unwt_%s_%s_%s_%s_mean.tif"), diet_type, fcr, crop_type, ingredient_type, allocation_type, tx_type)
+          outf_sd_prop <- sprintf(file.path(biodiv_dir, "output/impact_maps_by_taxon_ingredient/%s/%s/prop_unwt_%s_%s_%s_%s_sd.tif"), diet_type, fcr, crop_type, ingredient_type, allocation_type, tx_type)
+          outf_nspp_prop <- sprintf(file.path(biodiv_dir, "output/impact_maps_by_taxon_ingredient/%s/%s/prop_unwt_%s_%s_%s_%s_nspp.tif"), diet_type, fcr, crop_type, ingredient_type, allocation_type, tx_type)
+          
           
           outf_mean_df <- glue(file.path(this_dir, "int/aoh_impacts_terrestrial/{tx_type}_{diet_type}_{fcr}_{crop_type}_{ingredient_type}_{allocation_type}.rds"))
 
           
-          if(all(file.exists(outf_mean, outf_sd))) {
-            message('Rasters exist for taxon ', tx_type, crop_type, ingredient_type, diet_type, allocation_type, fcr, ' for harvest stressor... skipping!')
-            next()
-          }
+          # if(all(file.exists(outf_mean, outf_sd))) {
+          #   message('Rasters exist for taxon ', tx_type, crop_type, ingredient_type, diet_type, allocation_type, fcr, ' for harvest stressor... skipping!')
+          #   next()
+          # }
 
           
           
@@ -202,6 +206,7 @@ for(allocation_type in allocations){
                                                 .[ , harvest := ifelse(is.na(harvest), 0, harvest)] %>%
                                                 .[ , impact_km2  := (1-cropland_suitability)*harvest] %>%
                                                 .[ , impact  := 1 - ((100 - impact_km2)/100)^0.25] %>%
+                                                .[ , prop_remaining  := ((100 - impact_km2)/100)] %>%
                                                 .[impact>0]
                                                 
                                                 
@@ -210,11 +215,19 @@ for(allocation_type in allocations){
                                                        impact_sd   = sd(impact),
                                                        n_spp       = length(unique(species_full))),
                                                    by = 'cell_id']
-                                              
+                                                
+                                                ## add in another chunk sum with mean proportion habitat left
+                                                chunk_sum_prop <- chunk_sum_spp %>%
+                                                  .[ , .(prop_mean = mean(prop_remaining),
+                                                         prop_sd   = sd(prop_remaining),
+                                                         n_spp       = length(unique(species_full))),
+                                                     by = 'cell_id']
                                               
                                               chunk_sum_spp_global <- chunk_sum_spp %>%
                                                 .[ , .(impact_total = sum(impact_km2)),
-                                                   by = 'species_full']
+                                                   by = 'species_full'] %>%
+                                                .[ , .(impact_mean = mean(impact_km2)),
+                                                  by = 'species_full'] ## add in total habitat area here? 
                                               
                                               return(list(chunk_sum_spp_global = chunk_sum_spp_global, chunk_sum = chunk_sum))
                                             }) 
@@ -233,6 +246,28 @@ for(allocation_type in allocations){
             as.data.frame()
 
           message(glue('Creating and saving rasters for taxon {tx_type} {allocation_type} {diet_fcr_crop_ingredient_type}'))
+          rast_mean_prop <- result_df %>%
+            dplyr::select(cell_id, prop_mean) %>%
+            left_join(moll_template_xy) %>%
+            dplyr::select(x, y, prop_mean) %>%
+            rast(., type = "xyz", crs = moll_template)
+          rast_sd_prop   <- result_df %>%
+            dplyr::select(cell_id, prop_sd) %>%
+            left_join(moll_template_xy) %>%
+            dplyr::select(x, y, prop_sd) %>%
+            rast(., type = "xyz", crs = moll_template)
+          rast_nspp_prop <- result_df %>%
+            dplyr::select(cell_id, n_spp) %>%
+            left_join(moll_template_xy) %>%
+            dplyr::select(x, y, n_spp) %>%
+            rast(., type = "xyz", crs = moll_template)
+
+          writeRaster(rast_mean_prop, outf_mean, overwrite = TRUE)
+          writeRaster(rast_sd_prop,   outf_sd, overwrite = TRUE)
+          writeRaster(rast_nspp_prop, outf_nspp, overwrite = TRUE)
+          
+          
+          message(glue('Creating and saving rasters for taxon {tx_type} {allocation_type} {diet_fcr_crop_ingredient_type} for proportion habitat remaining'))
           rast_mean <- result_df %>%
             dplyr::select(cell_id, impact_mean) %>%
             left_join(moll_template_xy) %>%
@@ -248,7 +283,7 @@ for(allocation_type in allocations){
             left_join(moll_template_xy) %>%
             dplyr::select(x, y, n_spp) %>%
             rast(., type = "xyz", crs = moll_template)
-
+          
           writeRaster(rast_mean, outf_mean, overwrite = TRUE)
           writeRaster(rast_sd,   outf_sd, overwrite = TRUE)
           writeRaster(rast_nspp, outf_nspp, overwrite = TRUE)

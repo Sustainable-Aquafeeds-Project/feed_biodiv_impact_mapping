@@ -458,7 +458,7 @@ trim_npp <-
   left_join(trim_props, by = c("iso3c", "TaxonName")) %>%
   filter(!is.na(ingredient)) %>%
   mutate(prop = ifelse(is.na(prop), 0, prop)) %>% # just incase
-  mutate(fmfo_embodied_fish = prop*trimmings_catch) %>% ## ADD IN TRIMMINGS WEIGHTS HERE ?
+  mutate(fmfo_embodied_fish = prop*trimmings_catch) %>% 
   left_join(fao_xyz) %>%
   left_join(ecosystem_te, by="fao_area_code") |> 
   left_join(trim_tls, by = "TaxonName") |>
@@ -499,6 +499,7 @@ all_fish_npp <-
   ungroup()
 
 
+all_fish_npp <- trim_npp
 
 ## save as rasters 
 
@@ -520,11 +521,11 @@ for(diet_type in diets){
     for(allocation in allocations){
       for(pos in depth_positions){
         for(fcr in fcrs){
-      
+
       # diet_type = "fish-dominant"
-      # ingredient_type = "fish meal"
+      # ingredient_type = "fish meal, cut offs"
       # allocation = "economic"
-      #  pos = "benthic"
+      #  pos = "pelagic"
       #    fcr = "efficient"
       
       rast_xyz_df <- all_fish_npp %>%
@@ -552,7 +553,7 @@ for(diet_type in diets){
   
       rast_xyz <- rast(rast_xyz_df, type = "xyz", crs = crs(base_rast)) %>%
         project(base_rast)
-      
+
       writeRaster(rast_xyz, sprintf(here("prep/02_feed/output/%s/%s/%s_%s_%s_%s_catch_A.tif"), diet_type, fcr, fish_type, ingredient_type, allocation, pos), overwrite = TRUE)
       
             rast_xyz_bycatch <- rast(rast_xyz_df_bycatch, type = "xyz", crs = crs(base_rast)) %>%
@@ -580,7 +581,7 @@ for(diet_type in diets){
 test_ben <- rast(here("prep/02_feed/output/plant-dominant/regular/trimmings fish_fish meal, cut offs_mass_benthic_catch_A.tif"))
 test_pel <- rast(here("prep/02_feed/output/plant-dominant/regular/trimmings fish_fish meal, cut offs_mass_pelagic_catch_A.tif"))
 
-global(test_ben, "sum", na.rm = TRUE) + global(test_pel, "sum", na.rm = TRUE)  # 2284.717 km2
+global(test_ben, "sum", na.rm = TRUE) + global(test_pel, "sum", na.rm = TRUE)  # 2306.942 km2
 
 ## looks good
 ```  
@@ -616,12 +617,12 @@ test <- trim_npp %>%
 test2 <- rast(test %>% dplyr::select(LonCentre, LatCentre, area_fmfo), type = "xyz", crs = crs(base_rast)) %>%
   project(base_rast)
  plot(test2)
-plot(log(test2+1))
+plot(log(test2))
 
-global(test2, "sum", na.rm = TRUE) # 211.5595 km2
+global(test2, "sum", na.rm = TRUE) # 188.3197 km2
 
-sum(test$fmfo_embodied_fish) # 23076.47 tonnage
-sum(test$area_fmfo, na.rm = TRUE) # 211.6933 km2
+sum(test$fmfo_embodied_fish) # 20210.26 tonnage
+sum(test$area_fmfo, na.rm = TRUE) # 188.4551 km2
 
 
 test <- all_fish_npp %>%
