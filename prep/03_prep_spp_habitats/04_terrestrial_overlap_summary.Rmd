@@ -52,17 +52,9 @@ impact_df <-  purrr::map_df(list.files(file.path(biodiv_dir, "int/aoh_impacts_te
   # unite(sciname, c(genus, species))
 
 
-length(unique(impact_df$sciname)) # 11876 hmmm.. missing ~5k species.. is this because they are unaffected species, and we only kept affected species? probably
+length(unique(impact_df$sciname)) # 22351
 
 # now lets clean up the data a bit 
-
-# mammals_list <- read.csv(here("prep/data/Mammals_list_AOH.csv")) %>%
-#   dplyr::select(sciname = BINOMIAL, order = ORDER, iucn_rl_cat = Red_List_Category_2019)
-# 
-# birds_list <- read.csv(here("prep/data/Birds_list_AOH.csv")) %>%
-#     dplyr::select(sciname = BINOMIAL, order = Order_, iucn_rl_cat = F2019_Iucn_Red_List_Category)
-# 
-# all_spp_list <- rbind(mammals_list, birds_list)
 
 all_spp_list <- readRDS(here("prep/03_prep_spp_habitats/data/iucn/eyres_iucn_spp.rds")) %>%
   dplyr::select(sciname = scientific_name, order = order_name, iucn_rl_cat = category) %>%
@@ -71,7 +63,9 @@ all_spp_list <- readRDS(here("prep/03_prep_spp_habitats/data/iucn/eyres_iucn_spp
 
 impact_df_tidy <- impact_df %>%
     group_by(sciname, diet, fcr_type, allocation, crop_ingredient) %>%
-  summarise(impact_total = sum(impact_total, na.rm = TRUE)) %>%
+  summarise(impact_total = sum(impact_total, na.rm = TRUE),
+            total_hab_area = sum(hab_area, na.rm = TRUE),
+            extinction_mean = mean(extinction_mean, na.rm = TRUE)) %>%
   mutate(aoh_filepath = paste0(aoh_dir, sciname), 
          feed_filepath = sprintf(here("prep/02_feed/output/resampled/%s/%s/%s_%s_A.tif"), diet, fcr_type, crop_ingredient, allocation)) %>%
   rename("ingredient" = "crop_ingredient") %>%
@@ -81,9 +75,23 @@ impact_df_tidy <- impact_df %>%
 
 species_list <- c(unique(impact_df_tidy$sciname))
 
-# riteLines(species_list, here("prep/03_prep_spp_habitats/int/impacted_species_list.txt"))
+writeLines(species_list, here("prep/03_prep_spp_habitats/int/impacted_species_list.txt"))
 
+hab_areas <- impact_df_tidy %>% ungroup() %>% distinct(sciname, total_hab_area) %>%
+  group_by(sciname) %>%
+  filter(total_hab_area == max(total_hab_area)) %>%
+  ungroup()
 
+test <- impact_df_tidy %>%
+  ungroup() %>%
+  group_by(sciname, diet, fcr_type, allocation) %>%
+  summarise(impact_total = sum(impact_total, na.rm = TRUE), 
+            extinction_mean = mean(extinction_mean, na.rm = TRUE)) %>%
+  ungroup() %>%
+  left_join(hab_areas) %>% 
+  mutate(prop_impacted = impact_total/total_hab_area)
+
+## highest total proportional impact is Liolaemus gravenhorstii, commonly known as Gravenhorst's tree iguana. ~1.7% of its habitat is impacted under plant-dominant, regular, economic. It has an average extinction risk of 0.00042959420 or 0.04% extinction risk across all cells it occupies. 
 ```
 
 
@@ -93,6 +101,7 @@ Bind species' tolerances to the full aoh impacted dataframe.
 ag_suitability <- readRDS(here("prep/03_prep_spp_habitats/int/terrestrial_spp_habitat_suitability.rds"))
 
 aoh_df <- impact_df_tidy %>%
+  ungroup() %>%
   left_join(., ag_suitability, by = c("sciname" = "species")) %>%
   rename(suitability = cropland_suitability) %>%
   mutate(vulnerability = 1 - suitability)

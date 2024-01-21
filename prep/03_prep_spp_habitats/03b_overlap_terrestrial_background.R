@@ -132,7 +132,6 @@ for(allocation_type in allocations){
 
 # allocation_type = "economic"
 # diet_fcr_crop_ingredient_type = "fish-dominant/efficient/Maize_corn gluten meal"
-# tx_type = "Amphibians"
 
           diet_type = str_before_first(diet_fcr_crop_ingredient_type, "/")
           ingredient_type = str_after_first(diet_fcr_crop_ingredient_type, "_")
@@ -204,9 +203,10 @@ for(allocation_type in allocations){
                                                           by = c('cell_id')) %>%
                                                 as.data.table() %>%
                                                 .[ , harvest := ifelse(is.na(harvest), 0, harvest)] %>%
+                                                .[ , hab_area := 100] %>%
                                                 .[ , impact_km2  := (1-cropland_suitability)*harvest] %>%
-                                                .[ , impact  := 1 - ((100 - impact_km2)/100)^0.25] %>%
-                                                .[ , prop_remaining  := ((100 - impact_km2)/100)] %>%
+                                                .[ , impact  := 1 - ((hab_area - impact_km2)/hab_area)^0.25] %>%
+                                                .[ , prop_remaining  := ((hab_area - impact_km2)/hab_area)] %>%
                                                 .[impact>0]
                                                 
                                                 
@@ -224,12 +224,12 @@ for(allocation_type in allocations){
                                                      by = 'cell_id']
                                               
                                               chunk_sum_spp_global <- chunk_sum_spp %>%
-                                                .[ , .(impact_total = sum(impact_km2)),
-                                                   by = 'species_full'] %>%
-                                                .[ , .(impact_mean = mean(impact_km2)),
-                                                  by = 'species_full'] ## add in total habitat area here? 
+                                                .[ , .(impact_total = sum(impact_km2),
+                                                       impact_mean = mean(impact), 
+                                                       hab_area = sum(hab_area)),
+                                                   by = 'species_full']
                                               
-                                              return(list(chunk_sum_spp_global = chunk_sum_spp_global, chunk_sum = chunk_sum))
+                                              return(list(chunk_sum_spp_global = chunk_sum_spp_global, chunk_sum = chunk_sum, chunk_sum_prop = chunk_sum_prop))
                                             }) 
           
           
@@ -244,27 +244,31 @@ for(allocation_type in allocations){
           result_df <- rbindlist(lapply(result_list, function(x) x$chunk_sum)) %>%
             filter(!is.na(cell_id)) %>%
             as.data.frame()
+          
+          result_df_prop <- rbindlist(lapply(result_list, function(x) x$chunk_sum_prop)) %>%
+            filter(!is.na(cell_id)) %>%
+            as.data.frame()
 
           message(glue('Creating and saving rasters for taxon {tx_type} {allocation_type} {diet_fcr_crop_ingredient_type}'))
-          rast_mean_prop <- result_df %>%
+          rast_mean_prop <- result_df_prop  %>%
             dplyr::select(cell_id, prop_mean) %>%
             left_join(moll_template_xy) %>%
             dplyr::select(x, y, prop_mean) %>%
             rast(., type = "xyz", crs = moll_template)
-          rast_sd_prop   <- result_df %>%
+          rast_sd_prop   <- result_df_prop %>%
             dplyr::select(cell_id, prop_sd) %>%
             left_join(moll_template_xy) %>%
             dplyr::select(x, y, prop_sd) %>%
             rast(., type = "xyz", crs = moll_template)
-          rast_nspp_prop <- result_df %>%
+          rast_nspp_prop <- result_df_prop %>%
             dplyr::select(cell_id, n_spp) %>%
             left_join(moll_template_xy) %>%
             dplyr::select(x, y, n_spp) %>%
             rast(., type = "xyz", crs = moll_template)
 
-          writeRaster(rast_mean_prop, outf_mean, overwrite = TRUE)
-          writeRaster(rast_sd_prop,   outf_sd, overwrite = TRUE)
-          writeRaster(rast_nspp_prop, outf_nspp, overwrite = TRUE)
+          writeRaster(rast_mean_prop, outf_mean_prop, overwrite = TRUE)
+          writeRaster(rast_sd_prop,   outf_sd_prop, overwrite = TRUE)
+          writeRaster(rast_nspp_prop, outf_nspp_prop, overwrite = TRUE)
           
           
           message(glue('Creating and saving rasters for taxon {tx_type} {allocation_type} {diet_fcr_crop_ingredient_type} for proportion habitat remaining'))
@@ -294,11 +298,14 @@ for(allocation_type in allocations){
           global_df <- rbindlist(lapply(result_list, function(x) x$chunk_sum_spp_global)) %>% 
             as.data.frame() %>%
             group_by(species_full) %>%
-            summarise(impact_total = sum(impact_total, na.rm = TRUE)) %>%
+            summarise(impact_total = sum(impact_total, na.rm = TRUE),
+                      extinction_mean = mean(impact_mean, na.rm = TRUE),
+                      hab_area = sum(hab_area, na.rm = TRUE)) %>%
             mutate(allocation = allocation_type, diet_fcr_crop_ingredient = diet_fcr_crop_ingredient_type) %>%
             mutate(diet = str_before_first(diet_fcr_crop_ingredient, "\\/")) %>%
             mutate(fcr_type = str_before_first(str_after_first(diet_fcr_crop_ingredient, "\\/"), "\\/")) %>%
-            mutate(crop_ingredient = str_after_nth(diet_fcr_crop_ingredient, "\\/", 2))
+            mutate(crop_ingredient = str_after_nth(diet_fcr_crop_ingredient, "\\/", 2)) %>%
+            ungroup()
           
           diet_type = unique(global_df$diet)
           fcr <- unique(global_df$fcr_type)

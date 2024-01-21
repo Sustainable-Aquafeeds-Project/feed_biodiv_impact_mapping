@@ -60,7 +60,7 @@ impact_df <- purrr::map_df(list.files(file.path(biodiv_dir, "int/aoh_impacts_mar
               mutate(species = tolower(species))
               ) 
 
-length(unique(impact_df$SpeciesID)) # 20335 missing some spp.. however, we filtered out the species that aren't vulnerable, so this makes sense (see check that I did in the terrestrial overlap summary RMD)
+length(unique(impact_df$SpeciesID)) # 20254 missing some spp.. however, we filtered out the species that aren't vulnerable, so this makes sense
 
 setdiff(unique(aquamaps_spp$SpeciesID), unique(impact_df$SpeciesID))
 
@@ -71,10 +71,21 @@ test <- vuln_taxa %>% filter(SpeciesID %in% spp_to_run) # ok, all species that a
 
 impact_vuln <- impact_df %>%
   dplyr::group_by(species, diet, fcr_type, allocation, ingredient) %>%
-  summarise(impact_total = sum(impact_total, na.rm = TRUE)) %>%
+  summarise(impact_total = sum(impact_total, na.rm = TRUE),
+             extinction_mean = mean(extinction_mean, na.rm = TRUE),
+                        total_hab_area = sum(hab_area, na.rm = TRUE)) %>%
   ungroup() %>% 
   left_join(vuln_taxa) %>%
-  dplyr::select(sciname= species, diet, fcr_type, allocation, ingredient, impact_total, vulnerability = vuln_quartile, spp_type = taxon, impact_total)
+  dplyr::select(sciname= species, diet, fcr_type, allocation, ingredient, impact_total, vulnerability = vuln_quartile, spp_type = taxon, impact_total, total_hab_area, extinction_mean)
+
+hab_areas <- impact_vuln %>% ungroup() %>% distinct(sciname, total_hab_area) %>%
+  group_by(sciname) %>%
+  filter(total_hab_area == max(total_hab_area)) %>%
+  ungroup()
+
+impact_vuln <- impact_vuln %>%
+  dplyr::select(-total_hab_area) %>%
+  left_join(hab_areas)
   
 summary(impact_vuln) # no Nas in vulnerability
 
@@ -99,8 +110,8 @@ test_marine <- impact_vuln %>%
          allocation == "mass",
          fcr_type == "regular")
 
-sum(test_marine$impact_total, na.rm = TRUE) # 130228.9
-mean(test_marine$impact_total, na.rm = TRUE) # 1.845072
+sum(test_marine$impact_total, na.rm = TRUE) # 133105
+mean(test_marine$impact_total, na.rm = TRUE) # 2.070416
 
 
 ```

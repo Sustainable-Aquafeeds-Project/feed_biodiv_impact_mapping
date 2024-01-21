@@ -123,7 +123,7 @@ spp_types <- unique(spp_info_df$taxon)
 # indices_to_remove <- grep("Bird|Marine mammal|Marine plant|Reptiles and amphibians|arthropods|echinoderms|polychaetes|sponges", spp_types)
 indices_to_remove <- grep("fish|polychaetes", spp_types)
 spp_types <- spp_types[-indices_to_remove] # remove fish category... we handle this separately in the next script `06c_overlap_fish_fix.R`
-spp_types <- spp_types[grep("corals", spp_types)]
+# spp_types <- spp_types[grep("corals", spp_types)]
 
 for(tx_type in spp_types){
   
@@ -165,6 +165,10 @@ for(fs_type in fish_types){
             outf_mean <- sprintf(file.path(biodiv_dir, "output/impact_maps_by_taxon_ingredient/%s/%s/imp_unwt_%s_%s_%s_%s_mean.tif"), diet_type, fcr, fs_type, ingredient_type, allocation_type, tx_type)
             outf_sd <- sprintf(file.path(biodiv_dir, "output/impact_maps_by_taxon_ingredient/%s/%s/imp_unwt_%s_%s_%s_%s_sd.tif"), diet_type, fcr, fs_type, ingredient_type, allocation_type, tx_type)
             outf_nspp <- sprintf(file.path(biodiv_dir, "output/impact_maps_by_taxon_ingredient/%s/%s/imp_unwt_%s_%s_%s_%s_nspp.tif"), diet_type, fcr, fs_type, ingredient_type, allocation_type, tx_type)
+            
+            outf_mean_prop <- sprintf(file.path(biodiv_dir, "output/impact_maps_by_taxon_ingredient/%s/%s/prop_unwt_%s_%s_%s_%s_mean.tif"), diet_type, fcr, fs_type, ingredient_type, allocation_type, tx_type)
+            outf_sd_prop <- sprintf(file.path(biodiv_dir, "output/impact_maps_by_taxon_ingredient/%s/%s/prop_unwt_%s_%s_%s_%s_sd.tif"), diet_type, fcr, fs_type, ingredient_type, allocation_type, tx_type)
+            outf_nspp_prop <- sprintf(file.path(biodiv_dir, "output/impact_maps_by_taxon_ingredient/%s/%s/prop_unwt_%s_%s_%s_%s_nspp.tif"), diet_type, fcr, fs_type, ingredient_type, allocation_type, tx_type)
             
             
             outf_mean_df <- glue(file.path(biodiv_dir, "int/aoh_impacts_marine/{tx_type}_{diet_type}_{fcr}_{fs_type}_{ingredient_type}_{allocation_type}.rds"))
@@ -245,7 +249,9 @@ for(fs_type in fish_types){
                                                   .[ , bycatch := ifelse(is.na(bycatch), 0, bycatch)] %>%
                                                   .[ , catch := ifelse(is.na(catch), 0, catch)] %>%
                                                   .[ , impact_km2  := ifelse(catch_type == "bycatch", vuln_quartile * bycatch, vuln_quartile*catch)] %>%
-                                                  .[ , impact  := 1 - ((100 - impact_km2)/100)^0.25] %>% # only count species if they are impacted? 
+                                                  .[ , hab_area := 100] %>%
+                                                  .[ , impact  := 1 - ((100 - impact_km2)/100)^0.25] %>% # only count species if they are impacted?
+                                                  .[ , prop_remaining  := ((hab_area - impact_km2)/hab_area)] %>%
                                                   .[impact>0]
                                                 
                                                 
@@ -256,11 +262,20 @@ for(fs_type in fish_types){
                                                      by = 'cell_id']
                                                 
                                                 
+                                                ## add in another chunk sum with mean proportion habitat left
+                                                chunk_sum_prop <- chunk_sum_spp %>%
+                                                  .[ , .(prop_mean = mean(prop_remaining),
+                                                         prop_sd   = sd(prop_remaining),
+                                                         n_spp       = length(unique(species))),
+                                                     by = 'cell_id']
+                                                
                                                 chunk_sum_spp_global <- chunk_sum_spp %>%
-                                                  .[ , .(impact_total = sum(impact_km2)),
+                                                  .[ , .(impact_total = sum(impact_km2),
+                                                         impact_mean = mean(impact), 
+                                                         hab_area = sum(hab_area)),
                                                      by = 'species']
                                                 
-                                                return(list(chunk_sum_spp_global = chunk_sum_spp_global, chunk_sum = chunk_sum))
+                                                return(list(chunk_sum_spp_global = chunk_sum_spp_global, chunk_sum = chunk_sum, chunk_sum_prop = chunk_sum_prop))
                                               })
             
             
@@ -274,6 +289,10 @@ for(fs_type in fish_types){
             message(glue('Binding results for {tx_type} {allocation_type} {ingredient_type} {fs_type} {diet_type} {fcr}'))
             
             result_df <- rbindlist(lapply(result_list, function(x) x$chunk_sum)) %>%
+              filter(!is.na(cell_id)) %>%
+              as.data.frame()
+            
+            result_df_prop <- rbindlist(lapply(result_list, function(x) x$chunk_sum_prop)) %>%
               filter(!is.na(cell_id)) %>%
               as.data.frame()
             
@@ -312,12 +331,50 @@ for(fs_type in fish_types){
             writeRaster(rast_sd,   outf_sd, overwrite = TRUE)
             writeRaster(rast_nspp, outf_nspp, overwrite = TRUE)
             
+            
+            
+            
+            if(nrow(result_df_prop) == 0){
+              
+              rast_mean_prop <- setValues(moll_template, NA)
+              rast_sd_prop <- rast_mean_prop
+              rast_nspp_prop <- rast_mean_prop
+              
+            }else{
+              
+              rast_mean_prop <- result_df_prop %>%
+                dplyr::select(cell_id, prop_mean) %>%
+                left_join(moll_ocean_template) %>%
+                dplyr::select(x, y, prop_mean) %>%
+                filter(prop_mean > 0) %>%
+                rast(., type = "xyz")
+              
+              rast_sd_prop   <- result_df_prop %>%
+                dplyr::select(cell_id, prop_sd) %>%
+                left_join(moll_ocean_template) %>%
+                dplyr::select(x, y, prop_sd) %>%
+                rast(., type = "xyz")
+              
+              rast_nspp_prop <- result_df_prop %>%
+                dplyr::select(cell_id, n_spp) %>%
+                left_join(moll_ocean_template) %>%
+                dplyr::select(x, y, n_spp) %>%
+                rast(., type = "xyz")
+              
+            }
+            
+            writeRaster(rast_mean_prop, outf_mean_prop, overwrite = TRUE)
+            writeRaster(rast_sd_prop,   outf_sd_prop, overwrite = TRUE)
+            writeRaster(rast_nspp_prop, outf_nspp_prop, overwrite = TRUE)
+            
             message(glue('Creating and saving global df for taxon {tx_type} {allocation_type} {ingredient_type} {fs_type} {diet_type} {fcr}'))
             
             global_df <- rbindlist(lapply(result_list, function(x) x$chunk_sum_spp_global)) %>% 
               as.data.frame() %>%
               group_by(species) %>%
-              summarise(impact_total = sum(impact_total, na.rm = TRUE)) %>%
+              summarise(impact_total = sum(impact_total, na.rm = TRUE),
+                        extinction_mean = mean(impact_mean, na.rm = TRUE),
+                        hab_area = sum(hab_area, na.rm = TRUE)) %>%
               mutate(allocation = allocation_type, diet = diet_type, fcr_type = fcr, ingredient = glue("{fs_type}_{ingredient_type}")) 
             
             fish_ingredient_type = glue("{fs_type}_{ingredient_type}")
