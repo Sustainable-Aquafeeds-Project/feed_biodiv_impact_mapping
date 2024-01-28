@@ -808,14 +808,18 @@ ggsave(glue(here(this_dir, "output/plots/by_ingredient/{allocation_type}_{ingred
 
 
 # make delta plots! 
+## jan 20 - sd_prop mean_prop delta doesn't exist; need to fix
+
+calc_types <- calc_types[-5]
+calc_types <- calc_types[-4]
 
 for(allocation_type in allocations){
     for(ingredient_type in ingredients){
       for(type in calc_types){
   
-        # type = "mean"
+        # type = "mean_prop"
         # allocation_type = "economic"
-        # ingredient_type = "CropsNES_coconut oil"
+        # ingredient_type = "forage fish_fish oil"
   
   # if(file.exists(glue(here(this_dir, "output/plots/delta/by_ingredient/{allocation_type}_{ingredient_type}_{type}_plot.png")))){
   #   cat("exists")
@@ -823,7 +827,7 @@ for(allocation_type in allocations){
   # }
         
         
-        delta_df <- fread(glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_by_ingredient/delta/{allocation_type}_{taxa_type}_{type}.rds.gz")))
+        delta_df <- fread(glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_by_ingredient/delta/{allocation_type}_{ingredient_type}_{type}.rds.gz")))
   
   
         
