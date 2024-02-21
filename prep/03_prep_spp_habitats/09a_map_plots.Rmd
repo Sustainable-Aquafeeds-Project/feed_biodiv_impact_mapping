@@ -875,15 +875,17 @@ raw_mats <- all_overlap %>% mutate(raw_material = str_before_first(ingredient, "
   # filter(!(raw_material %in% c("forage fish", "trimmings fish"))) %>% 
   pull(raw_material) %>% unique()
 
+## for some reason didn't run all... need to split mean and mean_prop? 
+
 ## commented out code only needs to be run if the source impact maps are updated! 
 for(allocation_type in allocations){
   for(raw_mat in raw_mats){
     for(type in calc_types){
 
-    # ingredient_type = "Soybean_soybean meal"
+    # ingredient_type = "Sunflower_sunflower meal"
     # allocation_type = "economic"
     # type = "mean"
-    #  raw_mat = "CropsNES"
+    #  raw_mat = "Sunflower"
 
     all_files <- list.files(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_by_ingredient"), pattern = glue("{allocation_type}_{raw_mat}_.*._{type}"), full.names = TRUE)
 
