@@ -252,6 +252,8 @@ for(allocation_type in allocations){
 
 **Mean extinction risk**
 
+ - Look at ranges of values
+
 ```{r}
 
 spp_assessed_plot_df <- spp_assessed %>%
@@ -372,44 +374,44 @@ plot1 <- ggplot(summary_df_test, aes(x = mean_ext_risk)) +
 
 
 
-# summary_df$taxon <- with(summary_df, reorder(taxon, mean_ext_risk, FUN = function(x) mean(x)))
-# 
-# diet_cols = c("Fish-dominant" = "#0D6EB5", "Plant-dominant" = "#7BD67F")
-# # diet_cols = c("fish-dominant" = "#0D6EB5", "plant-dominant" = "#7BD67F")
-# 
-# 
-# ## make boxplot of mean extinction risk
-# 
-# plot1 <- ggplot(summary_df, aes(x = mean_ext_risk)) +
-#   geom_boxplot(aes(y = taxon, fill = diet, color = diet), 
-#                width = 0.3, position = position_dodge(width = -0.7),
-#                size = 0.3, outlier.size = 0.3, outlier.color = NA) +
-#   geom_vline(xintercept = 0, color = "black") + 
-#   geom_point(data = summary_df_all, aes(x = mean_ext_risk, y = taxon, group = diet), 
-#              position = position_dodge(width = -0.7),
-#              shape = 21, color = "black", fill = "white", size = 1.5) +
-#   facet_grid(~fcr, scales = "free_y", space = "free_y") + 
-#   theme_ohara() + 
-#       labs(x = "Mean Extinction Risk", fill = 'Diet', color = 'Diet') + 
-#            ## , title = "Distribution of mean extinction risk across species AOH") +   
-#   scale_x_continuous(expand = c(0,0), limits = c(0, .000035)) +# , limits = c(0, max(summary_df$mean_ext_risk))) + 
-#   scale_fill_manual(values = diet_cols, breaks = names(diet_cols), guide = guide_legend(reverse = FALSE)) + 
-#   scale_color_manual(values = diet_cols, breaks = names(diet_cols), guide = guide_legend(reverse = FALSE)) + 
-#   theme(panel.background = element_blank(),
-#             legend.text = element_text(size = 10),
-#             legend.title = element_text(face = 'bold', size = 11),
-#             legend.key.size = unit(.20, 'cm'),
-#             legend.background = element_blank(),
-#             axis.title.y = element_blank(),
-#             axis.text.x = element_text(size = 6, angle = -90, hjust = 1),
-#         legend.position = "none") + 
-# # annotate('rect', data = summary_df_all %>% filter(fcr == "Regular"),
-# #                xmin = .00003, xmax = .000035, ymin = 0.5, ymax = 13.5,
-# #                fill = 'white', color = 'white') +
-#       geom_text(data = spp_assessed_plot_df %>% mutate(fcr = "Regular"), aes(label = spp_count_str, y = taxon),
-#                 x = .00003, hjust = 0, color = 'black', fill = NA,
-#                 family = 'Helvetica',
-#                 size = 2.2)
+summary_df$taxon <- with(summary_df, reorder(taxon, mean_ext_risk, FUN = function(x) mean(x)))
+
+diet_cols = c("Fish-dominant" = "#0D6EB5", "Plant-dominant" = "#7BD67F")
+# diet_cols = c("fish-dominant" = "#0D6EB5", "plant-dominant" = "#7BD67F")
+
+
+## make boxplot of mean extinction risk
+
+plot1 <- ggplot(summary_df, aes(x = mean_ext_risk)) +
+  geom_boxplot(aes(y = taxon, fill = diet, color = diet),
+               width = 0.3, position = position_dodge(width = -0.7),
+               size = 0.3, outlier.size = 0.3, outlier.color = NA) +
+  geom_vline(xintercept = 0, color = "black") +
+  geom_point(data = summary_df_all, aes(x = mean_ext_risk, y = taxon, group = diet),
+             position = position_dodge(width = -0.7),
+             shape = 21, color = "black", fill = "white", size = 1.5) +
+  facet_grid(~fcr, scales = "free_y", space = "free_y") +
+  theme_ohara() +
+      labs(x = "Mean Extinction Risk", fill = 'Diet', color = 'Diet') +
+           ## , title = "Distribution of mean extinction risk across species AOH") +
+  scale_x_continuous(expand = c(0,0), limits = c(0, .000035)) +# , limits = c(0, max(summary_df$mean_ext_risk))) +
+  scale_fill_manual(values = diet_cols, breaks = names(diet_cols), guide = guide_legend(reverse = FALSE)) +
+  scale_color_manual(values = diet_cols, breaks = names(diet_cols), guide = guide_legend(reverse = FALSE)) +
+  theme(panel.background = element_blank(),
+            legend.text = element_text(size = 10),
+            legend.title = element_text(face = 'bold', size = 11),
+            legend.key.size = unit(.20, 'cm'),
+            legend.background = element_blank(),
+            axis.title.y = element_blank(),
+            axis.text.x = element_text(size = 6, angle = -90, hjust = 1),
+        legend.position = "none") +
+# annotate('rect', data = summary_df_all %>% filter(fcr == "Regular"),
+#                xmin = .00003, xmax = .000035, ymin = 0.5, ymax = 13.5,
+#                fill = 'white', color = 'white') +
+      geom_text(data = spp_assessed_plot_df %>% mutate(fcr = "Regular"), aes(label = spp_count_str, y = taxon),
+                x = .00003, hjust = 0, color = 'black', fill = NA,
+                family = 'Helvetica',
+                size = 2.2)
 
 library(egg)
 
@@ -419,7 +421,7 @@ library(egg)
 
 # get legend
 
-plot1_legend <- get_legend(ggplot(summary_df_test, aes(x = mean_ext_risk)) +
+plot1_legend <- get_legend(ggplot(summary_df, aes(x = mean_ext_risk)) +
   geom_boxplot(aes(y = taxon, fill = diet, color = diet), 
                width = 0.3, position = position_dodge(width = -0.7),
                size = 0.3, outlier.size = 0.3) + 
@@ -460,7 +462,7 @@ ggdraw() +
   draw_label('B', x = 0.575, y = .964, hjust = 0, vjust = 1, 
              size = 9, fontfamily = 'Helvetica', fontface = 'bold')
 
-ggsave(here("prep/03_prep_spp_habitats/output/plots/publication/exclude_outliers_boxplot.png"), width = 16, height = 9, units = "in")
+ggsave(here("prep/03_prep_spp_habitats/output/plots/publication/economic_boxplot.png"), width = 16, height = 9, units = "in")
 
 ```
 
@@ -519,10 +521,26 @@ ggplot(summary_df, aes(x = taxon, y = mean_ext_risk, fill = raw_material)) +
     theme(axis.text.x = element_text(angle = -90, hjust = 1)) +
       scale_y_continuous(expand = c(0,0))
 
+## read in median absolute deviation values
+uncertainty_vals <- read.csv(here("prep/03_prep_spp_habitats/output/absolute_deviations.csv")) %>%
+        separate_wider_delim(ingredient_raw_material, delim = "_", names = c("raw_material", "ingredient")) %>% 
+  mutate(raw_material = str_to_sentence(raw_material), 
+         ingredient = str_to_sentence(ingredient),
+         allocation = str_to_sentence(allocation),
+         diet = str_to_sentence(diet),
+         fcr = str_to_sentence(fcr)) %>%
+  filter(allocation == "Economic") %>%
+  left_join(taxon_names) %>%
+  group_by(allocation, diet, fcr, taxon, raw_material) %>%
+  summarise(across(where(is.numeric), mean, na.rm = TRUE)) %>%
+  ungroup()
 
+summary_df_uncertainty <- summary_df %>%
+  left_join(uncertainty_vals)
 
-p <- ggplot(summary_df, aes(x = taxon, y = mean_ext_risk, fill = raw_material)) +
+p <- ggplot(summary_df_uncertainty, aes(x = taxon, y = mean_ext_risk, fill = raw_material)) +
     geom_bar(stat = "identity") +
+ # geom_errorbar(aes(ymin = lower_med_ad, ymax = upper_med_ad)) + #since its stacked this doesnt really work
   facet_grid(fcr ~ diet, scales = "free_y") +
   labs(x = "Taxon", y = "Species weighted mean extinction risk", fill = NULL) +
   theme_minimal() + 

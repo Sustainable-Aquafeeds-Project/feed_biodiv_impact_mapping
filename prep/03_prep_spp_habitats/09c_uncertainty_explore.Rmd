@@ -1,0 +1,243 @@
+---
+title: "Summary plots"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+## Setup
+
+Load libraries
+
+```{r setup, include=FALSE}
+
+library(tidyverse)
+library(here)
+library(data.table)
+library(terra)
+library(rnaturalearth)
+library(strex)
+library(janitor)
+library(tools)
+library(khroma)
+library(scales)
+library(fields)
+library(patchwork)
+library(cowplot)
+library(glue)
+library(viridis)
+library(RColorBrewer)
+library(ggpubr)
+library(smoothr)
+
+source(here("src/directories.R"))
+
+source(here("src/spatial.R"))
+
+select <- dplyr::select
+setwd(dirname(rstudioapi::getSourceEditorContext()$path)) # set working directory to where this script is located
+this_dir <- getwd()
+
+biodiv_dir <- file.path(rdsi_dir, "biodiversity_impacts")
+
+impact_maps_dir <- file.path(biodiv_dir, "output")
+
+```
+
+```{r}
+## load in some data for categories and general exploration
+marine_overlap <- readRDS(here("prep/03_prep_spp_habitats/output/aoh_marine_impact.rds")) %>%
+    dplyr::select(sciname, spp_type, diet, fcr_type, allocation, ingredient, vulnerability, impact_total, total_hab_area, extinction_mean)
+
+
+terrestrial_overlap <- readRDS(here("prep/03_prep_spp_habitats/output/aoh_terrestrial_mammals_birds_impact.rds")) %>% 
+  dplyr::select(-suitability) %>%
+      dplyr::select(sciname, spp_type, diet, fcr_type, allocation, ingredient, vulnerability, impact_total, total_hab_area, extinction_mean)
+
+all_overlap <- rbind(marine_overlap, terrestrial_overlap) %>%
+    mutate(taxon = str_to_sentence(spp_type)) %>%
+  mutate(taxon = case_when(
+    taxon == "Terrestrial mammal" ~ "Terrestrial mammals",
+    taxon == "Bird" ~ "Birds",
+    taxon == "Fish" ~ "Finfish", 
+    taxon == "Marine mammal" ~ "Marine mammals",
+    taxon == "Marine plant" ~ "Marine plants",
+    TRUE ~ taxon))
+
+```
+
+
+First, lets determine what type of uncertainty statistic is appropriate, following best practices from this paper: https://conbio.onlinelibrary.wiley.com/doi/10.1111/cobi.13699
+
+We need to determine if the data is normally distributed
+
+```{r}
+## read in global economic allocation average impact rasters
+
+allocation_types <- c("economic", "mass", "ge")
+fcr_types <- c("regular", "efficient")
+diet_types <- c("plant-dominant", "fish-dominant")
+
+for(allocation_type in allocation_types){
+  for(fcr_type in fcr_types){
+    for(diet_type in diet_types){
+      
+      # allocation_type = "economic"
+      # fcr_type = "regular"
+      # diet_type = "plant-dominant"
+      
+      imp_rast <- rast(glue(file.path(impact_maps_dir, "impact_maps_across_taxon_ingredient/{diet_type}/{fcr_type}/{allocation_type}_mean.tif")))
+      
+      imp_vals <- terra::values(imp_rast, dataframe = TRUE, na.rm = TRUE)
+      
+      mean_val <- global(imp_rast, fun = "mean", na.rm = TRUE)$mean
+      
+            imp_vals <- as.data.frame(imp_rast, xy=TRUE, na.rm = TRUE) %>%
+              mutate(abs.diff = abs(imp_mean - mean_val))
+      
+      hist(imp_vals$imp_mean) # all of the rasters are highly right skewed...
+      
+      measures <- imp_vals %>%
+        summarise(MedAD = median(abs.diff)) %>%
+        ungroup()
+      
+      
+      
+    }
+  }
+}
+
+
+# since all of the values are very right skewed it seems like i should report the quantiles (which i already do) or the median absolute deviation
+```
+
+Next steps are to: 
+
+Take the finest resolution info we have; for each diet and allocation scenario: raw material and taxon rasters. Pull the x, y, value info from those rasters. Also pull the x, y, value from the overall mean rasters (regardless of raw material and taxon). Then calculate the absolute difference between the fine resolution (raw mat and taxon) and the global mean for each cell. Then group by scenario (so raw material and taxon) and calculate the median and mean to get the mean and median absolute differences. Then you can caclulate the upper and lower bounds associated with those. Similarly, we can use the same general workflow to calculate the quantiles and standard deviation (? we already this info tho in raster form). Then we can visualize this information per raw material and taxonomic grouping (potentially adding error bars to our bar charts)
+
+
+Pull for each diet, fcr, allocation, taxon, and raw material/ingredient combo; x, y, imp_mean, put into one df, and calculate stats described above, one by one, then combine into one large df (without spatial info, so it won't be too large a dataframe)
+
+```{r}
+
+allocation_types <- c("economic", "mass", "ge")
+fcr_types <- c("regular", "efficient")
+diet_types <- c("plant-dominant", "fish-dominant")
+spp_types <- all_overlap %>% 
+  filter(spp_type != "polychaetes") %>% 
+  pull(spp_type) %>% unique()
+
+ingredient_types <- all_overlap %>% 
+  pull(ingredient) %>% unique()
+
+      data_df <- data.frame(allocation = NA, diet = NA, fcr = NA, spp_type = NA, ingredient_raw_material = NA, mean_ad = NA, med_ad = NA, upper_med_ad = NA, lower_med_ad = NA, upper_mean_ad = NA, lower_mean_ad = NA, range_med_ad = NA, range_mean_ad = NA, global_mean = NA)
+
+for(allocation_type in allocation_types){
+  # allocation_type = "economic"
+  for(fcr_t in fcr_types){
+   # fcr_t = "regular"
+    for(diet_type in diet_types){
+    #   diet_type = "plant-dominant"
+            
+     # global_df <- fread(glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_ingredient/{allocation_type}_mean.rds.gz"))) %>%
+     #   filter(diet == diet_type, 
+     #          fcr_type == fcr_t) %>%
+     #   dplyr::select(x = long, y = lat, global_mean = value)
+      
+      
+      for(spp_type in spp_types){
+        for(ingredient_type in ingredient_types){
+              
+# allocation_type = "economic"
+# fcr_t = "regular"
+# diet_type = "plant-dominant"
+# spp_type = "Terrestrial mammal"
+# ingredient_type = "Soybean_soy protein concentrate"
+      
+      
+          if(length(list.files(file.path(glue(impact_maps_dir, "/impact_maps_by_taxon_ingredient/{diet_type}/{fcr_t}")), pattern = glue("{ingredient_type}_{allocation_type}_{spp_type}_mean.tif"), full.names = TRUE)) > 0 ){
+        
+    #    index <- mean(global_df$global_mean, na.rm = TRUE)
+            
+        map_df <- rast(list.files(file.path(glue(impact_maps_dir, "/impact_maps_by_taxon_ingredient/{diet_type}/{fcr_t}")), pattern = glue("imp_unwt_{ingredient_type}_{allocation_type}_{spp_type}_mean.tif"), full.names = TRUE)) %>%
+          as.data.frame(., xy = TRUE) %>%
+                    mutate(allocation = allocation_type, 
+                 diet = diet_type, 
+                 fcr = fcr_t, 
+                 spp_type = spp_type, 
+                 ingredient_raw_material = ingredient_type,
+                 global_mean = mean(impact_mean, na.rm = TRUE)) %>%
+          # left_join(global_df) %>%
+          mutate(abs.diff = abs(impact_mean - global_mean)) %>% 
+          group_by(allocation, diet, fcr, spp_type, ingredient_raw_material) %>%
+          summarise(med_ad = median(abs.diff, na.rm = TRUE),
+                    mean_ad = mean(abs.diff, na.rm = TRUE),
+                    global_mean = mean(global_mean, na.rm = TRUE)) %>%
+          ungroup() %>%
+          mutate(lower_med_ad = global_mean - med_ad, 
+                 upper_med_ad = global_mean + med_ad,
+                 lower_mean_ad = global_mean - mean_ad, 
+                 upper_mean_ad = global_mean + mean_ad, 
+                 range_med_ad = upper_med_ad - lower_med_ad, 
+                 range_mean_ad = upper_mean_ad - lower_mean_ad)
+        
+        data_df <- rbind(map_df, data_df) %>%
+          filter(!is.na(allocation))
+        
+          }else{
+            next()
+          }
+        
+        
+        }
+        
+      }
+      
+    }
+  }
+}
+      
+    
+write.csv(data_df, here("prep/03_prep_spp_habitats/output/absolute_deviations.csv"), row.names = FALSE)
+      
+
+
+## lets plot the mean AD and median AD
+
+  
+  # Set dodge position
+  pos <- position_dodge(width = 0.5)
+
+  # Plot data
+  ggplot(data_df %>% filter(allocation == "economic"), aes(x = ingredient_raw_material, y = med_ad, group = factor(spp_type))) +
+            geom_point(aes(colour = factor(spp_type)),position = pos, linewidth = 0.5) + #
+    geom_ribbon(aes(ymax = lower_med_ad, ymin = upper_med_ad, fill = factor(spp_type)), #position = pos,
+                alpha = 0.3, position = pos) +
+           # scale_color_manual(values = c("navy", "seagreen3", "skyblue2")) + # change lines/points
+            # scale_fill_manual(values = c("navy", "seagreen3", "skyblue2")) + # change ribbons
+            xlab("Ingredient/Raw material") + 
+            ylab("AOH Impacts") +
+ # scale_y_continuous( expand = c(0, 0)) +
+  theme(axis.line = element_line(colour="black"),
+        axis.ticks.y = element_blank(),
+        axis.text.x = element_text(size = 9, family = "Helvetica"),
+        axis.title.x = element_text(size = 9, face = "bold", family = "Helvetica"),
+        axis.title.y = element_text(size = 9, face = "bold", family = "Helvetica"),
+       #  legend.key = element_blank(),
+        legend.box = "horizontal",
+        legend.title = element_blank(),
+        panel.spacing = unit(1.5, "lines"),
+       # legend.position = "none",
+        panel.background = element_rect(fill = "white", colour = "white"),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank()) +
+    facet_grid(diet~fcr, scales = "free") + 
+    coord_flip()
+
+
+
+
+
+```
+
+
