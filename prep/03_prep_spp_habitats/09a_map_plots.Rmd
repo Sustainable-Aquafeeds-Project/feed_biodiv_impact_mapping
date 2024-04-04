@@ -1,5 +1,5 @@
 ---
-title: "Make maps"
+title: "Summary plots: maps"
 output: html_document
 editor_options: 
   chunk_output_type: console
@@ -15,30 +15,22 @@ library(tidyverse)
 library(here)
 library(data.table)
 library(terra)
-library(raster)
 library(rnaturalearth)
 library(strex)
 library(janitor)
 library(sf)
 library(tools)
-library(khroma)
-library(scales)
-library(fields)
 library(patchwork)
 library(cowplot)
 library(glue)
-library(viridis)
 library(RColorBrewer)
 library(ggpubr)
 library(smoothr)
-library(egg)
-library(ggh4x)
 
 source(here("src/directories.R"))
 
 source(here("src/spatial.R"))
 
-select <- dplyr::select
 setwd(dirname(rstudioapi::getSourceEditorContext()$path)) # set working directory to where this script is located
 this_dir <- getwd()
 
@@ -58,7 +50,7 @@ globe_border <- st_polygon(list(globe_bbox)) %>%
 
 ```
 
-```{r establish color palettes}
+```{r establish color palettes and themes}
 
 ## establish color palette from food footprint project
 d_brown <- "#515256"
@@ -80,9 +72,6 @@ image(volcano, asp=1, col=final_palette)
 palette_red <- c(final_palette, "#B90000")
 image(volcano, asp=1, col=palette_red)
 
-light_gray <- "#F8F9FA"
-final_palette <- c(light_gray, continuous_pal)
-scales::show_col(final_palette)
 
 countries_shp <- ne_countries(scale = 110, returnclass = "sf") |> 
   st_transform(crs(moll_template)) # read in countries shapefile
@@ -173,6 +162,8 @@ all_df <- as.data.frame(global_maps_mean, xy = TRUE) %>%
   separate_wider_delim(type, delim = "/", names = c("diet", "fcr_type", "calc_type")) %>%
   mutate(value_log =  ifelse(str_detect(calc_type, "mean"), log(value*1000000 + 1), value)) %>%
   rename(long = x, lat = y)
+# %>%
+  # filter(str_detect(calc_type, "mean_prop")) # comment this out if you want to run a specific calc_type only
 
 for(i in unique(all_df$calc_type)){
 
@@ -181,7 +172,7 @@ for(i in unique(all_df$calc_type)){
   loop_df <- all_df %>%
     filter(calc_type == i) 
 
-# data.table::fwrite(loop_df, glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_ingredient/{i}.rds.gz")))
+data.table::fwrite(loop_df, glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_ingredient/{i}.rds.gz")))
 
 
 delta_df <-  loop_df %>%
@@ -196,11 +187,11 @@ delta_df <-  loop_df %>%
     mutate(delta_rescale = delta*1000000) %>%
     mutate(delta_cat = case_when(
       delta > 0 ~ "Fish-dominant",
-      delta < 0 ~ "Plant-dominant", 
+      delta < 0 ~ "Plant-dominant",
       delta == 0 ~ "No difference"
     ))
 
-  
+
 data.table::fwrite(delta_df, glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_ingredient/delta/{i}.rds.gz")))
 
 }
@@ -222,157 +213,121 @@ types_df <- expand.grid(allocation_types, calc_types, calc_types_2) %>%
 types_df <- types_df[!grepl("nspp_prop", types_df)]
 
 diets <- c("fish-dominant", "plant-dominant")
-fcrs <- c("regular", "efficienct")
+fcrs <- c("regular", "efficient")
 
-# types_df <- grep(pattern = "nspp", types_df, value = TRUE)
+# types_df <- grep(pattern = "mean_prop", types_df, value = TRUE)
 
 for(type in types_df){
   
-  # type = "economic_mean_prop"
+  # type = "economic_sd_prop"
   
  filepath <- glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_ingredient/{type}.rds.gz"))
 
 loop_df <-  fread(filepath) 
 
-if(str_detect(type, "_prop|nspp|sd")){
+if(str_detect(type, "mean")){
   
   if(str_detect(type, "_prop")){
-  fill_name = "Proportion\nhabitat\nremaining"
-    
-  }else if(str_detect(type, "nspp")){
+  fill_name = "Proportion\nhabitat\nimpacted"
+  }else{
+    fill_name = "Extinction\nRisk"
+  }
+  
+  plot_list <- list()
+  
+  for(diet_type in diets){
+    for(fcr in fcrs){
+
+      # diet_type = "plant-dominant"
+      # fcr = "efficient"
+      
+  loop_loop_df <- loop_df %>%
+    filter(diet == diet_type, 
+           fcr_type == fcr)
+  
+quantile_value <- quantile(loop_loop_df$value, probs = 0.999, na.rm = TRUE)
+  
+  loop_loop_df <- loop_loop_df %>% 
+    mutate(value_new = ifelse(value > quantile_value, quantile_value, value))
+  
+  loop_plot <-  ggplot() + 
+      geom_tile(data = loop_loop_df, aes(x = long, y = lat, fill = value_new, color = value_new)) +
+     geom_tile(fill = ifelse(loop_loop_df$value_new < quantile_value, "#B90000", NA)) + 
+            geom_sf(data = countries_shp, fill = NA, colour = "grey") + 
+       scale_fill_gradientn(colors = palette_red, na.value = "white") +
+            scale_color_gradientn(colors = palette_red, na.value = "white") +
+            geom_sf(data = globe_border,
+            fill = NA, color = 'grey70', 
+            size = .1) +
+    scale_x_continuous(expand = c(0, 0)) +
+    scale_y_continuous(expand = c(0, 0)) +
+    theme_void() +
+      theme(plot.title = element_text(hjust = 0.5), 
+          axis.title = element_blank(),
+          axis.text = element_blank(),
+          axis.ticks = element_blank(),
+          legend.margin = margin(r = 10)) + # add a margin to legend text so it isn't cut off when saving 
+  labs(fill = fill_name,
+      # color = "≥99th quantile",
+       title = glue("{diet_type}, {fcr}")) + 
+     guides(color = "none")
+   # + 
+    #   guides(color = guide_legend(override.aes = list(fill = "#B90000")))
+        
+      plot_list[[length(plot_list) + 1]] <- loop_plot
+
+    }
+  } 
+
+ggsave(glue(here(this_dir, "output/plots/{type}_plot.png")), plot = plot_grid(plotlist = plot_list, nrow = 2), width = 10, height = 8, bg = "white")
+
+}else{
+  
+ # type = "ge_sd_prop"
+  
+ if(str_detect(type, "nspp")){
     fill_name = "Number of\nspecies\nimpacted"
   }else{
     fill_name = "sdev"
   }
   
-## create maps in separate plots, force common scale between them
-maps <- map(.x = diets, 
-            .f = function(x, y) 
-  ggplot() + 
-  geom_tile(data = loop_df  %>% 
-              filter(diet == x), aes(x= long, y = lat, fill = value)) +  
-      # scale_fill_gradientn(colors = YlOrBr(9), na.value = "white") +  # Set the color for missing values (NA) to white
-   scale_fill_gradientn(colors = final_palette, na.value = "white") +
-   #  scale_fill_viridis(direction = -1) + 
-              geom_sf(data = countries_shp, fill = NA, colour = "grey") + 
+    plot_list <- list()
+  
+    for(diet_type in diets){
+    for(fcr in fcrs){
+  
+loop_loop_df <- loop_df %>%
+    filter(diet == diet_type, 
+           fcr_type == fcr)
+
+  
+  loop_plot <-  ggplot() + 
+      geom_tile(data = loop_loop_df, aes(x = long, y = lat, fill = value, color = value)) +
+            geom_sf(data = countries_shp, fill = NA, colour = "grey") + 
+       scale_fill_gradientn(colors = final_palette, na.value = "white") +
+            scale_color_gradientn(colors = palette_red, na.value = "white") +
             geom_sf(data = globe_border,
             fill = NA, color = 'grey70', 
             size = .1) +
     scale_x_continuous(expand = c(0, 0)) +
     scale_y_continuous(expand = c(0, 0)) +
     theme_void() +
-    facet_wrap(~fcr_type) + 
-      theme(
+      theme(plot.title = element_text(hjust = 0.5), 
           axis.title = element_blank(),
           axis.text = element_blank(),
           axis.ticks = element_blank(),
-          legend.margin = margin(r = 10)) + # add a margin to legend text so it isn't cut off when saving 
-  labs(fill = fill_name)
-            ) 
-
-ggsave(glue(here(this_dir, "output/plots/{type}_plot.png")), plot = plot_grid(plotlist = maps, labels = glue("{diets}:{type}"), label_size = 10, nrow = 2), width = 10, height = 8, bg = "white")
-
-
-
-}else{
+          legend.margin = margin(r = 10)) + 
+  labs(fill = fill_name,
+       title = glue("{diet_type}, {fcr}")) + 
+     guides(color = "none")
+        
+      plot_list[[length(plot_list) + 1]] <- loop_plot
+    }
+    }
   
-  maps <- map(.x = diets, 
-            .f = function(x, y) 
-  ggplot() + 
-  geom_tile(data = loop_df  %>% 
-              filter(diet == x), aes(x= long, y = lat, fill = value_log)) +  # change to regular value if you don't want log transformed...
-      # scale_fill_gradientn(colors = YlOrBr(9), na.value = "white") +  # Set the color for missing values (NA) to white
-   scale_fill_gradientn(colors = final_palette, na.value = "white") +
-              geom_sf(data = countries_shp, fill = NA, colour = "grey") + 
-            geom_sf(data = globe_border,
-            fill = NA, color = 'grey70', 
-            size = .1) +
-    scale_x_continuous(expand = c(0, 0)) +
-    scale_y_continuous(expand = c(0, 0)) +
-    theme_void() +
-    facet_wrap(~fcr_type) + 
-      theme(
-          axis.title = element_blank(),
-          axis.text = element_blank(),
-          axis.ticks = element_blank(), 
-          legend.margin = margin(r = 10)) +
-    labs(fill = "Logged\nExtinction\nRisk")
-            )
-
-ggsave(glue(here(this_dir, "output/plots/{type}_plot.png")), plot = plot_grid(plotlist = maps, labels = glue("{diets}:{type}"), label_size = 10, nrow = 2), width = 10, height = 8, bg = "white")
-}
+ggsave(glue(here(this_dir, "output/plots/{type}_plot.png")), plot = plot_grid(plotlist = plot_list, nrow = 2), width = 10, height = 8, bg = "white")
 
 }
-
-
-# create delta (change) plots between each diet scenario
-
-for(type in types_df){
-  
-  # type = "economic_mean"
- 
-  # if(file.exists(glue(here(this_dir, "output/plots/delta/{type}_plot.png")))){
-  #   cat("exists")
-  #   next()
-  # }
-
- filepath <- glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_ingredient/delta/{type}.rds.gz"))
-
-delta_df <-  fread(filepath) %>%
-  filter(calc_type == type)
-  
-if(str_detect(type, "nspp|_prop")){
-  limit <- c(min(delta_df$delta), max(delta_df$delta))
-
-}else{
-limit <- c(quantile(delta_df$delta, 0.05), quantile(delta_df$delta, 0.9))
-
-}
-
-
-if(str_detect(type, "nspp")){
-  fill_name = 'Δ Nspp\nimpacted'
-
-}else if(str_detect(type, "sd")){
- fill_name = 'Δ sdev'
- 
-}else if(type %in% c("mass_mean", "economic_mean", "ge_mean")){
-    fill_name = 'Δ\nExtinction\nRisk'
-}else{
-   
-      fill_name = 'Δ\nProportion\nRemaining'
-
- }
-## create maps in separate plots, force common scale between them
-# p <- ggplot() +
-#   geom_tile(data = delta_df %>% filter(delta != 0) , aes(x= long, y = lat, fill = delta)) +
-#     scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0, limit = limit, na.value = "white", oob=scales::squish) + # this will make sure anything above the scales limit will be a solid color
-#   geom_sf(data = countries_shp, fill = NA, colour = "grey") +
-#     facet_wrap(~fcr_type) +
-#   theme_minimal() +
-#       theme(
-#           axis.title = element_blank(),
-#           axis.text = element_blank(),
-#           axis.ticks = element_blank()) +
-#     labs(caption = str_replace(glue("{type}"), "_", "; "))
-
-p <- ggplot() +
-  geom_raster(data = delta_df , aes(x= long, y = lat, fill = delta)) +
-  geom_sf(data = countries_shp, fill = NA, colour = "grey") +
-        geom_sf(data = globe_border,
-            fill = NA, color = 'grey70', 
-            size = .1) +
-    scale_x_continuous(expand = c(0, 0)) +
-    scale_y_continuous(expand = c(0, 0)) +
-    theme_void() +
-    facet_wrap(~fcr_type) +
-    labs(caption = str_replace(glue("{type}"), "_", "; "), 
-         fill = fill_name) + 
-        scale_fill_gradient2(high = '#d01c8b', mid = '#ffffdf', low = '#4dac26', limit = limit, oob=scales::squish) +
-  theme(legend.margin = margin(r = 10))
-
-
-  ggsave(plot = p, glue(here(this_dir, "output/plots/delta/{type}_plot.png")), width = 6.5, height = 3, dpi = 300)
 
 }
 
@@ -395,18 +350,18 @@ for(allocation_type in allocations){
 # allocation_type = "mass"
 #  taxa_type = "cnidaria"
       
-       if(all(c(file.exists(glue(file.path(impact_maps_dir, "csvs/impact_maps_by_taxon_across_ingredient/{allocation_type}_{taxa_type}_mean.rds.gz"))), 
-          file.exists(glue(file.path(impact_maps_dir, "csvs/impact_maps_by_taxon_across_ingredient/{allocation_type}_{taxa_type}_mean_prop.rds.gz"))),
-          file.exists(glue(file.path(impact_maps_dir, "csvs/impact_maps_by_taxon_across_ingredient/{allocation_type}_{taxa_type}_sd_prop.rds.gz"))),
-          file.exists(glue(file.path(impact_maps_dir, "csvs/impact_maps_by_taxon_across_ingredient/{allocation_type}_{taxa_type}_nspp.rds.gz"))),
-          file.exists(glue(file.path(impact_maps_dir, "csvs/impact_maps_by_taxon_across_ingredient/{allocation_type}_{taxa_type}_sd.rds.gz"))))
-          )){
-
-    cat("file exists")
-    next()
-  }else{
-    cat(glue("running {allocation_type} {taxa_type}"))
-  }
+  #      if(all(c(file.exists(glue(file.path(impact_maps_dir, "csvs/impact_maps_by_taxon_across_ingredient/{allocation_type}_{taxa_type}_mean.rds.gz"))), 
+  #         file.exists(glue(file.path(impact_maps_dir, "csvs/impact_maps_by_taxon_across_ingredient/{allocation_type}_{taxa_type}_mean_prop.rds.gz"))),
+  #         file.exists(glue(file.path(impact_maps_dir, "csvs/impact_maps_by_taxon_across_ingredient/{allocation_type}_{taxa_type}_sd_prop.rds.gz"))),
+  #         file.exists(glue(file.path(impact_maps_dir, "csvs/impact_maps_by_taxon_across_ingredient/{allocation_type}_{taxa_type}_nspp.rds.gz"))),
+  #         file.exists(glue(file.path(impact_maps_dir, "csvs/impact_maps_by_taxon_across_ingredient/{allocation_type}_{taxa_type}_sd.rds.gz"))))
+  #         )){
+  # 
+  #   cat("file exists")
+  #   next()
+  # }else{
+  #   cat(glue("running {allocation_type} {taxa_type}"))
+  # }
 
 global_maps_list <- list.files(file.path(impact_maps_dir, "impact_maps_by_taxon_across_ingredient"), pattern = glue("{allocation_type}_{taxa_type}"), recursive = TRUE, full.names = TRUE)
 
@@ -430,19 +385,21 @@ all_df <- terra::as.data.frame(stack_rast, xy = TRUE) %>%
   separate_wider_delim(type, delim = "/", names = c("diet", "fcr_type", "taxa_calc_type")) %>%
   separate_wider_delim(taxa_calc_type, delim = "_", names = c("allocation", "taxa", "calc_type"), too_many = "merge") %>%
   mutate(value_log =  log(value*1000000 + 1)) %>%
-  rename(long = x, lat = y)
+  rename(long = x, lat = y) 
+# %>%
+#   filter(str_detect(calc_type, "mean_prop")) # comment this out if you want to run a specific calc_type only
 
 for(i in unique(all_df$calc_type)){
 
   # i = "nspp"
 
-  if(file.exists(glue(file.path(impact_maps_dir, "csvs/impact_maps_by_taxon_across_ingredient/{allocation_type}_{taxa_type}_{i}.rds.gz")))){
-
-    cat("file exists")
-    next()
-  }else{
-    cat(glue("running {i} {allocation_type} {taxa_type}"))
-  }
+  # if(file.exists(glue(file.path(impact_maps_dir, "csvs/impact_maps_by_taxon_across_ingredient/{allocation_type}_{taxa_type}_{i}.rds.gz")))){
+  # 
+  #   cat("file exists")
+  #   next()
+  # }else{
+  #   cat(glue("running {i} {allocation_type} {taxa_type}"))
+  # }
 
   loop_df <- all_df %>%
     filter(calc_type == i) %>%
@@ -469,6 +426,8 @@ data.table::fwrite(delta_df, glue(file.path(impact_maps_dir, "csvs/impact_maps_b
     }
   }
 
+diets <- c("fish-dominant", "plant-dominant")
+fcrs <- c("regular", "efficient")
      
   
 # make and save plots across ingredients per taxon  
@@ -476,167 +435,121 @@ data.table::fwrite(delta_df, glue(file.path(impact_maps_dir, "csvs/impact_maps_b
 for(allocation_type in allocations){
     for(taxa_type in taxon){
       for(type in calc_types){
+# 
+# allocation_type = "economic"
+# taxa_type = "Bird"
+# type = "sd_prop"
 
-        # allocation_type = "economic"
-        # taxa_type = "Bird"
-        # type = "mean"
-        
-        all_df <- fread(glue(file.path(impact_maps_dir, "csvs/impact_maps_by_taxon_across_ingredient/{allocation_type}_{taxa_type}_{type}.rds.gz"))) %>%
+        loop_df <- fread(glue(file.path(impact_maps_dir, "csvs/impact_maps_by_taxon_across_ingredient/{allocation_type}_{taxa_type}_{type}.rds.gz"))) %>%
           filter(!is.na(value))
+
+if(str_detect(type, "mean")){
+  
+  if(str_detect(type, "_prop")){
+  fill_name = "Proportion\nhabitat\nimpacted"
+  }else{
+    fill_name = "Extinction\nRisk"
+  }
+  
+  plot_list <- list()
+  
+  for(diet_type in diets){
+    for(fcr in fcrs){
+
+      # diet_type = "plant-dominant"
+      # fcr = "efficient"
+      
+  loop_loop_df <- loop_df %>%
+    filter(diet == diet_type, 
+           fcr_type == fcr)
+  
+quantile_value <- quantile(loop_loop_df$value, probs = 0.999, na.rm = TRUE)
+  
+  loop_loop_df <- loop_loop_df %>% 
+    mutate(value_new = ifelse(value > quantile_value, quantile_value, value))
+  
+  loop_plot <-  ggplot() + 
+      geom_tile(data = loop_loop_df, aes(x = long, y = lat, fill = value_new, color = value_new)) +
+     geom_tile(fill = ifelse(loop_loop_df$value_new < quantile_value, "#B90000", NA)) + 
+            geom_sf(data = countries_shp, fill = NA, colour = "grey") + 
+       scale_fill_gradientn(colors = palette_red, na.value = "white") +
+            scale_color_gradientn(colors = palette_red, na.value = "white") +
+            geom_sf(data = globe_border,
+            fill = NA, color = 'grey70', 
+            size = .1) +
+    scale_x_continuous(expand = c(0, 0)) +
+    scale_y_continuous(expand = c(0, 0)) +
+    theme_void() +
+      theme(plot.title = element_text(hjust = 0.5), 
+          axis.title = element_blank(),
+          axis.text = element_blank(),
+          axis.ticks = element_blank(),
+          legend.margin = margin(r = 10)) + # add a margin to legend text so it isn't cut off when saving 
+  labs(fill = fill_name,
+      # color = "≥99th quantile",
+       title = glue("{diet_type}, {fcr}")) + 
+     guides(color = "none")
+   # + 
+    #   guides(color = guide_legend(override.aes = list(fill = "#B90000")))
         
-diets <- unique(all_df$diet)
+      plot_list[[length(plot_list) + 1]] <- loop_plot
+
+    }
+  } 
+
+ggsave(glue(here(this_dir, "output/plots/by_taxa/{allocation_type}_{taxa_type}_{type}_plot.png")), plot = plot_grid(plotlist = plot_list, nrow = 2), width = 10, height = 8, bg = "white")
+
+}else{
   
-if(str_detect(type, "_prop|nspp|sd")){
+ # type = "ge_sd_prop"
   
-    if(str_detect(type, "_prop")){
-  fill_name = "Proportion\nhabitat\nremaining"
-    
-  }else if(str_detect(type, "nspp")){
-    fill_name = "Number of\nspecies\nremaining"
+ if(str_detect(type, "nspp")){
+    fill_name = "Number of\nspecies\nimpacted"
   }else{
     fill_name = "sdev"
   }
   
+    plot_list <- list()
+  
+    for(diet_type in diets){
+    for(fcr in fcrs){
+  
+loop_loop_df <- loop_df %>%
+    filter(diet == diet_type, 
+           fcr_type == fcr)
 
-## create maps in separate plots, force common scale between them
-maps <- map(.x = diets, 
-            .f = function(x, y) 
-  ggplot() + 
-  geom_tile(data = all_df  %>% filter(diet == x), aes(x= long, y = lat, fill = value)) + 
-   scale_fill_gradientn(colors = final_palette, na.value = "white") +
-              geom_sf(data = countries_shp, fill = NA, colour = "grey") + 
+  
+  loop_plot <-  ggplot() + 
+      geom_tile(data = loop_loop_df, aes(x = long, y = lat, fill = value, color = value)) +
+            geom_sf(data = countries_shp, fill = NA, colour = "grey") + 
+       scale_fill_gradientn(colors = final_palette, na.value = "white") +
+            scale_color_gradientn(colors = palette_red, na.value = "white") +
             geom_sf(data = globe_border,
             fill = NA, color = 'grey70', 
             size = .1) +
     scale_x_continuous(expand = c(0, 0)) +
     scale_y_continuous(expand = c(0, 0)) +
     theme_void() +
-    facet_wrap(~fcr_type) +
-      theme(
-          axis.title = element_blank(),
-          axis.text = element_blank(),
-          axis.ticks = element_blank(), 
-          legend.margin = margin(r = 10)) +
-    labs(fill = fill_name)
-            ) 
-
-
-ggsave(glue(here(this_dir, "output/plots/by_taxa/{allocation_type}_{taxa_type}_{type}_plot.png")), plot = plot_grid(plotlist = maps, labels = glue("{diets}:{allocation_type}:{taxa_type}:{type}"), label_size = 10, nrow = 2), width = 10, height = 8, bg = "white")
-
-}else{
- 
-   maps <- map(.x = diets, 
-            .f = function(x, y) 
-  ggplot() + 
-  geom_tile(data = all_df  %>% filter(diet == x), aes(x= long, y = lat, fill = value_log)) + 
-      # scale_fill_gradientn(colors = YlOrBr(9), na.value = "white") +  # Set the color for missing values (NA) to white
-   scale_fill_gradientn(colors = final_palette, na.value = "white") +
-   #  scale_fill_viridis(direction = -1) + 
-              geom_sf(data = countries_shp, fill = NA, colour = "grey") + 
-            geom_sf(data = globe_border,
-            fill = NA, color = 'grey70', 
-            size = .1) +
-    scale_x_continuous(expand = c(0, 0)) +
-    scale_y_continuous(expand = c(0, 0)) +
-    theme_void() +
-    facet_wrap(~fcr_type) +
-      theme(
+      theme(plot.title = element_text(hjust = 0.5), 
           axis.title = element_blank(),
           axis.text = element_blank(),
           axis.ticks = element_blank(),
-          legend.margin = margin(r = 10)) +
-    labs(fill = "Logged\nExtinction\nRisk")
-            ) 
-  
-  ggsave(glue(here(this_dir, "output/plots/by_taxa/{allocation_type}_{taxa_type}_{type}_plot.png")), plot = plot_grid(plotlist = maps, labels = glue("{diets}:{allocation_type}:{taxa_type}:{type}"), label_size = 10, nrow = 2), width = 10, height = 8, bg = "white")
-}
+          legend.margin = margin(r = 10)) + 
+  labs(fill = fill_name,
+       title = glue("{diet_type}, {fcr}")) + 
+     guides(color = "none")
+        
+      plot_list[[length(plot_list) + 1]] <- loop_plot
+    }
+    }
+    
+    ggsave(glue(here(this_dir, "output/plots/by_taxa/{allocation_type}_{taxa_type}_{type}_plot.png")), plot = plot_grid(plotlist = plot_list, nrow = 2), width = 10, height = 8, bg = "white")
 
     }
   }
-}
-
-
-
-# save delta plots across ingredients per taxon 
-taxon <- taxon[-5]
-
-for(allocation_type in allocations){
-    for(taxa_type in taxon){
-      for(type in calc_types){
-  
-        # type = "mean"
-        # allocation_type = "economic"
-        # taxa_type = "arthropods"
-  
-  if(file.exists(glue(here(this_dir, "output/plots/delta/by_taxa/{allocation_type}_{taxa_type}_{type}_plot.png")))){
-    cat("exists")
-    next()
-  }
-
-delta_df <- fread(glue(file.path(impact_maps_dir, "csvs/impact_maps_by_taxon_across_ingredient/delta/{allocation_type}_{taxa_type}_{type}.rds.gz")))
-  
-
-
-if(str_detect(type, "nspp|_prop")){
-  limit <- c(min(delta_df$delta), max(delta_df$delta))
-
-}else{
-limit <- c(quantile(delta_df$delta, 0.05), quantile(delta_df$delta, 0.9))
-}
-
-if(str_detect(type, "nspp")){
-  fill_name = 'Δ Nspp\nimpacted'
-
-}else if(str_detect(type, "sd")){
- fill_name = 'Δ sdev'
- 
-}else if(type %in% c("mass_mean", "economic_mean", "ge_mean")){
-    fill_name = 'Δ Extinction\nRisk'
-}else{
-   
-      fill_name = 'Δ Proportion\nRemaining'
-
- }
-
-## create maps in separate plots, force common scale between them
-  # ggplot() +
-  # geom_tile(data = delta_df %>% filter(delta != 0) , aes(x= long, y = lat, fill = delta)) +
-  #   scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0,  limit = limit, na.value = "white", oob=scales::squish) + # squish makes sure anything above the scales limit will be a solid red or blue... better to visualize this way since the numbers are so small
-  #             geom_sf(data = countries_shp, fill = NA, colour = "grey") +
-  #   facet_wrap(~fcr_type) +
-  # theme_minimal() +
-  #     theme(
-  #         axis.title = element_blank(),
-  #         axis.text = element_blank(),
-  #         axis.ticks = element_blank()) +
-  #   labs(caption = glue("{allocation_type}; {taxa_type}; {type}"))
-  
-  
-  p <- ggplot() +
-  geom_raster(data = delta_df , aes(x= long, y = lat, fill = delta)) +
-  geom_sf(data = countries_shp, fill = NA, colour = "grey") +
-        geom_sf(data = globe_border,
-            fill = NA, color = 'grey70', 
-            size = .1) +
-    scale_x_continuous(expand = c(0, 0)) +
-    scale_y_continuous(expand = c(0, 0)) +
-    theme_void() +
-    facet_wrap(~fcr_type) +
-    labs(caption = glue("{allocation_type}; {taxa_type}; {type}"), 
-         fill = fill_name) + 
-        scale_fill_gradient2(high = '#d01c8b', mid = '#ffffdf', low = '#4dac26', limit = limit, oob=scales::squish) +
-    theme(
-          legend.margin = margin(r = 10))
-       
-
-    ggsave(plot = p, glue(here(this_dir, "output/plots/delta/by_taxa/{allocation_type}_{taxa_type}_{type}_plot.png")), width = 6.5, height = 3, dpi = 300, bg = "white")
-
-
-# ggsave(glue(here(this_dir, "output/plots/delta/by_taxa/{allocation_type}_{taxa_type}_{type}_plot.png")), width = 10, height = 8, bg = "white")
-
     }
-  }
 }
+
 
 ```
 
@@ -680,7 +593,9 @@ all_df <- as.data.frame(stack_rast, xy = TRUE) %>%
   mutate(value_log =  ifelse(str_detect(calc_type, "mean"), log(value*1000000 + 1), value)) %>%
   rename(long = x, lat = y) %>%
   filter(!is.na(value)) %>%
-  unite("crop_ingredient", c(raw_material:ingredient), sep = "_", remove = FALSE)
+  unite("crop_ingredient", c(raw_material:ingredient), sep = "_", remove = FALSE) %>%
+  filter(str_detect(calc_type, "mean_prop")) # comment this out if you want to run a specific calc_type only
+
 
 for(i in unique(all_df$calc_type)){
   # i = "mean"
@@ -738,128 +653,118 @@ for(allocation_type in allocations){
         
       # ingredient_type = "Soybean_soybean meal"
       # allocation_type = "economic"
-      # type = "mean"
+      # type = "sd_prop"
         
-                all_df <- fread(glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_by_ingredient/{allocation_type}_{ingredient_type}_{type}.rds.gz"))) 
+                loop_df <- fread(glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_by_ingredient/{allocation_type}_{ingredient_type}_{type}.rds.gz"))) 
  
-diets <- unique(all_df$diet)
+diets <- unique(loop_df$diet)
   
 
-if(str_detect(type, "_prop|nspp|sd")){
+if(str_detect(type, "mean")){
   
-    if(str_detect(type, "_prop")){
-  fill_name = "Proportion\nhabitat\nremaining"
-    
-  }else if(str_detect(type, "nspp")){
-    fill_name = "Number of\nspecies\nremaining"
+  if(str_detect(type, "_prop")){
+  fill_name = "Proportion\nhabitat\nimpacted"
+  }else{
+    fill_name = "Extinction\nRisk"
+  }
+  
+  plot_list <- list()
+  
+  for(diet_type in diets){
+    for(fcr in fcrs){
+
+      # diet_type = "plant-dominant"
+      # fcr = "efficient"
+      
+  loop_loop_df <- loop_df %>%
+    filter(diet == diet_type, 
+           fcr_type == fcr)
+  
+quantile_value <- quantile(loop_loop_df$value, probs = 0.999, na.rm = TRUE)
+  
+  loop_loop_df <- loop_loop_df %>% 
+    mutate(value_new = ifelse(value > quantile_value, quantile_value, value))
+  
+  loop_plot <-  ggplot() + 
+      geom_tile(data = loop_loop_df, aes(x = long, y = lat, fill = value_new, color = value_new)) +
+     geom_tile(fill = ifelse(loop_loop_df$value_new < quantile_value, "#B90000", NA)) + 
+            geom_sf(data = countries_shp, fill = NA, colour = "grey") + 
+       scale_fill_gradientn(colors = palette_red, na.value = "white") +
+            scale_color_gradientn(colors = palette_red, na.value = "white") +
+            geom_sf(data = globe_border,
+            fill = NA, color = 'grey70', 
+            size = .1) +
+    scale_x_continuous(expand = c(0, 0)) +
+    scale_y_continuous(expand = c(0, 0)) +
+    theme_void() +
+      theme(plot.title = element_text(hjust = 0.5), 
+          axis.title = element_blank(),
+          axis.text = element_blank(),
+          axis.ticks = element_blank(),
+          legend.margin = margin(r = 10)) + # add a margin to legend text so it isn't cut off when saving 
+  labs(fill = fill_name,
+      # color = "≥99th quantile",
+       title = glue("{diet_type}, {fcr}")) + 
+     guides(color = "none")
+   # + 
+    #   guides(color = guide_legend(override.aes = list(fill = "#B90000")))
+        
+      plot_list[[length(plot_list) + 1]] <- loop_plot
+
+    }
+  } 
+
+ggsave(glue(here(this_dir, "output/plots/by_ingredient/{allocation_type}_{ingredient_type}_{type}_plot.png")), plot = plot_grid(plotlist = plot_list, nrow = 2), width = 10, height = 8, bg = "white")
+
+}else{
+  
+ # type = "ge_sd_prop"
+  
+ if(str_detect(type, "nspp")){
+    fill_name = "Number of\nspecies\nimpacted"
   }else{
     fill_name = "sdev"
   }
   
-## create maps in separate plots, force common scale between them
-maps <- map(.x = diets, 
-            .f = function(x, y) 
-  ggplot() + 
-  geom_tile(data = all_df  %>% filter(diet == x), aes(x= long, y = lat, fill = value)) + 
-   scale_fill_gradientn(colors = final_palette, na.value = "white") +
-              geom_sf(data = countries_shp, fill = NA, colour = "grey") + 
-            geom_sf(data = globe_border,
-            fill = NA, color = 'grey70', 
-            size = .1) +
-    scale_x_continuous(expand = c(0, 0)) +
-    scale_y_continuous(expand = c(0, 0)) +
-    theme_void() +
-        theme(
-          legend.margin = margin(r = 10)) +
-    labs(fill = fill_name) + 
-    facet_wrap(~fcr_type) 
-            )
-
-ggsave(glue(here(this_dir, "output/plots/by_ingredient/{allocation_type}_{ingredient_type}_{type}_plot.png")), plot = plot_grid(plotlist = maps, labels = glue("{diets}:{allocation_type}:{ingredient_type}:{type}"), label_size = 10, nrow = 2), width = 10, height = 8, bg = "white")
-
-
-}else{
-  ## create maps in separate plots, force common scale between them
-maps <- map(.x = diets, 
-            .f = function(x, y) 
-  ggplot() + 
-  geom_tile(data = all_df  %>% filter(diet == x), aes(x= long, y = lat, fill = value_log)) + 
-   scale_fill_gradientn(colors = final_palette, na.value = "white") +
-              geom_sf(data = countries_shp, fill = NA, colour = "grey") + 
-            geom_sf(data = globe_border,
-            fill = NA, color = 'grey70', 
-            size = .1) +
-    scale_x_continuous(expand = c(0, 0)) +
-    scale_y_continuous(expand = c(0, 0)) +
-    theme_void() +
-        theme(
-          legend.margin = margin(r = 10)) +
-    labs(fill = "Logged\nExtinction\nRisk") + 
-    facet_wrap(~fcr_type) 
-            )
-
-ggsave(glue(here(this_dir, "output/plots/by_ingredient/{allocation_type}_{ingredient_type}_{type}_plot.png")), plot = plot_grid(plotlist = maps, labels = glue("{diets}:{allocation_type}:{ingredient_type}:{type}"), label_size = 10, nrow = 2), width = 10, height = 8, bg = "white")
+    plot_list <- list()
   
-}
+    for(diet_type in diets){
+    for(fcr in fcrs){
+  
+loop_loop_df <- loop_df %>%
+    filter(diet == diet_type, 
+           fcr_type == fcr)
+
+  
+  loop_plot <-  ggplot() + 
+      geom_tile(data = loop_loop_df, aes(x = long, y = lat, fill = value, color = value)) +
+            geom_sf(data = countries_shp, fill = NA, colour = "grey") + 
+       scale_fill_gradientn(colors = final_palette, na.value = "white") +
+            scale_color_gradientn(colors = palette_red, na.value = "white") +
+            geom_sf(data = globe_border,
+            fill = NA, color = 'grey70', 
+            size = .1) +
+    scale_x_continuous(expand = c(0, 0)) +
+    scale_y_continuous(expand = c(0, 0)) +
+    theme_void() +
+      theme(plot.title = element_text(hjust = 0.5), 
+          axis.title = element_blank(),
+          axis.text = element_blank(),
+          axis.ticks = element_blank(),
+          legend.margin = margin(r = 10)) + 
+  labs(fill = fill_name,
+       title = glue("{diet_type}, {fcr}")) + 
+     guides(color = "none")
+        
+      plot_list[[length(plot_list) + 1]] <- loop_plot
+    }
+    }
     
-    }
-  }
-}
-
-
-# make delta plots! 
-## jan 20 - sd_prop mean_prop delta doesn't exist; need to fix
-
-calc_types <- calc_types[-5]
-calc_types <- calc_types[-4]
-
-for(allocation_type in allocations){
-    for(ingredient_type in ingredients){
-      for(type in calc_types){
-  
-        # type = "mean_prop"
-        # allocation_type = "economic"
-        # ingredient_type = "forage fish_fish oil"
-  
-  # if(file.exists(glue(here(this_dir, "output/plots/delta/by_ingredient/{allocation_type}_{ingredient_type}_{type}_plot.png")))){
-  #   cat("exists")
-  #   next()
-  # }
-        
-        
-        delta_df <- fread(glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_by_ingredient/delta/{allocation_type}_{ingredient_type}_{type}.rds.gz")))
-  
-  
-        
-if(str_detect(type, "nspp|_prop")){
-  limit <- c(min(delta_df$delta), max(delta_df$delta))
-
-}else{
-limit <- c(quantile(delta_df$delta, 0.05), quantile(delta_df$delta, 0.9))
-}
-
-## create maps in separate plots, force common scale between them
-  ggplot() +
-  geom_tile(data = delta_df %>% filter(delta != 0) , aes(x= long, y = lat, fill = delta)) +
-    scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0,  limit = limit, na.value = "white", oob=scales::squish) +
-              geom_sf(data = countries_shp, fill = NA, colour = "grey") +
-                geom_sf(data = globe_border,
-            fill = NA, color = 'grey70', 
-            size = .1) +
-    scale_x_continuous(expand = c(0, 0)) +
-    scale_y_continuous(expand = c(0, 0)) +
-    theme_void() +
-        theme(
-          legend.margin = margin(r = 10)) +
-    labs(fill = "Logged\nExtinction\nRisk") + 
-    facet_wrap(~fcr_type) +
-    labs(caption = glue("{allocation_type}; {ingredient_type}; {type}"))
-
-
-ggsave(glue(here(this_dir, "output/plots/delta/by_ingredient/{allocation_type}_{ingredient_type}_{type}_plot.png")), width = 10, height = 8, bg = "white")
+    ggsave(glue(here(this_dir, "output/plots/by_ingredient/{allocation_type}_{ingredient_type}_{type}_plot.png")), plot = plot_grid(plotlist = plot_list, nrow = 2), width = 10, height = 8, bg = "white")
 
     }
   }
+    }
 }
 
 ```
@@ -882,10 +787,9 @@ for(allocation_type in allocations){
   for(raw_mat in raw_mats){
     for(type in calc_types){
 
-    # ingredient_type = "Sunflower_sunflower meal"
-    # allocation_type = "economic"
-    # type = "mean"
-    #  raw_mat = "Sunflower"
+# allocation_type = "economic"
+# type = "mean_prop"
+#  raw_mat = "forage fish"
 
     all_files <- list.files(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_by_ingredient"), pattern = glue("{allocation_type}_{raw_mat}_.*._{type}"), full.names = TRUE)
 
@@ -893,11 +797,9 @@ for(allocation_type in allocations){
 all_df <- map_dfr(all_files, ~fread(.x), header = TRUE)
 
 all_df_fin <- all_df %>% 
-  mutate(value_log = log(value + 1)*1000000) %>%
   group_by(long, lat, diet, fcr_type, allocation, raw_material, calc_type) %>% 
-  summarise(value = sum(value, na.rm = TRUE),
-            value_log = sum(value_log, na.rm = TRUE)) %>%
-  ungroup()
+  summarise(value = mean(value, na.rm = TRUE)) %>%
+  ungroup() 
 
 # test <- all_df_fin %>% group_by(diet, fcr_type, allocation) %>% summarise(sum = sum(value, na.rm = TRUE))
 
@@ -935,190 +837,179 @@ for(allocation_type in allocations){
         
       # raw_mat = "forage fish"
       # allocation_type = "economic"
-      # type = "nspp"
+      # type = "mean_prop"
       
-                all_df <- fread(glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_by_raw_material/{allocation_type}_{raw_mat}_{type}.rds.gz"))) 
+                loop_df <- fread(glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_by_raw_material/{allocation_type}_{raw_mat}_{type}.rds.gz"))) %>%
+                  filter(calc_type == type)
  
-diets <- unique(all_df$diet)
+diets <- unique(loop_df$diet)
+  fcrs <- unique(loop_df$fcr_type)
 
-
-if(str_detect(type, "_prop|nspp|sd")){
+if(str_detect(type, "mean")){
   
-    if(str_detect(type, "_prop")){
-  fill_name = "Proportion\nhabitat\nremaining"
-    
-  }else if(str_detect(type, "nspp")){
-    fill_name = "Number of\nspecies\nremaining"
+  if(str_detect(type, "_prop")){
+  fill_name = "Proportion\nhabitat\nimpacted"
   }else{
-    fill_name = "sdev"
+    fill_name = "Extinction\nRisk"
   }
   
+  plot_list <- list()
   
-## create maps in separate plots, force common scale between them
-maps <- map(.x = diets, 
-            .f = function(x, y) 
-  ggplot() + 
-  geom_tile(data = all_df  %>% filter(diet == x), aes(x= long, y = lat, fill = value)) + 
-   scale_fill_gradientn(colors = final_palette, na.value = "white") +
-              geom_sf(data = countries_shp, fill = NA, colour = "grey") + 
-                geom_sf(data = globe_border,
-            fill = NA, color = 'grey70', 
-            size = .1) +
-    scale_x_continuous(expand = c(0, 0)) +
-    scale_y_continuous(expand = c(0, 0)) +
-    theme_void() +
-        theme(
-          legend.margin = margin(r = 10)) +
-    labs(fill = "Logged\nExtinction\nRisk") + 
-    facet_wrap(~fcr_type) + 
-    labs(fill = fill_name)
-            )
+  for(diet_type in diets){
+    for(fcr in fcrs){
 
-ggsave(glue(here(this_dir, "output/plots/by_material/{allocation_type}_{raw_mat}_{type}_plot.png")), plot = plot_grid(plotlist = maps, labels = glue("{diets}:{allocation_type}:{raw_mat}:{type}"), label_size = 10, nrow = 2), width = 10, height = 8, bg = "white")
-
-}else{
+      # diet_type = "plant-dominant"
+      # fcr = "efficient"
+      
+  loop_loop_df <- loop_df %>%
+    filter(diet == diet_type, 
+           fcr_type == fcr)
   
+quantile_value <- quantile(loop_loop_df$value, probs = 0.999, na.rm = TRUE)
   
-  maps <- map(.x = diets, 
-            .f = function(x, y) 
-  ggplot() + 
-  geom_tile(data = all_df  %>% filter(diet == x), aes(x= long, y = lat, fill = value_log)) + 
-   scale_fill_gradientn(colors = final_palette, na.value = "white") +
-              geom_sf(data = countries_shp, fill = NA, colour = "grey") + 
-                geom_sf(data = globe_border,
-            fill = NA, color = 'grey70', 
-            size = .1) +
-    scale_x_continuous(expand = c(0, 0)) +
-    scale_y_continuous(expand = c(0, 0)) +
-    theme_void() +
-        theme(
-          legend.margin = margin(r = 10)) +
-    labs(fill = "Logged\nExtinction\nRisk") + 
-    facet_wrap(~fcr_type) + 
-    labs(fill = "Logged\nExtinction\nRisk")
-            )
-
-ggsave(glue(here(this_dir, "output/plots/by_material/{allocation_type}_{raw_mat}_{type}_plot.png")), plot = plot_grid(plotlist = maps, labels = glue("{diets}:{allocation_type}:{raw_mat}:{type}"), label_size = 10, nrow = 2), width = 10, height = 8, bg = "white")
+  loop_loop_df <- loop_loop_df %>% 
+    mutate(value_new = ifelse(value > quantile_value, quantile_value, value))
   
-  
-}
-    
-    }
-  }
-}
-
-
-# make delta plots! 
-
-for(allocation_type in allocations){
-    for(raw_mat in raw_mats){
-      for(type in calc_types){
-  
-        # type = "mean"
-        # allocation_type = "economic"
-        # raw_mat = "Soybean"
-  
-  # if(file.exists(glue(here(this_dir, "output/plots/delta/by_ingredient/{allocation_type}_{ingredient_type}_{type}_plot.png")))){
-  #   cat("exists")
-  #   next()
-  # }
-  
-        delta_df <- fread(glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_by_raw_material/delta/{allocation_type}_{raw_mat}_{type}.rds.gz"))) %>%
-          filter(!is.na(delta)) %>%
-          dplyr::select(long, lat, fcr_type, allocation, raw_material, calc_type, delta)
-  
-if(str_detect(type, "nspp|_prop")){
-  limit <- c(min(delta_df$delta), max(delta_df$delta))
-  
-}else{
-limit <- c(quantile(delta_df$delta, 0.05), quantile(delta_df$delta, 0.9))
-}
-
-## create maps in separate plots, force common scale between them
-  ggplot() + 
-  geom_tile(data = delta_df %>% filter(delta != 0) , aes(x= long, y = lat, fill = delta)) +
-    scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0,  limit = limit, na.value = "white", oob=scales::squish) +
-              geom_sf(data = countries_shp, fill = NA, colour = "grey") +
-                geom_sf(data = globe_border,
-            fill = NA, color = 'grey70', 
-            size = .1) +
-    scale_x_continuous(expand = c(0, 0)) +
-    scale_y_continuous(expand = c(0, 0)) +
-    theme_void() +
-        theme(
-          legend.margin = margin(r = 10)) +
-    labs(fill = "Logged\nExtinction\nRisk") + 
-    facet_wrap(~fcr_type) + 
-    labs(caption = glue("{allocation_type}; {raw_mat}; {type}"))
-            
-
-ggsave(glue(here(this_dir, "output/plots/delta/by_material/{allocation_type}_{raw_mat}_{type}_plot.png")), width = 10, height = 8, bg = "white")
-
-    }
-  }
-}
-
-```
-
-
-```{r}
-# make publication ready mean extinction risk plots with all feed scenarios, economic allocation
- filepath <- glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_ingredient/economic_mean.rds.gz"))
-
-all_df <-  fread(filepath) 
-
-p <-  ggplot() + 
-  geom_tile(data = all_df, aes(x= long, y = lat, fill = value_log)) +  # change to regular value if you don't want log transformed...
-      # scale_fill_gradientn(colors = YlOrBr(9), na.value = "white") +  # Set the color for missing values (NA) to white
-   scale_fill_gradientn(colors = final_palette, na.value = "white") +
-              geom_sf(data = countries_shp, fill = NA, colour = "grey") + 
+  loop_plot <-  ggplot() + 
+      geom_tile(data = loop_loop_df, aes(x = long, y = lat, fill = value_new, color = value_new)) +
+     geom_tile(fill = ifelse(loop_loop_df$value_new < quantile_value, "#B90000", NA)) + 
+            geom_sf(data = countries_shp, fill = NA, colour = "grey") + 
+       scale_fill_gradientn(colors = palette_red, na.value = "white") +
+            scale_color_gradientn(colors = palette_red, na.value = "white") +
             geom_sf(data = globe_border,
             fill = NA, color = 'grey70', 
             size = .1) +
     scale_x_continuous(expand = c(0, 0)) +
     scale_y_continuous(expand = c(0, 0)) +
     theme_void() +
-    facet_grid(diet~fcr_type, switch = "y") + 
-      theme(
-            legend.title = element_text(size = 9),
-          legend.margin = margin(r = 10), 
-          strip.text.y = element_text(angle = 90, vjust = 1, hjust = 0.5)) +
-    labs(fill = "Logged\nExtinction\nRisk") 
-
-p <- tag_facet(p, x = -Inf, y = Inf, tag_pool = LETTERS, open = "", close = "") + 
-  theme(strip.text = element_text())
+      theme(plot.title = element_text(hjust = 0.5), 
+          axis.title = element_blank(),
+          axis.text = element_blank(),
+          axis.ticks = element_blank(),
+          legend.margin = margin(r = 10)) + # add a margin to legend text so it isn't cut off when saving 
+  labs(fill = fill_name,
+      # color = "≥99th quantile",
+       title = glue("{diet_type}, {fcr}")) + 
+     guides(color = "none")
+   # + 
+    #   guides(color = guide_legend(override.aes = list(fill = "#B90000")))
         
-ggsave(glue(here(this_dir, "output/plots/publication/economic_mean_extinction.png")), plot = p, width = 10, height = 8, bg = "white")
+      plot_list[[length(plot_list) + 1]] <- loop_plot
 
+    }
+  } 
 
-filepath <- glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_ingredient/delta/economic_mean.rds.gz"))
+ggsave(glue(here(this_dir, "output/plots/by_material/{allocation_type}_{raw_mat}_{type}_plot.png")), plot = plot_grid(plotlist = plot_list, nrow = 2), width = 10, height = 8, bg = "white")
 
-delta_df <-  fread(filepath) 
+}else{
   
-limit <- c(quantile(delta_df$delta, 0.05), quantile(delta_df$delta, 0.9))
+ # type = "ge_sd_prop"
+  
+ if(str_detect(type, "nspp")){
+    fill_name = "Number of\nspecies\nimpacted"
+  }else{
+    fill_name = "sdev"
+  }
+  
+    plot_list <- list()
+  
+    for(diet_type in diets){
+    for(fcr in fcrs){
+  
+loop_loop_df <- loop_df %>%
+    filter(diet == diet_type, 
+           fcr_type == fcr)
 
-p <- ggplot() +
-  geom_raster(data = delta_df , aes(x= long, y = lat, fill = delta)) +
-  geom_sf(data = countries_shp, fill = NA, colour = "grey") +
-        geom_sf(data = globe_border,
+  
+  loop_plot <-  ggplot() + 
+      geom_tile(data = loop_loop_df, aes(x = long, y = lat, fill = value, color = value)) +
+            geom_sf(data = countries_shp, fill = NA, colour = "grey") + 
+       scale_fill_gradientn(colors = final_palette, na.value = "white") +
+            scale_color_gradientn(colors = palette_red, na.value = "white") +
+            geom_sf(data = globe_border,
             fill = NA, color = 'grey70', 
             size = .1) +
     scale_x_continuous(expand = c(0, 0)) +
     scale_y_continuous(expand = c(0, 0)) +
     theme_void() +
-    facet_wrap(~fcr_type) +
-    labs(
-         fill = "Δ Extinction\nRisk") + 
-        scale_fill_gradient2(high = '#d01c8b', mid = '#ffffdf', low = '#4dac26', limit = limit, oob=scales::squish) +
-  theme(legend.margin = margin(r = 10),
-        legend.title = element_text(size = 9))
+      theme(plot.title = element_text(hjust = 0.5), 
+          axis.title = element_blank(),
+          axis.text = element_blank(),
+          axis.ticks = element_blank(),
+          legend.margin = margin(r = 10)) + 
+  labs(fill = fill_name,
+       title = glue("{diet_type}, {fcr}")) + 
+     guides(color = "none")
+        
+      plot_list[[length(plot_list) + 1]] <- loop_plot
+    }
+    }
+    
+    ggsave(glue(here(this_dir, "output/plots/by_material/{allocation_type}_{raw_mat}_{type}_plot.png")), plot = plot_grid(plotlist = plot_list, nrow = 2), width = 10, height = 8, bg = "white")
 
-p <- tag_facet(p, x = -Inf, y = Inf, tag_pool = LETTERS, open = "", close = "") + 
-  theme(strip.text = element_text())
+    }
+  }
+    }
+}
 
 
-ggsave(plot = p, glue(here(this_dir, "output/plots/publication/economic_mean_extinction_delta.png")), width = 10, height = 8, bg = "white")
+```
 
+
+```{r}
+# make publication ready mean extinction risk plots with all feed scenarios, economic allocation
+ filepath <- glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_ingredient/economic_mean_prop.rds.gz"))
+
+all_df <-  fread(filepath) %>%
+  filter(fcr_type == "regular")
+
+ plot_list <- list()
+  
+ diets <- unique(all_df$diet)
+ 
+ for(diet_type in diets){
+
+      # diet_type = "plant-dominant"
+      
+  loop_loop_df <- all_df %>%
+    filter(diet == diet_type)
+  
+quantile_value <- quantile(loop_loop_df$value, probs = 0.999, na.rm = TRUE)
+  
+  loop_loop_df <- loop_loop_df %>% 
+    mutate(value_new = ifelse(value > quantile_value, quantile_value, value))
+  
+  loop_plot <-  ggplot() + 
+      geom_tile(data = loop_loop_df, aes(x = long, y = lat, fill = value_new, color = value_new)) +
+     geom_tile(fill = ifelse(loop_loop_df$value_new < quantile_value, "#B90000", NA)) + 
+            geom_sf(data = countries_shp, fill = NA, colour = "grey") + 
+       scale_fill_gradientn(colors = palette_red, na.value = "white") +
+            scale_color_gradientn(colors = palette_red, na.value = "white") +
+            geom_sf(data = globe_border,
+            fill = NA, color = 'grey70', 
+            size = .1) +
+    scale_x_continuous(expand = c(0, 0)) +
+    scale_y_continuous(expand = c(0, 0)) +
+    theme_void() +
+      theme(plot.title = element_text(hjust = 0.5), 
+          axis.title = element_blank(),
+          axis.text = element_blank(),
+          axis.ticks = element_blank(),
+          legend.margin = margin(r = 10)) + # add a margin to legend text so it isn't cut off when saving 
+  labs(fill = "Proportion\nhabitat\nimpacted",
+      # color = "≥99th quantile")
+      ) + 
+     guides(color = "none") + 
+    facet_wrap(~diet)
+   # + 
+    #   guides(color = guide_legend(override.aes = list(fill = "#B90000")))
+  
+        
+      plot_list[[length(plot_list) + 1]] <- loop_plot
+
+  } 
+
+ggsave(glue(here(this_dir, "output/plots/publication/economic_mean_prop.png")), plot = plot_grid(plotlist = plot_list, nrow = 1), width = 10, height = 4, bg = "white")
 ```
 
 

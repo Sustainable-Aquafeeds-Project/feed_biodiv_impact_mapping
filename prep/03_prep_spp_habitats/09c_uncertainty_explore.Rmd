@@ -1,5 +1,5 @@
 ---
-title: "Summary plots"
+title: "Summary plots: uncertainty and variability"
 output: html_document
 editor_options: 
   chunk_output_type: console
@@ -29,6 +29,7 @@ library(viridis)
 library(RColorBrewer)
 library(ggpubr)
 library(smoothr)
+library(tmap)
 
 source(here("src/directories.R"))
 
@@ -237,6 +238,97 @@ write.csv(data_df, here("prep/03_prep_spp_habitats/output/absolute_deviations.cs
 
 
 
+
+```
+
+Lets map how each scenario agrees (or not) with one another on high vs low impact areas:
+  	  - most impacted cells (>90 quantile?) in 1, 2, 3, or 4 scenarios (different colors); least impacted cells (<25th quantile) in 1, 2, 3, or 4 scenarios (different colors); this will tell us the places that for sure have high or low impacts 
+  	  - Fig 1 from [Stock et al.](https://conbio.onlinelibrary.wiley.com/doi/full/10.1111/cobi.13141?saml_referrer)
+  	  - Maybe try with mean impacts for each allocation, diet, and fcr? So will be reading in 12 rasters (3 allocations X 2 diets X 2 FCRs)
+
+```{r}
+
+# read in each scenario, filter for >95th quantile, set all cells to 1; filter for <25th quantile, set all cells to 1. Stack all and count what cells match up 
+
+allocation_types <- c("economic", "mass", "ge")
+fcr_types <- c("regular", "efficient")
+diet_types <- c("plant-dominant", "fish-dominant")
+
+
+
+  for(diet_type in diet_types){
+    for(fcr_type in fcr_types){
+      
+high_impact_rast <- moll_template
+low_impact_rast <- moll_template
+
+      # diet_type = "plant-dominant"
+      # fcr_type = "regular"
+
+for(allocation_type in allocation_types){
+  
+
+      
+      # allocation_type = "economic"
+      
+      imp_rast <- 1-rast(glue(file.path(biodiv_dir, "output/impact_maps_across_taxon_ingredient/{diet_type}/{fcr_type}/{allocation_type}_mean_prop.tif")))
+      
+      quant_95 <- global(imp_rast, probs = 0.95, na.rm = TRUE)
+      
+      imp_rast_95 <- classify(imp_rast, cbind(quant_95$mean, Inf, 1), others = NA, right = FALSE)
+
+      
+      quant_25 <-  global(imp_rast, probs = 0.05, na.rm = TRUE)
+      
+      imp_rast_25 <- classify(imp_rast, cbind(0, quant_25$mean, 1), others = NA, right = TRUE)
+
+      
+      high_impact_rast <- c(high_impact_rast, imp_rast_95)
+      
+      low_impact_rast <- c(low_impact_rast, imp_rast_25)
+      
+    }
+  
+
+
+high_imp_sum <- sum(high_impact_rast, na.rm = TRUE)
+low_imp_sum <- sum(low_impact_rast, na.rm = TRUE)
+
+pal <- colorRampPalette(c("yellow","darkred"))
+
+
+png(file = glue(here("prep/03_prep_spp_habitats/output/plots/uncertainty/{diet_type}_{fcr_type}/high_impact.png")), width = 1200, height = 700)
+plot(high_imp_sum, col = pal(3), type = "classes") 
+dev.off()
+
+png(file = glue(here("prep/03_prep_spp_habitats/output/plots/uncertainty/{diet_type}_{fcr_type}/low_impact.png")), width = 1200, height = 700)
+plot(low_imp_sum, col = pal(3), type = "classes") 
+dev.off()
+
+## look at scenario disagreement (sometimes scenarios has cells that are classified as both high impact and low impact)
+all_imp_sum <- intersect(high_imp_sum, low_imp_sum)
+
+r <- classify(all_imp_sum, cbind(FALSE, 0))
+
+png(file = glue(here("prep/03_prep_spp_habitats/output/plots/uncertainty/{diet_type}_{fcr_type}/disagree.png")), width = 1200, height = 700)
+plot(r)
+dev.off()
+
+    }
+  }
+
+```
+
+```{r}
+test <- 1 - rast(file.path(biodiv_dir, "output/impact_maps_across_taxon_ingredient/plant-dominant/regular/economic_mean_prop.tif"))
+test[test == 0] <- NA
+global(test, "mean", na.rm = TRUE) # 0.00001099836
+plot(raster(test))
+s <- raster::select(raster(test))
+plot(s)
+where.max(test)
+
+test_rescale <- test/0.02474564
 
 ```
 

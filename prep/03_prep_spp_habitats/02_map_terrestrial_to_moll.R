@@ -2,7 +2,7 @@
 
 # # Summary
 # 
-# Convert 1 km x 1 km maps from Lumbierres et al. into the Mollweide 10 km x 10 km projection. This takes a long time to run... run overnight if possible. 
+# Convert 1 km x 1 km maps from Eyres et al. into the Mollweide 10 km x 10 km projection. This takes a long time to run... run overnight if possible. 
 # 
 # # Methods
 # 

@@ -7,7 +7,7 @@ editor_options:
 
 ## Summary
 
-In this script we summarize the impact rasters created in 03b, 06a and 06b by finding the mean, standard deviation (pooled variance), and number of species:
+In this script we summarize the impact rasters created in 03b, 06a and 06b by finding the impact mean, standard deviation (pooled variance), and number of species:
 
  - Across all taxon and ingredients
  - Across all taxon per each ingredient
@@ -30,7 +30,7 @@ library(data.table)
 library(terra)
 library(strex)
 library(janitor)
-library(sf)
+# library(sf)
 library(tools)
 library(glue)
 library(tidyterra)
@@ -620,7 +620,7 @@ big_df <- combine_taxa_maps(tx_impact_map_df_loop)
 
 
 
-## Calculate mean proportion of habitat remaining impact maps
+## Calculate mean proportion of habitat impacted maps
   - Across all taxa and ingredients: 1 raster per diet/allocation
   - Across all taxa per ingredient: 1 raster per diet/allocation/ingredient
   - Across all ingredients per taxa: 1 raster per taxon/allocation/diet
@@ -665,7 +665,8 @@ for(allocation_type in allocations){
              e == fcr_type)
     
     
-  big_df <- combine_taxa_maps(tx_impact_map_df_loop)
+  big_df <- combine_taxa_maps(tx_impact_map_df_loop) %>%
+    mutate(imp_mean = 1-imp_mean)
     
   process_mean_rasts(big_df) %>%
     inner_join(all_xy_moll, by = "cell_id") %>%
@@ -714,7 +715,8 @@ for(allocation_type in allocations){
     
     message(glue("processing mean calculations for {diet_type} diet; {fcr_type} efficiency; {allocation_type} allocation; {taxa_type} taxon"))
     
-    big_df <- combine_taxa_maps(tx_impact_map_df_loop)
+    big_df <- combine_taxa_maps(tx_impact_map_df_loop) %>%
+          mutate(imp_mean = 1-imp_mean)
     
     if(nrow(big_df) == 0){
       
@@ -739,6 +741,7 @@ for(allocation_type in allocations){
   }
 }
 
+### NOTE: March 27: Need to run below here (not sd stuff though)
 
 ## calculate means by ingredient across taxa
 
@@ -780,7 +783,8 @@ for(allocation_type in allocations){
     
 message(glue("processing mean and nspp calculations for {diet_type} diet; {fcr_type} efficiency; {allocation_type} allocation; {ingredient_type} ingredient"))
 
-big_df <- combine_taxa_maps(tx_impact_map_df_loop)
+big_df <- combine_taxa_maps(tx_impact_map_df_loop) %>%
+      mutate(imp_mean = 1-imp_mean)
 
  process_mean_rasts(big_df) %>%       
     inner_join(all_xy_moll, by = "cell_id") %>%
@@ -798,7 +802,7 @@ big_df <- combine_taxa_maps(tx_impact_map_df_loop)
 
 ```
 
-## Calculate sd and pooled variance proportion of habitat remaining impact maps
+## Calculate sd and pooled variance proportion of habitat impacted maps
   - Across all taxa and ingredients: 1 raster per diet/allocation
   - Across all taxa per ingredient: 1 raster per diet/allocation/ingredient
   - Across all ingredients per taxa: 1 raster per taxon/allocation/diet

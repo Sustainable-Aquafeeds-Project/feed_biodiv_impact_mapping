@@ -11,12 +11,12 @@
  
 
 # - Overlap re-projected and AOH species suitable habitat maps with the appropriate disturbance rasters. This will provide a km2 estimate of the amount of suitable habitat that is exposed to harvest of aquafeed ingredients.  
-# - multiply by each species vulnerability values (downloaded in script 3a) to get impact and save
+# - multiply by each species vulnerability values (downloaded in script 3a) to get impact (both extinction risk and prop of habitat impacted) and save
 
 # Code partially adapted from O'Hara et al. 2023 in prep 
 
-# * Lumbierres et al. 2022: https://www.nature.com/articles/s41597-022-01838-w
-# * O'Hara et al. 2023 in prep 
+# * Eyres et al. 2023 (preprint): https://www.researchgate.net/publication/376637364_LIFE_A_metric_for_quantitively_mapping_the_impact_of_land-cover_change_on_global_extinctions
+# * O'Hara et al. 2024 in prep 
 
 ## Setup
 
@@ -57,16 +57,10 @@ iucn_ids_names <- readRDS(here(this_dir, "data/iucn/eyres_iucn_spp.rds"))
 ## For loop
 
 ## Setup spp map source and vulnerability data 
-# spp_fp <- data.frame(filepath = list.files(file.path(terrestrial_dir, "reprojected_mol_csv"), full.names = TRUE)) %>%
-#   mutate(species_full = str_after_last(filepath, "\\/")) %>%
-#   mutate(species = ifelse(str_detect(species_full, "_R.csv|_N.csv|_B.csv"), str_remove_all(species_full, "_R.csv|_N.csv|_B.csv"), species_full)) %>%
-#   mutate(species = str_remove_all(species, ".csv")) %>%
-#   mutate(species = str_replace_all(species, "_", " ")) %>%
-#   mutate(species_full = str_remove_all(species_full, ".csv"))
 
-spp_fp <- data.frame(filepath = list.files(file.path(terrestrial_dir, "reprojected_mol_csv"), full.names = TRUE)) %>%
+spp_fp <- data.frame(filepath = list.files(file.path(terrestrial_dir, "reprojected_mol_csv_fin"), full.names = TRUE)) %>%
   mutate(species_full = str_after_last(filepath, "\\/")) %>%
-  mutate(species_id = as.numeric(str_remove_all(str_after_last(species_full, "-"), ".csv"))) %>%
+  mutate(species_id = as.numeric(str_remove_all(species_full, ".csv"))) %>%
   left_join(iucn_ids_names, by = c("species_id" = "iucn_id")) %>%
   dplyr::select(filepath, species_full = scientific_name, spp_type, species_id) %>%
   mutate(spp_type = case_when(
@@ -87,7 +81,7 @@ spp_info_df %>%
 # # A tibble: 4 × 2
 # spp_type            nspp
 # <chr>              <int>
-#   1 Amphibians          6792
+# 1 Amphibians          6792
 # 2 Bird               10024
 # 3 Reptiles            9279
 # 4 Terrestrial mammal  5501
@@ -196,7 +190,6 @@ for(allocation_type in allocations){
                                                       ': cells ', cell_id_min, ' - ', cell_id_max, '...')
                                               
                                               chunk_sum_spp <- tx_maps %>%
-                                                # as.data.frame() %>% 
                                                 filter(between(cell_id, cell_id_min, cell_id_max)) %>%
                                                 left_join(tx_vuln_df, by = c('species_full')) %>%
                                                 left_join(harvest_cells_df, 
@@ -206,11 +199,13 @@ for(allocation_type in allocations){
                                                 .[ , hab_area := 100] %>%
                                                 .[ , impact_km2  := (1-cropland_suitability)*harvest] %>%
                                                 .[ , impact  := 1 - ((hab_area - impact_km2)/hab_area)^0.25] %>%
-                                                .[ , prop_remaining  := ((hab_area - impact_km2)/hab_area)] %>%
-                                                .[impact>0]
+                                                .[ , prop_impact  := 1 - ((hab_area - impact_km2)/hab_area)]
+                                              # %>%
+                                              #   .[impact>0]
                                                 
                                                 
                                                 chunk_sum <- chunk_sum_spp %>%
+                                                  .[impact > 0] %>% 
                                                 .[ , .(impact_mean = mean(impact),
                                                        impact_sd   = sd(impact),
                                                        n_spp       = length(unique(species_full))),
@@ -218,16 +213,25 @@ for(allocation_type in allocations){
                                                 
                                                 ## add in another chunk sum with mean proportion habitat left
                                                 chunk_sum_prop <- chunk_sum_spp %>%
-                                                  .[ , .(prop_mean = mean(prop_remaining),
-                                                         prop_sd   = sd(prop_remaining),
+                                                  .[impact > 0] %>% 
+                                                  .[ , .(prop_mean = mean(prop_impact),
+                                                         prop_sd   = sd(prop_impact),
                                                          n_spp       = length(unique(species_full))),
                                                      by = 'cell_id']
                                               
-                                              chunk_sum_spp_global <- chunk_sum_spp %>%
-                                                .[ , .(impact_total = sum(impact_km2),
-                                                       impact_mean = mean(impact), 
-                                                       hab_area = sum(hab_area)),
-                                                   by = 'species_full']
+                             
+                                                chunk_sum_spp_hab <- chunk_sum_spp %>%
+                                                  .[, .(species_full, cell_id, hab_area)] %>%
+                                                .[, .SD[!duplicated(.SD, by = c('species_full', 'cell_id', 'hab_area'))]] %>%
+                                                  .[ , .(hab_area = sum(hab_area)),
+                                                     by = c('species_full')]
+                                                
+                                                chunk_sum_spp_global <- chunk_sum_spp %>%
+                                                  .[ , .(impact_total = sum(impact_km2),
+                                                         impact_mean = mean(impact)),
+                                                     by = c('species_full')] %>%
+                                                  merge(., chunk_sum_spp_hab, by = "species_full", all = TRUE)
+                                                
                                               
                                               return(list(chunk_sum_spp_global = chunk_sum_spp_global, chunk_sum = chunk_sum, chunk_sum_prop = chunk_sum_prop))
                                             }) 
@@ -294,7 +298,7 @@ for(allocation_type in allocations){
           
           
           message(glue('Creating and saving global df for taxon {tx_type} {allocation_type} {diet_fcr_crop_ingredient_type}'))
-          
+                    
           global_df <- rbindlist(lapply(result_list, function(x) x$chunk_sum_spp_global)) %>% 
             as.data.frame() %>%
             group_by(species_full) %>%
