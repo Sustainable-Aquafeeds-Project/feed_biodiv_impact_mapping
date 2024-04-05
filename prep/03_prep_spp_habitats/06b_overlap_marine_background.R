@@ -1,4 +1,4 @@
-### Takes ~12 hours to run
+### Takes ~12 hours to run if all goes well... sometimes it stops due to overload of cores or other problems...
 # In this script we overlap [Aquamaps probability of suitable habitat maps](https://www.aquamaps.org/) with our disturbance pressure maps created in the `02_feed` folder, and multiply by their vulnerability value. The goal of this script is to create impact maps, that is, the area of likely suitable habitat (>0.6 probability) for each species that is exposured AND impacted to harvest of forage or trimmings fish that is ultimately processed into FMFO. To do this, we: 
 #   
 #   - We have created maps of disturbance (km2) of harvest of forage and trimmings fish species that end up as FMFO. They have these categories: 
@@ -29,7 +29,7 @@
 # * when referring to FishBase concepts and design, cite its architects (Froese and Pauly 2000);
 # * when referring to a set of values extracted from a FishBase table, cite the author(s) of the original data, e.g., "Houde and Zastrow (1993)", or "Welcomme (1988)". To help us track the use of FishBase in the literature, we would appreciate your also citing Froese and Pauly (2000) in an appropriate part of your text, as the source of the information;
 # * when discussing the features of a FishBase table, cite the section documenting that table, e.g., "Sa-a et al. (2000)."
-# 
+
 
 library(tidyverse)
 library(tidyr)
@@ -48,7 +48,6 @@ library(glue)
 select <- dplyr::select
 setwd(dirname(rstudioapi::getSourceEditorContext()$path)) # set working directory to where this script is located
 this_dir <- getwd()
-# feed_rast_dir <- here("prep/02_feed/output/resampled")
 
 options(dplyr.summarise.inform = FALSE)
 source(here("src/directories.R"))
@@ -58,7 +57,6 @@ source(here("src/fxns.R"))
 aquamaps_dir <- file.path(rdsi_raw_data_dir, "aquamaps")
 biodiv_dir <- file.path(rdsi_dir, "biodiversity_impacts")
 feed_rast_dir <- file.path(biodiv_dir, "int/resampled_ingredient_rasts")
-
 
 gall_peters <- "+proj=cea +lon_0=0 +x_0=0 +y_0=0 +lat_ts=45 +ellps=WGS84 +datum=WGS84 +units=m +no_defs"
 
@@ -120,14 +118,12 @@ ingredients <- unique(spp_info_df$ingredient)
 fish_types <- unique(spp_info_df$fish_type)
 fcrs <- c("efficient", "regular")
 spp_types <- unique(spp_info_df$taxon)
-# indices_to_remove <- grep("Bird|Marine mammal|Marine plant|Reptiles and amphibians|arthropods|echinoderms|polychaetes|sponges", spp_types)
-indices_to_remove <- grep("fish|polychaetes", spp_types)
+indices_to_remove <- grep("fish|polychaetes|echinoderms|molluscs|arthropods|elasmobranchs", spp_types) # fish and polychaetes are the ones you don't want (we split fish in next script and polychaetes have no impacts)
 spp_types <- spp_types[-indices_to_remove] # remove fish category... we handle this separately in the next script `06c_overlap_fish_fix.R`
-# spp_types <- spp_types[grep("corals", spp_types)]
 
 for(tx_type in spp_types){
   
-  # tx_type = "corals"
+  # tx_type = "elasmobranchs"
   tx_maps_df <- spp_info_df %>%
     filter(taxon == tx_type) %>%
     dplyr::select(species, filepath) %>%
@@ -159,7 +155,7 @@ for(fs_type in fish_types){
             # diet_type = "fish-dominant"
             # ingredient_type = "fish meal"
             # fs_type = "forage fish"
-            # tx_type = "corals"
+            # tx_type = "elasmobranchs"
             #  fcr = "efficient"
             
             outf_mean <- sprintf(file.path(biodiv_dir, "output/impact_maps_by_taxon_ingredient/%s/%s/imp_unwt_%s_%s_%s_%s_mean.tif"), diet_type, fcr, fs_type, ingredient_type, allocation_type, tx_type)
@@ -240,24 +236,26 @@ for(fs_type in fish_types){
                                                 
                                                 chunk_sum_spp <- tx_maps %>%
                                                   filter(between(cell_id, cell_id_min, cell_id_max)) %>%
-                                                  left_join(tx_vuln_df, by = c('species_full')) %>%
-                                                  left_join(harvest_cells_df, 
-                                                            by = c('cell_id')) %>%
+                                                  left_join(tx_vuln_df, by = c('species')) %>%
+                                                  left_join(bycatch_cells_df,
+                                                            by = c('cell_id', 'wcol')) %>%
+                                                  left_join(catch_cells_df,
+                                                            by = c('cell_id', 'wcol')) %>%
                                                   as.data.table() %>%
-                                                  .[ , harvest := ifelse(is.na(harvest), 0, harvest)] %>%
+                                                  .[ , bycatch := ifelse(is.na(bycatch), 0, bycatch)] %>%
+                                                  .[ , catch := ifelse(is.na(catch), 0, catch)] %>%
+                                                  .[ , impact_km2  := ifelse(catch_type == "bycatch", vuln_quartile * bycatch, vuln_quartile*catch)] %>%
                                                   .[ , hab_area := 100] %>%
-                                                  .[ , impact_km2  := (1-cropland_suitability)*harvest] %>%
-                                                  .[ , impact  := 1 - ((hab_area - impact_km2)/hab_area)^0.25] %>%
-                                                  .[ , prop_impact  := 1 - ((hab_area - impact_km2)/hab_area)]
-                                                # %>%
-                                                #   .[impact>0]
+                                                  .[ , impact  := 1 - ((100 - impact_km2)/100)^0.25] %>% # only count species if they are impacted?
+                                                  .[ , prop_impact  := 1 - ((hab_area - impact_km2)/hab_area)] 
+                      
                                                 
                                                 
                                                 chunk_sum <- chunk_sum_spp %>%
                                                   .[impact > 0] %>% 
                                                   .[ , .(impact_mean = mean(impact),
                                                          impact_sd   = sd(impact),
-                                                         n_spp       = length(unique(species_full))),
+                                                         n_spp       = length(unique(species))),
                                                      by = 'cell_id']
                                                 
                                                 ## add in another chunk sum with mean proportion habitat left
@@ -265,21 +263,21 @@ for(fs_type in fish_types){
                                                   .[impact > 0] %>% 
                                                   .[ , .(prop_mean = mean(prop_impact),
                                                          prop_sd   = sd(prop_impact),
-                                                         n_spp       = length(unique(species_full))),
+                                                         n_spp       = length(unique(species))),
                                                      by = 'cell_id']
                                                 
                                                 
                                                 chunk_sum_spp_hab <- chunk_sum_spp %>%
-                                                  .[, .(species_full, cell_id, hab_area)] %>%
-                                                  .[, .SD[!duplicated(.SD, by = c('species_full', 'cell_id', 'hab_area'))]] %>%
+                                                  .[, .(species, cell_id, hab_area)] %>%
+                                                  .[, .SD[!duplicated(.SD, by = c('species', 'cell_id', 'hab_area'))]] %>%
                                                   .[ , .(hab_area = sum(hab_area)),
-                                                     by = c('species_full')]
+                                                     by = c('species')]
                                                 
                                                 chunk_sum_spp_global <- chunk_sum_spp %>%
                                                   .[ , .(impact_total = sum(impact_km2),
                                                          impact_mean = mean(impact)),
-                                                     by = c('species_full')] %>%
-                                                  merge(., chunk_sum_spp_hab, by = "species_full", all = TRUE)
+                                                     by = c('species')] %>%
+                                                  merge(., chunk_sum_spp_hab, by = "species", all = TRUE)
                                                 
                                                 return(list(chunk_sum_spp_global = chunk_sum_spp_global, chunk_sum = chunk_sum, chunk_sum_prop = chunk_sum_prop))
                                               })

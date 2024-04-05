@@ -1,7 +1,9 @@
-
 library(terra)
 library(raster)
 library(tidyterra)
+library(dplyr)
+
+select <- dplyr::select
 
 #projections
 

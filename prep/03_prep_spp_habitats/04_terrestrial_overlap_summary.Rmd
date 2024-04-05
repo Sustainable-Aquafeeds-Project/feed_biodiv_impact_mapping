@@ -7,7 +7,7 @@ editor_options:
 
 ## Summary
 
-In this script we prep dataframes of total global amount of impacted habitat per terrestrial species.
+In this script we prep data frames of total global amount of impacted habitat per terrestrial species.
 
 
 ## Setup
@@ -30,16 +30,9 @@ source(here("src/directories.R"))
 
 source(here("src/spatial.R"))
 
-select <- dplyr::select
-
-
 aoh_dir <- file.path(rdsi_raw_data_dir, "AOH_eyres/reprojected_mol_csv/")
 
-setwd(dirname(rstudioapi::getSourceEditorContext()$path)) # set working directory to where this script is located
-this_dir <- getwd()
-
 biodiv_dir <- file.path(rdsi_dir, "biodiversity_impacts")
-
 ```
 
 Bind all chunked data together, tidy, and save
@@ -48,9 +41,6 @@ Bind all chunked data together, tidy, and save
 
 impact_df <-  purrr::map_df(list.files(file.path(biodiv_dir, "int/aoh_impacts_terrestrial/"), full.names = TRUE), readRDS) %>%
   rename(sciname = species_full)
- # separate_wider_delim(species_full, delim = "_", names = c("genus", "species", "bird_type"), too_few = "align_start") %>%
-  # unite(sciname, c(genus, species))
-
 
 length(unique(impact_df$sciname)) # 22351
 

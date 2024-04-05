@@ -174,8 +174,6 @@ for(tx_type in spp_types){
           #   next()
           # }
 
-
-
           tx_vuln_df <- spp_info_df_fish %>%
             filter(taxon == tx_type,
                    allocation == allocation_type,
@@ -236,24 +234,26 @@ for(tx_type in spp_types){
 
                                               chunk_sum_spp <- tx_maps %>%
                                                 filter(between(cell_id, cell_id_min, cell_id_max)) %>%
-                                                left_join(tx_vuln_df, by = c('species_full')) %>%
-                                                left_join(harvest_cells_df, 
-                                                          by = c('cell_id')) %>%
+                                                left_join(tx_vuln_df, by = c('species')) %>%
+                                                left_join(bycatch_cells_df,
+                                                          by = c('cell_id', 'wcol')) %>%
+                                                left_join(catch_cells_df,
+                                                          by = c('cell_id', 'wcol')) %>%
                                                 as.data.table() %>%
-                                                .[ , harvest := ifelse(is.na(harvest), 0, harvest)] %>%
+                                                .[ , bycatch := ifelse(is.na(bycatch), 0, bycatch)] %>%
+                                                .[ , catch := ifelse(is.na(catch), 0, catch)] %>%
+                                                .[ , impact_km2  := ifelse(catch_type == "bycatch", vuln_quartile * bycatch, vuln_quartile*catch)] %>%
                                                 .[ , hab_area := 100] %>%
-                                                .[ , impact_km2  := (1-cropland_suitability)*harvest] %>%
-                                                .[ , impact  := 1 - ((hab_area - impact_km2)/hab_area)^0.25] %>%
-                                                .[ , prop_impact  := 1 - ((hab_area - impact_km2)/hab_area)]
-                                              # %>%
-                                              #   .[impact>0]
+                                                .[ , impact  := 1 - ((100 - impact_km2)/100)^0.25] %>% # only count species if they are impacted?
+                                                .[ , prop_impact  := 1 - ((hab_area - impact_km2)/hab_area)] 
+                                              
                                               
                                               
                                               chunk_sum <- chunk_sum_spp %>%
                                                 .[impact > 0] %>% 
                                                 .[ , .(impact_mean = mean(impact),
                                                        impact_sd   = sd(impact),
-                                                       n_spp       = length(unique(species_full))),
+                                                       n_spp       = length(unique(species))),
                                                    by = 'cell_id']
                                               
                                               ## add in another chunk sum with mean proportion habitat left
@@ -261,21 +261,21 @@ for(tx_type in spp_types){
                                                 .[impact > 0] %>% 
                                                 .[ , .(prop_mean = mean(prop_impact),
                                                        prop_sd   = sd(prop_impact),
-                                                       n_spp       = length(unique(species_full))),
+                                                       n_spp       = length(unique(species))),
                                                    by = 'cell_id']
                                               
                                               
                                               chunk_sum_spp_hab <- chunk_sum_spp %>%
-                                                .[, .(species_full, cell_id, hab_area)] %>%
-                                                .[, .SD[!duplicated(.SD, by = c('species_full', 'cell_id', 'hab_area'))]] %>%
+                                                .[, .(species, cell_id, hab_area)] %>%
+                                                .[, .SD[!duplicated(.SD, by = c('species', 'cell_id', 'hab_area'))]] %>%
                                                 .[ , .(hab_area = sum(hab_area)),
-                                                   by = c('species_full')]
+                                                   by = c('species')]
                                               
                                               chunk_sum_spp_global <- chunk_sum_spp %>%
                                                 .[ , .(impact_total = sum(impact_km2),
                                                        impact_mean = mean(impact)),
-                                                   by = c('species_full')] %>%
-                                                merge(., chunk_sum_spp_hab, by = "species_full", all = TRUE)
+                                                   by = c('species')] %>%
+                                                merge(., chunk_sum_spp_hab, by = "species", all = TRUE)
 
                                               return(list(chunk_sum_spp_global = chunk_sum_spp_global, chunk_sum = chunk_sum, chunk_sum_prop = chunk_sum_prop))
                                             })
