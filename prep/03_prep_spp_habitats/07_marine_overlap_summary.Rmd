@@ -27,10 +27,8 @@ source(here("src/directories.R"))
 
 source(here("src/spatial.R"))
 
-
 aquamaps_dir <- file.path(rdsi_raw_data_dir, "aquamaps")
 biodiv_dir <- file.path(rdsi_dir, "biodiversity_impacts")
-
 ```
 
 
@@ -66,26 +64,24 @@ setdiff(unique(aquamaps_spp$SpeciesID), unique(impact_df$SpeciesID))
 
 spp_to_run <- setdiff(unique(aquamaps_spp$SpeciesID), unique(impact_df$SpeciesID)) 
 
-test <- vuln_taxa %>% filter(SpeciesID %in% spp_to_run) # ok, all species that aren't vulnerable or there is no overlap/impact
+test <- vuln_taxa %>% filter(SpeciesID %in% spp_to_run) 
+test2 <- test %>%
+  filter(taxon != "polychaetes") %>%
+  distinct(species) # ok only missing 2 species with very small range. Likely just no overlap
 
+spp_habs_area <- impact_df %>%
+  distinct(species, total_hab_area = hab_area)
+
+write.csv(spp_habs_area, here("prep/03_prep_spp_habitats/int/marine_habitat_areas.csv"), row.names = FALSE)
 
 impact_vuln <- impact_df %>%
   dplyr::group_by(species, diet, fcr_type, allocation, ingredient) %>%
   summarise(impact_total = sum(impact_total, na.rm = TRUE),
-             extinction_mean = mean(extinction_mean, na.rm = TRUE),
-                        total_hab_area = sum(hab_area, na.rm = TRUE)) %>%
+             extinction_mean = mean(extinction_mean, na.rm = TRUE)) %>%
   ungroup() %>% 
   left_join(vuln_taxa) %>%
+  left_join(spp_habs_area) %>%
   dplyr::select(sciname= species, diet, fcr_type, allocation, ingredient, impact_total, vulnerability = vuln_quartile, spp_type = taxon, impact_total, total_hab_area, extinction_mean)
-
-hab_areas <- impact_vuln %>% ungroup() %>% distinct(sciname, total_hab_area) %>%
-  group_by(sciname) %>%
-  filter(total_hab_area == max(total_hab_area)) %>%
-  ungroup()
-
-impact_vuln <- impact_vuln %>%
-  dplyr::select(-total_hab_area) %>%
-  left_join(hab_areas)
   
 summary(impact_vuln) # no Nas in vulnerability
 
@@ -93,7 +89,7 @@ saveRDS(impact_vuln, here("prep/03_prep_spp_habitats/output/aoh_marine_impact.rd
 
 
 ## take al look at some stuff
-terrestrial_overlap <- readRDS(here("prep/03_prep_spp_habitats/output/aoh_terrestrial_mammals_birds_impact.rds"))
+terrestrial_overlap <- readRDS(here("prep/03_prep_spp_habitats/output/aoh_terrestrial_impact.rds"))
 colnames(terrestrial_overlap)
 
 
@@ -102,17 +98,16 @@ test_terr <- terrestrial_overlap %>%
          allocation == "mass",
          fcr_type == "regular")
 
-sum(test_terr$impact_total, na.rm = TRUE) # 400940.2
-mean(test_terr$impact_total, na.rm = TRUE) # 1.857908
+sum(test_terr$impact_total, na.rm = TRUE) # 309348.5
+mean(test_terr$impact_total, na.rm = TRUE) # 0.8525683
 
 test_marine <- impact_vuln %>%
     filter(diet == "plant-dominant",
          allocation == "mass",
          fcr_type == "regular")
 
-sum(test_marine$impact_total, na.rm = TRUE) # 133105
-mean(test_marine$impact_total, na.rm = TRUE) # 2.070416
-
+sum(test_marine$impact_total, na.rm = TRUE) # 132236.8
+mean(test_marine$impact_total, na.rm = TRUE) # 1.161664
 
 ```
 

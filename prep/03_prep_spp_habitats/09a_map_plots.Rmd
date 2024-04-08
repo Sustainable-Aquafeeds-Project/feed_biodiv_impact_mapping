@@ -97,19 +97,11 @@ Read in marine and terrestrial dfs and combine
 
 ```{r}
 marine_overlap <- readRDS(here("prep/03_prep_spp_habitats/output/aoh_marine_impact.rds")) %>%
-  group_by(sciname, spp_type, diet, fcr_type, allocation, ingredient) %>%
-  summarise(vulnerability = mean(vulnerability, na.rm = TRUE), 
-            impact_total = sum(impact_total, na.rm = TRUE)) %>%
-  ungroup() %>%
-    dplyr::select(sciname, spp_type, diet, fcr_type, allocation, ingredient, vulnerability, impact_total)
+    dplyr::select(sciname, spp_type, diet, fcr_type, allocation, ingredient, vulnerability, impact_total, total_hab_area)
 
 
-terrestrial_overlap <- readRDS(here("prep/03_prep_spp_habitats/output/aoh_terrestrial_mammals_birds_impact.rds")) %>% 
-  group_by(sciname, diet, fcr_type, allocation, ingredient, spp_type) %>%
-  summarise(vulnerability = 1 - mean(suitability, na.rm = TRUE),
-            impact_total = sum(impact_total, na.rm = TRUE)) %>%
-  ungroup() %>%
-    dplyr::select(sciname, spp_type, diet, fcr_type, allocation, ingredient, vulnerability, impact_total)
+terrestrial_overlap <- readRDS(here("prep/03_prep_spp_habitats/output/aoh_terrestrial_impact.rds")) %>% 
+    dplyr::select(sciname, spp_type, diet, fcr_type, allocation, ingredient, vulnerability, impact_total, total_hab_area)
 
 all_overlap <- rbind(marine_overlap, terrestrial_overlap)
 
@@ -160,14 +152,13 @@ names(global_maps_mean) <- file_path_sans_ext(str_after_nth(global_maps_list, "\
 all_df <- as.data.frame(global_maps_mean, xy = TRUE) %>%
   pivot_longer(cols = c(3:ncol(.)), values_to = "value", names_to = "type") %>%
   separate_wider_delim(type, delim = "/", names = c("diet", "fcr_type", "calc_type")) %>%
-  mutate(value_log =  ifelse(str_detect(calc_type, "mean"), log(value*1000000 + 1), value)) %>%
   rename(long = x, lat = y)
+
 # %>%
-  # filter(str_detect(calc_type, "mean_prop")) # comment this out if you want to run a specific calc_type only
+#   filter(str_detect(calc_type, "mean_prop"))
 
 for(i in unique(all_df$calc_type)){
-
-  # i = "economic_mean"
+  # i = "economic_mean_prop"
 
   loop_df <- all_df %>%
     filter(calc_type == i) 
@@ -175,16 +166,11 @@ for(i in unique(all_df$calc_type)){
 data.table::fwrite(loop_df, glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_ingredient/{i}.rds.gz")))
 
 
-delta_df <-  loop_df %>%
-        dplyr::select(-value_log)
-
-  delta_df <- delta_df %>%
+  delta_df <- loop_df %>%
       pivot_wider(names_from = c(diet), values_from = value) %>%
     mutate(`fish-dominant` = ifelse(is.na(`fish-dominant`), 0, `fish-dominant`),
            `plant-dominant` = ifelse(is.na(`plant-dominant`), 0, `plant-dominant`)) %>%
   mutate(delta = (`fish-dominant` - `plant-dominant`)) %>%
-    mutate(delta_log = log(delta + 1)) %>%
-    mutate(delta_rescale = delta*1000000) %>%
     mutate(delta_cat = case_when(
       delta > 0 ~ "Fish-dominant",
       delta < 0 ~ "Plant-dominant",
@@ -219,7 +205,7 @@ fcrs <- c("regular", "efficient")
 
 for(type in types_df){
   
-  # type = "economic_sd_prop"
+  # type = "economic_mean_prop"
   
  filepath <- glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_ingredient/{type}.rds.gz"))
 
@@ -384,7 +370,6 @@ all_df <- terra::as.data.frame(stack_rast, xy = TRUE) %>%
   filter(!is.na(value)) %>%
   separate_wider_delim(type, delim = "/", names = c("diet", "fcr_type", "taxa_calc_type")) %>%
   separate_wider_delim(taxa_calc_type, delim = "_", names = c("allocation", "taxa", "calc_type"), too_many = "merge") %>%
-  mutate(value_log =  log(value*1000000 + 1)) %>%
   rename(long = x, lat = y) 
 # %>%
 #   filter(str_detect(calc_type, "mean_prop")) # comment this out if you want to run a specific calc_type only
@@ -553,6 +538,7 @@ loop_loop_df <- loop_df %>%
 
 ```
 
+STOPPED HERE April 8
 Global maps by ingredients across taxon
 
 ```{r}
@@ -590,7 +576,6 @@ all_df <- as.data.frame(stack_rast, xy = TRUE) %>%
   pivot_longer(cols = c(3:ncol(.)), values_to = "value", names_to = "type") %>%
   separate_wider_delim(type, delim = "/", names = c("diet", "fcr_type", "ingredient_calc_type")) %>%
     separate_wider_delim(ingredient_calc_type, delim = "_", names = c("allocation", "raw_material", "ingredient", "calc_type"), too_many = "merge") %>%
-  mutate(value_log =  ifelse(str_detect(calc_type, "mean"), log(value*1000000 + 1), value)) %>%
   rename(long = x, lat = y) %>%
   filter(!is.na(value)) %>%
   unite("crop_ingredient", c(raw_material:ingredient), sep = "_", remove = FALSE) %>%

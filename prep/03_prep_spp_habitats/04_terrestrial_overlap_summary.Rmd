@@ -42,7 +42,16 @@ Bind all chunked data together, tidy, and save
 impact_df <-  purrr::map_df(list.files(file.path(biodiv_dir, "int/aoh_impacts_terrestrial/"), full.names = TRUE), readRDS) %>%
   rename(sciname = species_full)
 
-length(unique(impact_df$sciname)) # 22351
+length(unique(impact_df$sciname)) # 27911
+
+spp_habs_df <- impact_df %>%
+  distinct(sciname, total_hab_area = hab_area)
+
+write.csv(spp_habs_df, here("prep/03_prep_spp_habitats/int/terrestrial_habitat_areas.csv"), row.names = FALSE)
+
+test <- data.frame(dups = duplicated(spp_habs_df$sciname)) %>%
+  filter(dups == TRUE) # good, 0 duplicates
+  
 
 # now lets clean up the data a bit 
 
@@ -54,18 +63,22 @@ all_spp_list <- readRDS(here("prep/03_prep_spp_habitats/data/iucn/eyres_iucn_spp
 impact_df_tidy <- impact_df %>%
     group_by(sciname, diet, fcr_type, allocation, crop_ingredient) %>%
   summarise(impact_total = sum(impact_total, na.rm = TRUE),
-            total_hab_area = sum(hab_area, na.rm = TRUE),
             extinction_mean = mean(extinction_mean, na.rm = TRUE)) %>%
+  ungroup() %>%
   mutate(aoh_filepath = paste0(aoh_dir, sciname), 
          feed_filepath = sprintf(here("prep/02_feed/output/resampled/%s/%s/%s_%s_A.tif"), diet, fcr_type, crop_ingredient, allocation)) %>%
   rename("ingredient" = "crop_ingredient") %>%
   mutate(sciname = str_replace_all(sciname, "_", " ")) %>%
   left_join(all_spp_list, by = c("sciname")) %>%
+  left_join(spp_habs_df, by = "sciname") %>%
   mutate(impact_total = ifelse(is.na(impact_total), 0, impact_total))
+
+test <- data.frame(sciname = setdiff(all_spp_list$sciname, impact_df_tidy$sciname)) %>%
+  left_join(all_spp_list)
 
 species_list <- c(unique(impact_df_tidy$sciname))
 
-writeLines(species_list, here("prep/03_prep_spp_habitats/int/impacted_species_list.txt"))
+writeLines(species_list, here("prep/03_prep_spp_habitats/int/assessed_species_list.txt"))
 
 hab_areas <- impact_df_tidy %>% ungroup() %>% distinct(sciname, total_hab_area) %>%
   group_by(sciname) %>%
@@ -78,10 +91,10 @@ test <- impact_df_tidy %>%
   summarise(impact_total = sum(impact_total, na.rm = TRUE), 
             extinction_mean = mean(extinction_mean, na.rm = TRUE)) %>%
   ungroup() %>%
-  left_join(hab_areas) %>% 
+  left_join(spp_habs_df) %>% 
   mutate(prop_impacted = impact_total/total_hab_area)
 
-## highest total proportional impact is Liolaemus gravenhorstii, commonly known as Gravenhorst's tree iguana. ~1.7% of its habitat is impacted under plant-dominant, regular, economic. It has an average extinction risk of 0.00042959420 or 0.04% extinction risk across all cells it occupies. 
+## highest total proportional impact is Liolaemus gravenhorstii, commonly known as Gravenhorst's tree iguana. ~1.7% of its habitat is impacted under plant-dominant, regular, economic. It has an average extinction risk of 0.00033 or 0.03% extinction risk across all cells it occupies. 
 ```
 
 
@@ -96,7 +109,7 @@ aoh_df <- impact_df_tidy %>%
   rename(suitability = cropland_suitability) %>%
   mutate(vulnerability = 1 - suitability)
 
-saveRDS(aoh_df, here("prep/03_prep_spp_habitats/output/aoh_terrestrial_mammals_birds_impact.rds")) # save as rds to save space
+saveRDS(aoh_df, here("prep/03_prep_spp_habitats/output/aoh_terrestrial_impact.rds")) # save as rds to save space
 
 test <- aoh_df %>%
   ungroup() %>%
@@ -104,21 +117,34 @@ test <- aoh_df %>%
   group_by(spp_type) %>%
   summarise(n_distinct(sciname)) ## ok missing a lot of species... is this because they aren't vulnerable? 
 
+length(unique(all_spp_list$sciname)) # 31596
+length(unique(aoh_df$sciname)) # 27911
+# missing 3685 species...
+
 test_ag <- ag_suitability %>% 
   group_by(spp_type, cropland_suitability) %>%
   summarise(n_distinct(species))
 
 2927 + 626 + 1003 + 627 # 5183 not vulnerable
 
-31596 - 5183 # 26413 total species impacted (if there is overlap) 
+31596 - 3685 # 27911 total species accounted for... 
 
 ## paper reports: 
-length(unique(aoh_df$sciname)) # 22351... ok so 26413 - 22351 = 4062 species do not have any overlap.. that's possible. Many weren't reprojected, as their habitats were too small. 
 
 length(unique(ag_suitability$species)) # 31596
 ag_suitability %>% filter(cropland_suitability != 1) %>% pull(species) %>% unique() %>% length() # 26413
 
-# how many do we assess? 
+# how many do we assess? 31596... but only have 27911 in our dataset after running everything??
+
+## filter for our missing spp and see their suitability
+
+
+missing_spp <- setdiff(all_spp_list$sciname, impact_df_tidy$sciname)
+
+
+test_ag <- ag_suitability %>% 
+  filter(species %in% c(missing_spp)) # ok... majority of them should theoretically be impacted... does this just mean there was literally no overlap at all? I think so... explore this further in the week.
+
 
 all_spp_list <- readRDS(here("prep/03_prep_spp_habitats/data/iucn/eyres_iucn_spp.rds")) %>%
   dplyr::select(sciname = scientific_name, order = order_name, iucn_rl_cat = category, spp_type) %>%

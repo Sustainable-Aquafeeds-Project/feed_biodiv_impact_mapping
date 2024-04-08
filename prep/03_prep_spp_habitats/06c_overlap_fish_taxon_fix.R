@@ -1,9 +1,9 @@
-#### Takes ~16? hours to run all scenarios...
+#### Takes ~20ish? hours to run all scenarios... sorry.
 ## This script accomplishes the same thing as 06b, but only for the finfish taxon. The finfish taxon was too large to process in one go, so we needed to split it so that our server could handle it. We take a species weighted mean, and a pooled variance to get the final mean and sd maps for the finfish taxon. 
 
 # In this script we overlap [Aquamaps probability of suitable habitat maps](https://www.aquamaps.org/) with our disturbance pressure maps created in the `02_feed` folder, and multiply by their vulnerability value. The goal of this script is to create impact maps, that is, the area of likely suitable habitat (>0.6 probability) for each species that is exposed AND impacted to harvest of forage or trimmings fish that is ultimately processed into FMFO. To do this, we: 
 #   
-#   - We have created maps of disturbance (km2) of harvest of forage and trimmings fish species that end up as FMFO. They have these categories: 
+# - We have created maps of disturbance (km2) of harvest of forage and trimmings fish species that end up as FMFO. They have these categories: 
 # - Ingredient type; Fish oil or fish meal
 # - Allocation type; mass, energetic, or economic
 # - Diet type; feed formulation; plant-dominant or fish-dominant
@@ -22,8 +22,8 @@
 # * Welcomme, R.L. 1988. International introductions of inland aquatic species. FAO Fish. Tech. Pap. 294, 318 p.
 # * Butt, N. et al. 2022.
 # * Kaschner, K., Kesner-Reyes, K., Garilao, C., Segschneider, J., Rius-Barile, J. Rees, T., & Froese, R. (2019, October). AquaMaps: Predicted range maps for aquatic species. Retrieved from https://www.aquamaps.org.
-# * O'Hara et al. 2023 in prep 
-# * Casey C. O’Hara et al., At-risk marine biodiversity faces extensive, expanding, and intensifying human impacts.Science372,84-87(2021).DOI:10.1126/science.abe6731
+# * O'Hara et al. 2023 in review 
+#   * Casey C. O’Hara et al., At-risk marine biodiversity faces extensive, expanding, and intensifying human impacts.Science372,84-87(2021).DOI:10.1126/science.abe6731
 # 
 # FishBase is a scientific database, and this has the implication - among others - that its use and the use of its contents are free as long as due credit is given.
 # 
@@ -49,7 +49,6 @@ library(glue)
 select <- dplyr::select
 setwd(dirname(rstudioapi::getSourceEditorContext()$path)) # set working directory to where this script is located
 this_dir <- getwd()
-# feed_rast_dir <- here("prep/02_feed/output/resampled")
 
 options(dplyr.summarise.inform = FALSE)
 source(here("src/directories.R"))
@@ -116,7 +115,7 @@ diets <- unique(spp_info_df_fish$diet)
 ingredients <- unique(spp_info_df_fish$ingredient)
 fish_types <- unique(spp_info_df_fish$fish_type)
 spp_types <- unique(spp_info_df_fish$taxon)
-fcrs <- c("regular")
+fcrs <- c("regular", "efficient")
 
 for(tx_type in spp_types){
 
@@ -507,7 +506,7 @@ for(allocation_type in allocations){
     }
   }
 
-
+## do proportion impacts 
 
 fcrs <- c("regular", "efficient")
 

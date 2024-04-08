@@ -26,16 +26,12 @@ Load libraries
 
 library(tidyverse)
 library(here)
-library(data.table)
 library(terra)
 library(strex)
 library(janitor)
-# library(sf)
 library(tools)
 library(glue)
 library(tidyterra)
-library(rnaturalearth)
-
 
 source(here("src/directories.R"))
 
@@ -616,10 +612,6 @@ big_df <- combine_taxa_maps(tx_impact_map_df_loop)
 
 ```
 
-
-
-
-
 ## Calculate mean proportion of habitat impacted maps
   - Across all taxa and ingredients: 1 raster per diet/allocation
   - Across all taxa per ingredient: 1 raster per diet/allocation/ingredient
@@ -665,8 +657,7 @@ for(allocation_type in allocations){
              e == fcr_type)
     
     
-  big_df <- combine_taxa_maps(tx_impact_map_df_loop) %>%
-    mutate(imp_mean = 1-imp_mean)
+  big_df <- combine_taxa_maps(tx_impact_map_df_loop)
     
   process_mean_rasts(big_df) %>%
     inner_join(all_xy_moll, by = "cell_id") %>%
@@ -715,8 +706,7 @@ for(allocation_type in allocations){
     
     message(glue("processing mean calculations for {diet_type} diet; {fcr_type} efficiency; {allocation_type} allocation; {taxa_type} taxon"))
     
-    big_df <- combine_taxa_maps(tx_impact_map_df_loop) %>%
-          mutate(imp_mean = 1-imp_mean)
+    big_df <- combine_taxa_maps(tx_impact_map_df_loop)
     
     if(nrow(big_df) == 0){
       
@@ -740,8 +730,6 @@ for(allocation_type in allocations){
    }
   }
 }
-
-### NOTE: March 27: Need to run below here (not sd stuff though)
 
 ## calculate means by ingredient across taxa
 
@@ -783,8 +771,7 @@ for(allocation_type in allocations){
     
 message(glue("processing mean and nspp calculations for {diet_type} diet; {fcr_type} efficiency; {allocation_type} allocation; {ingredient_type} ingredient"))
 
-big_df <- combine_taxa_maps(tx_impact_map_df_loop) %>%
-      mutate(imp_mean = 1-imp_mean)
+big_df <- combine_taxa_maps(tx_impact_map_df_loop)
 
  process_mean_rasts(big_df) %>%       
     inner_join(all_xy_moll, by = "cell_id") %>%

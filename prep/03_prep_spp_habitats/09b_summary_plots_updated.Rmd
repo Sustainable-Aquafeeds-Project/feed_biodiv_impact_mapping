@@ -34,7 +34,6 @@ biodiv_dir <- file.path(rdsi_dir, "biodiversity_impacts")
 
 impact_maps_dir <- file.path(biodiv_dir, "output")
 
-
 ```
 
 ```{r}
@@ -80,7 +79,7 @@ marine_overlap <- readRDS(here("prep/03_prep_spp_habitats/output/aoh_marine_impa
     dplyr::select(sciname, spp_type, diet, fcr_type, allocation, ingredient, vulnerability, impact_total, total_hab_area, extinction_mean)
 
 
-terrestrial_overlap <- readRDS(here("prep/03_prep_spp_habitats/output/aoh_terrestrial_mammals_birds_impact.rds")) %>% 
+terrestrial_overlap <- readRDS(here("prep/03_prep_spp_habitats/output/aoh_terrestrial_impact.rds")) %>% 
   dplyr::select(-suitability) %>%
       dplyr::select(sciname, spp_type, diet, fcr_type, allocation, ingredient, vulnerability, impact_total, total_hab_area, extinction_mean)
 
@@ -103,6 +102,7 @@ taxon_names <- all_overlap %>%
   distinct(spp_type, taxon)
 
 spp_impacted <- all_overlap %>%
+  filter(impact_total > 0) %>%
   group_by(taxon, diet, allocation, fcr_type) %>%
   summarise(spp_count_impacted = n_distinct(sciname)) %>%
   ungroup()
@@ -139,18 +139,17 @@ summary_info <- spp_assessed_impacted %>%
   mutate(prop_impacted = total_impacted/total_assessed)
 
 spp_total_hab <- all_overlap %>%
-  distinct(sciname, spp_type, total_hab_area)
+  distinct(sciname, spp_type, total_hab_area) %>%
+  mutate(id = row_number())
 
-test <- all_overlap %>%
-  filter(spp_type %in% c("fish", "sponges", "arthropods", "cephalopods", "cnidaria", "molluscs", "echinoderms", "Marine plant", "corals", "elasmobranchs", "Marine mammal")) %>%
-  distinct(sciname, total_hab_area)
-test2 <- data.frame(duplicated(test$sciname)) # ok.. so none of the marine ones have duplicates for sciname or total_hab_area
+test <- data.frame(dups = duplicated(spp_total_hab$sciname)) %>%
+  mutate(id = row_number()) %>%
+  filter(dups == TRUE)
+  
+test2 <- spp_total_hab %>%
+  filter(id %in% c(test$id))
 
-
-test <- all_overlap %>%
-  filter(spp_type %in% c("Amphibians", "Terrestrial mammal", "Reptiles", "Bird")) %>%
-  distinct(sciname, total_hab_area)
-test2 <- data.frame(duplicates = duplicated(test$sciname)) %>% filter(duplicates == TRUE) # ok.. yikes.. there are a lot of duplicates for terrestrial species... what is going wrong with the code? Maybe I just need to calculate total hab area in a separate script for each species? 
+marine_habs <- read.csv(here("prep/03_prep_spp_habitats/int/marine_habitat_areas.csv"))
 
 summary_info_s <- all_overlap %>%
   group_by(diet, allocation, fcr_type) %>%
@@ -258,6 +257,8 @@ for(allocation_type in allocations){
 **Mean proportion impacted**
 
  - Look at ranges of values
+ - Consider splitting into two plots, like in global food paper; 1 is <95th quantile, 1 is >95th quantile 
+ - Consider having one point for each species, instead of a box and whiskers chart. 
 
 ```{r}
 
