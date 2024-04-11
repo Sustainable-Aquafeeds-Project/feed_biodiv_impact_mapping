@@ -209,15 +209,15 @@ all_overlap_summary <- all_overlap %>%
     quantile_50 = quantile(prop_impact, probs = 0.50),
     quantile_75 = quantile(prop_impact, probs = 0.75),
     quantile_95 = quantile(prop_impact, probs = 0.95),
-    quantile_999 = quantile(prop_impact, probs = 0.999)
+    quantile_99 = quantile(prop_impact, probs = 0.99)
   ) %>%
   ungroup() %>%
   mutate(impact_category = case_when(
     prop_impact < quantile_25 ~ "<25",
     prop_impact >= quantile_25 & prop_impact < quantile_50 ~ "25-49",
     prop_impact >= quantile_50 & prop_impact < quantile_75 ~ "50-74",
-   prop_impact >= quantile_75 & prop_impact < quantile_999 ~ "75-99.9",
-   prop_impact >= quantile_999 ~ "≥99.9",
+   prop_impact >= quantile_75 & prop_impact < quantile_95 ~ "75-94",
+   prop_impact >= quantile_95 ~ "≥95",
    TRUE ~ NA
   )) %>%
   mutate(iucn_cat = case_when(
@@ -249,7 +249,7 @@ plot_df <- all_overlap_summary %>%
 
 plot_df_new <- plot_df
 
-x_axis_order <- c("<25", "25-49", "50-74", "75-99.9", "≥99.9")
+x_axis_order <- c("<25", "25-49", "50-74", "75-94", "≥95")
 plot_df_new$impact_category <- factor(plot_df_new$impact_category, levels = x_axis_order)
 
 fill_order <- c("Least Concern", "Near Threatened", "Data Deficient", "Not Evaluated", "Vulnerable", "Endangered", "Critically Endangered")
@@ -266,45 +266,72 @@ iucn_cat_pal <- c(
   "Critically Endangered" = "#D40A1E"
 )
 
-
-ggplot() +
+test <- ggplot() +
   geom_col(plot_df_new %>% filter(diet == "fish-dominant"),
-             mapping = aes(x = impact_category, y = n_spp, fill = iucn_cat, col = diet), 
+             mapping = aes(x = impact_category, y = n_spp, fill = iucn_cat), 
                width = 0.4, position_stacknudge(x = -0.21)) +
-    geom_col(plot_df_new %>% filter(diet == "plant-dominant"),
-             mapping = aes(x = impact_category, y = n_spp, fill = iucn_cat, col = diet), 
-               width = 0.4, position = position_stacknudge(x = 0.21)) + 
+    geom_col_pattern(plot_df_new %>% filter(diet == "plant-dominant"),
+             mapping = aes(x = impact_category, y = n_spp, fill = iucn_cat, pattern_fill = diet), 
+               width = 0.4, position = position_stacknudge(x = 0.21), pattern_alpha = 0.3,
+             pattern_size = 0.5, pattern_spacing = 0.025, pattern = "stripe") + 
   facet_wrap(~taxon, ncol = 3, scales = "free_x") +
   labs(
        x = "Impact Quantile",
-       y = "Number of Species",
-       fill = "Current IUCN Category") +
+       y = "Number of Species") +
   theme_ohara() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1),
         strip.text = element_text(size = 10), 
-        legend.position  = "right") +
+        legend.position  = "none",
+        plot.margin = margin(t = 0, r =0, b = 3, l = 0, unit = "cm")) +
   scale_fill_manual(values = iucn_cat_pal)
+
+legend_iucn <- get_legend( ggplot() +
+  geom_col(plot_df_new %>% filter(diet == "fish-dominant"),
+             mapping = aes(x = impact_category, y = n_spp, fill = iucn_cat)) +
+              theme(legend.position = "bottom",
+                    legend.spacing.x = unit(0.28, 'cm')) +
+    labs(fill = "Current IUCN Category") + 
+    guides(fill = guide_legend(title.position = "bottom", title.hjust = 0.5)) +
+      scale_fill_manual(values = iucn_cat_pal)) 
+
+legend_pattern <-  get_legend(ggplot() + geom_col_pattern(plot_df_new,
+             mapping = aes(x = impact_category, y = n_spp, pattern = diet), 
+               width = 0.4, position = position_stacknudge(x = 0.21), pattern_alpha = 0.3,
+             pattern_size = 0.5, pattern_spacing = 0.025, pattern_key_scale_factor = 0.5, pattern_color = "white") +
+               theme(legend.position = "bottom",
+                     legend.spacing.x = unit(0.28, 'cm')) + 
+                 labs(pattern = "Diet") + 
+                guides(pattern = guide_legend(title.position = "bottom", title.hjust = 0.5, ncol = 1)) +
+               scale_pattern_manual(values=c('fish-dominant' = 'none', 'plant-dominant' = 'stripe'), 
+                                    labels = c("Fish-dominant", "Plant-dominant")))
+
+
+p <- ggdraw() + draw_plot(test) + draw_plot(legend_iucn, x = 0.1, y = 0.005, width = 0.5, height = 0.1) + draw_plot(legend_pattern, x = 0.6, y = 0.005, width = 0.5, height = 0.1)
 
 ggsave(here("prep/03_prep_spp_habitats/output/plots/publication/iucn_plot.png"), units = "in", width = 8, height = 11)
 
-ggplot() +
-  geom_col_pattern(plot_df_new %>% filter(diet == "fish-dominant"),
-             mapping = aes(x = impact_category, y = n_spp, fill = iucn_cat, col = diet), 
-               width = 0.4, position_stacknudge(x = -0.21)) +
-    geom_col_pattern(plot_df_new %>% filter(diet == "plant-dominant"),
-             mapping = aes(x = impact_category, y = n_spp, fill = iucn_cat), 
-               width = 0.4, position = position_stacknudge(x = 0.21), pattern = "stripe") + 
-  facet_wrap(~taxon, ncol = 3, scales = "free_x") +
-  labs(
-       x = "Impact Quantile",
-       y = "Number of Species",
-       fill = "Current IUCN Category") +
-  theme_ohara() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1),
-        strip.text = element_text(size = 10), 
-        legend.position  = "right") +
-  scale_fill_manual(values = iucn_cat_pal)
 
+```
 
+```{r}
+# ggplot() +
+#   geom_col(plot_df_new %>% filter(diet == "fish-dominant"),
+#              mapping = aes(x = impact_category, y = n_spp, fill = iucn_cat, col = diet), 
+#                width = 0.4, position_stacknudge(x = -0.21)) +
+#     geom_col(plot_df_new %>% filter(diet == "plant-dominant"),
+#              mapping = aes(x = impact_category, y = n_spp, fill = iucn_cat, col = diet), 
+#                width = 0.4, position = position_stacknudge(x = 0.21)) + 
+#   facet_wrap(~taxon, ncol = 3, scales = "free_x") +
+#   labs(
+#        x = "Impact Quantile",
+#        y = "Number of Species",
+#        fill = "Current IUCN Category") +
+#   theme_ohara() +
+#   theme(axis.text.x = element_text(angle = 45, hjust = 1),
+#         strip.text = element_text(size = 10), 
+#         legend.position  = "right") +
+#   scale_fill_manual(values = iucn_cat_pal) # ok great this works, now just need to figure out how to add pattern to one of the diet bars
+
+# ggsave(here("prep/03_prep_spp_habitats/output/plots/publication/iucn_plot.png"), units = "in", width = 8, height = 11)
 ```
 
