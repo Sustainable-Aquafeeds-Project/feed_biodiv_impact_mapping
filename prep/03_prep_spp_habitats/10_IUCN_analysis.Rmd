@@ -1,0 +1,310 @@
+---
+title: "Match species to IUCN categories"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+## Setup
+
+Load libraries
+
+```{r setup, include=FALSE}
+
+library(tidyverse)
+library(here)
+library(strex)
+library(janitor)
+library(tools)
+library(patchwork)
+library(cowplot)
+library(glue)
+library(RColorBrewer)
+library(ggpubr)
+library(smoothr)
+library(rredlist)
+library(ggpattern)
+library(ggpp)
+
+source(here("src/directories.R"))
+
+source(here("src/spatial.R"))
+source(here("src/fxns.R"))
+
+biodiv_dir <- file.path(rdsi_dir, "biodiversity_impacts")
+
+impact_maps_dir <- file.path(biodiv_dir, "output")
+
+```
+
+```{r}
+# Create a named vector with colors for each spp_type
+color_scale <- readRDS(here("prep/03_prep_spp_habitats/int/color_scale.RDS"))
+
+pal_mats <- c("Soybean" = "#328C41",
+              "Trimmings fish" = "#8FBAED",
+              "Sunflower" = "#4277A9",
+              "Wheat" = "#FFE96D",
+              "Rapeseed" = "#AC9900",
+              "Pulses" = "#79E0DA",
+              "Forage fish" = "#3DB1AB",
+              "Maize" = "#0A6B66",
+              "Cropsnes" = "#BC94C6")
+
+theme_ohara <- function(base_size = 9) {
+  theme(axis.ticks = element_blank(),
+        text             = element_text(family = 'Helvetica',
+                                        color = 'gray30', size = base_size),
+        plot.title       = element_text(size = rel(1.25), hjust = 0, face = 'bold'),
+        panel.background = element_blank(),
+        legend.position  = 'right',
+        panel.border     = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.grid.major = element_line(colour = 'grey90', size = .25),
+        legend.key       = element_rect(colour = NA, fill = NA),
+        axis.line        = element_blank())
+}
+
+```
+
+Read in marine and terrestrial dfs and combine
+
+```{r}
+marine_overlap <- readRDS(here("prep/03_prep_spp_habitats/output/aoh_marine_impact.rds")) %>%
+    dplyr::select(sciname, spp_type, diet, fcr_type, allocation, ingredient, vulnerability, impact_total, total_hab_area, extinction_mean)
+
+
+terrestrial_overlap <- readRDS(here("prep/03_prep_spp_habitats/output/aoh_terrestrial_impact.rds")) %>% 
+  dplyr::select(-suitability) %>%
+      dplyr::select(sciname, spp_type, diet, fcr_type, allocation, ingredient, vulnerability, impact_total, total_hab_area, extinction_mean)
+
+all_overlap <- rbind(marine_overlap, terrestrial_overlap) %>%
+    mutate(taxon = str_to_sentence(spp_type)) %>%
+  mutate(taxon = case_when(
+    taxon == "Terrestrial mammal" ~ "Terrestrial mammals",
+    taxon == "Bird" ~ "Birds",
+    taxon == "Fish" ~ "Finfish", 
+    taxon == "Marine mammal" ~ "Marine mammals",
+    taxon == "Marine plant" ~ "Marine plants",
+    TRUE ~ taxon)) %>%
+  mutate(sciname = tolower(sciname))
+
+
+spp_habs <- all_overlap %>%
+  distinct(sciname, taxon, total_hab_area) %>%
+  group_by(sciname, taxon) %>%
+  summarise(total_hab_area = max(total_hab_area)) %>%
+  ungroup()
+
+```
+
+Get IUCN categories for species
+
+```{r}
+
+spp_names_df <- all_overlap %>%
+  distinct(sciname = tolower(sciname), taxon)
+
+rl_threats('Fratercula arctica', key = api_key)
+
+
+out <- rl_sp(all = TRUE, key = api_key) 
+
+length(out) 
+
+all_df <- do.call(rbind, lapply(out, "[[", "result")) %>%
+  mutate(sciname = tolower(scientific_name)) %>%
+  dplyr::select(sciname, category)
+
+spp_cats <- spp_names_df %>%
+  left_join(all_df) %>%
+  distinct(sciname, taxon, category) %>%
+  mutate(category = case_when(
+    is.na(category) ~ "NE",
+    category == "LR/cd" ~ "NT",
+    category == "LR/lc" ~ "LC",
+     category == "LR/nt" ~ "NT",
+    TRUE ~ category
+  )) %>%
+    distinct(sciname, taxon, category) %>%
+  mutate(rank = case_when(
+    category %in%  c("NE") ~ 0,
+    category == "DD" ~ 1,
+    category == "LC" ~ 2,
+    category == "NT" ~ 3,
+    category == "VU" ~ 4,
+    category == "EN" ~ 5, 
+    category == "CR" ~ 6,
+    category == "EW" ~ 7,
+    category == "EX" ~ 8
+  )) %>%
+  group_by(sciname, taxon) %>%
+  summarise(rank = max(rank)) %>% ## we're just going to take the worst category if it has multiple for some reason...
+  ungroup() %>%
+    mutate(category = case_when(
+   rank ==  0 ~ "NE",
+    rank == 1 ~ "DD",
+    rank == 2 ~ "LC",
+    rank == 3 ~ "NT",
+    rank == 4 ~ "VU",
+    rank == 5 ~ "EN", 
+    rank == 6 ~ "CR",
+    rank == 7 ~ "EW",
+    rank == 8 ~ "EX"
+  )) %>%
+   mutate(id = row_number()) %>%
+  dplyr::select(-rank)
+
+write.csv(spp_cats, here("prep/03_prep_spp_habitats/int/spp_iucn_cats.csv"), row.names = FALSE)
+ 
+unique(spp_cats$category) #  [1] "NE" "LC" "DD" "VU" "NT" "EN" "CR" "EX" "EW"
+  ## DD = data deficient
+  ## LC = least concern
+  ## VU = vulnerable
+  ## NT = near threatened
+  ## EN = endangered
+  ## CR = critically endangered
+  ## LR/cd = near threatened
+  ## LR/nt = near threatened
+  ## EX = Extinct 
+  ## LR/lc = least concern
+  ## EW = extinct in the wild
+  ## NE = not evaluated
+
+test <- spp_cats %>%
+  filter(!is.na(category))
+
+test <- spp_cats %>% 
+  filter(is.na(category)) %>%
+  group_by(taxon) %>%
+  summarise(n_distinct(sciname))
+
+unique(test$taxon)
+
+test <- data.frame(dups = duplicated(spp_cats$sciname)) %>%
+  mutate(id = row_number()) %>%
+  filter(dups == TRUE) %>%
+  left_join(spp_cats)
+
+
+```
+
+Match IUCN categores to our overlap data and match impacts to quantile ranges
+
+```{r}
+
+spp_cats <- read.csv(here("prep/03_prep_spp_habitats/int/spp_iucn_cats.csv")) %>%
+  dplyr::select(-id)
+
+all_overlap_summary <- all_overlap %>%
+  group_by(sciname, taxon, diet, fcr_type, allocation) %>%
+  summarise(impact_km2 = sum(impact_total, na.rm = TRUE)) %>%
+  ungroup() %>%
+  left_join(spp_habs) %>%
+    left_join(spp_cats) %>%
+  mutate(prop_impact = impact_km2/total_hab_area) %>%
+  group_by(diet, allocation, fcr_type) %>%
+  mutate(
+    quantile_25 = quantile(prop_impact, probs = 0.25),
+    quantile_50 = quantile(prop_impact, probs = 0.50),
+    quantile_75 = quantile(prop_impact, probs = 0.75),
+    quantile_95 = quantile(prop_impact, probs = 0.95),
+    quantile_999 = quantile(prop_impact, probs = 0.999)
+  ) %>%
+  ungroup() %>%
+  mutate(impact_category = case_when(
+    prop_impact < quantile_25 ~ "<25",
+    prop_impact >= quantile_25 & prop_impact < quantile_50 ~ "25-49",
+    prop_impact >= quantile_50 & prop_impact < quantile_75 ~ "50-74",
+   prop_impact >= quantile_75 & prop_impact < quantile_999 ~ "75-99.9",
+   prop_impact >= quantile_999 ~ "≥99.9",
+   TRUE ~ NA
+  )) %>%
+  mutate(iucn_cat = case_when(
+    category == "LC" ~ "Least Concern",
+    category == "NT" ~ "Near Threatened",
+    category == "DD" ~ "Data Deficient",
+    category == "NE" ~ "Not Evaluated",
+    category == "VU" ~ "Vulnerable", 
+    category == "EN" ~ "Endangered",
+    category == "CR" ~ "Critically Endangered",
+    category == "EX" ~ "Extinct", 
+    category == "EW" ~ "Extinct In The Wild"
+  )) %>%
+  filter(!(category %in% c("EX", "EW")))
+
+```
+
+Make a plot! 
+
+```{r}
+
+plot_df <- all_overlap_summary %>%
+  filter(allocation == "economic",
+         fcr_type == "regular"
+         ) %>%
+  group_by(diet, category, iucn_cat, taxon, impact_category) %>%
+  summarise(n_spp = n_distinct(sciname)) %>%
+  ungroup()
+
+plot_df_new <- plot_df
+
+x_axis_order <- c("<25", "25-49", "50-74", "75-99.9", "≥99.9")
+plot_df_new$impact_category <- factor(plot_df_new$impact_category, levels = x_axis_order)
+
+fill_order <- c("Least Concern", "Near Threatened", "Data Deficient", "Not Evaluated", "Vulnerable", "Endangered", "Critically Endangered")
+plot_df_new$iucn_cat <- factor(plot_df_new$iucn_cat, levels = fill_order)
+
+
+iucn_cat_pal <- c(
+  "Least Concern" = "#54B050",
+  "Near Threatened" = "#C9CE3A", 
+  "Data Deficient" = "#C5C5C5", 
+  "Not Evaluated" = "darkgray",
+  "Vulnerable" = "#FED339", 
+  "Endangered" = "#FD643E", 
+  "Critically Endangered" = "#D40A1E"
+)
+
+
+ggplot() +
+  geom_col(plot_df_new %>% filter(diet == "fish-dominant"),
+             mapping = aes(x = impact_category, y = n_spp, fill = iucn_cat, col = diet), 
+               width = 0.4, position_stacknudge(x = -0.21)) +
+    geom_col(plot_df_new %>% filter(diet == "plant-dominant"),
+             mapping = aes(x = impact_category, y = n_spp, fill = iucn_cat, col = diet), 
+               width = 0.4, position = position_stacknudge(x = 0.21)) + 
+  facet_wrap(~taxon, ncol = 3, scales = "free_x") +
+  labs(
+       x = "Impact Quantile",
+       y = "Number of Species",
+       fill = "Current IUCN Category") +
+  theme_ohara() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        strip.text = element_text(size = 10), 
+        legend.position  = "right") +
+  scale_fill_manual(values = iucn_cat_pal)
+
+ggsave(here("prep/03_prep_spp_habitats/output/plots/publication/iucn_plot.png"), units = "in", width = 8, height = 11)
+
+ggplot() +
+  geom_col_pattern(plot_df_new %>% filter(diet == "fish-dominant"),
+             mapping = aes(x = impact_category, y = n_spp, fill = iucn_cat, col = diet), 
+               width = 0.4, position_stacknudge(x = -0.21)) +
+    geom_col_pattern(plot_df_new %>% filter(diet == "plant-dominant"),
+             mapping = aes(x = impact_category, y = n_spp, fill = iucn_cat), 
+               width = 0.4, position = position_stacknudge(x = 0.21), pattern = "stripe") + 
+  facet_wrap(~taxon, ncol = 3, scales = "free_x") +
+  labs(
+       x = "Impact Quantile",
+       y = "Number of Species",
+       fill = "Current IUCN Category") +
+  theme_ohara() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        strip.text = element_text(size = 10), 
+        legend.position  = "right") +
+  scale_fill_manual(values = iucn_cat_pal)
+
+
+```
+

@@ -548,7 +548,7 @@ calc_types <- c("mean", "sd", "nspp", "sd_prop", "mean_prop")
 ingredients <- all_overlap %>% 
   pull(ingredient) %>% unique()
 
-## commented out code only needs to be run if the source impact maps are updated! 
+## this loop only needs to be run if the source impact maps are updated! 
 for(allocation_type in allocations){
   for(ingredient_type in ingredients){
 
@@ -578,8 +578,7 @@ all_df <- as.data.frame(stack_rast, xy = TRUE) %>%
     separate_wider_delim(ingredient_calc_type, delim = "_", names = c("allocation", "raw_material", "ingredient", "calc_type"), too_many = "merge") %>%
   rename(long = x, lat = y) %>%
   filter(!is.na(value)) %>%
-  unite("crop_ingredient", c(raw_material:ingredient), sep = "_", remove = FALSE) %>%
-  filter(str_detect(calc_type, "mean_prop")) # comment this out if you want to run a specific calc_type only
+  unite("crop_ingredient", c(raw_material:ingredient), sep = "_", remove = FALSE) 
 
 
 for(i in unique(all_df$calc_type)){
@@ -623,7 +622,7 @@ for(i in unique(all_df$calc_type)){
   
 
   
-  data.table::fwrite(loop_df, glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_by_ingredient/delta/{allocation_type}_{ingredient_type}_{type}.rds.gz")))
+  data.table::fwrite(loop_df, glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_by_ingredient/delta/{allocation_type}_{ingredient_type}_{i}.rds.gz")))
 
 
    }
@@ -1003,19 +1002,30 @@ Map stats!
 ```{r}
 
 ## read in plant-dominant, economic, regulat
- filepath <- glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_ingredient/economic_mean.rds.gz"))
+ filepath <- glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_ingredient/economic_mean_prop.rds.gz"))
 
 all_df <-  fread(filepath)  %>%
   filter(value > 0) %>%
   filter(!is.na(value))
 
-max(all_df$value)
+max(all_df$value) # 0.035490633.5
+
+moll_template_land <- readRDS(here("prep/03_prep_spp_habitats/data/spatial/moll_template_land_xy.rds"))
+moll_template_ocean <- readRDS(here("prep/03_prep_spp_habitats/data/spatial/moll_template_ocean_xy.rds"))
+
+
+maximum_location <- all_df %>%
+  filter(value > 0.02) %>%
+  left_join(land_eez_rgns, by = c("long" = "x", "lat" = "y")) %>%
+ left_join(moll_template_land, by = c("long" = "x", "lat" = "y")) # max value is 0.035 on land in Norway
 
 test <- all_df %>%
   group_by(diet, fcr_type) %>%
-  summarise(mean_ext = mean(value, na.rm = TRUE))
+  summarise(prop_mean = mean(value, na.rm = TRUE)) %>%
+  ungroup()
 
 scenario_summary <- all_df %>% 
+  filter(value > 0) %>%
   group_by(diet, fcr_type) %>%
   summarise(cells_impacted = n()) %>%
   ungroup()
@@ -1025,6 +1035,7 @@ moll_land <- readRDS(here("prep/03_prep_spp_habitats/data/spatial/moll_template_
 all_df_land <- all_df %>%
   left_join(moll_land, by = c("long" = "x", "lat" = "y")) %>%
   filter(!is.na(cell_id)) %>%
+  filter(value > 0) %>%
     group_by(diet, fcr_type) %>%
   summarise(cells_impacted = n()) %>%
   ungroup() %>%
@@ -1036,6 +1047,7 @@ moll_ocean <- readRDS(here("prep/03_prep_spp_habitats/data/spatial/moll_template
 all_df_ocean <- all_df %>%
   left_join(moll_ocean, by = c("long" = "x", "lat" = "y")) %>%
   filter(!is.na(cell_id)) %>%
+    filter(value > 0) %>%
     group_by(diet, fcr_type) %>%
   summarise(cells_impacted = n()) %>%
   ungroup() %>%
