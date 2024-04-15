@@ -13,13 +13,9 @@ Load libraries
 
 library(tidyverse)
 library(here)
-library(data.table)
-library(terra)
 library(rnaturalearth)
 library(strex)
-library(janitor)
 library(sf)
-library(tools)
 library(patchwork)
 library(cowplot)
 library(glue)
@@ -95,20 +91,6 @@ theme_ohara <- function(base_size = 9) {
 
 ```
 
-Read in marine and terrestrial dfs and combine
-
-```{r}
-marine_overlap <- readRDS(here("prep/03_prep_spp_habitats/output/aoh_marine_impact.rds")) %>%
-    dplyr::select(sciname, spp_type, diet, fcr_type, allocation, ingredient, vulnerability, impact_total, total_hab_area)
-
-terrestrial_overlap <- readRDS(here("prep/03_prep_spp_habitats/output/aoh_terrestrial_impact.rds")) %>% 
-    dplyr::select(sciname, spp_type, diet, fcr_type, allocation, ingredient, vulnerability, impact_total, total_hab_area)
-
-all_overlap <- rbind(marine_overlap, terrestrial_overlap)
-
-```
-
-
 Make map split by quantiles in each cell
  - regular quantiles up to 95th 
  - Then 95-99.9th
@@ -116,6 +98,7 @@ Make map split by quantiles in each cell
  
 Additionally, make a delta map, and color either fish dominant or plant dominant. Have the legend colors be the same as the green and blue we use for the boxplot, but split by quantile of delta (same as regular impact quantiles above).
  
+ - For main text
  
 ```{r}
 # make publication ready mean extinction risk plots with all feed scenarios, economic allocation
@@ -134,7 +117,6 @@ all_df <-  fread(filepath) %>%
   filter(fcr_type == "regular") %>%
     filter(!is.na(value)) %>%
     mutate(diet_cap = str_to_sentence(diet))
-
 
 quantiles <- all_df %>%
   group_by(diet) %>%
@@ -175,9 +157,9 @@ all_df_quant$category <- factor(all_df_quant$category, levels = c("0-24", "25-49
           legend.title = element_text(size = 8),
           strip.text.x = element_text(size = 8, family = "Arial", colour = "black"),
           legend.key.size = unit(4, "mm")) + # change legend box sizes
-  labs(fill = "Impact Quantile") + 
+  labs(fill = "Impact by Quantile") + 
      guides(color = "none",
-             fill = guide_legend(title.position = "bottom", title.hjust = 0.5, nrow = 1)) + 
+             fill = guide_legend(title.position = "top", title.hjust = 0.5, nrow = 1)) + 
     facet_wrap(~diet_cap) + 
     scale_fill_manual(values = quantile_pal) +
     scale_colour_manual(values = quantile_pal) 
@@ -191,8 +173,7 @@ all_df_quant$category <- factor(all_df_quant$category, levels = c("0-24", "25-49
 
 delta_df <-  fread(filepath) %>%
   filter(fcr_type == "regular", 
-         delta_cat != "No difference")
-
+         delta_cat != "No difference") # there are only a few pixels where there is no difference... so just filter out.
 
 quantiles_delta_fish <- delta_df %>%
   filter(delta_cat == "Fish-dominant") %>%
@@ -215,7 +196,7 @@ quantiles_delta_plant <- delta_df %>%
   ungroup() %>%
   mutate(across(2:6, ~.x*-1))
 
-quantiles_delta <- rbind(quantiles_delta_plant, quantiles_delta_fish)
+quantiles_delta <- rbind(quantiles_delta_plant, quantiles_delta_fish) # bind back together
 
 delta_df_quant <- delta_df %>%
   left_join(quantiles_delta, by = "delta_cat") %>%
@@ -228,14 +209,7 @@ delta_df_quant <- delta_df %>%
     abs(delta) >= abs(q999) ~ "≥99.9"
   ))
 
-
-delta_pal <- c(
-  "Fish-dominant" = "#0D6EB5",
-  "Plant-dominant" = "#7BD67F"
-)
-
-plant_pal <-  colorRampPalette(brewer.pal(n=9, name = "Greens"))(7)
-
+# establish palettes for delta map 
 plant_pal <- c(
       "0-24" = "#DBF1D5", 
     "25-49" = "#ADDEA7", 
@@ -244,8 +218,6 @@ plant_pal <- c(
     "95-99.9" = "#0B7734", 
     "≥99.9" = "#00441B"
 )
-
-fish_pal <- colorRampPalette(brewer.pal(n=9, name = "Blues"))(7)
 
 fish_pal <- c(
       "0-24" = "#D6E5F4", 
@@ -271,7 +243,7 @@ delta_df_quant_plant$category <- factor(delta_df_quant_plant$category, levels = 
     scale_x_continuous(expand = c(0, 0)) +
     scale_y_continuous(expand = c(0, 0)) +
      theme_ohara() + 
-  labs(fill = "Plant-dominant") +
+  labs() +
   guides(color = "none") +
           theme(legend.position = "none", 
                 text = element_text(family = "Arial")) + 
@@ -282,11 +254,12 @@ delta_df_quant_plant$category <- factor(delta_df_quant_plant$category, levels = 
                  geom_sf(data = countries_shp, fill = NA, colour = "grey", alpha = 0.2)  +
                  geom_sf(data = globe_border, fill = NA, colour = "grey") + 
     scale_colour_manual(values = fish_pal) +
-       labs(fill = "Fish-dominant", x = "", y = "") +
+       labs(fill = "Fish-dominant", x = "Difference of Impact by Quantile", y = "") +
   guides(color = "none") + 
      theme(legend.position = "none", 
            axis.text.y = element_blank(), 
-           axis.text.x = element_blank(), 
+           axis.text.x = element_blank(),
+           axis.title.x = element_text(size = 8, family = "Arial"),
            plot.margin = margin(t = 10, r = 10, b = 50, l = 10, unit = "pt"),
            text = element_text(family = "Arial", colour = "black"))
    
@@ -314,19 +287,19 @@ delta_df_quant_plant$category <- factor(delta_df_quant_plant$category, levels = 
           theme(legend.position = "bottom",
                 legend.title = element_text(size = 8),
                 legend.text = element_text(size = 8), 
-                   text = element_text(family = "Arial", colour = "black"), 
+                text = element_text(family = "Arial", colour = "black"), 
       legend.margin = margin(r = 10),
       legend.key.size = unit(4, "mm")))
      
    full_plot <- ggdraw() +
                 draw_plot(delta_plot) +
-                draw_plot(fish_legend, height = 0.15, width = 0.52) +
-                draw_plot(plant_legend, height = 0.15, width = 1.54)
+                draw_plot(fish_legend, height = 0.25, width = 0.52) +
+                draw_plot(plant_legend, height = 0.25, width = 1.54)
      
-   
+   ## saving two separetely because I can
    
         ggsave(glue(here(this_dir, "output/plots/publication/economic_mean_prop_quantiles_delta.png")),
-                plot = plot_grid(quantile_plot, full_plot, nrow = 2, labels = c("A", "B"), label_fontfamily = "Arial", label_fontface = "plain", label_size = 8), 
+                plot = plot_grid(quantile_plot, full_plot, nrow = 2, labels = c("A", "B"), label_fontfamily = "Arial", label_fontface = "bold", label_size = 8), 
                 width = 180, height = 180, bg = "white", units = "mm")
       
          ggsave(glue(here(this_dir, "output/plots/publication/SI/delta_plot.png")),
@@ -337,6 +310,7 @@ delta_df_quant_plant$category <- factor(delta_df_quant_plant$category, levels = 
 ```
 
 Histogram of impact values by quantile group 
+ - SI
 
 ```{r}
 hist_plot_fish <- ggplot(data = all_df_quant %>% filter(diet == "fish-dominant")) + 
@@ -364,6 +338,8 @@ hist_plot_plant <- ggplot(data = all_df_quant %>% filter(diet == "plant-dominant
 
 
 Make map showing actual values
+ - SI
+ 
 ```{r}
 # make publication ready mean extinction risk plots with all feed scenarios, economic allocation
  filepath <- glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_ingredient/economic_mean_prop.rds.gz"))
@@ -418,7 +394,7 @@ ggsave(glue(here(this_dir, "output/plots/publication/SI/economic_mean_prop.png")
 
 
 Map stats!
-
+ 
 ```{r}
 
 ## read in plant-dominant, economic, regulat

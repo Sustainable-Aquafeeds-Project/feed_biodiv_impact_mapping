@@ -15,16 +15,12 @@ library(tidyverse)
 library(here)
 library(data.table)
 library(terra)
-library(sf)
 library(strex)
-library(janitor)
-library(tools)
 library(patchwork)
 library(cowplot)
 library(glue)
 library(RColorBrewer)
 library(ggpubr)
-library(smoothr)
 
 source(here("src/directories.R"))
 
@@ -72,7 +68,6 @@ Read in marine and terrestrial dfs and combine
 marine_overlap <- readRDS(here("prep/03_prep_spp_habitats/output/aoh_marine_impact.rds")) %>%
     dplyr::select(sciname, spp_type, diet, fcr_type, allocation, ingredient, vulnerability, impact_total, total_hab_area, extinction_mean)
 
-
 terrestrial_overlap <- readRDS(here("prep/03_prep_spp_habitats/output/aoh_terrestrial_impact.rds")) %>% 
   dplyr::select(-suitability) %>%
       dplyr::select(sciname, spp_type, diet, fcr_type, allocation, ingredient, vulnerability, impact_total, total_hab_area, extinction_mean)
@@ -101,7 +96,6 @@ spp_impacted <- all_overlap %>%
   summarise(spp_count_impacted = n_distinct(sciname)) %>%
   ungroup()
 
-
 aquamaps_spp <- readRDS(file.path(rdsi_dir, "biodiversity_impacts/int/spp_vuln_depth_info.rds")) %>%
   distinct(spp_type = taxon, sciname = species)
   
@@ -125,13 +119,6 @@ spp_assessed <- rbind(aquamaps_spp, eyres_spp) %>%
 spp_assessed_impacted <- spp_impacted %>%
   left_join(spp_assessed)
 
-summary_info <- spp_assessed_impacted %>%
-  group_by(diet, allocation, fcr_type) %>%
-  summarise(total_assessed = sum(spp_count_assessed, na.rm = TRUE),
-            total_impacted = sum(spp_count_impacted, na.rm = TRUE)) %>%
-  ungroup() %>%
-  mutate(prop_impacted = total_impacted/total_assessed)
-
 spp_total_hab <- all_overlap %>%
   distinct(sciname, spp_type, total_hab_area) %>%
   mutate(id = row_number())
@@ -142,38 +129,6 @@ test <- data.frame(dups = duplicated(spp_total_hab$sciname)) %>%
   
 test2 <- spp_total_hab %>%
   filter(id %in% c(test$id)) ## good no dupes
-
-summary_info_s <- all_overlap %>%
-  group_by(diet, allocation, fcr_type) %>%
-  summarise(mean_impact = mean(extinction_mean, na.rm = TRUE),
-            impact_total = sum(impact_total, na.rm = TRUE)) %>%
-  ungroup() %>% 
-  mutate(total_hab = sum(spp_total_hab$total_hab_area)) %>%
-  mutate(prop = impact_total/total_hab)
-
-
-vuln_values <- all_overlap %>%
-  distinct(sciname, ingredient, vulnerability) %>%
-  mutate(type = ifelse(str_detect(ingredient, "fish"), "marine", "terrestrial")) %>%
-  group_by(type) %>%
-  summarise(mean_vuln = mean(vulnerability)) %>%
-  ungroup()
-
-
-ag_suitability <- readRDS(here("prep/03_prep_spp_habitats/int/terrestrial_spp_habitat_suitability.rds"))
-
-1 - mean(ag_suitability$cropland_suitability) # 0.8213065
-
-vuln_taxa <- readRDS(file.path(rdsi_dir, "biodiversity_impacts/int/spp_vuln_depth_info.rds")) %>%
-  unite("ingredient", c(fish_type, ingredient), sep = "_") %>%
-  mutate(ingredient = case_when(
-    ingredient == "trimmings fish_fish meal" ~ "trimmings fish_fish meal, cut offs",
-    ingredient == "trimmings fish_fish oil" ~ "trimmings fish_fish oil, cut offs",
-    TRUE ~ ingredient
-  )) %>%
-  distinct(species,ingredient, vuln_quartile)
-
-mean(vuln_taxa$vuln_quartile) # 0.44618
 
 ```
 
@@ -271,7 +226,7 @@ plot1 <- ggplot(summary_df_spp %>% filter(prop_impact > 0), aes(x = prop_impact)
   scale_color_manual(values = diet_cols, breaks = names(diet_cols), guide = guide_legend(reverse = FALSE)) +
   theme(panel.background = element_blank(),
             axis.title.y = element_blank(),
-            axis.text.x = element_text(size = 16, angle = -90, hjust = 1),
+            axis.text.x = element_text(size = 16, angle = 45, hjust = 1),
          axis.text.y = element_text(size = 16),
         strip.text = element_text(size = 16),
         axis.title = element_text(size = 16),
@@ -289,7 +244,7 @@ plot2 <- ggplot(summary_df_spp %>% filter(prop_impact > quant_95), aes(x = prop_
   scale_color_manual(values = diet_cols, breaks = names(diet_cols), guide = guide_legend(reverse = FALSE)) +
   theme(panel.background = element_blank(),
             axis.title.y = element_blank(),
-            axis.text.x = element_text(size = 16, angle = -90, hjust = 1),
+            axis.text.x = element_text(size = 16, angle = 45, hjust = 1),
          axis.text.y = element_blank(),
         strip.text = element_text(size = 16),
         axis.title = element_text(size = 16),
@@ -314,23 +269,11 @@ plot1_legend <- get_legend(ggplot(summary_df_spp, aes(x = mean_prop)) +
   scale_color_manual(values = diet_cols, breaks = names(diet_cols), guide = guide_legend(reverse = FALSE)) + 
     labs(x = "Proportion of habitat area impacted", fill = 'Diet', color = 'Diet'))
 
-## get a blank rectangle to add to the plot (where we will put the legend)
-library(grid)
-
-rect <- rectGrob(
-  x = 0.5,
-  y = 0.25,
-  width = 0.15,
-  height = 0.11,
-  hjust = 0, vjust = 1,
-  gp = gpar(fill = "white", col = "white", alpha = 1)
-)
-
 
 # draw plots together 
 ggdraw() + draw_plot((plot1 + plot2 +  plot_layout(widths = c(3, 1)))) + draw_plot(plot1_legend,  x = .78, y = 0.15, height = .10, width = .15) 
 
-ggsave(here("prep/03_prep_spp_habitats/output/plots/publication/economic_boxplot_prop.png"), width = 16, height = 9, units = "in") # technically for nature food the max width is 180 mm, however, I'm saving like this and adjusting save in post production because doing it here messing things up...
+ggsave(here("prep/03_prep_spp_habitats/output/plots/publication/economic_boxplot_prop.png"), width = 16, height = 9, units = "in", bg = "white") # technically for nature food the max width is 180 mm, however, I'm saving like this and adjusting save in post production because doing it here messing things up...
 
 ```
  
@@ -344,6 +287,30 @@ summary_df_barcharts <- all_overlap_df %>%
   left_join(taxon_hab_area) %>%
   mutate(prop_impact = impact_total/total_hab_area)
 
+## switch the raw materials and species in that plot
+
+summary_df_barcharts$taxon <- with(summary_df_barcharts, reorder(taxon, prop_impact, FUN = function(x) sum(x)))
+
+ggplot(summary_df_barcharts, aes(x = taxon, y = prop_impact, fill = raw_material)) +
+    geom_bar(stat = "identity") +
+  facet_wrap(~diet) +
+  labs(x = "Taxon", y = "Proportion of total habitat impacted", fill = NULL) +
+  theme_minimal() + 
+  scale_fill_manual(values = pal_mats) + 
+  coord_flip()  + 
+  theme(panel.background = element_blank(),
+            axis.title.y = element_blank(),
+            axis.text.x = element_text(size = 7, angle = 45, hjust = 1),
+         axis.text.y = element_text(size = 7),
+        strip.text = element_text(size = 7),
+        axis.title = element_text(size = 7),
+        legend.text = element_text(size = 7),
+        text = element_text(family = "arial")) + 
+    scale_y_continuous(expand = c(0,0))
+
+
+ggsave(here("prep/03_prep_spp_habitats/output/plots/publication/economic_barchart.png"), width = 178.9, height =100.92 , units = "mm", bg = "white")
+
 summary_df_barcharts$raw_material <- with(summary_df_barcharts, reorder(raw_material, prop_impact, FUN = function(x) mean(x)))
 
 
@@ -354,56 +321,10 @@ ggplot(summary_df_barcharts, aes(x = raw_material, y = prop_impact, fill = taxon
   scale_fill_manual(values = color_scale) + 
   theme_minimal() + 
   coord_flip()  + 
-    theme(axis.text.x = element_text(angle = -90, hjust = 1)) # Adjust the 'angle' value as needed
-ggsave(here("prep/03_prep_spp_habitats/output/plots/publication/test.png"))
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Adjust the 'angle' value as needed
 
-## switch the raw materials and species in that plot
+ggsave(here("prep/03_prep_spp_habitats/output/plots/publication/SI/barchart_by_raw_mat.png"), bg = "white")
 
-summary_df_barcharts$taxon <- with(summary_df_barcharts, reorder(taxon, prop_impact, FUN = function(x) sum(x)))
-
-ggplot(summary_df_barcharts, aes(x = taxon, y = prop_impact, fill = raw_material)) +
-    geom_bar(stat = "identity") +
-  facet_wrap(~diet) +
-  labs(x = "Taxon", y = "Proportion of habitat impacted", fill = NULL) +
-  theme_minimal() + 
-  scale_fill_manual(values = pal_mats) + 
-  coord_flip()  + 
-  theme(panel.background = element_blank(),
-            axis.title.y = element_blank(),
-            axis.text.x = element_text(size = 7, angle = -90, hjust = 1),
-         axis.text.y = element_text(size = 7),
-        strip.text = element_text(size = 7),
-        axis.title = element_text(size = 7),
-        legend.text = element_text(size = 7),
-        text = element_text(family = "arial")) + 
-    scale_y_continuous(expand = c(0,0))
-
-
-ggsave(here("prep/03_prep_spp_habitats/output/plots/publication/economic_barchart.png"), width = 178.9, height =100.92 , units = "mm")
-
-## how efficient are these compared to their contribution to the feed formulation?
-  
-
-summary_df_stats <- summary_df_barcharts %>%
-   group_by(diet, fcr, raw_material, allocation) %>%
-  summarise(prop_total_impact = sum(prop_impact)) %>%
-  ungroup() %>%
-  group_by(diet, fcr, allocation) %>% 
-  mutate(total_impact = sum(prop_total_impact)) %>%
-  mutate(prop_attributed = prop_total_impact/total_impact)
-  
-## wow ok some interesting results! Soybean is highly inefficient! Rapeseed doesn't appear to be that bad...
-# In the fish-dominant diet: 
-#  - soybean accounts for 17% of the feed, however, it accounts for ~36% of the impacts. 
-#  - forage fish ingredients account for 42% of the fish dominant feed and only ~41% of the impacts. 
-#  - wheat is similarly efficient in the fish dominant diet; 20% of the feed and 18% of the impacts. 
-# 
-# For the plant-dominant diet:
-#  - Soybeans are 22% of the feeds but account for ~47% of the impacts.
-#  - Forage fish are 17% of the feed and 17% of the impacts. 
-#  - Wheat is 16% of the feed and 11% of the impacts
-#  - Pulses are 12% of the feed and 11% of the impacts
-#  - Rapeseed is 18% of the feed and 10% of the impact
 ```
 
 **Plot showing diet percentages**
@@ -449,7 +370,6 @@ ggplot(data = both_diets,
   guides(fill = guide_legend(byrow=TRUE, reverse = FALSE, ncol = 1))
 
 ggsave(filename = here("prep/03_prep_spp_habitats/output/plots/feed_composition.jpg"), dpi = 600, width = 10, height = 9, units = "cm")
-
 
 
 ```
@@ -655,37 +575,6 @@ material_stats_1 <- combined_impact_df %>%
   mutate(prop_impacts = sum_prop_mean/total_prop_mean)
 ```
 
-How much raw material does Norway produce and use in country for salmon aquafeeds? 
-
-```{r}
-ingredient_production_location <- read.csv(here("prep/02_feed/data/demand/ingredient_demand_production_locations.csv"))
-
-norway_incountry <- ingredient_production_location %>%
-  filter(
-         iso3c_consuming == "NOR") %>%
-  group_by(iso3c_consuming, iso3c_producing, diet, fcr_type) %>%
-  summarise(total_tonnes_traded = sum(producing_ingredient_consumed_tonnes, na.rm = TRUE)) %>%
-  ungroup() %>%
-  group_by(diet, fcr_type) %>%
-  mutate(total_tonnes_consumed = sum(total_tonnes_traded, na.rm = TRUE)) %>%
-  ungroup() %>%
-  mutate(prop_consumed = total_tonnes_traded/total_tonnes_consumed)
-
-```
-
-How much salmon aquaculture production does NOR produce? 
-
-```{r}
-
-production <- readRDS(here("data/tidy_data/production-data/aquaculture_production_tidy.rds")) 
-
-
-salmon_production <- production %>%
-  filter(species == "Atlantic salmon" & year == 2020,
-         value > 0) %>%
-  mutate(species = "salmon")
-
-```
 
 Lets look at average impacts and their proportional contributions, rather than at an individual species level
 

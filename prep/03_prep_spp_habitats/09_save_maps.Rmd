@@ -1,5 +1,5 @@
 ---
-title: "Summary plots: maps"
+title: "Save maps a multitude of ways"
 output: html_document
 editor_options: 
   chunk_output_type: console
