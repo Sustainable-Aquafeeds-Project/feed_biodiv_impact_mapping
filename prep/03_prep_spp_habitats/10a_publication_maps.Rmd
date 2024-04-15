@@ -98,7 +98,6 @@ theme_ohara <- function(base_size = 9) {
 Read in marine and terrestrial dfs and combine
 
 ```{r}
-
 marine_overlap <- readRDS(here("prep/03_prep_spp_habitats/output/aoh_marine_impact.rds")) %>%
     dplyr::select(sciname, spp_type, diet, fcr_type, allocation, ingredient, vulnerability, impact_total, total_hab_area)
 
@@ -107,39 +106,15 @@ terrestrial_overlap <- readRDS(here("prep/03_prep_spp_habitats/output/aoh_terres
 
 all_overlap <- rbind(marine_overlap, terrestrial_overlap)
 
-spp_impacted <- all_overlap %>%
-  group_by(spp_type, diet, allocation, fcr_type) %>%
-  summarise(spp_count_impacted = n_distinct(sciname)) %>%
-  ungroup()
-
-aquamaps_spp <- readRDS(file.path(rdsi_dir, "biodiversity_impacts/int/spp_vuln_depth_info.rds")) %>%
-  distinct(spp_type = taxon, sciname = species)
-  
-eyres_spp <- readRDS(here("prep/03_prep_spp_habitats/data/iucn/eyres_iucn_spp.rds")) %>%
-  dplyr::select(spp_type, sciname = scientific_name) %>%
-  mutate(sciname = tolower(sciname)) %>%
-  mutate(spp_type = case_when(
-    spp_type == "mammals" ~ "Terrestrial mammal",
-    spp_type == "amphibians" ~ "Amphibians", 
-    spp_type == "reptiles" ~ "Reptiles", 
-    spp_type == "birds" ~ "Bird"
-  ))
-
-spp_assessed <- rbind(aquamaps_spp, eyres_spp) %>%
-  group_by(spp_type) %>%
-  summarise(spp_count_assessed = n_distinct(sciname)) %>%
-  ungroup()
-
 ```
 
-Maps!
 
 Make map split by quantiles in each cell
  - regular quantiles up to 95th 
  - Then 95-99.9th
  - then >= 99.9th
  
-Additionally, make a delta map, and just color either fish dominant, plant dominant, or no change as the legend. Have the legend colors be the same as the green and blue we use for the boxplot.
+Additionally, make a delta map, and color either fish dominant or plant dominant. Have the legend colors be the same as the green and blue we use for the boxplot, but split by quantile of delta (same as regular impact quantiles above).
  
  
 ```{r}
@@ -185,52 +160,34 @@ all_df_quant$category <- factor(all_df_quant$category, levels = c("0-24", "25-49
 
   quantile_plot <-  ggplot() + 
       geom_tile(data = all_df_quant, aes(x = long, y = lat, fill = category, color = category)) +
-            geom_sf(data = countries_shp, fill = NA, colour = "grey") +
+                 geom_sf(data = countries_shp, fill = NA, colour = "grey", alpha = 0.2)  +
+                 geom_sf(data = globe_border, fill = NA, colour = "grey") + 
     scale_x_continuous(expand = c(0, 0)) +
     scale_y_continuous(expand = c(0, 0)) +
-    theme_minimal() +
+    theme_minimal() + 
       theme(plot.title = element_text(hjust = 0.5), 
           axis.title = element_blank(),
           axis.text = element_blank(),
           axis.ticks = element_blank(),
-          legend.margin = margin(r = 10),
-          legend.position = "bottom") + # add a margin to legend text so it isn't cut off when saving 
+          legend.margin = margin(r = 10), # add a margin to legend text so it isn't cut off when saving 
+          legend.position = "bottom",
+          text = element_text(family = "Arial", colour = "black"),
+          legend.title = element_text(size = 8),
+          strip.text.x = element_text(size = 8, family = "Arial", colour = "black"),
+          legend.key.size = unit(4, "mm")) + # change legend box sizes
   labs(fill = "Impact Quantile") + 
      guides(color = "none",
              fill = guide_legend(title.position = "bottom", title.hjust = 0.5, nrow = 1)) + 
     facet_wrap(~diet_cap) + 
     scale_fill_manual(values = quantile_pal) +
-    scale_colour_manual(values = quantile_pal)
+    scale_colour_manual(values = quantile_pal) 
   
-    ggsave(glue(here(this_dir, "output/plots/publication/economic_mean_prop_quantiles.png")), plot = quantile_plot, width = 8, height = 8, bg = "white")
+    ggsave(glue(here(this_dir, "output/plots/publication/SI/economic_mean_prop_quantiles.png")), plot = quantile_plot, width = 8, height = 8, bg = "white")
     
     
-hist_plot_fish <- ggplot(data = all_df_quant %>% filter(diet == "fish-dominant")) + 
-    geom_histogram(aes(value, fill = category)) +
-    facet_wrap(~category, scales = "free", ncol = 2) +
-    theme_ohara() +
-    labs(x = "Average proportion of habitat impacted", y = "Number of cells", title = "Fish-dominant") +
-    scale_fill_manual(values = quantile_pal) +
-  theme(legend.position = "none")
-
-hist_plot_plant <- ggplot(data = all_df_quant %>% filter(diet == "plant-dominant")) + 
-    geom_histogram(aes(value, fill = category)) +
-    facet_wrap(~category, scales = "free", ncol = 2) +
-    theme_ohara() +
-    labs(x = "Average proportion of habitat impacted", y = "Number of cells", title = "Plant-dominant") +
-    scale_fill_manual(values = quantile_pal) + 
-    theme(legend.position = "none")
-
-  
-  ggsave(glue(here(this_dir, "output/plots/publication/SI/economic_mean_prop_quantiles_hist_plant.png")), plot = plot_grid(hist_plot_plant , nrow = 1), width = 8, height = 8, bg = "white") 
-  
-    ggsave(glue(here(this_dir, "output/plots/publication/SI/economic_mean_prop_quantiles_hist_fish.png")), plot = plot_grid(hist_plot_fish, nrow = 1), width = 8, height = 8, bg = "white") 
-    
-    
-## Do delta plot 
+## Delta plot 
     
  filepath <- glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_ingredient/delta/economic_mean_prop.rds.gz"))
-
 
 delta_df <-  fread(filepath) %>%
   filter(fcr_type == "regular", 
@@ -309,34 +266,99 @@ delta_df_quant_plant$category <- factor(delta_df_quant_plant$category, levels = 
 
    delta_plot <-  ggplot() + 
       geom_tile(data = delta_df_quant_plant, aes(x = long, y = lat, fill = category, color = category)) +
-            geom_sf(data = countries_shp, fill = NA, colour = "grey")  +
         scale_fill_manual(values = plant_pal) +
     scale_colour_manual(values = plant_pal) +
     scale_x_continuous(expand = c(0, 0)) +
     scale_y_continuous(expand = c(0, 0)) +
-    theme_minimal() +
+     theme_ohara() + 
   labs(fill = "Plant-dominant") +
-  guides(color = "none",
-          fill = guide_legend(title.position = "bottom", title.hjust = 0.5, nrow = 1)) +
+  guides(color = "none") +
+          theme(legend.position = "none", 
+                text = element_text(family = "Arial")) + 
      new_scale_color() +
      new_scale_fill() + 
            geom_tile(data = delta_df_quant_fis, aes(x = long, y = lat, fill = category, color = category)) +
              scale_fill_manual(values = fish_pal) +
+                 geom_sf(data = countries_shp, fill = NA, colour = "grey", alpha = 0.2)  +
+                 geom_sf(data = globe_border, fill = NA, colour = "grey") + 
     scale_colour_manual(values = fish_pal) +
-       labs(fill = "Fish-dominant", 
-            title = "Proportion of habitat impacted difference") +
-  guides(color = "none",
-          fill = guide_legend(title.position = "bottom", title.hjust = 0.5, nrow = 1))
+       labs(fill = "Fish-dominant", x = "", y = "") +
+  guides(color = "none") + 
+     theme(legend.position = "none", 
+           axis.text.y = element_blank(), 
+           axis.text.x = element_blank(), 
+           plot.margin = margin(t = 10, r = 10, b = 50, l = 10, unit = "pt"),
+           text = element_text(family = "Arial", colour = "black"))
    
+   fish_legend <- get_legend(ggplot() + 
+      geom_tile(data = delta_df_quant_fis, aes(x = long, y = lat, fill = category, color = category)) +
+             scale_fill_manual(values = fish_pal) +
+              scale_colour_manual(values = fish_pal) +
+                  labs(fill = "Fish-dominant") +
+          guides(color = "none",
+            fill = guide_legend(title.position = "bottom", title.hjust = 0.5, nrow = 1)) +
+          theme(legend.position = "bottom", 
+                  legend.title = element_text(size = 8),
+                legend.text = element_text(size = 8), 
+      text = element_text(family = "Arial", colour = "black"),
+      legend.margin = margin(r = 10),
+      legend.key.size = unit(4, "mm")))
+   
+   plant_legend <- get_legend(ggplot() + 
+      geom_tile(data = delta_df_quant_plant, aes(x = long, y = lat, fill = category, color = category)) +
+             scale_fill_manual(values = plant_pal) +
+              scale_colour_manual(values = plant_pal) +
+                  labs(fill = "Plant-dominant") +
+          guides(color = "none",
+            fill = guide_legend(title.position = "bottom", title.hjust = 0.5, nrow = 1)) +
+          theme(legend.position = "bottom",
+                legend.title = element_text(size = 8),
+                legend.text = element_text(size = 8), 
+                   text = element_text(family = "Arial", colour = "black"), 
+      legend.margin = margin(r = 10),
+      legend.key.size = unit(4, "mm")))
+     
+   full_plot <- ggdraw() +
+                draw_plot(delta_plot) +
+                draw_plot(fish_legend, height = 0.15, width = 0.52) +
+                draw_plot(plant_legend, height = 0.15, width = 1.54)
+     
+   
+   
+        ggsave(glue(here(this_dir, "output/plots/publication/economic_mean_prop_quantiles_delta.png")),
+                plot = plot_grid(quantile_plot, full_plot, nrow = 2, labels = c("A", "B"), label_fontfamily = "Arial", label_fontface = "plain", label_size = 8), 
+                width = 180, height = 180, bg = "white", units = "mm")
       
-         ggsave(glue(here(this_dir, "output/plots/publication/test.png")),
-                plot = delta_plot, 
-                width = 8, height = 8, bg = "white")
+         ggsave(glue(here(this_dir, "output/plots/publication/SI/delta_plot.png")),
+                plot = full_plot, 
+                width = 180, height = 180, bg = "white", units = "mm")
    
-         ggsave(glue(here(this_dir, "output/plots/publication/economic_mean_prop_quantiles_delta.png")),
-                plot = plot_grid(quantile_plot, delta_plot, nrow = 2, labels = c("A", "B")), 
-                width = 8, height = 8, bg = "white")
-   
+    
+```
+
+Histogram of impact values by quantile group 
+
+```{r}
+hist_plot_fish <- ggplot(data = all_df_quant %>% filter(diet == "fish-dominant")) + 
+    geom_histogram(aes(value, fill = category)) +
+    facet_wrap(~category, scales = "free", ncol = 2) +
+    theme_ohara() +
+    labs(x = "Average proportion of habitat impacted", y = "Number of cells", title = "Fish-dominant") +
+    scale_fill_manual(values = quantile_pal) +
+  theme(legend.position = "none")
+
+hist_plot_plant <- ggplot(data = all_df_quant %>% filter(diet == "plant-dominant")) + 
+    geom_histogram(aes(value, fill = category)) +
+    facet_wrap(~category, scales = "free", ncol = 2) +
+    theme_ohara() +
+    labs(x = "Average proportion of habitat impacted", y = "Number of cells", title = "Plant-dominant") +
+    scale_fill_manual(values = quantile_pal) + 
+    theme(legend.position = "none")
+
+  
+  ggsave(glue(here(this_dir, "output/plots/publication/SI/economic_mean_prop_quantiles_hist_plant.png")), plot = plot_grid(hist_plot_plant , nrow = 1), width = 8, height = 8, bg = "white") 
+  
+    ggsave(glue(here(this_dir, "output/plots/publication/SI/economic_mean_prop_quantiles_hist_fish.png")), plot = plot_grid(hist_plot_fish, nrow = 1), width = 8, height = 8, bg = "white") 
     
 ```
 
@@ -382,20 +404,16 @@ quantile_value <- quantile(loop_loop_df$value, probs = 0.999, na.rm = TRUE)
           axis.text = element_blank(),
           axis.ticks = element_blank(),
           legend.margin = margin(r = 10)) + # add a margin to legend text so it isn't cut off when saving 
-  labs(fill = "Proportion\nhabitat\nimpacted",
-      # color = "≥99th quantile")
-      ) + 
+  labs(fill = "Proportion\nhabitat\nimpacted") + 
      guides(color = "none") + 
     facet_wrap(~diet)
-   # + 
-    #   guides(color = guide_legend(override.aes = list(fill = "#B90000")))
   
         
       plot_list[[length(plot_list) + 1]] <- loop_plot
 
   } 
 
-ggsave(glue(here(this_dir, "output/plots/publication/economic_mean_prop.png")), plot = plot_grid(plotlist = plot_list, nrow = 1), width = 10, height = 4, bg = "white")
+ggsave(glue(here(this_dir, "output/plots/publication/SI/economic_mean_prop.png")), plot = plot_grid(plotlist = plot_list, nrow = 1), width = 10, height = 4, bg = "white")
 ```
 
 

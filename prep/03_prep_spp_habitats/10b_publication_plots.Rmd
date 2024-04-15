@@ -254,11 +254,7 @@ spp_assesed_reg_outlier <- distinct(summary_df_spp_reg, taxon, spp_outliers, spp
 # Set the levels of the taxon variable in summary_df_test
 summary_df_spp$taxon <- with(summary_df_spp, reorder(taxon, prop_impact, FUN = function(x) mean(x)))
 
-
 diet_cols = c("Fish-dominant" = "#0D6EB5", "Plant-dominant" = "#7BD67F")
-# diet_cols = c("fish-dominant" = "#0D6EB5", "plant-dominant" = "#7BD67F")
-
-# summary_df$taxon <- with(summary_df, reorder(taxon, mean_prop, FUN = function(x) mean(x)))
 
 ## make boxplot of prop impacted
 
@@ -280,14 +276,7 @@ plot1 <- ggplot(summary_df_spp %>% filter(prop_impact > 0), aes(x = prop_impact)
         strip.text = element_text(size = 16),
         axis.title = element_text(size = 16),
         legend.position = "none", 
-        text = element_text(family = "arial"))
-# + 
-#         geom_text(data = spp_assesed_reg_outlier, aes(label = spp_impacted_str, y = taxon),
-#                 x = 0.000035, hjust = 0, color = 'black',
-#                 family = 'arial',
-#                 size = 6)
-
-
+        text = element_text(family = "Arial"))
 
 # get legend
 
@@ -341,7 +330,7 @@ rect <- rectGrob(
 # draw plots together 
 ggdraw() + draw_plot((plot1 + plot2 +  plot_layout(widths = c(3, 1)))) + draw_plot(plot1_legend,  x = .78, y = 0.15, height = .10, width = .15) 
 
-ggsave(here("prep/03_prep_spp_habitats/output/plots/publication/economic_boxplot_prop.png"), width = 16, height = 9, units = "in")
+ggsave(here("prep/03_prep_spp_habitats/output/plots/publication/economic_boxplot_prop.png"), width = 16, height = 9, units = "in") # technically for nature food the max width is 180 mm, however, I'm saving like this and adjusting save in post production because doing it here messing things up...
 
 ```
  
@@ -381,16 +370,16 @@ ggplot(summary_df_barcharts, aes(x = taxon, y = prop_impact, fill = raw_material
   coord_flip()  + 
   theme(panel.background = element_blank(),
             axis.title.y = element_blank(),
-            axis.text.x = element_text(size = 16, angle = -90, hjust = 1),
-         axis.text.y = element_text(size = 16),
-        strip.text = element_text(size = 16),
-        axis.title = element_text(size = 16),
-        legend.text = element_text(size = 16),
+            axis.text.x = element_text(size = 7, angle = -90, hjust = 1),
+         axis.text.y = element_text(size = 7),
+        strip.text = element_text(size = 7),
+        axis.title = element_text(size = 7),
+        legend.text = element_text(size = 7),
         text = element_text(family = "arial")) + 
     scale_y_continuous(expand = c(0,0))
 
 
-ggsave(here("prep/03_prep_spp_habitats/output/plots/publication/economic_barchart.png"))
+ggsave(here("prep/03_prep_spp_habitats/output/plots/publication/economic_barchart.png"), width = 178.9, height =100.92 , units = "mm")
 
 ## how efficient are these compared to their contribution to the feed formulation?
   
