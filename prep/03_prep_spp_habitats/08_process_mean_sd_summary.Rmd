@@ -975,4 +975,152 @@ big_df <- combine_taxa_maps(tx_impact_map_df_loop)
 
 
 
+```{r}
+diet_types <- c("fish-dominant", "plant-dominant")
+fcr_types <- c("regular")
+allocation_types <- c("economic")
+
+
+for(diet in diet_types){
+  for(fcr in fcr_types){
+    for(allocation in allocation_types){
+      
+      # diet = "fish-dominant"
+      # fcr = "regular"
+      # allocation = "economic"
+
+      all_files <- list.files(file.path(biodiv_dir, "output/impact_maps_by_spp_ingredient_lists"), pattern = glue(".*_{diet}_{fcr}_.*_{allocation}"), full.names = TRUE)
+    
+      
+      all_files_list <- lapply(all_files, readRDS)
+
+      all_impact_df <- data.frame(cell_id = NA, prop_mean = NA, prop_sd = NA, prop_nspp = NA)
+
+      for(i in 1:14){
+              # i =4
+                
+        
+        i_dfs <- lapply(all_files_list, function(x) x[[i]])
+
+        
+ combined_dataframe <- bind_rows(i_dfs) %>%
+    filter(!is.na(cell_id)) %>%
+  as.data.table() %>%
+  group_by(cell_id, species_full) %>%
+  summarise(impact_km2 = sum(impact_km2, na.rm = TRUE)) %>% # divide by 100 after this for prop and cap prop at 1
+  ungroup() %>%
+  mutate(prop_impact = impact_km2/100) %>%
+  group_by(cell_id) %>%
+  summarise(prop_mean = mean(prop_impact,na.rm=TRUE),
+            prop_sd = sd(prop_impact, na.rm = TRUE),
+            prop_nspp = n_distinct(species_full)) %>%
+  ungroup() %>%
+  as.data.frame()
+
+      
+        all_impact_df <- rbind(all_impact_df, combined_dataframe)
+        
+      }
+      
+      rast_impact <- all_impact_df %>%
+        dplyr::select(cell_id, prop_mean) %>%
+        filter(!is.na(cell_id)) %>%
+                left_join(moll_template_xy) %>%
+            dplyr::select(x, y, prop_mean) %>%
+            rast(., type = "xyz", crs = moll_template)
+      
+      writeRaster(rast_impact, glue(file.path(biodiv_dir, "int/terrestrial_aggregation/impact_maps_across_taxon_ingredient/{diet}/{fcr}/{allocation}_mean_prop.tif")))
+      
+            rast_impact_sd <- all_impact_df %>%
+        dplyr::select(cell_id, prop_sd) %>%
+        filter(!is.na(cell_id)) %>%
+                left_join(moll_template_xy) %>%
+            dplyr::select(x, y, prop_sd) %>%
+            rast(., type = "xyz", crs = moll_template)
+      
+            writeRaster(rast_impact_sd, glue(file.path(biodiv_dir, "int/terrestrial_aggregation/impact_maps_across_taxon_ingredient/{diet}/{fcr}/{allocation}_sd_prop.tif")))
+
+            
+                        rast_impact_nspp <- all_impact_df %>%
+        dplyr::select(cell_id, prop_nspp) %>%
+        filter(!is.na(cell_id)) %>%
+                left_join(moll_template_xy) %>%
+            dplyr::select(x, y, prop_nspp) %>%
+            rast(., type = "xyz", crs = moll_template)
+                        
+                  writeRaster(rast_impact_nspp, glue(file.path(biodiv_dir, "int/terrestrial_aggregation/impact_maps_across_taxon_ingredient/{diet}/{fcr}/{allocation}_nspp.tif")))
+
+      
+    }
+  }
+}
+
+
+
+## save lists of species impacts and then read back in as chunks to do the below (theoretically would have 14 result_list[])
+
+second_dfs <- lapply(all_files_list, function(x) x[[2]])
+
+# Step 2: Combine these dataframes into one
+combined_dataframe <- bind_rows(second_dfs) %>%
+    filter(!is.na(cell_id)) %>%
+  as.data.table() %>%
+  group_by(cell_id, species_full) %>%
+  summarise(impact_km2 = sum(impact_km2, na.rm = TRUE)) %>% # divide by 100 after this for prop and cap prop at 1
+  ungroup() %>%
+  mutate(prop_impact = impact_km2/100) %>%
+  group_by(cell_id) %>%
+  summarise(prop_mean = mean(prop_impact,na.rm=TRUE)) %>%
+  ungroup() %>%
+  as.data.frame()
+
+
+```
+
+```{r}
+
+for(diet in diet_types){
+  for(fcr in fcr_types){
+    for(allocation in allocation_types){
+      
+      # diet = "plant-dominant"
+      # fcr = "regular"
+      # allocation = "economic"
+
+      all_files <- list.files(file.path(biodiv_dir, "output/impact_maps_by_spp_ingredient_lists"), pattern = glue(".*_{diet}_{fcr}_.*_{allocation}"), full.names = TRUE)
+    
+            all_impact_df <- data.frame(cell_id = NA, prop_mean = NA, prop_sd = NA, prop_nspp = NA)
+
+
+      for(file in all_files){
+       
+        # file = 1
+               all_files_list <- lapply(all_files[[file]], readRDS)
+               
+               cell_chunk_df <- data.frame(cell_id = NA, species_full = NA, impact_km2 = NA)
+
+        for(i in 1:14){
+         # i = 2
+          
+          
+           i_dfs <- lapply(all_files_list, function(x) x[[i]])
+
+          
+  combined_dataframe <- bind_rows(i_dfs) %>%
+    filter(!is.na(cell_id)) %>%
+    dplyr::select(cell_id, species_full, impact_km2) %>%
+    as.data.frame()
+          
+  cell_chunk_df <- rbind(cell_chunk_df, combined_dataframe)
+          
+        }
+               
+               
+               
+      }
+
+    }
+  }
+}
+```
 

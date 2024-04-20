@@ -218,8 +218,9 @@ plot1 <- ggplot(summary_df_spp %>% filter(prop_impact > 0), aes(x = prop_impact)
   geom_vline(xintercept = 0, color = "black") +
   geom_point(data = summary_df_spp, aes(x = mean_prop, y = taxon, group = diet),
              position = position_dodge(width = -0.9),
-             shape = 21, color = "black", fill = "white", size = 2) +
-   geom_boxplot(aes(y = taxon, fill = diet), outlier.fill = NA, outlier.color = NA, position = position_dodge(width = -0.9), alpha = 0) +
+             shape = 21, color = "black", fill = "orange", size = 4) +
+     geom_boxplot(aes(y = taxon, fill = diet), outlier.fill = NA, outlier.color = NA, position = position_dodge(width = -0.9), alpha = 0, colour = "orange") +
+   geom_boxplot(aes(y = taxon, fill = diet), outlier.fill = NA, outlier.color = NA, position = position_dodge(width = -0.9), alpha = 0, fatten = NULL) +
   theme_ohara() +
       labs(x = "Proportion of habitat area impacted", fill = 'Diet', color = 'Diet') +
   scale_x_continuous(expand = c(0,0), limits = c(0, quant_95)) +

@@ -110,12 +110,12 @@ all_overlap <- rbind(marine_overlap, terrestrial_overlap)
 hab_areas <- all_overlap %>% 
   distinct(sciname, spp_type, total_hab_area)
 
-# saveRDS(hab_areas, here("prep/03_prep_spp_habitats/output/all_spp_hab_areas.rds")) # was saving this, but it is too big for github i believe
+saveRDS(hab_areas, here("prep/03_prep_spp_habitats/output/all_spp_hab_areas.rds")) 
 
 all_overlap <- all_overlap %>%
   dplyr::select(-total_hab_area)
 
-write_rds(all_overlap, here("prep/03_prep_spp_habitats/output/aoh_spp_impacts.rds"))
+# write_rds(all_overlap, here("prep/03_prep_spp_habitats/output/aoh_spp_impacts.rds")) # was saving this, but it is too big for github i believe
 
 spp_impacted <- all_overlap %>%
   group_by(spp_type, diet, allocation, fcr_type) %>%
@@ -783,7 +783,7 @@ for(allocation_type in allocations){
 
 # allocation_type = "economic"
 # type = "mean_prop"
-#  raw_mat = "forage fish"
+#  raw_mat = "Soybean"
 
     all_files <- list.files(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_by_ingredient"), pattern = glue("{allocation_type}_{raw_mat}_.*._{type}"), full.names = TRUE)
 
@@ -792,7 +792,7 @@ all_df <- map_dfr(all_files, ~fread(.x), header = TRUE)
 
 all_df_fin <- all_df %>% 
   group_by(long, lat, diet, fcr_type, allocation, raw_material, calc_type) %>% 
-  summarise(value = mean(value, na.rm = TRUE)) %>%
+  summarise(value = sum(value, na.rm = TRUE)) %>%
   ungroup() 
 
 # test <- all_df_fin %>% group_by(diet, fcr_type, allocation) %>% summarise(sum = sum(value, na.rm = TRUE))
@@ -947,5 +947,161 @@ loop_loop_df <- loop_df %>%
 }
 
 
+```
+
+Data check soybeans
+
+```{r}
+
+list.files(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_by_raw_material/delta/"))
+
+
+soy_deltas <- data.table::fread(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_by_raw_material/delta/economic_Soybean_mean_prop.rds.gz")) %>%
+  filter(fcr_type == "regular") %>%
+  mutate(delta_cat = case_when(
+    delta > 0 ~ "Fish-dominant", 
+    delta < 0 ~ "Plant-dominant",
+    delta == 0 ~ "No difference"
+  )) %>%
+  filter(delta != "No difference")
+
+
+
+quantiles_delta_fish <- soy_deltas %>%
+  filter(delta_cat == "Fish-dominant") %>%
+  group_by(delta_cat) %>%
+  summarise(q25 = quantile(delta, 0.25),
+            q50 = quantile(delta, 0.50),
+            q75 = quantile(delta, 0.75),
+            q95 = quantile(delta, 0.95),
+            q999 = quantile(delta, 0.999)) %>%
+  ungroup()
+
+quantiles_delta_plant <- soy_deltas %>%
+  filter(delta_cat == "Plant-dominant") %>%
+  group_by(delta_cat) %>%
+  summarise(q25 = quantile(-1*delta, 0.25),
+            q50 = quantile(-1*delta, 0.50),
+            q75 = quantile(-1*delta, 0.75),
+            q95 = quantile(-1*delta, 0.95),
+            q999 = quantile(-1*delta, 0.999)) %>%
+  ungroup() %>%
+  mutate(across(2:6, ~.x*-1))
+
+quantiles_delta <- rbind(quantiles_delta_plant, quantiles_delta_fish) # bind back together
+
+delta_df_quant <- soy_deltas %>%
+  left_join(quantiles_delta, by = "delta_cat") %>%
+    mutate(category = case_when(
+    abs(delta) < abs(q25) ~ "0-24",
+    abs(delta) >= abs(q25) & abs(delta) < abs(q50) ~ "25-49",
+    abs(delta) >= abs(q50) & abs(delta) < abs(q75) ~ "50-74",
+    abs(delta) >= abs(q75) & abs(delta) < abs(q95) ~ "75-94",
+    abs(delta) >= abs(q95) & abs(delta) < abs(q999) ~ "95-99.9",
+    abs(delta) >= abs(q999) ~ "≥99.9"
+  ))
+
+# establish palettes for delta map 
+plant_pal <- c(
+      "0-24" = "#DBF1D5", 
+    "25-49" = "#ADDEA7", 
+    "50-74" = "#74C476", 
+    "75-94" = "#37A055", 
+    "95-99.9" = "#0B7734", 
+    "≥99.9" = "#00441B"
+)
+
+fish_pal <- c(
+      "0-24" = "#D6E5F4", 
+    "25-49" = "#ABCFE5", 
+    "50-74" = "#6BAED6", 
+    "75-94" = "#3787C0", 
+    "95-99.9" = "#105BA4", 
+    "≥99.9" = "#08306B"
+)
+
+delta_df_quant_fis <- delta_df_quant %>% filter(delta_cat == "Fish-dominant")
+delta_df_quant_fis$category <- factor(delta_df_quant_fis$category, levels = c("0-24", "25-49", "50-74", "75-94", "95-99.9", "≥99.9"))
+
+
+delta_df_quant_plant <- delta_df_quant %>% filter(delta_cat == "Plant-dominant")
+delta_df_quant_plant$category <- factor(delta_df_quant_plant$category, levels = c("0-24", "25-49", "50-74", "75-94", "95-99.9", "≥99.9"))
+
+
+   delta_plot <-  ggplot() + 
+      geom_tile(data = delta_df_quant_plant, aes(x = long, y = lat, fill = category, color = category)) +
+        scale_fill_manual(values = plant_pal) +
+    scale_colour_manual(values = plant_pal) +
+    scale_x_continuous(expand = c(0, 0)) +
+    scale_y_continuous(expand = c(0, 0)) +
+     theme_ohara() + 
+  labs() +
+  guides(color = "none") +
+          theme(legend.position = "none", 
+                text = element_text(family = "Arial")) + 
+     new_scale_color() +
+     new_scale_fill() + 
+           geom_tile(data = delta_df_quant_fis, aes(x = long, y = lat, fill = category, color = category)) +
+             scale_fill_manual(values = fish_pal) +
+                 geom_sf(data = countries_shp, fill = NA, colour = "grey", alpha = 0.2)  +
+                 geom_sf(data = globe_border, fill = NA, colour = "grey") + 
+    scale_colour_manual(values = fish_pal) +
+       labs(fill = "Fish-dominant", x = "Difference of Impact by Quantile", y = "", title = "Soybean impacts") +
+  guides(color = "none") + 
+     theme(legend.position = "none", 
+           axis.text.y = element_blank(), 
+           axis.text.x = element_blank(),
+           axis.title.x = element_text(size = 8, family = "Arial"),
+           plot.margin = margin(t = 10, r = 10, b = 50, l = 10, unit = "pt"),
+           text = element_text(family = "Arial", colour = "black"))
+   
+   fish_legend <- get_legend(ggplot() + 
+      geom_tile(data = delta_df_quant_fis, aes(x = long, y = lat, fill = category, color = category)) +
+             scale_fill_manual(values = fish_pal) +
+              scale_colour_manual(values = fish_pal) +
+                  labs(fill = "Fish-dominant") +
+          guides(color = "none",
+            fill = guide_legend(title.position = "bottom", title.hjust = 0.5, nrow = 1)) +
+          theme(legend.position = "bottom", 
+                  legend.title = element_text(size = 8),
+                legend.text = element_text(size = 8), 
+      text = element_text(family = "Arial", colour = "black"),
+      legend.margin = margin(r = 10),
+      legend.key.size = unit(4, "mm")))
+   
+   plant_legend <- get_legend(ggplot() + 
+      geom_tile(data = delta_df_quant_plant, aes(x = long, y = lat, fill = category, color = category)) +
+             scale_fill_manual(values = plant_pal) +
+              scale_colour_manual(values = plant_pal) +
+                  labs(fill = "Plant-dominant") +
+          guides(color = "none",
+            fill = guide_legend(title.position = "bottom", title.hjust = 0.5, nrow = 1)) +
+          theme(legend.position = "bottom",
+                legend.title = element_text(size = 8),
+                legend.text = element_text(size = 8), 
+                text = element_text(family = "Arial", colour = "black"), 
+      legend.margin = margin(r = 10),
+      legend.key.size = unit(4, "mm")))
+     
+   full_plot <- ggdraw() +
+                draw_plot(delta_plot) +
+                draw_plot(fish_legend, height = 0.25, width = 0.52) +
+                draw_plot(plant_legend, height = 0.25, width = 1.54)
+   
+            ggsave(glue(here(this_dir, "output/plots/publication/SI/soybean_test.png")),
+                plot = full_plot, 
+                width = 180, height = 180, bg = "white", units = "mm")
+
+            
+            
+## ok this isn't making sense to me...
+            
+## lets look at the soybean pressure rasters just to be sure...
+            
+            sbm_fd <- rast(here("prep/02_feed/output/fish-dominant/regular/Soybean_soybean meal_economic_A.tif"))
+            plot(sbm_fd)
+            
+                        spc_pd <- rast(here("prep/02_feed/output/plant-dominant/regular/Soybean_soy protein concentrate_economic_A.tif"))
+            plot(spc_pd)
 ```
 

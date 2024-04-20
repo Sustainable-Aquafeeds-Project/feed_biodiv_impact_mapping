@@ -20,8 +20,6 @@ library(knitr)
 library(strex)
 library(sjmisc)
 
-focus_year = 2021
-
 source(here("src/fxns.R"))
 source(here("src/directories.R"))
 source(here("src/spatial.R"))
@@ -135,7 +133,7 @@ test_fis_res <-  list.files(file.path(biodiv_dir, "int/resampled_ingredient_rast
 ## check 
 
 test_plant <- list.files(here("prep/02_feed/output/plant-dominant"), full.names = TRUE, recursive = TRUE)
-test_plant_res <-  list.files(file.path(biodiv_dir, "int/resampled_ingredient_rasts/plant-dominant"), full.names = TRUE, recursive = TRUE) # ok missing some here...
+test_plant_res <-  list.files(file.path(biodiv_dir, "int/resampled_ingredient_rasts/plant-dominant"), full.names = TRUE, recursive = TRUE)
 
 # perfect 
 
@@ -145,14 +143,53 @@ test_plant_res <-  list.files(file.path(biodiv_dir, "int/resampled_ingredient_ra
 Data check 
 
 ```{r}
-spc_mass_plant <- rast(here("prep/02_feed/output/resampled/plant-dominant/Soybean_soy protein concentrate_mass_A.tif"))
+# take a look at plant dominant
 
-global(spc_mass_plant, "sum", na.rm = TRUE) # 3315.874 km2 of soybean for SPC globally
+test_names <- str_replace_all(str_before_last(list.files(file.path(biodiv_dir, "int/resampled_ingredient_rasts/plant-dominant/regular"), pattern = "economic_A.tif"), ".tif"), "_", ":")
 
+test <- rast(list.files(file.path(biodiv_dir, "int/resampled_ingredient_rasts/plant-dominant/regular"), pattern = "economic_A.tif", full.names = TRUE))
 
-all_crop_rast_mass <- rast(list.files(here("prep/02_feed/output/resampled/plant-dominant/"), pattern = "mass_A.tif", full.names = TRUE))
+names(test) <- test_names
 
-names(all_crop_rast_mass) <- list.files(here("prep/02_feed/output/resampled/plant-dominant/"), pattern = "mass_A.tif")
+# plot(log(test+1))
+
+test_df <- as.data.frame(global(test, "sum", na.rm = TRUE))
+
+test_df %>% arrange(-sum)
+
+#                                                   sum
+# Rapeseed:canola oil:economic:A             3350.17145
+# Soybean:soy protein concentrate:economic:A 2482.72642
+# Wheat:wheat gluten:economic:A              1954.18908
+# Pulses:pea protein concentrate:economic:A   572.73846
+# Pulses:faba beans:economic:A                570.68376
+# Wheat:wheat:economic:A                      507.38673
+# Pulses:pea flour:economic:A                 466.24491
+# CropsNES:linseed oil:economic:A             439.87800
+# Sunflower:sunflower meal:economic:A         315.45644
+# Pulses:guar meal:economic:A                 305.56726
+# CropsNES:coconut oil:economic:A              81.27246
+# Soybean:soy oil:economic:A                   73.95469
+# Maize:corn gluten meal:economic:A            14.18603
+
+# take a look at fish dominant
+test_names <- str_replace_all(str_before_last(list.files(file.path(biodiv_dir, "int/resampled_ingredient_rasts/fish-dominant/regular"), pattern = "economic_A.tif"), ".tif"), "_", ":")
+
+test <- rast(list.files(file.path(biodiv_dir, "int/resampled_ingredient_rasts/fish-dominant/regular"), pattern = "economic_A.tif", full.names = TRUE))
+
+names(test) <- test_names
+
+# plot(log(test+1))
+
+test_df <- as.data.frame(global(test, "sum", na.rm = TRUE))
+
+test_df %>% arrange(-sum)
+#                                          sum
+# Wheat:wheat gluten:economic:A     2592.29164
+# Soybean:soybean meal:economic:A   1578.01008
+# Wheat:wheat:economic:A             546.41648
+# Pulses:faba beans:economic:A       317.04654
+# Maize:corn gluten meal:economic:A   81.06304
 
 ```
 

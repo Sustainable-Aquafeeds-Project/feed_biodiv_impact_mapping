@@ -349,3 +349,29 @@ ggsave(here("prep/03_prep_spp_habitats/output/plots/publication/iucn_plot.png"),
 # ggsave(here("prep/03_prep_spp_habitats/output/plots/publication/iucn_plot.png"), units = "in", width = 8, height = 11)
 ```
 
+
+```{r}
+test <- plot_df %>% group_by(diet, category) %>% summarise(nspp = sum(n_spp)) %>% ungroup()
+
+test2 <- plot_df %>% group_by(diet, category, taxon_plot) %>% summarise(nspp = sum(n_spp)) %>% ungroup() %>% filter(diet == "plant-dominant") %>% filter(category %in% c("NE", "DD"))
+
+test3 <- plot_df  %>%
+  group_by(taxon_plot, diet, impact_category) %>%
+  mutate(total_spp = sum(n_spp)) %>%
+  ungroup() %>%
+  mutate(prop = n_spp/total_spp) %>% 
+  mutate(category_2 = case_when(
+    category == "LC" ~ "LC",
+    category %in% c("CR", "EN", "CR", "NT", "VU") ~ "Not LC",
+    TRUE ~ category
+  )) %>%
+    group_by(taxon_plot, diet, impact_category, category_2) %>%
+    summarise(prop = sum(prop,na.rm = TRUE)) %>%
+  ungroup() %>%
+  filter(!(taxon_plot %in% c("Arthropods", "Other marine species", "Molluscs", "Finfish")))
+
+test <- plot_df %>% group_by(diet, category, impact_category) %>% summarise(nspp = sum(n_spp)) %>% filter(impact_category %in% c("≥95"))
+
+test <- plot_df %>% group_by(diet, impact_category, category) %>% summarise(nspp = sum(n_spp)) %>% ungroup() %>% filter(category %in% c("EN", "CR"))
+```
+

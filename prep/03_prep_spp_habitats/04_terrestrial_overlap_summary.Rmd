@@ -164,3 +164,21 @@ all_spp_list
 ```
 
   
+  
+  
+Look at soybean impacts:
+
+```{r}
+soybean_imps <- aoh_df %>%
+  filter(fcr_type == "regular",
+         str_detect(ingredient, "Soybean"),
+         allocation == "economic") %>%
+  group_by(diet, fcr_type, allocation, ingredient) %>%
+  summarise(total_impact = sum(impact_total, na.rm = TRUE),
+            mean_ext_risk = mean(extinction_mean, na.rm = TRUE)) %>%
+  ungroup()
+
+
+
+```
+

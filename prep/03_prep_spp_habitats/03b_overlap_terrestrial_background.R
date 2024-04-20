@@ -16,7 +16,7 @@
 # Code partially adapted from O'Hara et al. 2023 in prep 
 
 # * Eyres et al. 2023 (preprint): https://www.researchgate.net/publication/376637364_LIFE_A_metric_for_quantitively_mapping_the_impact_of_land-cover_change_on_global_extinctions
-# * O'Hara et al. 2024 in prep 
+# * O'Hara et al. 2023 (preprint) 
 
 ## Setup
 
@@ -104,7 +104,7 @@ diet_fcr_crop_ingredients <- unique(crop_ingredient_cats$diet_fcr_crop_ingredien
 
 for(tx_type in spp_types){
   
- # tx_type = "Amphibians"
+ # tx_type = "Bird"
   
   tx_vuln_df <- spp_info_df %>%
     filter(spp_type == tx_type)
@@ -125,7 +125,7 @@ for(allocation_type in allocations){
     for(diet_fcr_crop_ingredient_type in diet_fcr_crop_ingredients){
 
 # allocation_type = "economic"
-# diet_fcr_crop_ingredient_type = "fish-dominant/efficient/Maize_corn gluten meal"
+# diet_fcr_crop_ingredient_type = "plant-dominant/regular/Soybean_soy protein concentrate"
 
           diet_type = str_before_first(diet_fcr_crop_ingredient_type, "/")
           ingredient_type = str_after_first(diet_fcr_crop_ingredient_type, "_")
@@ -137,6 +137,12 @@ for(allocation_type in allocations){
           ## Read in harvest stressor maps, and create a dataframe of the results.  
           harvest_rast <- rast(sprintf(file.path(feed_rast_dir, "%s/%s/%s_%s_%s_A.tif"), diet_type, fcr, crop_type, ingredient_type, allocation_type))
          
+          # file_pattern = glue("{crop_type}_.*_{allocation_type}_A.tif")
+          # 
+          # harvest_rast <- rast(
+          #   list.files(file.path(feed_rast_dir, diet_type, fcr), pattern = file_pattern, full.names = TRUE)
+          # )
+          
           
           harvest_cells_df <- data.frame(harvest = as.vector(values(harvest_rast)),
                                          
@@ -152,19 +158,21 @@ for(allocation_type in allocations){
           outf_mean <- sprintf(file.path(biodiv_dir, "output/impact_maps_by_taxon_ingredient/%s/%s/imp_unwt_%s_%s_%s_%s_mean.tif"), diet_type, fcr, crop_type, ingredient_type, allocation_type, tx_type)
           outf_sd <- sprintf(file.path(biodiv_dir, "output/impact_maps_by_taxon_ingredient/%s/%s/imp_unwt_%s_%s_%s_%s_sd.tif"), diet_type, fcr, crop_type, ingredient_type, allocation_type, tx_type)
           outf_nspp <- sprintf(file.path(biodiv_dir, "output/impact_maps_by_taxon_ingredient/%s/%s/imp_unwt_%s_%s_%s_%s_nspp.tif"), diet_type, fcr, crop_type, ingredient_type, allocation_type, tx_type)
-
+          
           outf_mean_prop <- sprintf(file.path(biodiv_dir, "output/impact_maps_by_taxon_ingredient/%s/%s/prop_unwt_%s_%s_%s_%s_mean.tif"), diet_type, fcr, crop_type, ingredient_type, allocation_type, tx_type)
           outf_sd_prop <- sprintf(file.path(biodiv_dir, "output/impact_maps_by_taxon_ingredient/%s/%s/prop_unwt_%s_%s_%s_%s_sd.tif"), diet_type, fcr, crop_type, ingredient_type, allocation_type, tx_type)
           outf_nspp_prop <- sprintf(file.path(biodiv_dir, "output/impact_maps_by_taxon_ingredient/%s/%s/prop_unwt_%s_%s_%s_%s_nspp.tif"), diet_type, fcr, crop_type, ingredient_type, allocation_type, tx_type)
           
+        
+
           
           outf_mean_df <- glue(file.path(this_dir, "int/aoh_impacts_terrestrial/{tx_type}_{diet_type}_{fcr}_{crop_type}_{ingredient_type}_{allocation_type}.rds"))
 
           
-          # if(all(file.exists(outf_mean, outf_sd))) {
-          #   message('Rasters exist for taxon ', tx_type, crop_type, ingredient_type, diet_type, allocation_type, fcr, ' for harvest stressor... skipping!')
-          #   next()
-          # }
+          if(all(file.exists(outf_mean, outf_sd))) {
+            message('Rasters exist for taxon ', tx_type, crop_type, ingredient_type, diet_type, allocation_type, fcr, ' for harvest stressor... skipping!')
+            next()
+          }
 
           
           
@@ -199,9 +207,8 @@ for(allocation_type in allocations){
                                                 .[ , hab_area := 100] %>%
                                                 .[ , impact_km2  := (1-cropland_suitability)*harvest] %>%
                                                 .[ , impact  := 1 - ((hab_area - impact_km2)/hab_area)^0.25] %>%
-                                                .[ , prop_impact  := 1 - ((hab_area - impact_km2)/hab_area)]
-                                              # %>%
-                                              #   .[impact>0]
+                                                .[ , prop_impact  := 1 - ((hab_area - impact_km2)/hab_area)] %>%
+                                                .[impact>0]
                                                 
                                                 
                                                 chunk_sum <- chunk_sum_spp %>%
@@ -218,6 +225,13 @@ for(allocation_type in allocations){
                                                          prop_sd   = sd(prop_impact),
                                                          n_spp       = length(unique(species_full))),
                                                      by = 'cell_id']
+                                                
+                                                chunk_sum_km2 <- chunk_sum_spp %>%
+                                                  .[impact > 0] %>% 
+                                                  .[ , .(impact_sum = sum(impact_km2),
+                                                         km2_sd   = sd(impact_km2),
+                                                         n_spp       = length(unique(species_full))),
+                                                     by = 'cell_id']
                                               
                              
                                                 chunk_sum_spp_hab <- chunk_sum_spp %>%
@@ -232,8 +246,8 @@ for(allocation_type in allocations){
                                                      by = c('species_full')] %>%
                                                   merge(., chunk_sum_spp_hab, by = "species_full", all = TRUE)
                                                 
-                                              
-                                              return(list(chunk_sum_spp_global = chunk_sum_spp_global, chunk_sum = chunk_sum, chunk_sum_prop = chunk_sum_prop))
+                                            # return(list(chunk_sum_spp = chunk_sum_spp))
+                                             return(list(chunk_sum_spp_global = chunk_sum_spp_global, chunk_sum = chunk_sum, chunk_sum_prop = chunk_sum_prop, chunk_sum_km2 = chunk_sum_km2))
                                             }) 
           
           
@@ -243,7 +257,10 @@ for(allocation_type in allocations){
           }
           
           message(glue('Binding results for taxon {tx_type} {allocation_type} {diet_fcr_crop_ingredient_type}'))
-        
+         
+           # test <- rbindlist(lapply(result_list, function(x) x$chunk_sum_spp)) %>%
+           #  filter(!is.na(cell_id)) %>%
+           #  as.data.frame()
           
           result_df <- rbindlist(lapply(result_list, function(x) x$chunk_sum)) %>%
             filter(!is.na(cell_id)) %>%
@@ -324,3 +341,19 @@ for(allocation_type in allocations){
   }
 
   
+## save lists of species impacts and then read back in as chunks to do the below (theoretically would have 14 result_list[])
+
+# results_chunk_2 <- list(result_list[[2]], result_list_2[[2]])
+# result_df <- rbindlist(lapply(results_chunk_2, function(x) x$chunk_sum_spp)) %>%
+#   filter(!is.na(cell_id)) %>%
+#   as.data.table() %>%
+#   group_by(cell_id, species_full) %>%
+#   summarise(impact_km2 = sum(impact_km2, na.rm = TRUE)) %>% # divide by 100 after this for prop and cap prop at 1
+#   ungroup() %>%
+#   mutate(prop_impact = impact_km2/100) %>% 
+#   group_by(cell_id) %>%
+#   summarise(prop_mean = mean(prop_impact,na.rm=TRUE)) %>%
+#   ungroup() %>%
+#   as.data.frame()
+
+
