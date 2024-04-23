@@ -1,5 +1,5 @@
-#### Takes ~20ish? hours to run all scenarios... sorry.
-## This script accomplishes the same thing as 06b, but only for the finfish taxon. The finfish taxon was too large to process in one go, so we needed to split it so that our server could handle it. We take a species weighted mean, and a pooled variance to get the final mean and sd maps for the finfish taxon. 
+#### Takes ~20ish? hours to run all scenarios and allocations... sorry.
+## This script accomplishes the same thing as 06b, but only for the finfish taxon. The finfish taxon was too large to process in one go, so we needed to split it so that our server could handle it. 
 
 # In this script we overlap [Aquamaps probability of suitable habitat maps](https://www.aquamaps.org/) with our disturbance pressure maps created in the `02_feed` folder, and multiply by their vulnerability value. The goal of this script is to create impact maps, that is, the area of likely suitable habitat (>0.6 probability) for each species that is exposed AND impacted to harvest of forage or trimmings fish that is ultimately processed into FMFO. To do this, we: 
 #   
@@ -11,7 +11,7 @@
 # - Depth zone; reef, pelagic, bentho-pelagic, or benthic 
 # 
 # 
-# - Overlap re-projected and clipped Aquamaps species suitable habitat maps for FINFISH TAXON with the appropriate disturbance rasters based on depth range. This will provide a km2 estimate of the amount of suitable habitat that is exposed to harvest of forage or trimmings fish used for FMFO. 
+# - Overlap re-projected and clipped Aquamaps species suitable native habitat maps for FINFISH TAXON with the appropriate disturbance rasters based on depth range. This will provide a km2 estimate of the amount of suitable habitat that is exposed to harvest of forage or trimmings fish used for FMFO. 
 # - multiply by each species vulnerability values to get impact and save
 # - then we take a species weighted mean of each finfish raster to get the final fish taxon raster. We are doing this workaround because our server is memory limited and cannot handle all 9k species of finfish at once and fails. 
 
@@ -112,12 +112,12 @@ spp_info_df_fish %>%
 ## perfect
 
 allocations <- unique(spp_info_df_fish$allocation)
-allocations <- c("economic")
+allocations <- c("economic", "mass", "ge")
 diets <- unique(spp_info_df_fish$diet)
 ingredients <- unique(spp_info_df_fish$ingredient)
 fish_types <- unique(spp_info_df_fish$fish_type)
 spp_types <- unique(spp_info_df_fish$taxon)
-fcrs <- c("regular")
+fcrs <- c("regular", "efficient")
 
 for(tx_type in spp_types){
 
@@ -155,7 +155,7 @@ for(tx_type in spp_types){
 
           outf_mean_df <- glue(file.path(biodiv_dir, "int/aoh_impacts_marine/{tx_type}_{diet_type}_{fcr}_{fs_type}_{ingredient_type}_{allocation_type}.rds"))
 
-          if(all(file.exists(glue(file.path(biodiv_dir, "output/impact_maps_by_spp_ingredient_lists/{tx_type}_{diet_type}_{fcr}_{fs_type}_{ingredient_type}_{allocation_type}.qs"))))) {
+          if(file.exists(glue(file.path(biodiv_dir, "output/impact_maps_by_spp_ingredient_lists/{tx_type}_{diet_type}_{fcr}_{fs_type}_{ingredient_type}_{allocation_type}.qs")))) {
             message('Rasters exist for taxon ', tx_type, ' for pressure... skipping!')
             next()
           }

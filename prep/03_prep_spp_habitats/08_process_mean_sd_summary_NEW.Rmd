@@ -1,0 +1,299 @@
+---
+title: "Process summary rasters across taxa, ingredients, materials"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+## Summary
+
+In this script we summarize the impact rasters created in 03b, 06a and 06b by finding the impact mean, standard deviation (pooled variance), and number of species:
+
+ - Across all taxon and ingredients
+ - Across all taxon per each ingredient
+ - Across all ingredients per each taxon
+ - Across all taxon per raw material
+
+
+## Setup
+
+Load libraries
+
+```{r setup, include=FALSE}
+
+library(tidyverse)
+library(here)
+library(terra)
+library(strex)
+library(janitor)
+library(tools)
+library(glue)
+library(tidyterra)
+library(qs)
+
+source(here("src/directories.R"))
+
+source(here("src/spatial.R"))
+source(here("src/fxns.R"))
+
+select <- dplyr::select
+setwd(dirname(rstudioapi::getSourceEditorContext()$path)) # set working directory to where this script is located
+this_dir <- getwd()
+
+aoh_dir <- file.path(rdsi_raw_data_dir, "AOH_lumbierres/reprojected_csvs/")
+
+base_rast <- rast(res=0.5)
+ext(base_rast) <- c(-180, 180, -90, 90)
+
+biodiv_dir <- file.path(rdsi_dir, "biodiversity_impacts")
+
+impact_maps_dir <- file.path(biodiv_dir, "output")
+
+```
+
+
+## Aggregate terrestrial impacts 
+ - Take mean, sd, and nspp impacted across taxon and ingredient
+
+```{r}
+
+diet_types <- c("fish-dominant", "plant-dominant")
+fcr_types <- c("regular", "efficient")
+allocation_types <- c("economic", "mass", "ge")
+
+
+for(diet in diet_types){
+  for(fcr in fcr_types){
+    for(allocation in allocation_types){
+
+      # diet = "fish-dominant"
+      # fcr = "regular"
+      # allocation = "economic"
+      
+      # if(file.exists(glue(file.path(biodiv_dir, "int/terrestrial_aggregation/impact_maps_across_taxon_ingredient/{diet}/{fcr}/{allocation}_mean_prop.tif")))){
+      #   message("raster exitst... skipping")
+      #   next()
+      # }
+
+      all_files <- list.files(file.path(biodiv_dir, "output/impact_maps_by_spp_ingredient_lists"), pattern = glue(".*_{diet}_{fcr}_.*_{allocation}"), full.names = TRUE)
+      
+      to_remove <- grep("fish oil|fish meal", all_files)
+      all_files <- all_files[-to_remove]
+    
+      
+      all_files_list <- lapply(all_files, qread)
+
+      all_impact_df <- data.frame(cell_id = NA, prop_mean = NA, prop_sd = NA, prop_nspp = NA, prop_ext_risk = NA)
+
+      for(i in 1:14){
+              # i =4
+                
+        
+        i_dfs <- lapply(all_files_list, function(x) x[[i]])
+
+        
+ combined_dataframe <- bind_rows(i_dfs) %>%
+    filter(!is.na(cell_id)) %>%
+  as.data.table() %>%
+  group_by(cell_id, species_full) %>%
+  summarise(impact_km2 = sum(impact_km2, na.rm = TRUE)) %>% # divide by 100 after this for prop and cap prop at 1
+  ungroup() %>%
+  mutate(prop_impact = impact_km2/100,
+         ext_risk = 1 - ((100 - impact_km2)/100)^0.25) %>%
+  group_by(cell_id) %>%
+  summarise(prop_mean = mean(prop_impact,na.rm=TRUE),
+            prop_sd = sd(prop_impact, na.rm = TRUE),
+            prop_nspp = n_distinct(species_full),
+            prop_ext_risk = mean(ext_risk, na.rm = TRUE)) %>%
+  ungroup() %>%
+  as.data.frame()
+
+      
+        all_impact_df <- rbind(all_impact_df, combined_dataframe)
+        
+      }
+      
+      rast_impact <- all_impact_df %>%
+        dplyr::select(cell_id, prop_mean) %>%
+        filter(!is.na(cell_id)) %>%
+                left_join(moll_template_xy) %>%
+            dplyr::select(x, y, prop_mean) %>%
+            rast(., type = "xyz", crs = moll_template)
+      
+      writeRaster(rast_impact, glue(file.path(biodiv_dir, "int/terrestrial_aggregation/impact_maps_across_taxon_ingredient/{diet}/{fcr}/{allocation}_mean_prop.tif")), overwrite = TRUE)
+      
+      
+            rast_ext <- all_impact_df %>%
+        dplyr::select(cell_id, prop_ext_risk) %>%
+        filter(!is.na(cell_id)) %>%
+                left_join(moll_template_xy) %>%
+            dplyr::select(x, y, prop_ext_risk) %>%
+            rast(., type = "xyz", crs = moll_template)
+      
+      writeRaster(rast_ext, glue(file.path(biodiv_dir, "int/terrestrial_aggregation/impact_maps_across_taxon_ingredient/{diet}/{fcr}/{allocation}_mean_ext_risk.tif")), overwrite = TRUE)
+      
+            rast_impact_sd <- all_impact_df %>%
+        dplyr::select(cell_id, prop_sd) %>%
+        filter(!is.na(cell_id)) %>%
+                left_join(moll_template_xy) %>%
+            dplyr::select(x, y, prop_sd) %>%
+            rast(., type = "xyz", crs = moll_template)
+      
+            writeRaster(rast_impact_sd, glue(file.path(biodiv_dir, "int/terrestrial_aggregation/impact_maps_across_taxon_ingredient/{diet}/{fcr}/{allocation}_sd_prop.tif")), overwrite = TRUE)
+
+            
+                        rast_impact_nspp <- all_impact_df %>%
+        dplyr::select(cell_id, prop_nspp) %>%
+        filter(!is.na(cell_id)) %>%
+                left_join(moll_template_xy) %>%
+            dplyr::select(x, y, prop_nspp) %>%
+            rast(., type = "xyz", crs = moll_template)
+                        
+                  writeRaster(rast_impact_nspp, glue(file.path(biodiv_dir, "int/terrestrial_aggregation/impact_maps_across_taxon_ingredient/{diet}/{fcr}/{allocation}_nspp.tif")), overwrite = TRUE)
+
+      
+    }
+  }
+}
+
+
+```
+
+## Aggregate marine impacts 
+
+First we need to disaggregate the way we've saved this spatial information. Here we save an individual file for each taxon and ingredient combination for each chunk (500k cells)
+
+```{r}
+
+diet_types <- c("fish-dominant")
+fcr_types <- c("regular")
+allocation_types <- c("economic")
+
+
+for(diet in diet_types){
+  for(fcr in fcr_types){
+    for(allocation in allocation_types){
+      
+      # diet = "fish-dominant"
+      # fcr = "regular"
+      # allocation = "economic"
+
+      all_files <- list.files(file.path(biodiv_dir, "output/impact_maps_by_spp_ingredient_lists"), pattern = glue(".*_{diet}_{fcr}_.*_{allocation}"), full.names = TRUE)
+    
+      to_keep <- grep("fish oil|fish meal", all_files)
+      all_files <- all_files[to_keep]
+
+      for(file in 49:length(all_files)){
+       
+        # file = 49 # stopped at 49 because of molluscs problem
+               all_files_list <- lapply(all_files[[file]], qread)
+
+        for(i in 1:13){
+         # i = 2
+          
+          
+           i_dfs <- lapply(all_files_list, function(x) x[[i]])
+
+          
+  combined_dataframe <- bind_rows(i_dfs) %>%
+    filter(!is.na(cell_id)) %>%
+   dplyr::select(species, cell_id, impact_km2, taxon, ingredient, fish_type)
+  
+  
+  if(nrow(combined_dataframe) == 0){
+    message("df empty... skipping")
+    next()
+  }
+  taxa <- unique(combined_dataframe$taxon)
+  fs_type <- unique(combined_dataframe$fish_type)
+  ingredient_type <- unique(combined_dataframe$ingredient)
+  
+  qsave(combined_dataframe, glue(file.path(biodiv_dir, "int/marine_aggregation/sub_chunk_dfs/{taxa}_{diet}_{fcr}_{fs_type}_{ingredient_type}_{allocation}_chunk_{i}.qs")))
+          
+        }
+         
+      }
+
+    }
+  }
+}
+      
+```
+
+Next we need to read in the files we saved, by chunk (500k cells), summarise per cell the mean, sd, and nspp impacted, then rbind together into one big cell_id, prop_mean, prop_sd, and nspp dataframe
+
+```{r}
+
+diet_types <- c("plant-dominant", "fish-dominant")
+fcr_types <- c("regular")
+allocation_types <- c("economic")
+
+
+for(diet in diet_types){
+  for(fcr in fcr_types){
+    for(allocation in allocation_types){
+      
+            all_impact_df <- data.frame(cell_id = NA, prop_mean = NA, prop_sd = NA, prop_nspp = NA)
+      
+      for(chunk_id in 1:13){
+        
+       # chunk_id = 1
+        
+        files <- list.files(file.path(biodiv_dir, "int/marine_aggregation/sub_chunk_dfs/"), pattern = glue(".*_{diet}_{fcr}_.*_{allocation}_chunk_{chunk_id}.qs"), full.names = TRUE)
+        
+        impacts_chunk <- lapply(files, qread) %>%
+          bind_rows() %>%
+          filter(!is.na(cell_id)) %>%
+            as.data.table() %>%
+  group_by(cell_id, species) %>%
+  summarise(impact_km2 = sum(impact_km2, na.rm = TRUE)) %>% # divide by 100 after this for prop and cap prop at 1
+  ungroup() %>%
+  mutate(prop_impact = impact_km2/100) %>%
+  mutate(prop_impact = ifelse(prop_impact > 1, 1, prop_impact)) %>%
+  group_by(cell_id) %>%
+  summarise(prop_mean = mean(prop_impact,na.rm=TRUE),
+            prop_sd = sd(prop_impact, na.rm = TRUE),
+            prop_nspp = n_distinct(species)) %>%
+  ungroup() %>%
+  as.data.frame()
+
+        
+                all_impact_df <- rbind(all_impact_df, impacts_chunk)
+
+        
+        
+      }
+                  rast_impact <- all_impact_df %>%
+        dplyr::select(cell_id, prop_mean) %>%
+        filter(!is.na(cell_id)) %>%
+                left_join(moll_template_xy) %>%
+            dplyr::select(x, y, prop_mean) %>%
+            rast(., type = "xyz", crs = moll_template)
+      
+      writeRaster(rast_impact, glue(file.path(biodiv_dir, "int/marine_aggregation/impact_maps_across_taxon_ingredient/{diet}/{fcr}/{allocation}_mean_prop.tif")), overwrite = TRUE)
+      
+            rast_impact_sd <- all_impact_df %>%
+        dplyr::select(cell_id, prop_sd) %>%
+        filter(!is.na(cell_id)) %>%
+                left_join(moll_template_xy) %>%
+            dplyr::select(x, y, prop_sd) %>%
+            rast(., type = "xyz", crs = moll_template)
+      
+            writeRaster(rast_impact_sd, glue(file.path(biodiv_dir, "int/marine_aggregation/impact_maps_across_taxon_ingredient/{diet}/{fcr}/{allocation}_sd_prop.tif")), overwrite = TRUE)
+
+            
+                        rast_impact_nspp <- all_impact_df %>%
+        dplyr::select(cell_id, prop_nspp) %>%
+        filter(!is.na(cell_id)) %>%
+                left_join(moll_template_xy) %>%
+            dplyr::select(x, y, prop_nspp) %>%
+            rast(., type = "xyz", crs = moll_template)
+                        
+                  writeRaster(rast_impact_nspp, glue(file.path(biodiv_dir, "int/marine_aggregation/impact_maps_across_taxon_ingredient/{diet}/{fcr}/{allocation}_nspp.tif")), overwrite = TRUE)
+
+            
+    }
+  }
+}      
+```
+

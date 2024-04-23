@@ -1,4 +1,4 @@
-### Takes ~12 hours to run if all goes well... sometimes it stops due to overload of cores or other problems...
+### Takes ~12 hours if doing all scenarios and allocations
 # In this script we overlap [Aquamaps probability of suitable habitat maps](https://www.aquamaps.org/) with our disturbance pressure maps created in the `02_feed` folder, and multiply by their vulnerability value. The goal of this script is to create impact maps, that is, the area of likely suitable habitat (>0.6 probability) for each species that is exposured AND impacted to harvest of forage or trimmings fish that is ultimately processed into FMFO. To do this, we: 
 #   
 #   - We have created maps of disturbance (km2) of harvest of forage and trimmings fish species that end up as FMFO. They have these categories: 
@@ -11,7 +11,6 @@
 # 
 # - Overlap re-projected and clipped Aquamaps species suitable habitat maps with the appropriate disturbance rasters based on depth range. This will provide a km2 estimate of the amount of suitable habitat that is exposed to harvest of forage or trimmings fish used for FMFO. 
 # - multiply by each species vulnerability values to get impact and save
-
 
 # * Froese, R. and D. Pauly, Editors. 2000. FishBase 2000: concepts, design and data sources. ICLARM, Los Baños, Laguna, Philippines. 344 p.
 # * Houde, E.D. and C.E. Zastrow. 1993. Ecosystem- and taxon-specific dynamic energetics properties of fish larvae assemblages. Bull. Mar. Sci. 53(2):290-335.
@@ -81,9 +80,9 @@ spp_info_df <- readRDS(file.path(biodiv_dir, "int/spp_vuln_depth_info.rds")) %>%
   mutate(ingredient = ifelse(ingredient == "fish oil" & fish_type == "trimmings fish", "fish oil, cut offs", ingredient))
 
 
-spp_info_df %>% 
-  group_by(taxon) %>%
-  summarize(nspp = n_distinct(species))
+# spp_info_df %>% 
+#   group_by(taxon) %>%
+#   summarize(nspp = n_distinct(species))
 
 # A tibble: 15 × 2
 # taxon          nspp
@@ -104,9 +103,6 @@ spp_info_df %>%
 # 14 polychaetes     608
 # 15 sponges         455
 
-## only 9 marine birds?? 
-
-
 ## will save a total of X rasters from this script: 
 # 3 allocations * 2 diets * 2 ingredients * 2 fish ingredient spp (forage vs trimmings) * 2 efficiencies = 48 scenarios
 # 48 scenarios * 12 spp type * 3 raster types (mean, sd, nspp) = 1728 total or 432 per diet per fcr
@@ -114,14 +110,19 @@ spp_info_df %>%
 ## for fish species, need to split in half, and then take species weighted average. My server is memory limited and can't handle all 9k at once...  
 
 allocations <- unique(spp_info_df$allocation)
-allocations <- c("economic")
+allocations <- c("mass", "ge", "economic")
 diets <- unique(spp_info_df$diet)
+diets <- c("fish-dominant")
 ingredients <- unique(spp_info_df$ingredient)
+ingredients <- c("fish meal")
 fish_types <- unique(spp_info_df$fish_type)
+fish_types <- "forage fish"
 fcrs <- c("regular")
 spp_types <- unique(spp_info_df$taxon)
-indices_to_remove <- grep("fish|polychaetes|elasmobranchs|arthropods|molluscs", spp_types) # fish and polychaetes are the ones you don't want (we split fish in next script and polychaetes have no impacts)
-spp_types <- spp_types[-indices_to_remove] # remove fish category... we handle this separately in the next script `06c_overlap_fish_fix.R`
+# indices_to_remove <- grep("fish|polychaetes|arthropods|elasmobranchs", spp_types)
+indices_to_remove <- grep("molluscs", spp_types)
+# fish and polychaetes are the ones you don't want (we split fish in next script and polychaetes have no impacts)
+spp_types <- spp_types[indices_to_remove] # remove fish category... we handle this separately in the next script `06c_overlap_fish_fix.R`
 
 for(tx_type in spp_types){
   
@@ -164,10 +165,10 @@ for(fs_type in fish_types){
             outf_mean_df <- glue(file.path(biodiv_dir, "int/aoh_impacts_marine/{tx_type}_{diet_type}_{fcr}_{fs_type}_{ingredient_type}_{allocation_type}.rds"))
             
             ## comment this out if u want to rerun everything without skipping
-            if(file.exists(glue(file.path(biodiv_dir, "output/impact_maps_by_spp_ingredient_lists/{tx_type}_{diet_type}_{fcr}_{fs_type}_{ingredient_type}_{allocation_type}.qs")))) {
-              message('Rasters exist for taxon ', tx_type, allocation_type, diet_type, fcr, ingredient_type, fs_type, ' for catch/bycatch stressor... skipping!')
-              next()
-            }
+            # if(file.exists(glue(file.path(biodiv_dir, "output/impact_maps_by_spp_ingredient_lists/{tx_type}_{diet_type}_{fcr}_{fs_type}_{ingredient_type}_{allocation_type}.qs")))) {
+            #   message('Rasters exist for taxon ', tx_type, allocation_type, diet_type, fcr, ingredient_type, fs_type, ' for catch/bycatch stressor... skipping!')
+            #   next()
+            # }
             
             
             tx_vuln_df <- spp_info_df %>%
@@ -284,16 +285,18 @@ for(fs_type in fish_types){
             message('Creating and saving rasters for taxon ', tx_type, diet_type, fcr, allocation_type, fs_type, ingredient_type)
           
             
-            spp_list <- lapply(result_list, function(x) {
-              if ("chunk_sum_spp" %in% names(x)) {
-                return(x$chunk_sum_spp)
-              } else {
-                return(NA)  # Return NA or an empty dataframe if 'chunk_sum_spp' is not found
-              }
-            })
-            
-            qsave(spp_list, glue(file.path(biodiv_dir, "output/impact_maps_by_spp_ingredient_lists/{tx_type}_{diet_type}_{fcr}_{fs_type}_{ingredient_type}_{allocation_type}.qs")))
-            
+            result_list %>% 
+              lapply(function(x) {
+                if ("chunk_sum_spp" %in% names(x)) {
+                  return(x$chunk_sum_spp)
+                } else {
+                  return(NA)  # Return NA or an empty dataframe if 'chunk_sum_spp' is not found
+                }
+              }) %>% 
+              qsave(file = glue(file.path(biodiv_dir, "output/impact_maps_by_spp_ingredient_lists/{tx_type}_{diet_type}_{fcr}_{fs_type}_{ingredient_type}_{allocation_type}.qs")))
+           
+            rm(result_list)
+            rm(global_df)
             
           }
         }
