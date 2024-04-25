@@ -62,8 +62,7 @@ all_spp_list <- readRDS(here("prep/03_prep_spp_habitats/data/iucn/eyres_iucn_spp
 
 impact_df_tidy <- impact_df %>%
     group_by(sciname, diet, fcr_type, allocation, crop_ingredient) %>%
-  summarise(impact_total = sum(impact_total, na.rm = TRUE),
-            extinction_mean = mean(extinction_mean, na.rm = TRUE)) %>%
+  summarise(impact_total = sum(impact_total, na.rm = TRUE)) %>%
   ungroup() %>%
   mutate(aoh_filepath = paste0(aoh_dir, sciname), 
          feed_filepath = sprintf(here("prep/02_feed/output/resampled/%s/%s/%s_%s_A.tif"), diet, fcr_type, crop_ingredient, allocation)) %>%
@@ -88,13 +87,12 @@ hab_areas <- impact_df_tidy %>% ungroup() %>% distinct(sciname, total_hab_area) 
 test <- impact_df_tidy %>%
   ungroup() %>%
   group_by(sciname, diet, fcr_type, allocation) %>%
-  summarise(impact_total = sum(impact_total, na.rm = TRUE), 
-            extinction_mean = mean(extinction_mean, na.rm = TRUE)) %>%
+  summarise(impact_total = sum(impact_total, na.rm = TRUE)) %>%
   ungroup() %>%
   left_join(spp_habs_df) %>% 
   mutate(prop_impacted = impact_total/total_hab_area)
 
-## highest total proportional impact is Liolaemus gravenhorstii, commonly known as Gravenhorst's tree iguana. ~1.7% of its habitat is impacted under plant-dominant, regular, economic. It has an average extinction risk of 0.00033 or 0.03% extinction risk across all cells it occupies. 
+## highest total proportional impact is Liolaemus gravenhorstii, commonly known as Gravenhorst's tree iguana. ~1.7% of its habitat is impacted under plant-dominant, regular, economic. 
 ```
 
 
@@ -174,8 +172,7 @@ soybean_imps <- aoh_df %>%
          str_detect(ingredient, "Soybean"),
          allocation == "economic") %>%
   group_by(diet, fcr_type, allocation, ingredient) %>%
-  summarise(total_impact = sum(impact_total, na.rm = TRUE),
-            mean_ext_risk = mean(extinction_mean, na.rm = TRUE)) %>%
+  summarise(total_impact = sum(impact_total, na.rm = TRUE)) %>%
   ungroup()
 
 

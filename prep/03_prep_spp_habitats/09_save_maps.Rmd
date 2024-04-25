@@ -144,7 +144,7 @@ spp_assessed <- rbind(aquamaps_spp, eyres_spp) %>%
 
 Maps!
 
-Global maps across ingredients and taxon; Delta plots as well
+Global maps across ingredients and taxon; Delta datasets as well
 
 ```{r}
 ## only need to save RDS when impact maps info has changed

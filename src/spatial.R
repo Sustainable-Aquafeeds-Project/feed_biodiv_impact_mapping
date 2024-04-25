@@ -51,12 +51,12 @@ moll_template_xy <- data.frame(cell_id = 1:ncell(moll_template), as.data.frame(m
 # 
 # land_eez_rgns_mol <- project(land_eez_rgns, moll_template, method = "bilinear")
 # 
-# plot(land_eez_rgns)
-# plot(land_eez_rgns_mol)
+# # plot(land_eez_rgns)
+# # plot(land_eez_rgns_mol)
 # 
 # land_eez_rgns_mol_df <- land_eez_rgns_mol %>%
 #   as.data.frame(., xy = TRUE)
 #  # left_join(rgn_ids, by = c("land_eez_rgns" = "ID_0"))
 # 
-# write_rds(land_eez_rgns_mol_df, here("prep/03_prep_spp_habitats/data/spatial/land_eez_rgns_mol_xy.rds"))
+# qsave(land_eez_rgns_mol_df, here("prep/03_prep_spp_habitats/data/spatial/land_eez_rgns_mol_xy.qs"))
 

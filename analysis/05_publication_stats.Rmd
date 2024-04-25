@@ -1,0 +1,259 @@
+---
+title: "Summary stats for manuscript"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+## Setup
+
+Load libraries
+
+```{r setup, include=FALSE}
+
+library(tidyverse)
+library(here)
+library(rnaturalearth)
+library(strex)
+library(sf)
+library(patchwork)
+library(cowplot)
+library(glue)
+library(RColorBrewer)
+library(ggpubr)
+library(smoothr)
+library(ggtext)
+library(ggnewscale)
+
+source(here("src/directories.R"))
+
+source(here("src/spatial.R"))
+
+setwd(dirname(rstudioapi::getSourceEditorContext()$path)) # set working directory to where this script is located
+this_dir <- getwd()
+
+biodiv_dir <- file.path(rdsi_dir, "biodiversity_impacts")
+
+impact_maps_dir <- file.path(biodiv_dir, "output")
+
+```
+
+```{r}
+marine_overlap <- readRDS(here("prep/03_prep_spp_habitats/output/aoh_marine_impact.rds")) %>%
+    dplyr::select(sciname, spp_type, diet, fcr_type, allocation, ingredient, vulnerability, impact_total, total_hab_area, extinction_mean)
+
+terrestrial_overlap <- readRDS(here("prep/03_prep_spp_habitats/output/aoh_terrestrial_impact.rds")) %>% 
+  dplyr::select(-suitability) %>%
+      dplyr::select(sciname, spp_type, diet, fcr_type, allocation, ingredient, vulnerability, impact_total, total_hab_area, extinction_mean)
+
+all_overlap <- rbind(marine_overlap, terrestrial_overlap) %>%
+    mutate(taxon = str_to_sentence(spp_type)) %>%
+  mutate(taxon = case_when(
+    taxon == "Terrestrial mammal" ~ "Terrestrial mammals",
+    taxon == "Bird" ~ "Birds",
+    taxon == "Fish" ~ "Finfish", 
+    taxon == "Marine mammal" ~ "Marine mammals",
+    taxon == "Marine plant" ~ "Marine plants",
+    TRUE ~ taxon))
+
+```
+
+Get some stats about differences between diets and average impacts.
+
+```{r}
+
+## read in plant-dominant, economic, regulat
+ filepath <- glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_ingredient/economic_mean_prop.rds.gz"))
+
+all_df <-  fread(filepath)  %>%
+  filter(value > 0) %>%
+  filter(!is.na(value))
+
+max(all_df$value) # 0.035490633.5
+
+moll_template_land <- readRDS(here("prep/03_prep_spp_habitats/data/spatial/moll_template_land_xy.rds"))
+moll_template_ocean <- readRDS(here("prep/03_prep_spp_habitats/data/spatial/moll_template_ocean_xy.rds"))
+
+
+maximum_location <- all_df %>%
+  filter(value > 0.02) %>%
+  left_join(land_eez_rgns, by = c("long" = "x", "lat" = "y")) %>%
+ left_join(moll_template_land, by = c("long" = "x", "lat" = "y")) # max value is 0.035 on land in Norway
+
+test <- all_df %>%
+  group_by(diet, fcr_type) %>%
+  summarise(prop_mean = mean(value, na.rm = TRUE)) %>%
+  ungroup()
+
+scenario_summary <- all_df %>% 
+  filter(value > 0) %>%
+  group_by(diet, fcr_type) %>%
+  summarise(cells_impacted = n()) %>%
+  ungroup()
+
+moll_land <- readRDS(here("prep/03_prep_spp_habitats/data/spatial/moll_template_land_xy.rds"))
+
+all_df_land <- all_df %>%
+  left_join(moll_land, by = c("long" = "x", "lat" = "y")) %>%
+  filter(!is.na(cell_id)) %>%
+  filter(value > 0) %>%
+    group_by(diet, fcr_type) %>%
+  summarise(cells_impacted = n()) %>%
+  ungroup() %>%
+   mutate(land_cells_total = 2876998) %>%
+  mutate(prop = cells_impacted/land_cells_total)
+
+moll_ocean <- readRDS(here("prep/03_prep_spp_habitats/data/spatial/moll_template_ocean_xy.rds"))
+
+all_df_ocean <- all_df %>%
+  left_join(moll_ocean, by = c("long" = "x", "lat" = "y")) %>%
+  filter(!is.na(cell_id)) %>%
+    filter(value > 0) %>%
+    group_by(diet, fcr_type) %>%
+  summarise(cells_impacted = n()) %>%
+  ungroup() %>%
+  mutate(ocean_cells_total = 3684240) %>%
+  mutate(prop = cells_impacted/ocean_cells_total)
+
+# Comparing the fish-dominant and plant-dominant feed scenarios, under the BAU FCR scenario, we see that the plant-dominant diet has 82,162 more pixels impacted (there are ~6.5 million pixels on a 10km Mollweide grid) (Fig. 1). This difference is almost exclusively due to the difference in terrestrial crop impacts, with the plant-dominant diet having 81,990 more terrestrial pixels impacted than that of the fish-dominant diet. Pixels in which there are impacts under both scenarios, the plant-dominant diet has, on average, larger impacts on land, particularly in Sub-Saharan Africa, Canada, the Middle East, and Western Europe. In contrast, the fish-dominant diet has larger impacts in most ocean pixels, the United States, parts of South America, and China (Fig. 1b). Overall, ocean pixels are impacted over a larger area: approximately 42% of ocean pixels, regardless of feed scenario. In comparison, around a quarter of land pixels are impacted. The global average proportion of habitat impacted ranges from 0.00000325 to 0.00000507, with the fish-dominant, regular FCR scenario having the largest global average impact (0.00000507).
+
+```
+
+Compare how vulnerable species types are
+
+```{r}
+vuln_values <- all_overlap %>%
+  distinct(sciname, ingredient, vulnerability) %>%
+  mutate(type = ifelse(str_detect(ingredient, "fish"), "marine", "terrestrial")) %>%
+  group_by(type) %>%
+  summarise(mean_vuln = mean(vulnerability)) %>%
+  ungroup()
+
+ag_suitability <- readRDS(here("prep/03_prep_spp_habitats/int/terrestrial_spp_habitat_suitability.rds"))
+
+1 - mean(ag_suitability$cropland_suitability) # 0.8213065
+
+vuln_taxa <- readRDS(file.path(rdsi_dir, "biodiversity_impacts/int/spp_vuln_depth_info.rds")) %>%
+  unite("ingredient", c(fish_type, ingredient), sep = "_") %>%
+  mutate(ingredient = case_when(
+    ingredient == "trimmings fish_fish meal" ~ "trimmings fish_fish meal, cut offs",
+    ingredient == "trimmings fish_fish oil" ~ "trimmings fish_fish oil, cut offs",
+    TRUE ~ ingredient
+  )) %>%
+  distinct(species,ingredient, vuln_quartile)
+
+mean(vuln_taxa$vuln_quartile) # 0.44618
+
+# Additionally, of all species (impacted or not), marine species, on average, have a vulnerability value of 0.45, while terrestrial species have a vulnerability value of 0.82. This means that within our methods, marine species are, on average, more resilient to fishing pressures than terrestrial species are to cropland used for aquafeeds.
+```
+
+How many species assessed and impacted? 
+
+```{r}
+taxon_names <- all_overlap %>%
+  distinct(spp_type, taxon)
+
+spp_impacted <- all_overlap %>%
+  filter(impact_total > 0) %>%
+  group_by(taxon, diet, allocation, fcr_type) %>%
+  summarise(spp_count_impacted = n_distinct(sciname)) %>%
+  ungroup()
+
+aquamaps_spp <- readRDS(file.path(rdsi_dir, "biodiversity_impacts/int/spp_vuln_depth_info.rds")) %>%
+  distinct(spp_type = taxon, sciname = species)
+  
+eyres_spp <- readRDS(here("prep/03_prep_spp_habitats/data/iucn/eyres_iucn_spp.rds")) %>%
+  dplyr::select(spp_type, sciname = scientific_name) %>%
+  mutate(sciname = tolower(sciname)) %>%
+  mutate(spp_type = case_when(
+    spp_type == "mammals" ~ "Terrestrial mammal",
+    spp_type == "amphibians" ~ "Amphibians", 
+    spp_type == "reptiles" ~ "Reptiles", 
+    spp_type == "birds" ~ "Bird"
+  ))
+
+spp_assessed <- rbind(aquamaps_spp, eyres_spp) %>%
+  left_join(taxon_names) %>%
+  group_by(taxon) %>%
+  summarise(spp_count_assessed = n_distinct(sciname)) %>%
+  ungroup() %>%
+  filter(!is.na(taxon))
+
+spp_assessed_impacted <- spp_impacted %>%
+  left_join(spp_assessed)
+
+summary_info <- spp_assessed_impacted %>%
+  group_by(diet, allocation, fcr_type) %>%
+  summarise(total_assessed = sum(spp_count_assessed, na.rm = TRUE),
+            total_impacted = sum(spp_count_impacted, na.rm = TRUE)) %>%
+  ungroup() %>%
+  mutate(prop_impacted = total_impacted/total_assessed)
+
+```
+
+Look at efficiency of ingredients; how does proportion of impact differ from proportion of feed forumation?
+
+```{r}
+summary_df_barcharts <- all_overlap_df %>%
+  group_by(diet, fcr, raw_material, allocation, taxon) %>%
+  summarise(impact_total = sum(impact_total, na.rm = TRUE)) %>%
+  ungroup() %>%
+  left_join(taxon_hab_area) %>%
+  mutate(prop_impact = impact_total/total_hab_area)
+
+summary_df_stats <- summary_df_barcharts %>%
+   group_by(diet, fcr, raw_material, allocation) %>%
+  summarise(prop_total_impact = sum(prop_impact)) %>%
+  ungroup() %>%
+  group_by(diet, fcr, allocation) %>% 
+  mutate(total_impact = sum(prop_total_impact)) %>%
+  mutate(prop_attributed = prop_total_impact/total_impact)
+  
+## wow ok some interesting results! Soybean is highly inefficient! Rapeseed doesn't appear to be that bad...
+# In the fish-dominant diet: 
+#  - soybean accounts for 17% of the feed, however, it accounts for ~36% of the impacts. 
+#  - forage fish ingredients account for 42% of the fish dominant feed and only ~41% of the impacts. 
+#  - wheat is similarly efficient in the fish dominant diet; 20% of the feed and 18% of the impacts. 
+# 
+# For the plant-dominant diet:
+#  - Soybeans are 22% of the feeds but account for ~47% of the impacts.
+#  - Forage fish are 17% of the feed and 17% of the impacts. 
+#  - Wheat is 16% of the feed and 11% of the impacts
+#  - Pulses are 12% of the feed and 11% of the impacts
+#  - Rapeseed is 18% of the feed and 10% of the impact
+```
+
+
+How much raw material does Norway produce and use in country for salmon aquafeeds? 
+
+```{r}
+ingredient_production_location <- read.csv(here("prep/02_feed/data/demand/ingredient_demand_production_locations.csv"))
+
+norway_incountry <- ingredient_production_location %>%
+  filter(
+         iso3c_consuming == "NOR") %>%
+  group_by(iso3c_consuming, iso3c_producing, diet, fcr_type) %>%
+  summarise(total_tonnes_traded = sum(producing_ingredient_consumed_tonnes, na.rm = TRUE)) %>%
+  ungroup() %>%
+  group_by(diet, fcr_type) %>%
+  mutate(total_tonnes_consumed = sum(total_tonnes_traded, na.rm = TRUE)) %>%
+  ungroup() %>%
+  mutate(prop_consumed = total_tonnes_traded/total_tonnes_consumed)
+
+```
+
+How much salmon aquaculture production does NOR produce? 
+
+```{r}
+
+production <- readRDS(here("data/tidy_data/production-data/aquaculture_production_tidy.rds")) 
+
+
+salmon_production <- production %>%
+  filter(species == "Atlantic salmon" & year == 2020,
+         value > 0) %>%
+  mutate(species = "salmon")
+
+```
+
+

@@ -78,14 +78,13 @@ write.csv(spp_habs_area, here("prep/03_prep_spp_habitats/int/marine_habitat_area
 
 impact_vuln <- impact_df %>%
   dplyr::group_by(species, diet, fcr_type, allocation, ingredient) %>%
-  summarise(impact_total = sum(impact_total, na.rm = TRUE),
-             extinction_mean = mean(extinction_mean, na.rm = TRUE)) %>%
+  summarise(impact_total = sum(impact_total, na.rm = TRUE)) %>%
   ungroup() %>% 
   left_join(vuln_taxa) %>%
   left_join(spp_habs_area) %>%
-  dplyr::select(sciname= species, diet, fcr_type, allocation, ingredient, impact_total, vulnerability = vuln_quartile, spp_type = taxon, impact_total, total_hab_area, extinction_mean)
+  dplyr::select(sciname= species, diet, fcr_type, allocation, ingredient, impact_total, vulnerability = vuln_quartile, spp_type = taxon, impact_total, total_hab_area)
   
-summary(impact_vuln) # no Nas in vulnerability
+summary(impact_vuln) # no Nas in impact
 
 saveRDS(impact_vuln, here("prep/03_prep_spp_habitats/output/aoh_marine_impact.rds"))
 
@@ -108,8 +107,8 @@ test_marine <- impact_vuln %>%
          allocation == "mass",
          fcr_type == "regular")
 
-sum(test_marine$impact_total, na.rm = TRUE) # 122830.5
-mean(test_marine$impact_total, na.rm = TRUE) # 1.334331
+sum(test_marine$impact_total, na.rm = TRUE) # 138520.3
+mean(test_marine$impact_total, na.rm = TRUE) # 1.50376
 
 ```
 
