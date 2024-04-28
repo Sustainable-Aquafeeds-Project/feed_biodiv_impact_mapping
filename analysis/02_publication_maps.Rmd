@@ -110,8 +110,8 @@ quantile_pal <- c(
     "25-49" = "#538AC6", 
     "50-74" = "#1E438F", 
     "75-94" = "#F8D422", 
-    "95-99.9" = "#E95D08", 
-    "≥99.9" = "#781211"
+    "95-99" = "#E95D08", 
+    "≥99" = "#781211"
 )
 
 all_df <-  qread(filepath) %>%
@@ -135,11 +135,11 @@ all_df_quant <- all_df %>%
     value >= q25 & value < q50 ~ "25-49",
     value >= q50 & value < q75 ~ "50-74",
     value >= q75 & value < q95 ~ "75-94",
-    value >= q95 & value < q999 ~ "95-99.9",
-    value >= q999 ~ "≥99.9"
+    value >= q95 & value < q999 ~ "95-99",
+    value >= q999 ~ "≥99"
   ))
 
-all_df_quant$category <- factor(all_df_quant$category, levels = c("0-24", "25-49", "50-74", "75-94", "95-99.9", "≥99.9"))
+all_df_quant$category <- factor(all_df_quant$category, levels = c("0-24", "25-49", "50-74", "75-94", "95-99", "≥99"))
 
   quantile_plot <-  ggplot() + 
       geom_tile(data = all_df_quant, aes(x = long, y = lat, fill = category, color = category)) +

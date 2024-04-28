@@ -71,12 +71,12 @@ Read in marine and terrestrial dfs and combine
 
 ```{r}
 marine_overlap <- readRDS(here("prep/03_prep_spp_habitats/output/aoh_marine_impact.rds")) %>%
-    dplyr::select(sciname, spp_type, diet, fcr_type, allocation, ingredient, vulnerability, impact_total, total_hab_area, extinction_mean)
+    dplyr::select(sciname, spp_type, diet, fcr_type, allocation, ingredient, vulnerability, impact_total, total_hab_area)
 
 
 terrestrial_overlap <- readRDS(here("prep/03_prep_spp_habitats/output/aoh_terrestrial_impact.rds")) %>% 
   dplyr::select(-suitability) %>%
-      dplyr::select(sciname, spp_type, diet, fcr_type, allocation, ingredient, vulnerability, impact_total, total_hab_area, extinction_mean)
+      dplyr::select(sciname, spp_type, diet, fcr_type, allocation, ingredient, vulnerability, impact_total, total_hab_area)
 
 all_overlap <- rbind(marine_overlap, terrestrial_overlap) %>%
     mutate(taxon = str_to_sentence(spp_type)) %>%
@@ -322,31 +322,9 @@ legend_pattern <-  get_legend(ggplot() + geom_col_pattern(plot_df_new,
 
 p <- ggdraw() + draw_plot(iucn_plot) + draw_plot(legend_iucn, x = 0.1, y = 0.005, width = 0.5, height = 0.15) + draw_plot(legend_pattern, x = 0.6, y = 0.005, width = 0.5, height = 0.118)
 
-ggsave(here("prep/03_prep_spp_habitats/output/plots/publication/iucn_plot.png"), units = "mm", width = 180, height = 180)
+ggsave(here("analysis/MS_plots/fig4_iucn_plot.png"), units = "mm", width = 180, height = 180)
 
 
-```
-
-```{r}
-# ggplot() +
-#   geom_col(plot_df_new %>% filter(diet == "fish-dominant"),
-#              mapping = aes(x = impact_category, y = n_spp, fill = iucn_cat, col = diet), 
-#                width = 0.4, position_stacknudge(x = -0.21)) +
-#     geom_col(plot_df_new %>% filter(diet == "plant-dominant"),
-#              mapping = aes(x = impact_category, y = n_spp, fill = iucn_cat, col = diet), 
-#                width = 0.4, position = position_stacknudge(x = 0.21)) + 
-#   facet_wrap(~taxon, ncol = 3, scales = "free_x") +
-#   labs(
-#        x = "Impact Quantile",
-#        y = "Number of Species",
-#        fill = "Current IUCN Category") +
-#   theme_ohara() +
-#   theme(axis.text.x = element_text(angle = 45, hjust = 1),
-#         strip.text = element_text(size = 10), 
-#         legend.position  = "right") +
-#   scale_fill_manual(values = iucn_cat_pal) # ok great this works, now just need to figure out how to add pattern to one of the diet bars
-
-# ggsave(here("prep/03_prep_spp_habitats/output/plots/publication/iucn_plot.png"), units = "in", width = 8, height = 11)
 ```
 
 

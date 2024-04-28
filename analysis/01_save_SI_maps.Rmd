@@ -30,6 +30,7 @@ library(ggtext)
 library(ggnewscale)
 library(doParallel)
 library(foreach)
+library(qs)
 
 source(here("src/directories.R"))
 
@@ -198,6 +199,9 @@ if(str_detect(type, "mean")){
   
 quantile_value <- quantile(loop_loop_df$value, probs = 0.999, na.rm = TRUE)
   
+max_val =  round(max(loop_loop_df$value, na.rm = TRUE), 5)
+quant_val = round(quantile_value, 5)
+
   loop_loop_df <- loop_loop_df %>% 
     mutate(value_new = ifelse(value > quantile_value, quantile_value, value))
   
@@ -219,7 +223,8 @@ quantile_value <- quantile(loop_loop_df$value, probs = 0.999, na.rm = TRUE)
           axis.ticks = element_blank(),
           legend.margin = margin(r = 10)) + # add a margin to legend text so it isn't cut off when saving 
   labs(fill = fill_name,
-       title = glue("{diet_type}, {fcr}")) + 
+       title = glue("{diet_type}, {fcr}"),
+       caption = glue("99.9th quantile range: {quant_val} - {max_val}")) + 
      guides(color = "none")
         
       plot_list[[length(plot_list) + 1]] <- loop_plot
@@ -284,28 +289,32 @@ stopCluster(cl)
 
 ```
 
-
-APRIL 24 12pm : NEED TO UPDATE CODE BELOW HERE AFTER WE RERUN THIS STUFF WITH NEW METHODOLOGY
-
 Global maps across ingredients per taxon 
 
 ```{r}
 
 diets <- c("fish-dominant", "plant-dominant")
 fcrs <- c("regular", "efficient")
+allocations <- c("economic", "ge", "mass")
+taxon <- unique(all_overlap$spp_type)
+calc_types <- c("mean_prop", "mean_ext_risk", "sd_prop", "nspp")
      
   
 # make and save plots across ingredients per taxon  
+num_cores <- 3
+cl <- makeCluster(num_cores)
+registerDoParallel(cl)
 
-for(allocation_type in allocations){
+foreach(allocation_type = allocations,
+        .packages = c('stringr', 'qs', 'tidyverse', 'tools', 'strex', 'glue', 'cowplot', 'here')) %dopar% {
     for(taxa_type in taxon){
       for(type in calc_types){
-# 
+
 # allocation_type = "economic"
 # taxa_type = "Bird"
-# type = "sd_prop"
+# type = "mean_prop"
 
-        loop_df <- fread(glue(file.path(impact_maps_dir, "csvs/impact_maps_by_taxon_across_ingredient/{allocation_type}_{taxa_type}_{type}.rds.gz"))) %>%
+        loop_df <- qread(glue(file.path(impact_maps_dir, "csvs/impact_maps_by_taxon_across_ingredient/{allocation_type}_{taxa_type}_{type}.qs"))) %>%
           filter(!is.na(value))
 
 if(str_detect(type, "mean")){
@@ -329,6 +338,9 @@ if(str_detect(type, "mean")){
            fcr_type == fcr)
   
 quantile_value <- quantile(loop_loop_df$value, probs = 0.999, na.rm = TRUE)
+
+max_val =  round(max(loop_loop_df$value), 5)
+quant_val = round(quantile_value, 5)
   
   loop_loop_df <- loop_loop_df %>% 
     mutate(value_new = ifelse(value > quantile_value, quantile_value, value))
@@ -351,18 +363,16 @@ quantile_value <- quantile(loop_loop_df$value, probs = 0.999, na.rm = TRUE)
           axis.ticks = element_blank(),
           legend.margin = margin(r = 10)) + # add a margin to legend text so it isn't cut off when saving 
   labs(fill = fill_name,
-      # color = "≥99th quantile",
-       title = glue("{diet_type}, {fcr}")) + 
-     guides(color = "none")
-   # + 
-    #   guides(color = guide_legend(override.aes = list(fill = "#B90000")))
+       title = glue("{diet_type}, {fcr}"), 
+        caption = glue("99.9th quantile range: {quant_val} - {max_val}")) + 
+     guides(color = "none") 
         
       plot_list[[length(plot_list) + 1]] <- loop_plot
 
     }
   } 
 
-ggsave(glue(here(this_dir, "output/plots/by_taxa/{allocation_type}_{taxa_type}_{type}_plot.png")), plot = plot_grid(plotlist = plot_list, nrow = 2), width = 10, height = 8, bg = "white")
+ggsave(glue(here(this_dir, "SI_plots/by_taxa/{allocation_type}_{taxa_type}_{type}_plot.png")), plot = plot_grid(plotlist = plot_list, nrow = 2), width = 10, height = 8, bg = "white")
 
 }else{
   
@@ -370,9 +380,11 @@ ggsave(glue(here(this_dir, "output/plots/by_taxa/{allocation_type}_{taxa_type}_{
   
  if(str_detect(type, "nspp")){
     fill_name = "Number of\nspecies\nimpacted"
-  }else{
-    fill_name = "sdev"
-  }
+  }else if(str_detect(type, "sd_prop")){
+    fill_name = "sdev proportion\nhabitat\nimpacted"
+  }else(
+    fill_name = "sdev extinction\nrisk"
+  )
   
     plot_list <- list()
   
@@ -408,145 +420,14 @@ loop_loop_df <- loop_df %>%
     }
     }
     
-    ggsave(glue(here(this_dir, "output/plots/by_taxa/{allocation_type}_{taxa_type}_{type}_plot.png")), plot = plot_grid(plotlist = plot_list, nrow = 2), width = 10, height = 8, bg = "white")
+    ggsave(glue(here(this_dir, "SI_plots/by_taxa/{allocation_type}_{taxa_type}_{type}_plot.png")), plot = plot_grid(plotlist = plot_list, nrow = 2), width = 10, height = 8, bg = "white")
 
     }
   }
     }
 }
 
-
-```
-
-Global maps by ingredients across taxon
-
-```{r}
-
-allocations <- c("economic", "ge", "mass")
-calc_types <- c("mean", "sd", "nspp", "sd_prop", "mean_prop")
-ingredients <- all_overlap %>% 
-  pull(ingredient) %>% unique()
-
-
-for(allocation_type in allocations){
-    for(ingredient_type in ingredients){
-      for(type in calc_types){
-        
-      # ingredient_type = "Soybean_soybean meal"
-      # allocation_type = "economic"
-      # type = "sd_prop"
-        
-                loop_df <- fread(glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_by_ingredient/{allocation_type}_{ingredient_type}_{type}.rds.gz"))) 
- 
-diets <- unique(loop_df$diet)
-  
-
-if(str_detect(type, "mean")){
-  
-  if(str_detect(type, "_prop")){
-  fill_name = "Proportion\nhabitat\nimpacted"
-  }else{
-    fill_name = "Extinction\nRisk"
-  }
-  
-  plot_list <- list()
-  
-  for(diet_type in diets){
-    for(fcr in fcrs){
-
-      # diet_type = "plant-dominant"
-      # fcr = "efficient"
-      
-  loop_loop_df <- loop_df %>%
-    filter(diet == diet_type, 
-           fcr_type == fcr)
-  
-quantile_value <- quantile(loop_loop_df$value, probs = 0.999, na.rm = TRUE)
-  
-  loop_loop_df <- loop_loop_df %>% 
-    mutate(value_new = ifelse(value > quantile_value, quantile_value, value))
-  
-  loop_plot <-  ggplot() + 
-      geom_tile(data = loop_loop_df, aes(x = long, y = lat, fill = value_new, color = value_new)) +
-     geom_tile(fill = ifelse(loop_loop_df$value_new < quantile_value, "#B90000", NA)) + 
-            geom_sf(data = countries_shp, fill = NA, colour = "grey") + 
-       scale_fill_gradientn(colors = palette_red, na.value = "white") +
-            scale_color_gradientn(colors = palette_red, na.value = "white") +
-            geom_sf(data = globe_border,
-            fill = NA, color = 'grey70', 
-            size = .1) +
-    scale_x_continuous(expand = c(0, 0)) +
-    scale_y_continuous(expand = c(0, 0)) +
-    theme_void() +
-      theme(plot.title = element_text(hjust = 0.5), 
-          axis.title = element_blank(),
-          axis.text = element_blank(),
-          axis.ticks = element_blank(),
-          legend.margin = margin(r = 10)) + # add a margin to legend text so it isn't cut off when saving 
-  labs(fill = fill_name,
-      # color = "≥99th quantile",
-       title = glue("{diet_type}, {fcr}")) + 
-     guides(color = "none")
-   # + 
-    #   guides(color = guide_legend(override.aes = list(fill = "#B90000")))
-        
-      plot_list[[length(plot_list) + 1]] <- loop_plot
-
-    }
-  } 
-
-ggsave(glue(here(this_dir, "output/plots/by_ingredient/{allocation_type}_{ingredient_type}_{type}_plot.png")), plot = plot_grid(plotlist = plot_list, nrow = 2), width = 10, height = 8, bg = "white")
-
-}else{
-  
- # type = "ge_sd_prop"
-  
- if(str_detect(type, "nspp")){
-    fill_name = "Number of\nspecies\nimpacted"
-  }else{
-    fill_name = "sdev"
-  }
-  
-    plot_list <- list()
-  
-    for(diet_type in diets){
-    for(fcr in fcrs){
-  
-loop_loop_df <- loop_df %>%
-    filter(diet == diet_type, 
-           fcr_type == fcr)
-
-  
-  loop_plot <-  ggplot() + 
-      geom_tile(data = loop_loop_df, aes(x = long, y = lat, fill = value, color = value)) +
-            geom_sf(data = countries_shp, fill = NA, colour = "grey") + 
-       scale_fill_gradientn(colors = final_palette, na.value = "white") +
-            scale_color_gradientn(colors = palette_red, na.value = "white") +
-            geom_sf(data = globe_border,
-            fill = NA, color = 'grey70', 
-            size = .1) +
-    scale_x_continuous(expand = c(0, 0)) +
-    scale_y_continuous(expand = c(0, 0)) +
-    theme_void() +
-      theme(plot.title = element_text(hjust = 0.5), 
-          axis.title = element_blank(),
-          axis.text = element_blank(),
-          axis.ticks = element_blank(),
-          legend.margin = margin(r = 10)) + 
-  labs(fill = fill_name,
-       title = glue("{diet_type}, {fcr}")) + 
-     guides(color = "none")
-        
-      plot_list[[length(plot_list) + 1]] <- loop_plot
-    }
-    }
-    
-    ggsave(glue(here(this_dir, "output/plots/by_ingredient/{allocation_type}_{ingredient_type}_{type}_plot.png")), plot = plot_grid(plotlist = plot_list, nrow = 2), width = 10, height = 8, bg = "white")
-
-    }
-  }
-    }
-}
+stopCluster(cl)
 
 ```
 
@@ -555,25 +436,27 @@ Global maps by raw material across taxon
 ```{r}
 
 allocations <- c("economic", "ge", "mass")
-calc_types <- c("mean", "sd", "nspp", "sd_prop", "mean_prop")
-ingredients <- all_overlap %>% pull(ingredient) %>% unique()
-raw_mats <- all_overlap %>% mutate(raw_material = str_before_first(ingredient, "_")) %>% 
-  # filter(!(raw_material %in% c("forage fish", "trimmings fish"))) %>% 
-  pull(raw_material) %>% unique()
+calc_types <- c("mean_ext_risk", "nspp", "sd_prop", "mean_prop")
 
-for(allocation_type in allocations){
+raw_mats <- c("Soybean", "Wheat", "Sunflower", "CropsNES", "Rapeseed", "Maize", "forage fish", "trimmings fish", "Pulses")
+
+num_cores <- 3
+cl <- makeCluster(num_cores)
+registerDoParallel(cl)
+
+foreach(allocation_type = allocations,
+        .packages = c('stringr', 'qs', 'tidyverse', 'tools', 'strex', 'glue', 'cowplot', 'here')) %dopar% {
     for(raw_mat in raw_mats){
       for(type in calc_types){
         
-      # raw_mat = "forage fish"
+      # raw_mat = "Soybean"
       # allocation_type = "economic"
-      # type = "mean_prop"
-      
-                loop_df <- fread(glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_by_raw_material/{allocation_type}_{raw_mat}_{type}.rds.gz"))) %>%
-                  filter(calc_type == type)
+      # type = "sd_prop"
+        
+                loop_df <- qread(glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_by_material/{allocation_type}_{raw_mat}_{type}.qs"))) 
  
 diets <- unique(loop_df$diet)
-  fcrs <- unique(loop_df$fcr_type)
+  
 
 if(str_detect(type, "mean")){
   
@@ -597,6 +480,9 @@ if(str_detect(type, "mean")){
   
 quantile_value <- quantile(loop_loop_df$value, probs = 0.999, na.rm = TRUE)
   
+max_val =  round(max(loop_loop_df$value), 5)
+quant_val = round(quantile_value, 5)
+
   loop_loop_df <- loop_loop_df %>% 
     mutate(value_new = ifelse(value > quantile_value, quantile_value, value))
   
@@ -618,18 +504,16 @@ quantile_value <- quantile(loop_loop_df$value, probs = 0.999, na.rm = TRUE)
           axis.ticks = element_blank(),
           legend.margin = margin(r = 10)) + # add a margin to legend text so it isn't cut off when saving 
   labs(fill = fill_name,
-      # color = "≥99th quantile",
-       title = glue("{diet_type}, {fcr}")) + 
+       title = glue("{diet_type}, {fcr}"),
+       caption = glue("99.9th quantile range: {quant_val} - {max_val}")) + 
      guides(color = "none")
-   # + 
-    #   guides(color = guide_legend(override.aes = list(fill = "#B90000")))
         
       plot_list[[length(plot_list) + 1]] <- loop_plot
 
     }
   } 
 
-ggsave(glue(here(this_dir, "output/plots/by_material/{allocation_type}_{raw_mat}_{type}_plot.png")), plot = plot_grid(plotlist = plot_list, nrow = 2), width = 10, height = 8, bg = "white")
+ggsave(glue(here(this_dir, "SI_plots/by_material/{allocation_type}_{raw_mat}_{type}_plot.png")), plot = plot_grid(plotlist = plot_list, nrow = 2), width = 10, height = 8, bg = "white")
 
 }else{
   
@@ -638,7 +522,7 @@ ggsave(glue(here(this_dir, "output/plots/by_material/{allocation_type}_{raw_mat}
  if(str_detect(type, "nspp")){
     fill_name = "Number of\nspecies\nimpacted"
   }else{
-    fill_name = "sdev"
+    fill_name = "sdev proportion\nhabitat\nimpacted"
   }
   
     plot_list <- list()
@@ -675,12 +559,14 @@ loop_loop_df <- loop_df %>%
     }
     }
     
-    ggsave(glue(here(this_dir, "output/plots/by_material/{allocation_type}_{raw_mat}_{type}_plot.png")), plot = plot_grid(plotlist = plot_list, nrow = 2), width = 10, height = 8, bg = "white")
+    ggsave(glue(here(this_dir, "SI_plots/by_material/{allocation_type}_{raw_mat}_{type}_plot.png")), plot = plot_grid(plotlist = plot_list, nrow = 2), width = 10, height = 8, bg = "white")
 
     }
   }
     }
 }
 
+stopCluster(cl)
 
 ```
+

@@ -24,6 +24,7 @@ library(ggpubr)
 library(smoothr)
 library(ggtext)
 library(ggnewscale)
+library(qs)
 
 source(here("src/directories.R"))
 
@@ -40,11 +41,11 @@ impact_maps_dir <- file.path(biodiv_dir, "output")
 
 ```{r}
 marine_overlap <- readRDS(here("prep/03_prep_spp_habitats/output/aoh_marine_impact.rds")) %>%
-    dplyr::select(sciname, spp_type, diet, fcr_type, allocation, ingredient, vulnerability, impact_total, total_hab_area, extinction_mean)
+    dplyr::select(sciname, spp_type, diet, fcr_type, allocation, ingredient, vulnerability, impact_total, total_hab_area)
 
 terrestrial_overlap <- readRDS(here("prep/03_prep_spp_habitats/output/aoh_terrestrial_impact.rds")) %>% 
   dplyr::select(-suitability) %>%
-      dplyr::select(sciname, spp_type, diet, fcr_type, allocation, ingredient, vulnerability, impact_total, total_hab_area, extinction_mean)
+      dplyr::select(sciname, spp_type, diet, fcr_type, allocation, ingredient, vulnerability, impact_total, total_hab_area)
 
 all_overlap <- rbind(marine_overlap, terrestrial_overlap) %>%
     mutate(taxon = str_to_sentence(spp_type)) %>%
@@ -63,20 +64,22 @@ Get some stats about differences between diets and average impacts.
 ```{r}
 
 ## read in plant-dominant, economic, regulat
- filepath <- glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_ingredient/economic_mean_prop.rds.gz"))
+ filepath <- glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_ingredient/economic_mean_prop.qs"))
 
-all_df <-  fread(filepath)  %>%
+all_df <-  qread(filepath)  %>%
   filter(value > 0) %>%
   filter(!is.na(value))
 
-max(all_df$value) # 0.035490633.5
+max(all_df$value) # 0.2235324
 
 moll_template_land <- readRDS(here("prep/03_prep_spp_habitats/data/spatial/moll_template_land_xy.rds"))
 moll_template_ocean <- readRDS(here("prep/03_prep_spp_habitats/data/spatial/moll_template_ocean_xy.rds"))
 
+land_eez_rgns <- read.csv(file.path(biodiv_dir, "spatial/rgns_xy_all.csv")) %>% 
+  dplyr::select(x, y, rgn_id)
 
 maximum_location <- all_df %>%
-  filter(value > 0.02) %>%
+  filter(value > 0.22) %>%
   left_join(land_eez_rgns, by = c("long" = "x", "lat" = "y")) %>%
  left_join(moll_template_land, by = c("long" = "x", "lat" = "y")) # max value is 0.035 on land in Norway
 
