@@ -193,3 +193,13 @@ test_df %>% arrange(-sum)
 
 ```
 
+```{r}
+test_fd_eff <- rast(here("prep/02_feed/output/fish-dominant/efficient/forage fish_fish meal_economic_pelagic_catch_A.tif"))
+
+test_fd_reg <- rast(here("prep/02_feed/output/fish-dominant/regular/forage fish_fish meal_economic_pelagic_catch_A.tif"))
+
+ diff <- (test_fd_reg - test_fd_eff)/test_fd_reg
+
+ plot(diff)
+```
+

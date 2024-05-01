@@ -71,12 +71,12 @@ for(diet in diet_types){
   for(fcr in fcr_types){
     for(allocation in allocation_types){
 
-      # diet = "fish-dominant"
+      # diet = "plant-dominant"
       # fcr = "regular"
       # allocation = "economic"
       
       if(file.exists(glue(file.path(biodiv_dir, "int/terrestrial_aggregation/impact_maps_across_taxon_ingredient/{diet}/{fcr}/{allocation}_mean_prop.tif")))){
-        message("raster exitst... skipping")
+        message("raster exists... skipping")
         next()
       }
 
@@ -91,27 +91,35 @@ for(diet in diet_types){
       all_impact_df <- data.frame(cell_id = NA, prop_mean = NA, prop_sd = NA, prop_nspp = NA, prop_ext_risk = NA)
 
       for(i in 1:14){
-              # i =4
+              # i = 2
                 
         
         i_dfs <- lapply(all_files_list, function(x) x[[i]])
+        
+  #        for (j in seq_along(i_dfs)) {
+  #   i_dfs[[j]] <- i_dfs[[j]][, source_file := all_files[j]] # Add a column for source file
+  # }
 
         
  combined_dataframe <- bind_rows(i_dfs) %>%
     filter(!is.na(cell_id)) %>%
   as.data.table() %>%
+  # mutate(taxon = str_before_first(str_after_last(source_file, "/"), "_")) %>% 
   group_by(cell_id, species_full) %>%
   summarise(impact_km2 = sum(impact_km2, na.rm = TRUE)) %>% # divide by 100 after this for prop and cap prop at 1
   ungroup() %>%
   mutate(prop_impact = impact_km2/100,
          ext_risk = 1 - ((100 - impact_km2)/100)^0.25) %>%
+   filter(cell_id == 786772)
   group_by(cell_id) %>%
   summarise(prop_mean = mean(prop_impact,na.rm=TRUE),
             prop_sd = sd(prop_impact, na.rm = TRUE),
             prop_nspp = n_distinct(species_full),
             prop_ext_risk = mean(ext_risk, na.rm = TRUE)) %>%
   ungroup() %>%
-  as.data.frame()
+  as.data.frame() 
+  #%>%
+   # mutate(file_number = i)
 
       
         all_impact_df <- rbind(all_impact_df, combined_dataframe)

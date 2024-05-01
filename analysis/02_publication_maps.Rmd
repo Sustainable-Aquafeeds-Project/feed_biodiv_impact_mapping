@@ -125,7 +125,7 @@ quantiles <- all_df %>%
             q50 = quantile(value, 0.50),
             q75 = quantile(value, 0.75),
             q95 = quantile(value, 0.95),
-            q999 = quantile(value, 0.999)) %>%
+            q999 = quantile(value, 0.99)) %>%
   ungroup()
 
 all_df_quant <- all_df %>%
@@ -183,7 +183,7 @@ quantiles_delta_fish <- delta_df %>%
             q50 = quantile(delta, 0.50),
             q75 = quantile(delta, 0.75),
             q95 = quantile(delta, 0.95),
-            q999 = quantile(delta, 0.999)) %>%
+            q999 = quantile(delta, 0.99)) %>%
   ungroup()
 
 quantiles_delta_plant <- delta_df %>%
@@ -193,7 +193,7 @@ quantiles_delta_plant <- delta_df %>%
             q50 = quantile(-1*delta, 0.50),
             q75 = quantile(-1*delta, 0.75),
             q95 = quantile(-1*delta, 0.95),
-            q999 = quantile(-1*delta, 0.999)) %>%
+            q999 = quantile(-1*delta, 0.99)) %>%
   ungroup() %>%
   mutate(across(2:6, ~.x*-1))
 
@@ -206,8 +206,8 @@ delta_df_quant <- delta_df %>%
     abs(delta) >= abs(q25) & abs(delta) < abs(q50) ~ "25-49",
     abs(delta) >= abs(q50) & abs(delta) < abs(q75) ~ "50-74",
     abs(delta) >= abs(q75) & abs(delta) < abs(q95) ~ "75-94",
-    abs(delta) >= abs(q95) & abs(delta) < abs(q999) ~ "95-99.9",
-    abs(delta) >= abs(q999) ~ "≥99.9"
+    abs(delta) >= abs(q95) & abs(delta) < abs(q999) ~ "95-99",
+    abs(delta) >= abs(q999) ~ "≥99"
   ))
 
 # establish palettes for delta map 
@@ -216,8 +216,8 @@ plant_pal <- c(
     "25-49" = "#ADDEA7", 
     "50-74" = "#74C476", 
     "75-94" = "#37A055", 
-    "95-99.9" = "#0B7734", 
-    "≥99.9" = "#00441B"
+    "95-99" = "#0B7734", 
+    "≥99" = "#00441B"
 )
 
 fish_pal <- c(
@@ -225,16 +225,16 @@ fish_pal <- c(
     "25-49" = "#ABCFE5", 
     "50-74" = "#6BAED6", 
     "75-94" = "#3787C0", 
-    "95-99.9" = "#105BA4", 
-    "≥99.9" = "#08306B"
+    "95-99" = "#105BA4", 
+    "≥99" = "#08306B"
 )
 
 delta_df_quant_fis <- delta_df_quant %>% filter(delta_cat == "Fish-dominant")
-delta_df_quant_fis$category <- factor(delta_df_quant_fis$category, levels = c("0-24", "25-49", "50-74", "75-94", "95-99.9", "≥99.9"))
+delta_df_quant_fis$category <- factor(delta_df_quant_fis$category, levels = c("0-24", "25-49", "50-74", "75-94", "95-99", "≥99"))
 
 
 delta_df_quant_plant <- delta_df_quant %>% filter(delta_cat == "Plant-dominant")
-delta_df_quant_plant$category <- factor(delta_df_quant_plant$category, levels = c("0-24", "25-49", "50-74", "75-94", "95-99.9", "≥99.9"))
+delta_df_quant_plant$category <- factor(delta_df_quant_plant$category, levels = c("0-24", "25-49", "50-74", "75-94", "95-99", "≥99"))
 
 
    delta_plot <-  ggplot() + 

@@ -10,7 +10,6 @@ editor_options:
 Load libraries
 
 ```{r setup, include=FALSE}
-
 library(tidyverse)
 library(here)
 library(strex)

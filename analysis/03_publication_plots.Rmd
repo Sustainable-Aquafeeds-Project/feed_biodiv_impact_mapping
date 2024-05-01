@@ -149,8 +149,8 @@ test2 <- spp_total_hab %>%
 **Mean proportion impacted**
 
  - Look at ranges of values
- - Consider splitting into two plots, like in global food paper; 1 is <95th quantile, 1 is >95th quantile 
- - Consider having one point for each species, instead of a box and whiskers chart. 
+ - Split into two plots, like in global food paper; 1 is <95th quantile, 1 is >95th quantile 
+ - One point for each species with box and whisker chart overlaid
  
 ```{r}
 spp_assessed_plot_df <- spp_assessed %>%
@@ -454,7 +454,7 @@ for(allocation_type in allocations){
       }
     }
   }
-}
+
 stopCluster(cl)
 
 
@@ -472,7 +472,7 @@ combined_impact_df <- do.call(rbind, list_of_dfs) %>%
          allocation = str_to_sentence(allocation),
          diet = str_to_sentence(diet),
          fcr = str_to_sentence(fcr)) %>%
-  mutate(raw_material = ifelse(raw_material == "Cropsnes", "CropsNES", raw_material))
+  mutate(raw_material = ifelse(raw_material == "Cropsnes", "CropsNES", raw_material)) 
 
 ## do the same thing but make a plot with raw material as the fill value
 
@@ -573,22 +573,37 @@ country_stats_1 <- combined_impact_df %>%
 
 
 material_stats_1 <- combined_impact_df %>%
-    group_by(diet, iso3c, rgn_id, fcr, allocation, raw_material) %>%
+    filter(allocation == "Economic") %>%
+    group_by(diet, fcr, raw_material) %>%
   summarise(
             mean_prop_weighted = mean(mean_prop_weighted, na.rm = TRUE)) %>%
-  ungroup() %>%
-  group_by(diet, rgn_id, fcr, allocation, raw_material) %>%
-  summarise(
-            mean_prop_weighted = mean(mean_prop_weighted, na.rm = TRUE)) %>%
-  ungroup() %>% 
-  filter(allocation == "Economic") %>%
-  group_by(diet, fcr, raw_material) %>%
-  summarise(sum_prop_mean = sum(mean_prop_weighted, na.rm = TRUE)) %>%
   ungroup() %>%
   group_by(diet, fcr) %>%
-  mutate(total_prop_mean = sum(sum_prop_mean, na.rm = TRUE)) %>%
+  mutate(total_prop_mean = sum(mean_prop_weighted, na.rm = TRUE)) %>%
   ungroup() %>%
-  mutate(prop_impacts = sum_prop_mean/total_prop_mean)
+  mutate(prop_impacts = mean_prop_weighted/total_prop_mean) %>%
+  filter(fcr == "Regular")
+
+material_stats_1$raw_material <- with(material_stats_1, reorder(raw_material, mean_prop_weighted, FUN = function(x) sum(x)))
+
+ggplot(material_stats_1, aes(x = raw_material, y = mean_prop_weighted, fill = raw_material)) +
+    geom_bar(stat = "identity") +
+  facet_wrap(~diet) +
+  labs(x = "Raw material", y = "Average proportion of habitat impacted", fill = NULL) +
+  theme_minimal() + 
+  scale_fill_manual(values = pal_mats) + 
+  coord_flip()  + 
+  theme(panel.background = element_blank(),
+            axis.title.y = element_blank(),
+            axis.text.x = element_text(size = 7, angle = 45, hjust = 1),
+         axis.text.y = element_text(size = 7),
+        strip.text = element_text(size = 7),
+        axis.title = element_text(size = 7),
+        legend.text = element_text(size = 7),
+        text = element_text(family = "arial")) + 
+    scale_y_continuous(expand = c(0,0))
+
+ggsave(here(this_dir, "SI_plots/average_raw_mat_impact.png"), bg = "white", width = 178.9, height =100.92 , units = "mm")
 
 ```
 
