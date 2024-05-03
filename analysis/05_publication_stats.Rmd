@@ -151,6 +151,26 @@ vuln_taxa <- readRDS(file.path(rdsi_dir, "biodiversity_impacts/int/spp_vuln_dept
 mean(vuln_taxa$vuln_quartile) # 0.44618
 
 # Additionally, of all species (impacted or not), marine species, on average, have a vulnerability value of 0.45, while terrestrial species have a vulnerability value of 0.82. This means that within our methods, marine species are, on average, more resilient to fishing pressures than terrestrial species are to cropland used for aquafeeds.
+
+length(unique(vuln_taxa$species)) # 23639
+length(unique(ag_suitability$species)) # 31596
+
+
+terr_vuln_spp <- ag_suitability %>% 
+  filter(cropland_suitability != 1)
+length(terr_vuln_spp$species) # 26413 terrestrial vuln
+
+
+marine_vuln_spp <- vuln_taxa %>%
+  group_by(species) %>%
+  summarise(total_vuln = sum(vuln_quartile, na.rm = TRUE)) %>%
+  ungroup() %>%
+  filter(total_vuln != 0)
+
+length(marine_vuln_spp$species) # 20684 terrestrial vuln
+
+(20684 + 26413)/(23639 + 31596) # 0.8526659 are vulnerable in some capacity
+
 ```
 
 How many species assessed and impacted? 
@@ -481,9 +501,6 @@ test2 <- all_df %>%
   ungroup()
 
 ## ok we see the same thing here... all 10% decrease... good
-
-
-
 
 ```
 

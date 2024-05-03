@@ -22,6 +22,8 @@ library(glue)
 library(RColorBrewer)
 library(ggpubr)
 library(qs)
+library(parallel)
+library(doParallel)
 
 source(here("src/directories.R"))
 
@@ -507,7 +509,7 @@ ggsave(filename = here(this_dir, "SI_plots/feed_composition.jpg"), dpi = 600, wi
  - grab by raw material rasters 
 
 ```{r}
-allocations <- c("economic", "mass", "ge")
+allocations <- c("economic")
 fcr_types <- c("regular", "efficient")
 diet_types <- c("plant-dominant", "fish-dominant")
 spp_types <- all_overlap %>% 
@@ -585,8 +587,9 @@ combined_impact_df <- do.call(rbind, list_of_dfs) %>%
   mutate(raw_material = str_to_sentence(raw_material), 
          allocation = str_to_sentence(allocation),
          diet = str_to_sentence(diet),
-         fcr = str_to_sentence(fcr)) %>%
-  mutate(raw_material = ifelse(raw_material == "Cropsnes", "CropsNES", raw_material)) 
+         fcr = str_to_sentence(fcr)) 
+# %>%
+#  mutate(raw_material = ifelse(raw_material == "Cropsnes", "CropsNES", raw_material)) 
 
 ## do the same thing but make a plot with raw material as the fill value
 
@@ -717,7 +720,7 @@ ggplot(material_stats_1, aes(x = raw_material, y = mean_prop_weighted, fill = ra
         text = element_text(family = "arial")) + 
     scale_y_continuous(expand = c(0,0))
 
-ggsave(here(this_dir, "SI_plots/average_raw_mat_impact.png"), bg = "white", width = 178.9, height =100.92 , units = "mm")
+ggsave(here(this_dir, "SI_plots/average_raw_mat_impact.png"), bg = "white", width = 178.9, height = 100.92 , units = "mm")
 
 ```
 

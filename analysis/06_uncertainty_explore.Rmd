@@ -68,7 +68,7 @@ all_overlap <- rbind(marine_overlap, terrestrial_overlap) %>%
 ```
 
 Lets see if the standard deviation generally scales with the mean; if it does, we should probably report coefficient of variation instead. 
-
+ - these plots take a while to save - like 10 mins each.
 ```{r}
 ## read in mean rast for plant-dominant regular FCR
 
@@ -97,16 +97,20 @@ loop_df_sd <-  qs::qread(filepath_sd) %>%
 
 loop_df_all <- loop_df_mean %>%
   left_join(loop_df_sd) %>%
-  mutate(cv = sd_prop/mean_prop) 
+  mutate(cv = sd_prop/mean_prop) %>%
+  filter(!is.na(sd_prop))
+
+loop_df_all$fcr_type = factor(loop_df_all$fcr_type, levels=c("regular", "efficient"))
 
 
-ggplot(data = loop_df_all, aes(x = mean_prop, y = sd_prop)) +
+p <- ggplot(data = loop_df_all, aes(x = mean_prop, y = sd_prop)) +
   geom_point() +
-  geom_smooth(se = FALSE) +
+  geom_smooth(se = FALSE, formula = y~x) +
+  geom_abline() +
   labs(caption = glue("{allocation_type}")) + 
-  facet_grid(fcr_type~diet, scales = "free") 
+  facet_grid(diet~fcr_type, scales = "free") 
 
-ggsave(glue(here("analysis/uncertainty/mean_sd_scaling_{allocation_type}.png")))
+ggsave(filename = glue(here("analysis/uncertainty/sd_explore/mean_sd_scaling_{allocation_type}.png")), plot = p)
 
 
 }
@@ -135,8 +139,8 @@ diet_types <- c("plant-dominant", "fish-dominant")
 high_impact_rast <- moll_template
 low_impact_rast <- moll_template
 
-      # diet_type = "plant-dominant"
-      # fcr_type = "regular"
+      # diet_type = "fish-dominant"
+      # fcr_type = "efficient"
 
 for(allocation_type in allocation_types){
   
@@ -144,7 +148,7 @@ for(allocation_type in allocation_types){
       
       # allocation_type = "economic"
       
-      imp_rast <- 1-rast(glue(file.path(biodiv_dir, "output/impact_maps_across_taxon_ingredient/{diet_type}/{fcr_type}/{allocation_type}_mean_prop.tif")))
+      imp_rast <- rast(glue(file.path(biodiv_dir, "output/impact_maps_across_taxon_ingredient/{diet_type}/{fcr_type}/{allocation_type}_mean_prop.tif")))
       
       quant_95 <- global(imp_rast, probs = 0.95, na.rm = TRUE)
       
@@ -170,11 +174,11 @@ low_imp_sum <- sum(low_impact_rast, na.rm = TRUE)
 pal <- colorRampPalette(c("yellow","darkred"))
 
 
-png(file = glue(here("prep/03_prep_spp_habitats/output/plots/uncertainty/{diet_type}_{fcr_type}/high_impact.png")), width = 1200, height = 700)
+png(file = glue(here("analysis/uncertainty/{diet_type}_{fcr_type}/high_impact.png")), width = 1200, height = 700)
 plot(high_imp_sum, col = pal(3), type = "classes") 
 dev.off()
 
-png(file = glue(here("prep/03_prep_spp_habitats/output/plots/uncertainty/{diet_type}_{fcr_type}/low_impact.png")), width = 1200, height = 700)
+png(file = glue(here("analysis/uncertainty/{diet_type}_{fcr_type}/low_impact.png")), width = 1200, height = 700)
 plot(low_imp_sum, col = pal(3), type = "classes") 
 dev.off()
 
@@ -183,7 +187,7 @@ all_imp_sum <- intersect(high_imp_sum, low_imp_sum)
 
 r <- classify(all_imp_sum, cbind(FALSE, 0))
 
-png(file = glue(here("prep/03_prep_spp_habitats/output/plots/uncertainty/{diet_type}_{fcr_type}/disagree.png")), width = 1200, height = 700)
+png(file = glue(here("analysis/uncertainty/{diet_type}_{fcr_type}/disagree.png")), width = 1200, height = 700)
 plot(r)
 dev.off()
 

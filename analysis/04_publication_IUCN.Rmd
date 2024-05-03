@@ -326,6 +326,95 @@ ggsave(here("analysis/MS_plots/fig4_iucn_plot.png"), units = "mm", width = 180, 
 
 ```
 
+Now save it without 0 impact species:
+
+```{r}
+
+plot_df <- all_overlap_summary %>%
+  filter(allocation == "economic",
+         fcr_type == "regular"
+         ) %>%
+  filter(impact_km2 > 0) %>% 
+  group_by(diet, category, iucn_cat, taxon_plot, impact_category) %>%
+  summarise(n_spp = n_distinct(sciname)) %>%
+  ungroup()
+
+plot_df_new <- plot_df
+
+x_axis_order <- c("<25", "25-49", "50-74", "75-94", "≥95")
+plot_df_new$impact_category <- factor(plot_df_new$impact_category, levels = x_axis_order)
+
+fill_order <- c("Least Concern", "Near Threatened", "Data Deficient", "Not Evaluated", "Vulnerable", "Endangered", "Critically Endangered")
+plot_df_new$iucn_cat <- factor(plot_df_new$iucn_cat, levels = fill_order)
+
+plot_df_new$taxon_plot <- factor(plot_df_new$taxon_plot, levels = c("Birds", "Finfish", "Reptiles", "Molluscs", "Amphibians", "Terrestrial mammals", "Arthropods", "Other marine species"))
+
+iucn_cat_pal <- c(
+  "Least Concern" = "#54B050",
+  "Near Threatened" = "#C9CE3A", 
+  "Data Deficient" = "#C5C5C5", 
+  "Not Evaluated" = "darkgray",
+  "Vulnerable" = "#FED339", 
+  "Endangered" = "#FD643E", 
+  "Critically Endangered" = "#D40A1E"
+)
+
+iucn_plot <- ggplot() +
+  geom_col(plot_df_new %>% filter(diet == "fish-dominant"),
+             mapping = aes(x = impact_category, y = n_spp, fill = iucn_cat), 
+               width = 0.4, position_stacknudge(x = -0.21)) +
+    geom_col_pattern(plot_df_new %>% filter(diet == "plant-dominant"),
+             mapping = aes(x = impact_category, y = n_spp, fill = iucn_cat, pattern_fill = diet), 
+               width = 0.4, position = position_stacknudge(x = 0.21), pattern_alpha = 0.3,
+             pattern_size = 0.5, pattern_spacing = 0.025, pattern = "stripe") + 
+  facet_wrap(~taxon_plot, nrow = 2, scales = "free_x") +
+  labs(
+       x = "Impact Quantile",
+       y = "Number of Species") +
+  theme_ohara() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 7, family = "Arial"),
+        axis.text.y = element_text(size = 7, family = "Arial", colour = "black"),
+        axis.title = element_text(size = 7, family = "Arial", colour = "black"),
+        strip.text = element_text(size = 7, family = "Arial", colour = "black"), 
+        text = element_text(family = "Arial", size = 7, colour = "black"),
+        legend.position  = "none",
+        plot.margin = margin(t = 0.25, r = 0.25, b = 3, l = 0.25, unit = "cm")) +
+  scale_fill_manual(values = iucn_cat_pal)
+
+legend_iucn <- get_legend( ggplot() +
+  geom_col(plot_df_new %>% filter(diet == "fish-dominant"),
+             mapping = aes(x = impact_category, y = n_spp, fill = iucn_cat)) +
+              theme(legend.position = "bottom",
+                    legend.spacing.x = unit(0.28, 'cm')) +
+    labs(fill = "Current IUCN Category") + 
+    guides(fill = guide_legend(title.position = "bottom", title.hjust = 0.5)) +
+      scale_fill_manual(values = iucn_cat_pal) + 
+    theme(legend.text = element_text(size = 7, family = "Arial", colour = "black"), 
+          legend.title = element_text(size = 7, colour = "black"), 
+          legend.key.size = unit(5, "mm")))  
+
+legend_pattern <-  get_legend(ggplot() + geom_col_pattern(plot_df_new,
+             mapping = aes(x = impact_category, y = n_spp, pattern = diet), 
+               width = 0.4, position = position_stacknudge(x = 0.21), pattern_alpha = 0.3,
+             pattern_size = 0.5, pattern_spacing = 0.025, pattern_key_scale_factor = 0.5, pattern_color = "white") +
+               theme(legend.position = "bottom",
+                     legend.spacing.x = unit(0.28, 'cm'),
+                     legend.text = element_text(size = 7, family = "Arial", colour = "black"),
+                     legend.title = element_text(size = 7, colour = "black"), 
+                     legend.key.size = unit(5, "mm")) + 
+                 labs(pattern = "Diet") + 
+                guides(pattern = guide_legend(title.position = "bottom", title.hjust = 0.5, nrow = 1)) +
+               scale_pattern_manual(values=c('fish-dominant' = 'none', 'plant-dominant' = 'stripe'), 
+                                    labels = c("Fish-dominant", "Plant-dominant")))
+
+
+p <- ggdraw() + draw_plot(iucn_plot) + draw_plot(legend_iucn, x = 0.1, y = 0.005, width = 0.5, height = 0.15) + draw_plot(legend_pattern, x = 0.6, y = 0.005, width = 0.5, height = 0.118)
+
+ggsave(here("analysis/SI_plots/SIfig_iucn_plot_no_zeros.png"), units = "mm", width = 180, height = 180)
+
+
+```
+
 
 ```{r}
 test <- plot_df %>% group_by(diet, category) %>% summarise(nspp = sum(n_spp)) %>% ungroup()

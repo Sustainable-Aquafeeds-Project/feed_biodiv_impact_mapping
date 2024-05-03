@@ -251,9 +251,9 @@ Next we need to read in the files we saved, by chunk (500k cells), summarise per
 
 ```{r}
 
-diet_types <- c("fish-dominant", "plant-dominant")
-fcr_types <- c("regular", "efficient")
-allocation_types <- c("economic", "mass", "ge")
+diet_types <- c("fish-dominant")
+fcr_types <- c("efficient")
+allocation_types <- c("mass", "ge")
 
 
 for(diet in diet_types){

@@ -68,7 +68,8 @@ l_yellow <- "#F7F6C1"
 jv_pal <- c(l_yellow, yellow, green, l_brown, m_brown, d_brown)
 
 continuous_pal <-  colorRampPalette(jv_pal, space="Lab", bias = 3.5)(10000)
-image(volcano, asp=1, col=continuous_pal)
+continuous_pal_red <- c(continuous_pal, "#B90000")
+image(volcano, asp=1, col=continuous_pal_red)
 
 light_gray <- "#F8F9FA"
 final_palette <- c(light_gray, continuous_pal)
@@ -146,6 +147,8 @@ spp_assessed <- rbind(aquamaps_spp, eyres_spp) %>%
 
 Maps!
 
+## Save mean, sd, and nspp maps 
+
 Global impact maps across ingredients and taxon
  - dark red areas indicate >99.9th quantile of impacts
  - save a map for each scenario
@@ -171,7 +174,7 @@ registerDoParallel(cl)
 foreach(type = types_df,
         .packages = c('stringr', 'qs', 'tidyverse', 'tools', 'strex', 'glue', 'cowplot', 'here')) %dopar% {
   
-  # type = "economic_mean_prop"
+  # type = "economic_sd_prop"
   
  filepath <- glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_ingredient/{type}.qs"))
 
@@ -209,8 +212,8 @@ quant_val = round(quantile_value, 5)
       geom_tile(data = loop_loop_df, aes(x = long, y = lat, fill = value_new, color = value_new)) +
      geom_tile(fill = ifelse(loop_loop_df$value_new < quantile_value, "#B90000", NA)) + 
             geom_sf(data = countries_shp, fill = NA, colour = "grey") + 
-       scale_fill_gradientn(colors = palette_red, na.value = "white") +
-            scale_color_gradientn(colors = palette_red, na.value = "white") +
+       scale_fill_gradientn(colors = continuous_pal_red, na.value = "white") +
+            scale_color_gradientn(colors = continuous_pal_red, na.value = "white") +
             geom_sf(data = globe_border,
             fill = NA, color = 'grey70', 
             size = .1) +
@@ -257,8 +260,8 @@ loop_loop_df <- loop_df %>%
   loop_plot <-  ggplot() + 
       geom_tile(data = loop_loop_df, aes(x = long, y = lat, fill = value, color = value)) +
             geom_sf(data = countries_shp, fill = NA, colour = "grey") + 
-       scale_fill_gradientn(colors = final_palette, na.value = "white") +
-            scale_color_gradientn(colors = palette_red, na.value = "white") +
+       scale_fill_gradientn(colors = continuous_pal, na.value = "white") +
+            scale_color_gradientn(colors = continuous_pal, na.value = "white") +
             geom_sf(data = globe_border,
             fill = NA, color = 'grey70', 
             size = .1) +
@@ -349,8 +352,8 @@ quant_val = round(quantile_value, 5)
       geom_tile(data = loop_loop_df, aes(x = long, y = lat, fill = value_new, color = value_new)) +
      geom_tile(fill = ifelse(loop_loop_df$value_new < quantile_value, "#B90000", NA)) + 
             geom_sf(data = countries_shp, fill = NA, colour = "grey") + 
-       scale_fill_gradientn(colors = palette_red, na.value = "white") +
-            scale_color_gradientn(colors = palette_red, na.value = "white") +
+       scale_fill_gradientn(colors = continuous_pal_red, na.value = "white") +
+            scale_color_gradientn(colors = continuous_pal_red, na.value = "white") +
             geom_sf(data = globe_border,
             fill = NA, color = 'grey70', 
             size = .1) +
@@ -399,8 +402,8 @@ loop_loop_df <- loop_df %>%
   loop_plot <-  ggplot() + 
       geom_tile(data = loop_loop_df, aes(x = long, y = lat, fill = value, color = value)) +
             geom_sf(data = countries_shp, fill = NA, colour = "grey") + 
-       scale_fill_gradientn(colors = final_palette, na.value = "white") +
-            scale_color_gradientn(colors = palette_red, na.value = "white") +
+       scale_fill_gradientn(colors = continuous_pal, na.value = "white") +
+            scale_color_gradientn(colors = continuous_pal, na.value = "white") +
             geom_sf(data = globe_border,
             fill = NA, color = 'grey70', 
             size = .1) +
@@ -490,8 +493,8 @@ quant_val = round(quantile_value, 5)
       geom_tile(data = loop_loop_df, aes(x = long, y = lat, fill = value_new, color = value_new)) +
      geom_tile(fill = ifelse(loop_loop_df$value_new < quantile_value, "#B90000", NA)) + 
             geom_sf(data = countries_shp, fill = NA, colour = "grey") + 
-       scale_fill_gradientn(colors = palette_red, na.value = "white") +
-            scale_color_gradientn(colors = palette_red, na.value = "white") +
+       scale_fill_gradientn(colors = continuous_pal_red, na.value = "white") +
+            scale_color_gradientn(colors = continuous_pal_red, na.value = "white") +
             geom_sf(data = globe_border,
             fill = NA, color = 'grey70', 
             size = .1) +
@@ -538,8 +541,8 @@ loop_loop_df <- loop_df %>%
   loop_plot <-  ggplot() + 
       geom_tile(data = loop_loop_df, aes(x = long, y = lat, fill = value, color = value)) +
             geom_sf(data = countries_shp, fill = NA, colour = "grey") + 
-       scale_fill_gradientn(colors = final_palette, na.value = "white") +
-            scale_color_gradientn(colors = palette_red, na.value = "white") +
+       scale_fill_gradientn(colors = continuous_pal, na.value = "white") +
+            scale_color_gradientn(colors = continuous_pal, na.value = "white") +
             geom_sf(data = globe_border,
             fill = NA, color = 'grey70', 
             size = .1) +
@@ -569,6 +572,8 @@ loop_loop_df <- loop_df %>%
 stopCluster(cl)
 
 ```
+
+## Make coefficient of variation maps 
 
 Calculate and save coefficient of variation maps by each of the above categories (across taxa and material), (by taxa, across material), (across taxa by material)
 
@@ -624,8 +629,8 @@ loop_df_all <- loop_df_mean %>%
   loop_plot <-  ggplot() + 
       geom_tile(data = loop_loop_df, aes(x = long, y = lat, fill = cv, color = cv)) +
       geom_sf(data = countries_shp, fill = NA, colour = "grey") + 
-       scale_fill_gradientn(colors = palette_red, na.value = "white") +
-            scale_color_gradientn(colors = palette_red, na.value = "white") +
+       scale_fill_gradientn(colors = continuous_pal_red, na.value = "white") +
+            scale_color_gradientn(colors = continuous_pal_red, na.value = "white") +
             geom_sf(data = globe_border,
             fill = NA, color = 'grey70', 
             size = .1) +
@@ -708,8 +713,8 @@ foreach(allocation_type = allocations,
   loop_plot <-  ggplot() + 
       geom_tile(data = loop_loop_df, aes(x = long, y = lat, fill = cv, color = cv)) +
             geom_sf(data = countries_shp, fill = NA, colour = "grey") + 
-       scale_fill_gradientn(colors = palette_red, na.value = "white") +
-        scale_color_gradientn(colors = palette_red, na.value = "white") +
+       scale_fill_gradientn(colors = continuous_pal_red, na.value = "white") +
+        scale_color_gradientn(colors = continuous_pal_red, na.value = "white") +
             geom_sf(data = globe_border,
             fill = NA, color = 'grey70', 
             size = .1) +
@@ -791,8 +796,8 @@ diets <- unique(loop_df_all$diet)
   loop_plot <-  ggplot() + 
       geom_tile(data = loop_loop_df, aes(x = long, y = lat, fill = cv, color = cv)) +
             geom_sf(data = countries_shp, fill = NA, colour = "grey") + 
-       scale_fill_gradientn(colors = palette_red, na.value = "white") +
-            scale_color_gradientn(colors = palette_red, na.value = "white") +
+       scale_fill_gradientn(colors = continuous_pal_red, na.value = "white") +
+            scale_color_gradientn(colors = continuous_pal_red, na.value = "white") +
             geom_sf(data = globe_border,
             fill = NA, color = 'grey70', 
             size = .1) +
@@ -819,6 +824,107 @@ ggsave(glue(here(this_dir, "SI_plots/by_material/{allocation_type}_{raw_mat}_cv_
   }
 }
 
+
+stopCluster(cl)
+
+```
+
+## Proportion of species impacted maps
+
+Here we will make maps which describe the proportion of species which are impacted: 
+
+nspp impacted / total species richness map
+
+For each diet scenario (just filter for regular, as the number of species impacted does not change between fcr scenarios, only the magnitude)
+
+```{r}
+
+allocation_types <- c("mass", "economic", "ge")  
+diets <- c("fish-dominant", "plant-dominant")
+fcrs <- c("regular", "efficient")
+
+richness_files <- list.files(here("data/spatial/output"), pattern = "richness", full.names = TRUE) 
+
+richness_stack <- rast(richness_files) %>%
+  app(., "sum", na.rm = TRUE) %>%
+  as.data.frame(., xy = TRUE, na.rm = FALSE) %>%
+  rename(total_nspp = sum) %>%
+  mutate(total_nspp = ifelse(is.na(total_nspp), 0, total_nspp))
+
+
+richness_plot <- rast(richness_files) %>%
+  app(., "sum", na.rm = TRUE)
+
+test <- sum(richness_plot[] == 0 | is.na(richness_plot[])) # 1613739
+test <- sum(richness_plot[] == 0, na.rm = TRUE) # 0
+
+test <- sum(is.na(richness_plot[])) # 1613739
+# so when joining, we should have 6561238 - 1613739 = 4947499 cells
+
+
+num_cores <- 3
+cl <- makeCluster(num_cores)
+registerDoParallel(cl)
+
+
+foreach(allocation_type = allocation_types,
+        .packages = c('stringr', 'qs', 'tidyverse', 'tools', 'strex', 'glue', 'cowplot', 'here')) %dopar% {
+  
+  # allocation_type = "economic"
+  
+ filepath_nspp <- glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_ingredient/{allocation_type}_nspp.qs"))
+ 
+
+loop_df_nspp <-  qs::qread(filepath_nspp) %>%
+  dplyr::select(-calc_type) %>%
+  rename(nspp_impacted = value) %>%
+  filter(fcr_type == "regular")
+
+  
+  fill_name = "Proportion\nof species\nimpacted"
+  
+  plot_list <- list()
+  
+  for(diet_type in diets){
+
+# diet_type = "plant-dominant"
+# fcr = "regular"
+      
+  loop_loop_df <- loop_df_nspp %>%
+    filter(diet == diet_type) %>%
+      right_join(richness_stack, by = c("long" = "x", "lat" = "y")) %>%
+  mutate(nspp_impacted = ifelse(is.na(nspp_impacted), 0, nspp_impacted)) %>%
+  mutate(prop_spp_impacted = nspp_impacted/total_nspp) %>%
+    mutate(diet = diet_type) %>%
+    filter(!is.na(prop_spp_impacted))
+  
+  loop_plot <-  ggplot() + 
+      geom_tile(data = loop_loop_df, aes(x = long, y = lat, fill = prop_spp_impacted, color = prop_spp_impacted)) +
+     geom_sf(data = countries_shp, fill = NA, colour = "grey") +
+       scale_fill_gradientn(colors = continuous_pal_red) +
+            scale_color_gradientn(colors = continuous_pal_red) +
+            geom_sf(data = globe_border,
+            fill = NA, color = 'grey70',
+            size = .1) +
+    scale_x_continuous(expand = c(0, 0)) +
+    scale_y_continuous(expand = c(0, 0)) +
+    theme_void() +
+      theme(plot.title = element_text(hjust = 0.5), 
+          axis.title = element_blank(),
+          axis.text = element_blank(),
+          axis.ticks = element_blank(),
+          legend.margin = margin(r = 10)) + # add a margin to legend text so it isn't cut off when saving 
+  labs(fill = fill_name,
+       title = glue("{diet_type}")) + 
+     guides(color = "none")
+        
+      plot_list[[length(plot_list) + 1]] <- loop_plot
+
+  } 
+
+ggsave(glue(here(this_dir, "SI_plots/across_taxon_ingredient/{allocation_type}_prop_spp_plot.png")), plot = plot_grid(plotlist = plot_list, nrow = 1), width = 10, height = 8, bg = "white")
+
+}
 
 stopCluster(cl)
 
