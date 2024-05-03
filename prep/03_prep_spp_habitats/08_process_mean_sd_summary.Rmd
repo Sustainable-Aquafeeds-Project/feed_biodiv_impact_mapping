@@ -74,37 +74,37 @@ for(diet in diet_types){
       # diet = "plant-dominant"
       # fcr = "regular"
       # allocation = "economic"
-      
+
       if(file.exists(glue(file.path(biodiv_dir, "int/terrestrial_aggregation/impact_maps_across_taxon_ingredient/{diet}/{fcr}/{allocation}_mean_prop.tif")))){
         message("raster exists... skipping")
         next()
       }
 
       all_files <- list.files(file.path(biodiv_dir, "output/impact_maps_by_spp_ingredient_lists"), pattern = glue(".*_{diet}_{fcr}_.*_{allocation}"), full.names = TRUE)
-      
+
       to_remove <- grep("fish oil|fish meal", all_files)
       all_files <- all_files[-to_remove]
-    
-      
+
+
       all_files_list <- lapply(all_files, qread)
 
       all_impact_df <- data.frame(cell_id = NA, prop_mean = NA, prop_sd = NA, prop_nspp = NA, prop_ext_risk = NA)
 
       for(i in 1:14){
               # i = 2
-                
-        
+
+
         i_dfs <- lapply(all_files_list, function(x) x[[i]])
-        
+
   #        for (j in seq_along(i_dfs)) {
   #   i_dfs[[j]] <- i_dfs[[j]][, source_file := all_files[j]] # Add a column for source file
   # }
 
-        
+
  combined_dataframe <- bind_rows(i_dfs) %>%
     filter(!is.na(cell_id)) %>%
   as.data.table() %>%
-  # mutate(taxon = str_before_first(str_after_last(source_file, "/"), "_")) %>% 
+  # mutate(taxon = str_before_first(str_after_last(source_file, "/"), "_")) %>%
   group_by(cell_id, species_full) %>%
   summarise(impact_km2 = sum(impact_km2, na.rm = TRUE)) %>% # divide by 100 after this for prop and cap prop at 1
   ungroup() %>%
@@ -117,54 +117,54 @@ for(diet in diet_types){
             prop_nspp = n_distinct(species_full),
             prop_ext_risk = mean(ext_risk, na.rm = TRUE)) %>%
   ungroup() %>%
-  as.data.frame() 
+  as.data.frame()
   #%>%
    # mutate(file_number = i)
 
-      
+
         all_impact_df <- rbind(all_impact_df, combined_dataframe)
-        
+
       }
-      
+
       rast_impact <- all_impact_df %>%
         dplyr::select(cell_id, prop_mean) %>%
         filter(!is.na(cell_id)) %>%
                 left_join(moll_template_xy) %>%
             dplyr::select(x, y, prop_mean) %>%
             rast(., type = "xyz", crs = moll_template)
-      
+
       writeRaster(rast_impact, glue(file.path(biodiv_dir, "int/terrestrial_aggregation/impact_maps_across_taxon_ingredient/{diet}/{fcr}/{allocation}_mean_prop.tif")), overwrite = TRUE)
-      
-      
+
+
             rast_ext <- all_impact_df %>%
         dplyr::select(cell_id, prop_ext_risk) %>%
         filter(!is.na(cell_id)) %>%
                 left_join(moll_template_xy) %>%
             dplyr::select(x, y, prop_ext_risk) %>%
             rast(., type = "xyz", crs = moll_template)
-      
+
       writeRaster(rast_ext, glue(file.path(biodiv_dir, "int/terrestrial_aggregation/impact_maps_across_taxon_ingredient/{diet}/{fcr}/{allocation}_mean_ext_risk.tif")), overwrite = TRUE)
-      
+
             rast_impact_sd <- all_impact_df %>%
         dplyr::select(cell_id, prop_sd) %>%
         filter(!is.na(cell_id)) %>%
                 left_join(moll_template_xy) %>%
             dplyr::select(x, y, prop_sd) %>%
             rast(., type = "xyz", crs = moll_template)
-      
+
             writeRaster(rast_impact_sd, glue(file.path(biodiv_dir, "int/terrestrial_aggregation/impact_maps_across_taxon_ingredient/{diet}/{fcr}/{allocation}_sd_prop.tif")), overwrite = TRUE)
 
-            
+
                         rast_impact_nspp <- all_impact_df %>%
         dplyr::select(cell_id, prop_nspp) %>%
         filter(!is.na(cell_id)) %>%
                 left_join(moll_template_xy) %>%
             dplyr::select(x, y, prop_nspp) %>%
             rast(., type = "xyz", crs = moll_template)
-                        
+
                   writeRaster(rast_impact_nspp, glue(file.path(biodiv_dir, "int/terrestrial_aggregation/impact_maps_across_taxon_ingredient/{diet}/{fcr}/{allocation}_nspp.tif")), overwrite = TRUE)
 
-      
+
     }
   }
 }
@@ -182,31 +182,32 @@ for(diet in diet_types){
 ```{r}
 diet_types <- c("fish-dominant", "plant-dominant")
 fcr_types <- c("regular", "efficient")
-allocation_types <- c("economic", "mass", "ge")
+allocation_types <- c("economic", "ge", "mass")
 
 for(diet in diet_types){
   for(fcr in fcr_types){
     for(allocation in allocation_types){
 
 # diet = "fish-dominant"
-# fcr = "efficient"
+# fcr = "regular"
 # allocation = "ge"
 
 pattern <- glue(".*_{diet}_{fcr}_.*_{allocation}_chunk_.*.qs")
 
-if(
-any(file.exists(list.files(file.path(biodiv_dir, "int/marine_aggregation/sub_chunk_dfs/"), pattern = pattern, full.names = TRUE)))
-){
-        
-        message(glue("skipping processing for {diet} {fcr} {allocation} because they exist"))
-        next()
-      }
+# if(
+# any(file.exists(list.files(file.path(biodiv_dir, "int/marine_aggregation/sub_chunk_dfs/"), pattern = pattern, full.names = TRUE)))
+# ){
+#         
+#         message(glue("skipping processing for {diet} {fcr} {allocation} because they exist"))
+#         next()
+#       }
       
       all_files <- list.files(file.path(biodiv_dir, "output/impact_maps_by_spp_ingredient_lists"), pattern = glue(".*_{diet}_{fcr}_.*_{allocation}"), full.names = TRUE)
     
       to_keep <- grep("fish oil|fish meal", all_files)
       all_files <- all_files[to_keep]
 
+      
       for(file in 1:length(all_files)){
         # file = 50
                all_files_list <- lapply(all_files[[file]], qread)
@@ -245,12 +246,12 @@ any(file.exists(list.files(file.path(biodiv_dir, "int/marine_aggregation/sub_chu
 
 Next we need to read in the files we saved, by chunk (500k cells), summarise per cell the mean prop impacted, sd prop impacted, mean extinction risk, and nspp impacted, then rbind together into one big cell_id, prop_mean, prop_sd, extinction risk, and nspp dataframe
 
- - NOTE: April 24: Still need to run marine spp impacts for fish-dominant efficient, ge and mass
  - NOTE: If you want to run all scenarios, this will probably take ~12 hours...
+ - NOTE: MAY 2, 2024 10AM: Everything below here, need to rerun fish-dominant, ge and mass, regular scenarios
 
 ```{r}
 
-diet_types <- c("plant-dominant", "fish-dominant")
+diet_types <- c("fish-dominant", "plant-dominant")
 fcr_types <- c("regular", "efficient")
 allocation_types <- c("economic", "mass", "ge")
 
@@ -341,9 +342,10 @@ Now we need to stack and sum the rasters saved in the previous chunks to get mar
 
 ```{r}
 # establish scenarios
-diet_types <- c("plant-dominant", "fish-dominant")
+diet_types <- c("fish-dominant", "plant-dominant")
 fcr_types <- c("regular", "efficient")
 allocation_types <- c("economic", "mass", "ge")
+allocation_types <- c("mass", "ge")
 calc_types <- c("mean_prop", "sd_prop", "nspp", "mean_ext_risk")
 
 for(diet in diet_types){
@@ -437,8 +439,6 @@ stopCluster(cl)
 ```
 
 
-NOW DO THE SAME AS ABOVE BUT ACROSS TAXA BY INGREDIENT, ACROSS INGREDIENT BY TAXA, ACROSS RAW MATERIAL BY TAXA
-
 ## Impacts by taxa across ingredients
 
 ### Aggregate terrestrial impacts 
@@ -452,8 +452,6 @@ diet_types <- c("fish-dominant", "plant-dominant")
 fcr_types <- c("regular", "efficient")
 allocation_types <- c("economic", "mass", "ge")
 taxa_types <- c("Reptiles", "Amphibians", "Terrestrial mammal", "Bird")
-
-
 
 
 # num_cores <- 12
@@ -472,30 +470,30 @@ for(taxa in taxa_types){
       # fcr = "regular"
       # allocation = "economic"
       # taxa = "Reptiles"
-      
+
       if(file.exists(glue(file.path(biodiv_dir, "int/terrestrial_aggregation/impact_maps_by_taxon_across_ingredient/{diet}/{fcr}/{allocation}_{taxa}_mean_prop.tif")))){
         message("raster exitst... skipping")
         next()
       }
 
       all_files <- list.files(file.path(biodiv_dir, "output/impact_maps_by_spp_ingredient_lists"), pattern = glue("{taxa}_{diet}_{fcr}_.*_{allocation}"), full.names = TRUE)
-      
+
       if(taxa != "Terrestrial mammal"){
       to_remove <- grep("fish oil|fish meal", all_files)
       all_files <- all_files[-to_remove]
       }
-      
+
       all_files_list <- lapply(all_files, qread)
 
       all_impact_df <- data.frame(cell_id = NA, prop_mean = NA, prop_sd = NA, prop_nspp = NA, prop_ext_risk = NA, sd_ext_risk = NA)
 
       for(i in 1:14){
               # i = 4
-                
-        
+
+
         i_dfs <- lapply(all_files_list, function(x) x[[i]])
 
-        
+
  combined_dataframe <- bind_rows(i_dfs) %>%
     filter(!is.na(cell_id)) %>%
   as.data.table() %>%
@@ -513,22 +511,22 @@ for(taxa in taxa_types){
   ungroup() %>%
   as.data.frame()
 
-      
+
         all_impact_df <- rbind(all_impact_df, combined_dataframe)
-        
+
       }
-      
+
       rast_impact <- all_impact_df %>%
         dplyr::select(cell_id, prop_mean) %>%
         filter(!is.na(cell_id)) %>%
                 left_join(moll_template_xy) %>%
-            dplyr::select(x, y, prop_mean) 
+            dplyr::select(x, y, prop_mean)
       # %>%
-        #    rast(., type = "xyz", crs = moll_template) 
-      
+        #    rast(., type = "xyz", crs = moll_template)
+
       qsave(rast_impact, glue(file.path(biodiv_dir, "int/terrestrial_aggregation/impact_maps_by_taxon_across_ingredient/{diet}/{fcr}/{allocation}_{taxa}_mean_prop.qs")))
-      
-      
+
+
             rast_ext <- all_impact_df %>%
         dplyr::select(cell_id, prop_ext_risk) %>%
         filter(!is.na(cell_id)) %>%
@@ -536,38 +534,38 @@ for(taxa in taxa_types){
             dplyr::select(x, y, prop_ext_risk)
             # %>%
             # rast(., type = "xyz", crs = moll_template)
-      
+
       qsave(rast_ext, glue(file.path(biodiv_dir, "int/terrestrial_aggregation/impact_maps_by_taxon_across_ingredient/{diet}/{fcr}/{allocation}_{taxa}_mean_ext_risk.qs")))
-      
+
                   rast_ext_sd <- all_impact_df %>%
         dplyr::select(cell_id, sd_ext_risk) %>%
         filter(!is.na(cell_id)) %>%
                 left_join(moll_template_xy) %>%
-            dplyr::select(x, y, sd_ext_risk) 
+            dplyr::select(x, y, sd_ext_risk)
                   # %>%
             # rast(., type = "xyz", crs = moll_template)
-      
+
       qsave(rast_ext_sd, glue(file.path(biodiv_dir, "int/terrestrial_aggregation/impact_maps_by_taxon_across_ingredient/{diet}/{fcr}/{allocation}_{taxa}_sd_ext_risk.qs")))
-      
+
             rast_impact_sd <- all_impact_df %>%
         dplyr::select(cell_id, prop_sd) %>%
         filter(!is.na(cell_id)) %>%
                 left_join(moll_template_xy) %>%
-            dplyr::select(x, y, prop_sd) 
+            dplyr::select(x, y, prop_sd)
             # %>%
             # rast(., type = "xyz", crs = moll_template)
-      
+
             qsave(rast_impact_sd, glue(file.path(biodiv_dir, "int/terrestrial_aggregation/impact_maps_by_taxon_across_ingredient/{diet}/{fcr}/{allocation}_{taxa}_sd_prop.qs")))
 
-            
+
                         rast_impact_nspp <- all_impact_df %>%
         dplyr::select(cell_id, prop_nspp) %>%
         filter(!is.na(cell_id)) %>%
                 left_join(moll_template_xy) %>%
-            dplyr::select(x, y, prop_nspp) 
+            dplyr::select(x, y, prop_nspp)
                         # %>%
            # rast(., type = "xyz", crs = moll_template)
-                        
+
                   qsave(rast_impact_nspp, glue(file.path(biodiv_dir, "int/terrestrial_aggregation/impact_maps_by_taxon_across_ingredient/{diet}/{fcr}/{allocation}_{taxa}_nspp.qs")))
 
 
@@ -576,7 +574,7 @@ for(taxa in taxa_types){
   }
 }
 
-# stopCluster(cl)
+stopCluster(cl)
 
 ```
 
@@ -586,9 +584,9 @@ for(taxa in taxa_types){
     - takes a really long time.... like 18? hours for all scenarios
  
 ```{r}
-diet_types <- c("plant-dominant", "fish-dominant")
+diet_types <- c("fish-dominant", "plant-dominant")
 fcr_types <- c("regular", "efficient")
-allocation_types <- c("ge", "mass")
+allocation_types <- c("ge", "mass", "economic")
 taxa_types <- c("Amphibians", "Bird", "Marine mammal", "Marine plant", "Reptiles", "arthropods", "cephalopods", "cnidaria", "corals", "echinoderms", "elasmobranchs", "fish", "molluscs", "sponges")
 
 for(taxa in taxa_types){
@@ -650,8 +648,6 @@ for(diet in diet_types){
         filter(!is.na(cell_id)) %>%
                 left_join(moll_template_xy) %>%
             dplyr::select(x, y, prop_mean)
-             # %>%
-            # rast(., type = "xyz", crs = moll_template)
       
       qsave(rast_impact, glue(file.path(biodiv_dir, "int/marine_aggregation/impact_maps_by_taxon_across_ingredient/{diet}/{fcr}/{allocation}_{taxa}_mean_prop.qs")))
       
@@ -660,8 +656,6 @@ for(diet in diet_types){
         filter(!is.na(cell_id)) %>%
                 left_join(moll_template_xy) %>%
             dplyr::select(x, y, prop_sd)
-            # %>%
-            # rast(., type = "xyz", crs = moll_template)
       
             qsave(rast_impact_sd, glue(file.path(biodiv_dir, "int/marine_aggregation/impact_maps_by_taxon_across_ingredient/{diet}/{fcr}/{allocation}_{taxa}_sd_prop.qs")))
 
@@ -671,8 +665,6 @@ for(diet in diet_types){
         filter(!is.na(cell_id)) %>%
                 left_join(moll_template_xy) %>%
             dplyr::select(x, y, prop_nspp) 
-                        # %>%
-            # rast(., type = "xyz", crs = moll_template)
                         
                   qsave(rast_impact_nspp, glue(file.path(biodiv_dir, "int/marine_aggregation/impact_maps_by_taxon_across_ingredient/{diet}/{fcr}/{allocation}_{taxa}_nspp.qs")))
                   
@@ -681,8 +673,6 @@ for(diet in diet_types){
         filter(!is.na(cell_id)) %>%
                 left_join(moll_template_xy) %>%
             dplyr::select(x, y, prop_ext_risk) 
-      #%>%
-       #     rast(., type = "xyz", crs = moll_template)
       
       qsave(rast_ext, glue(file.path(biodiv_dir, "int/marine_aggregation/impact_maps_by_taxon_across_ingredient/{diet}/{fcr}/{allocation}_{taxa}_mean_ext_risk.qs")))
       
@@ -691,8 +681,6 @@ for(diet in diet_types){
         filter(!is.na(cell_id)) %>%
                 left_join(moll_template_xy) %>%
             dplyr::select(x, y, sd_ext_risk) 
-            # %>%
-            # rast(., type = "xyz", crs = moll_template)
       
       qsave(rast_ext_sd, glue(file.path(biodiv_dir, "int/marine_aggregation/impact_maps_by_taxon_across_ingredient/{diet}/{fcr}/{allocation}_{taxa}_sd_ext_risk.qs")))
 
@@ -711,9 +699,8 @@ Now we need to combine the taxa which have both marine and terrestrial impacts (
 
 ```{r}
 # establish scenarios
-diet_types <- c("plant-dominant", "fish-dominant")
-fcr_types <- c("regular", "efficient")
-allocation_types <- c("ge", "mass")
+diet_types <- c("fish-dominant", "plant-dominant")
+allocation_types <- c("ge", "mass", "economic")
 calc_types <- c("mean_prop", "sd_prop", "nspp", "mean_ext_risk") # deleted sd ext risk.. was causing problems
 taxa_types <- c("Amphibians", "Bird", "Marine mammal", "Marine plant", "Reptiles", "arthropods", "cephalopods", "cnidaria", "corals", "echinoderms", "elasmobranchs", "fish", "molluscs", "sponges", "Terrestrial mammal")
 
@@ -771,7 +758,7 @@ Save as .qs and delta as well
 
 ```{r}
 
-allocations <- c("ge", "mass")
+allocations <- c("ge", "mass", "economic")
 calc_types <- c("nspp", "mean_prop", "sd_prop", "mean_ext_risk")
 taxon <- c("Amphibians", "Bird", "Marine mammal", "Marine plant", "Reptiles", "arthropods", "cephalopods", "cnidaria", "corals", "echinoderms", "elasmobranchs", "fish", "molluscs", "sponges", "Terrestrial mammal")
 
@@ -859,30 +846,30 @@ foreach(raw_material = raw_materials,
       # diet = "fish-dominant"
       # fcr = "regular"
       # allocation = "economic"
-      
+
       if(file.exists(glue(file.path(biodiv_dir, "int/terrestrial_aggregation/impact_maps_across_taxon_by_material/{diet}/{fcr}/{allocation}_{raw_material}_mean_prop.qs")))){
         message("file exists... skipping")
         next()
       }
 
       all_files <- list.files(file.path(biodiv_dir, "output/impact_maps_by_spp_ingredient_lists"), pattern = glue(".*_{diet}_{fcr}_{raw_material}_.*_{allocation}"), full.names = TRUE)
-      
+
       if(length(all_files) == 0){
         message("skipping because not a category")
         next()
       }
-      
+
       all_files_list <- lapply(all_files, qread)
 
       all_impact_df <- data.frame(cell_id = NA, mean_prop = NA, sd_prop = NA, nspp = NA, mean_ext_risk = NA, sd_ext_risk = NA)
 
       for(i in 1:14){
               # i = 4
-                
-        
+
+
         i_dfs <- lapply(all_files_list, function(x) x[[i]])
 
-        
+
  combined_dataframe <- bind_rows(i_dfs) %>%
     filter(!is.na(cell_id)) %>%
   as.data.table() %>%
@@ -900,51 +887,51 @@ foreach(raw_material = raw_materials,
   ungroup() %>%
   as.data.frame()
 
-      
+
         all_impact_df <- rbind(all_impact_df, combined_dataframe)
-        
+
       }
-      
+
       rast_impact <- all_impact_df %>%
         dplyr::select(cell_id, mean_prop) %>%
         filter(!is.na(cell_id)) %>%
                 left_join(moll_template_xy) %>%
-            dplyr::select(x, y, mean_prop) 
-      
+            dplyr::select(x, y, mean_prop)
+
       qsave(rast_impact, glue(file.path(biodiv_dir, "int/terrestrial_aggregation/impact_maps_across_taxon_by_material/{diet}/{fcr}/{allocation}_{raw_material}_mean_prop.qs")))
-      
-      
+
+
             rast_ext <- all_impact_df %>%
         dplyr::select(cell_id, mean_ext_risk) %>%
         filter(!is.na(cell_id)) %>%
                 left_join(moll_template_xy) %>%
             dplyr::select(x, y, mean_ext_risk)
-      
+
       qsave(rast_ext, glue(file.path(biodiv_dir, "int/terrestrial_aggregation/impact_maps_across_taxon_by_material/{diet}/{fcr}/{allocation}_{raw_material}_mean_ext_risk.qs")))
-      
+
                   rast_ext_sd <- all_impact_df %>%
         dplyr::select(cell_id, sd_ext_risk) %>%
         filter(!is.na(cell_id)) %>%
                 left_join(moll_template_xy) %>%
-            dplyr::select(x, y, sd_ext_risk) 
-      
+            dplyr::select(x, y, sd_ext_risk)
+
       qsave(rast_ext_sd, glue(file.path(biodiv_dir, "int/terrestrial_aggregation/impact_maps_across_taxon_by_material/{diet}/{fcr}/{allocation}_{raw_material}_sd_ext_risk.qs")))
-      
+
             rast_impact_sd <- all_impact_df %>%
         dplyr::select(cell_id, sd_prop) %>%
         filter(!is.na(cell_id)) %>%
                 left_join(moll_template_xy) %>%
-            dplyr::select(x, y, sd_prop) 
-      
+            dplyr::select(x, y, sd_prop)
+
             qsave(rast_impact_sd, glue(file.path(biodiv_dir, "int/terrestrial_aggregation/impact_maps_across_taxon_by_material/{diet}/{fcr}/{allocation}_{raw_material}_sd_prop.qs")))
 
-            
+
                         rast_impact_nspp <- all_impact_df %>%
         dplyr::select(cell_id, nspp) %>%
         filter(!is.na(cell_id)) %>%
                 left_join(moll_template_xy) %>%
-            dplyr::select(x, y, nspp) 
-                        
+            dplyr::select(x, y, nspp)
+
                   qsave(rast_impact_nspp, glue(file.path(biodiv_dir, "int/terrestrial_aggregation/impact_maps_across_taxon_by_material/{diet}/{fcr}/{allocation}_{raw_material}_nspp.qs")))
 
 
@@ -960,11 +947,11 @@ stopCluster(cl)
 
 ## Aggregate marine impacts 
 
- - Take mean prop impacted, sd prop impacted, mean extinction risk, sd extinction risk, and nspp impacted by taxon across ingredient for marine species
+ - Take mean prop impacted, sd prop impacted, mean extinction risk, sd extinction risk, and nspp impacted across taxon by material for marine species
     - takes a really long time.... like 9 hours for all scenarios
  
 ```{r}
-diet_types <- c("plant-dominant", "fish-dominant")
+diet_types <- c("fish-dominant", "plant-dominant")
 fcr_types <- c("regular", "efficient")
 allocation_types <- c("ge", "mass", "economic")
 raw_materials <- c("forage fish", "trimmings fish")
@@ -974,10 +961,10 @@ num_cores <- 2 # just try 2, these can get really large I think
 cl <- makeCluster(num_cores)
 registerDoParallel(cl)
 
-foreach(raw_material = raw_materials,
+foreach(allocation = allocation_types,
         .packages = c('terra', 'qs', 'tidyverse', 'tools', 'strex', 'glue', 'data.table')) %dopar% {
   for(diet in diet_types){
-    for(allocation in allocation_types){
+    for(raw_material in raw_materials){
         for(fcr in fcr_types){
           
         # diet = "plant-dominant"
@@ -1085,11 +1072,11 @@ Rasterize and save the file into the output folder since terra won't work in par
 
 ```{r}
 # establish scenarios
-diet_types <- c("plant-dominant", "fish-dominant")
+diet_types <- c("fish-dominant", "plant-dominant")
 fcr_types <- c("regular", "efficient")
 allocation_types <- c("ge", "mass", "economic")
 calc_types <- c("mean_prop", "sd_prop", "nspp", "mean_ext_risk", "sd_ext_risk") # deleted sd ext risk.. was causing problems
-raw_materials <- c("trimmings fish", "forage fish", "Maize", "Pulses", "Soybean", "Wheat", "CropsNES", "Rapeseed", "Sunflower")
+raw_materials <- c("forage fish", "trimmings fish")
 
 for(diet in diet_types){
 for(raw_material in raw_materials){
@@ -1097,14 +1084,11 @@ for(raw_material in raw_materials){
     for(allocation in allocation_types){
       for(calc_type in calc_types){
       
-     
         # diet = "plant-dominant"
         # fcr = "regular"
         # allocation = "economic"
         # calc_type <- "mean_prop"
         # raw_material <- "trimmings fish"
-        
-        
       
       all_files <- c(
         list.files(glue(file.path(biodiv_dir, "int/terrestrial_aggregation/impact_maps_across_taxon_by_material/{diet}/{fcr}")), pattern = glue("{allocation}_{raw_material}_{calc_type}.qs"), full.names = TRUE), 
@@ -1121,10 +1105,10 @@ for(raw_material in raw_materials){
       writeRaster(total_rast, glue(file.path(biodiv_dir, "output/impact_maps_across_taxon_by_material/{diet}/{fcr}/{allocation}_{raw_material}_{calc_type}.tif")), overwrite = TRUE)
             
             
+        }
       }
     }
   }
-}
 }
 
 ```
@@ -1136,7 +1120,7 @@ Save as .qs and delta as well
 
 allocations <- c("ge", "mass", "economic")
 calc_types <- c("nspp", "mean_prop", "sd_prop", "mean_ext_risk")
-raw_materials <- c("trimmings fish", "forage fish", "Maize", "Pulses", "Soybean", "Wheat", "CropsNES", "Rapeseed", "Sunflower")
+raw_materials <- c("forage fish", "trimmings fish")
 
 for(allocation_type in allocations){
     for(raw_material in raw_materials){

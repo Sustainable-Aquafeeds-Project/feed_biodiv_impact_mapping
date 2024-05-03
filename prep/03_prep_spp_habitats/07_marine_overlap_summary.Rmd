@@ -113,5 +113,18 @@ mean(test_marine$impact_total, na.rm = TRUE) # 1.50376
 ```
 
 
+```{r}
+fcr_comparison_df <- impact_vuln %>% 
+  filter(allocation == "economic") %>%
+  pivot_wider(names_from = fcr_type, values_from = impact_total) %>%
+  mutate(difference = regular - efficient) %>%
+  mutate(percent_difference = ((difference)/regular)*100) %>%
+  mutate(percent_difference = ifelse(is.nan(percent_difference), 0, percent_difference)) %>%
+  filter(vulnerability != 0,
+         percent_difference >0)
+
+test <- fcr_comparison_df %>% 
+  filter(percent_difference < 0) # "arthropods"    "molluscs"      "echinoderms"   "elasmobranchs"
+```
 
 

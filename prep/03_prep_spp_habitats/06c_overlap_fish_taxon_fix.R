@@ -112,12 +112,13 @@ spp_info_df_fish %>%
 ## perfect
 
 allocations <- unique(spp_info_df_fish$allocation)
-allocations <- c("economic", "mass", "ge")
 diets <- unique(spp_info_df_fish$diet)
+diets <- c("fish-dominant")
 ingredients <- unique(spp_info_df_fish$ingredient)
 fish_types <- unique(spp_info_df_fish$fish_type)
+fish_types <- c("forage fish")
 spp_types <- unique(spp_info_df_fish$taxon)
-fcrs <- c("regular", "efficient")
+fcrs <- c("regular")
 
 for(tx_type in spp_types){
 
@@ -155,10 +156,10 @@ for(tx_type in spp_types){
 
           outf_mean_df <- glue(file.path(biodiv_dir, "int/aoh_impacts_marine/{tx_type}_{diet_type}_{fcr}_{fs_type}_{ingredient_type}_{allocation_type}.rds"))
 
-          if(file.exists(glue(file.path(biodiv_dir, "output/impact_maps_by_spp_ingredient_lists/{tx_type}_{diet_type}_{fcr}_{fs_type}_{ingredient_type}_{allocation_type}.qs")))) {
-            message('Rasters exist for taxon ', tx_type, ' for pressure... skipping!')
-            next()
-          }
+          # if(file.exists(glue(file.path(biodiv_dir, "output/impact_maps_by_spp_ingredient_lists/{tx_type}_{diet_type}_{fcr}_{fs_type}_{ingredient_type}_{allocation_type}.qs")))) {
+          #   message('Rasters exist for taxon ', tx_type, ' for pressure... skipping!')
+          #   next()
+          # }
 
           tx_vuln_df <- spp_info_df_fish %>%
             filter(taxon == tx_type,

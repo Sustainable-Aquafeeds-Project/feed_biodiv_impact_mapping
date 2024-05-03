@@ -408,9 +408,6 @@ watson_cells <- read.csv(file.path(watson_dir, "v5.0/Codes_cells.csv"))
 
 carbon_conversion <- 9
 
-# FOFM_props <- FOFM_props %>% 
-#   filter(fcr_type == "efficient") # just running efficient right now
-
 forage_npp <- foragefish %>% 
   left_join(FOFM_props, by = c("iso3c", "TaxonName")) %>%
   filter(!is.na(ingredient)) %>%
@@ -450,8 +447,7 @@ trim_tls <- read.csv(here("prep/02_feed/data/trimmings_fish_tls.csv"))
 
 trimmings_fish <- readRDS(file.path(watson_dir, "v5.0/int/all_catch_trimmingsfish.rds"))
 
-trim_props <- readRDS(here("prep/02_feed/data/embodied_FMFO_trimmings_rgns.rds")) # %>%
-#   filter(fcr_type == "efficient")
+trim_props <- readRDS(here("prep/02_feed/data/embodied_FMFO_trimmings_rgns.rds"))
 
 trim_npp <- 
  trimmings_fish %>% 
@@ -488,7 +484,6 @@ trim_npp <-
 
 
 #Bind the forage and trimmings catch npp per cell
-
 all_fish_npp <- 
   bind_rows(forage_npp |> select(diet, fcr_type, allocation_type, ingredient, water_col_position, LonCentre, LatCentre, area_fmfo, fmfo_embodied_fish, area_fmfo_bycatch),
             trim_npp |> select(diet, fcr_type, allocation_type, ingredient, water_col_position, LonCentre, LatCentre, area_fmfo, fmfo_embodied_fish, area_fmfo_bycatch)) |> 
@@ -498,9 +493,6 @@ all_fish_npp <-
             area_fmfo_bycatch = sum(area_fmfo_bycatch, na.rm = TRUE)) |> 
   ungroup()
 
-
-all_fish_npp <- trim_npp
-
 ## save as rasters 
 
 diets <- unique(all_fish_npp$diet)
@@ -509,12 +501,11 @@ allocations <- unique(all_fish_npp$allocation_type)
 depth_positions <- unique(all_fish_npp$water_col_position)
 fcrs <- unique(all_fish_npp$fcr_type)
 
-## had to run trim_npp and forage_npp separately due to memory constraints...
-diets <- unique(trim_npp$diet)
-ingredients <- unique(trim_npp$ingredient)
-allocations <- unique(trim_npp$allocation_type)
-depth_positions <- unique(trim_npp$water_col_position)
-fcrs <- unique(trim_npp$fcr_type)
+
+diets <- c("fish-dominant")
+fcrs <- c("regular")
+ingredients <- c("fish meal", "fish oil")
+
 
 for(diet_type in diets){
   for(ingredient_type in ingredients){
@@ -572,11 +563,6 @@ for(diet_type in diets){
 }
 
 
-## old data
-# test_ben <- rast(here("prep/02_feed/output/plant-dominant/trimmings fish_fish meal, cut offs_mass_benthic_catch_A.tif"))
-# test_pel <- rast(here("prep/02_feed/output/plant-dominant/trimmings fish_fish meal, cut offs_mass_pelagic_catch_A.tif"))
-# 
-# global(test_ben, "sum", na.rm = TRUE) + global(test_pel, "sum", na.rm = TRUE)  # 2513.923 km2
 
 test_ben <- rast(here("prep/02_feed/output/plant-dominant/regular/trimmings fish_fish meal, cut offs_mass_benthic_catch_A.tif"))
 test_pel <- rast(here("prep/02_feed/output/plant-dominant/regular/trimmings fish_fish meal, cut offs_mass_pelagic_catch_A.tif"))
@@ -584,6 +570,17 @@ test_pel <- rast(here("prep/02_feed/output/plant-dominant/regular/trimmings fish
 global(test_ben, "sum", na.rm = TRUE) + global(test_pel, "sum", na.rm = TRUE)  # 2306.942 km2
 
 ## looks good
+
+
+
+test_reg <- rast(here("prep/02_feed/output/fish-dominant/regular/forage fish_fish meal_economic_benthic_catch_A.tif"))
+  
+test_eff <- rast(here("prep/02_feed/output/fish-dominant/efficient/forage fish_fish meal_economic_benthic_catch_A.tif"))
+
+
+test_diff <- (test_reg - test_eff)/test_reg
+
+plot(test_diff) # should all be ~0.1; 10% decrease in FCR
 ```  
 
 Data checking:

@@ -108,7 +108,7 @@ diet_fcr_crop_ingredients <- unique(crop_ingredient_cats$diet_fcr_crop_ingredien
 
 for(tx_type in spp_types){
   
- # tx_type = "Bird"
+ # tx_type = "Terrestrial mammal"
   
   tx_vuln_df <- spp_info_df %>%
     filter(spp_type == tx_type)

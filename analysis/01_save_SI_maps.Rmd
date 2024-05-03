@@ -113,7 +113,7 @@ all_overlap <- rbind(marine_overlap, terrestrial_overlap)
 hab_areas <- all_overlap %>% 
   distinct(sciname, spp_type, total_hab_area)
 
-saveRDS(hab_areas, here("prep/03_prep_spp_habitats/output/all_spp_hab_areas.rds")) 
+saveRDS(hab_areas, here("analysis/int/all_spp_hab_areas.rds")) 
 
 all_overlap <- all_overlap %>%
   dplyr::select(-total_hab_area)
@@ -565,6 +565,260 @@ loop_loop_df <- loop_df %>%
   }
     }
 }
+
+stopCluster(cl)
+
+```
+
+Calculate and save coefficient of variation maps by each of the above categories (across taxa and material), (by taxa, across material), (across taxa by material)
+
+Across taxa and materials 
+
+```{r}
+
+allocation_types <- c("mass", "economic", "ge")  
+diets <- c("fish-dominant", "plant-dominant")
+fcrs <- c("regular", "efficient")
+
+num_cores <- 3
+cl <- makeCluster(num_cores)
+registerDoParallel(cl)
+
+
+foreach(allocation_type = allocation_types,
+        .packages = c('stringr', 'qs', 'tidyverse', 'tools', 'strex', 'glue', 'cowplot', 'here')) %dopar% {
+  
+  # allocation_type = "economic"
+  
+ filepath_mean <- glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_ingredient/{allocation_type}_mean_prop.qs"))
+ 
+  filepath_sd <- glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_ingredient/{allocation_type}_sd_prop.qs"))
+
+loop_df_mean <-  qs::qread(filepath_mean) %>%
+  dplyr::select(-calc_type) %>%
+  rename(mean_prop = value)
+
+loop_df_sd <-  qs::qread(filepath_sd) %>%
+    dplyr::select(-calc_type) %>%
+  rename(sd_prop = value)
+
+loop_df_all <- loop_df_mean %>%
+  left_join(loop_df_sd) %>%
+  mutate(cv = sd_prop/mean_prop)
+
+  
+  fill_name = "Coefficient\nof variation"
+  
+  plot_list <- list()
+  
+  for(diet_type in diets){
+    for(fcr in fcrs){
+
+      # diet_type = "plant-dominant"
+      # fcr = "regular"
+      
+  loop_loop_df <- loop_df_all %>%
+    filter(diet == diet_type, 
+           fcr_type == fcr)
+  
+  loop_plot <-  ggplot() + 
+      geom_tile(data = loop_loop_df, aes(x = long, y = lat, fill = cv, color = cv)) +
+      geom_sf(data = countries_shp, fill = NA, colour = "grey") + 
+       scale_fill_gradientn(colors = palette_red, na.value = "white") +
+            scale_color_gradientn(colors = palette_red, na.value = "white") +
+            geom_sf(data = globe_border,
+            fill = NA, color = 'grey70', 
+            size = .1) +
+    scale_x_continuous(expand = c(0, 0)) +
+    scale_y_continuous(expand = c(0, 0)) +
+    theme_void() +
+      theme(plot.title = element_text(hjust = 0.5), 
+          axis.title = element_blank(),
+          axis.text = element_blank(),
+          axis.ticks = element_blank(),
+          legend.margin = margin(r = 10)) + # add a margin to legend text so it isn't cut off when saving 
+  labs(fill = fill_name,
+       title = glue("{diet_type}, {fcr}")) + 
+     guides(color = "none")
+        
+      plot_list[[length(plot_list) + 1]] <- loop_plot
+
+    }
+  } 
+
+ggsave(glue(here(this_dir, "SI_plots/across_taxon_ingredient/{allocation_type}_cv_plot.png")), plot = plot_grid(plotlist = plot_list, nrow = 2), width = 10, height = 8, bg = "white")
+
+}
+
+stopCluster(cl)
+
+```
+
+
+By taxa across materials
+
+```{r}
+diets <- c("fish-dominant", "plant-dominant")
+fcrs <- c("regular", "efficient")
+allocations <- c("economic", "ge", "mass")
+taxon <- unique(all_overlap$spp_type)
+
+num_cores <- 3
+cl <- makeCluster(num_cores)
+registerDoParallel(cl)
+
+
+foreach(allocation_type = allocations,
+        .packages = c('stringr', 'qs', 'tidyverse', 'tools', 'strex', 'glue', 'cowplot', 'here')) %dopar% {
+    for(taxa_type in taxon){
+
+# allocation_type = "economic"
+# taxa_type = "Bird"
+
+  loop_df_mean <- qread(glue(file.path(impact_maps_dir, "csvs/impact_maps_by_taxon_across_ingredient/{allocation_type}_{taxa_type}_mean_prop.qs"))) %>%
+      dplyr::select(-calc_type) %>%
+  rename(mean_prop = value)
+        
+  loop_df_sd <- qread(glue(file.path(impact_maps_dir, "csvs/impact_maps_by_taxon_across_ingredient/{allocation_type}_{taxa_type}_sd_prop.qs"))) %>%
+      dplyr::select(-calc_type) %>%
+  rename(sd_prop = value)
+  
+  
+  loop_df_all <- loop_df_mean %>%
+    left_join(loop_df_sd) %>%
+    mutate(cv = sd_prop/mean_prop)
+
+  
+    fill_name = "Coefficient\nof variation"
+
+  
+  plot_list <- list()
+  
+  for(diet_type in diets){
+    for(fcr in fcrs){
+
+      # diet_type = "plant-dominant"
+      # fcr = "efficient"
+      
+  loop_loop_df <- loop_df_all %>%
+    filter(diet == diet_type, 
+           fcr_type == fcr)
+  
+  
+  loop_plot <-  ggplot() + 
+      geom_tile(data = loop_loop_df, aes(x = long, y = lat, fill = cv, color = cv)) +
+            geom_sf(data = countries_shp, fill = NA, colour = "grey") + 
+       scale_fill_gradientn(colors = palette_red, na.value = "white") +
+        scale_color_gradientn(colors = palette_red, na.value = "white") +
+            geom_sf(data = globe_border,
+            fill = NA, color = 'grey70', 
+            size = .1) +
+    scale_x_continuous(expand = c(0, 0)) +
+    scale_y_continuous(expand = c(0, 0)) +
+    theme_void() +
+      theme(plot.title = element_text(hjust = 0.5), 
+          axis.title = element_blank(),
+          axis.text = element_blank(),
+          axis.ticks = element_blank(),
+          legend.margin = margin(r = 10)) + # add a margin to legend text so it isn't cut off when saving 
+  labs(fill = fill_name,
+       title = glue("{diet_type}, {fcr}")) + 
+     guides(color = "none") 
+        
+      plot_list[[length(plot_list) + 1]] <- loop_plot
+
+    }
+  } 
+
+ggsave(glue(here(this_dir, "SI_plots/by_taxa/{allocation_type}_{taxa_type}_cv_plot.png")), plot = plot_grid(plotlist = plot_list, nrow = 2), width = 10, height = 8, bg = "white")
+
+    }
+        }
+stopCluster(cl)
+
+
+
+```
+
+
+Global maps by raw material across taxon
+
+```{r}
+
+allocations <- c("economic", "ge", "mass")
+raw_mats <- c("Soybean", "Wheat", "Sunflower", "CropsNES", "Rapeseed", "Maize", "forage fish", "trimmings fish", "Pulses")
+
+num_cores <- 3
+cl <- makeCluster(num_cores)
+registerDoParallel(cl)
+
+foreach(allocation_type = allocations,
+        .packages = c('stringr', 'qs', 'tidyverse', 'tools', 'strex', 'glue', 'cowplot', 'here')) %dopar% {
+    for(raw_mat in raw_mats){
+        
+      # raw_mat = "Soybean"
+      # allocation_type = "economic"
+      # type = "sd_prop"
+        
+                loop_df_mean <- qread(glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_by_material/{allocation_type}_{raw_mat}_mean_prop.qs"))) %>%
+                    dplyr::select(-calc_type) %>%
+  rename(mean_prop = value)
+                loop_df_sd <- qread(glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_by_material/{allocation_type}_{raw_mat}_sd_prop.qs"))) %>%
+                    dplyr::select(-calc_type) %>%
+  rename(sd_prop = value)
+                
+            loop_df_all <- loop_df_mean %>%
+              left_join(loop_df_sd) %>%
+              mutate(cv = sd_prop/mean_prop)
+ 
+diets <- unique(loop_df_all$diet)
+  
+  fill_name = "Coefficient\nof variation"
+
+  plot_list <- list()
+  
+  for(diet_type in diets){
+    for(fcr in fcrs){
+
+      # diet_type = "plant-dominant"
+      # fcr = "efficient"
+      
+  loop_loop_df <- loop_df_all %>%
+    filter(diet == diet_type, 
+           fcr_type == fcr)
+
+  
+  loop_plot <-  ggplot() + 
+      geom_tile(data = loop_loop_df, aes(x = long, y = lat, fill = cv, color = cv)) +
+            geom_sf(data = countries_shp, fill = NA, colour = "grey") + 
+       scale_fill_gradientn(colors = palette_red, na.value = "white") +
+            scale_color_gradientn(colors = palette_red, na.value = "white") +
+            geom_sf(data = globe_border,
+            fill = NA, color = 'grey70', 
+            size = .1) +
+    scale_x_continuous(expand = c(0, 0)) +
+    scale_y_continuous(expand = c(0, 0)) +
+    theme_void() +
+      theme(plot.title = element_text(hjust = 0.5), 
+          axis.title = element_blank(),
+          axis.text = element_blank(),
+          axis.ticks = element_blank(),
+          legend.margin = margin(r = 10)) + # add a margin to legend text so it isn't cut off when saving 
+  labs(fill = fill_name,
+       title = glue("{diet_type}, {fcr}")) + 
+     guides(color = "none")
+        
+      plot_list[[length(plot_list) + 1]] <- loop_plot
+
+    }
+  } 
+
+ggsave(glue(here(this_dir, "SI_plots/by_material/{allocation_type}_{raw_mat}_cv_plot.png")), plot = plot_grid(plotlist = plot_list, nrow = 2), width = 10, height = 8, bg = "white")
+
+
+  }
+}
+
 
 stopCluster(cl)
 

@@ -110,18 +110,17 @@ spp_info_df <- readRDS(file.path(biodiv_dir, "int/spp_vuln_depth_info.rds")) %>%
 ## for fish species, need to split in half, and then take species weighted average. My server is memory limited and can't handle all 9k at once...  
 
 allocations <- unique(spp_info_df$allocation)
-allocations <- c("ge")
 diets <- unique(spp_info_df$diet)
+diets <- c("fish-dominant")
 ingredients <- unique(spp_info_df$ingredient)
-ingredients <- c("fish oil")
+ingredients <- c("fish meal")
 fish_types <- unique(spp_info_df$fish_type)
 fish_types <- c("forage fish")
-fcrs <- c("efficient")
+fcrs <- c("regular")
 spp_types <- unique(spp_info_df$taxon)
-indices_to_remove <- grep("fish|polychaetes|echinoderms|molluscs|arthropods|elasmobranchs", spp_types) # fish and polychaetes are the ones you don't want (we split fish in next script and polychaetes have no impacts)
+indices_to_remove <- grep("fish|polychaetes", spp_types) # fish and polychaetes are the ones you don't want (we split fish in next script and polychaetes have no impacts)
 spp_types <- spp_types[-indices_to_remove] # remove fish category... we handle this separately in the next script `06c_overlap_fish_fix.R`
 spp_types <- c("molluscs")
-
 
 for(tx_type in spp_types){
   

@@ -91,7 +91,7 @@ directory <- sprintf("prep/02_feed/output/%s/%s", diet, fcr)
 files <- list.files(directory, full.names = TRUE)
 
 filtered_files <- files[grepl("fish oil|fish meal", files)]
-filtered_files <- filtered_files[grepl("trimmings", filtered_files)]
+filtered_files <- filtered_files[grepl("forage", filtered_files)]
 # filtered_files <- filtered_files[grepl("economic", filtered_files)]
 # filtered_files <- filtered_files[grepl("_A", filtered_files)]
 
@@ -136,6 +136,16 @@ test_plant <- list.files(here("prep/02_feed/output/plant-dominant"), full.names 
 test_plant_res <-  list.files(file.path(biodiv_dir, "int/resampled_ingredient_rasts/plant-dominant"), full.names = TRUE, recursive = TRUE)
 
 # perfect 
+
+
+
+test_reg <- rast(file.path(biodiv_dir, "int/resampled_ingredient_rasts/fish-dominant/regular/forage fish_fish meal_economic_pelagic_catch_A.tif"))
+  
+test_eff <- rast(file.path(biodiv_dir, "int/resampled_ingredient_rasts/fish-dominant/efficient/forage fish_fish meal_economic_pelagic_catch_A.tif"))
+
+diff <- (test_reg - test_eff)/test_reg
+
+plot(diff) # ok cool
 
 ```
 
@@ -199,7 +209,7 @@ test_fd_eff <- rast(here("prep/02_feed/output/fish-dominant/efficient/forage fis
 test_fd_reg <- rast(here("prep/02_feed/output/fish-dominant/regular/forage fish_fish meal_economic_pelagic_catch_A.tif"))
 
  diff <- (test_fd_reg - test_fd_eff)/test_fd_reg
-
- plot(diff)
+ 
+ plot(diff) # cool
 ```
 

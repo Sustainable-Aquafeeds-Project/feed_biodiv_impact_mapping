@@ -429,7 +429,7 @@ salmon_production <- production %>%
 ```
 
 Check to see how efficient FCR impacts compare to regular. 
- - Does a 10% decrease in FCR = 10% decrease in impacts? 
+ - Does a 10% decrease in FCR = 10% decrease in impacts? YES - because we assume trade relationships stay the same.
    - Look at a species level, average impact level, etc
    
 ```{r}
@@ -440,19 +440,12 @@ fcr_comparison_df <- all_overlap %>%
   mutate(difference = regular - efficient) %>%
   mutate(percent_difference = ((difference)/regular)*100) %>%
   mutate(percent_difference = ifelse(is.nan(percent_difference), 0, percent_difference)) %>%
-  filter(vulnerability != 0)
+  filter(vulnerability != 0, 
+         percent_difference != 0) # perfect... all 10 or very close to it
 
 test <- fcr_comparison_df %>% 
   filter(percent_difference < 0)
 
-unique(test$diet) # [1] "fish-dominant"
-unique(test$taxon) #  [1] "Sponges"        "Arthropods"     "Finfish"        "Cephalopods"    "Cnidaria"       # "Molluscs"      
-#  [7] "Reptiles"       "Echinoderms"    "Marine plants"  "Corals"         "Elasmobranchs"  "Marine mammals"
-# [13] "Birds"          "Amphibians"  
-unique(test$ingredient) # [1] "forage fish_fish meal" "forage fish_fish oil" 
-
-# interesting.. only one without a 10% decrease in impacts from regular to efficient are fish-dominant - forage fish FMFO
-# why is this happening only in fish-dominant? 
 
 test2 <- fcr_comparison_df %>%
   filter(percent_difference != 0) %>%
@@ -460,41 +453,16 @@ test2 <- fcr_comparison_df %>%
   summarise(mean_diff = mean(percent_difference, na.rm = TRUE)) %>%
   ungroup()
 
-# # A tibble: 2 × 2
+# A tibble: 2 × 2
 #   diet           mean_diff
 #   <chr>              <dbl>
-# 1 fish-dominant       2.46
-# 2 plant-dominant     10.0 
-
-# plant-dominant scenario; always a 10% decrease in impacts if not 0. 
-
-# fish-dominant, average is 2.46. 
-
-fd_test <- fcr_comparison_df %>%
-  filter(percent_difference != 0,
-         diet == "fish-dominant") %>%
-  filter(percent_difference > 0)
-mean(fd_test$percent_difference) # 9.94408... ok so if the difference is >0 in the FD, then impacts are a 10% decrease. 
+# 1 fish-dominant       10.0
+# 2 plant-dominant      10.0
 
 
-trimmings_fd <- fcr_comparison_df %>%
-  filter(diet == "fish-dominant",
-         str_detect(ingredient, "trimmings"),
-         percent_difference != 0)
-mean(trimmings_fd$percent_difference) #  10.. ok trimmings is fine. 
 
-forage_fd <- fcr_comparison_df %>%
-  filter(diet == "fish-dominant",
-         str_detect(ingredient, "forage"),
-         percent_difference != 0) %>%
-  filter(percent_difference < 0)
-mean(forage_fd$percent_difference) #  [1] -17.18885.. so for some reason, forage fish FMFO under fish dominant is WORSE under the efficient scenario
 
-unique(forage_fd$spp_type) # [1] "sponges"       "arthropods"    "fish"          "cephalopods"   "cnidaria"      "molluscs"      "Reptiles"     
-#  [8] "echinoderms"   "Marine plant"  "corals"        "elasmobranchs" "Marine mammal" "Bird"          "Amphibians" 
-# all species
-
-## ok thats weird... lets check the global rasters:
+## Check the global rasters:
 
  filepath <- glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_ingredient/economic_mean_prop.qs"))
 
@@ -512,31 +480,8 @@ test2 <- all_df %>%
   summarise(mean_diff = mean(percent_difference, na.rm = TRUE)) %>%
   ungroup()
 
-## ok we see the same thing here... all 10% decrease for plant-dominant but fish-dominant is difference, specifically ocean cells (so forage fish)
+## ok we see the same thing here... all 10% decrease... good
 
-## lets check out the forage fish pressure rasters? 
-
-# take forage fish fish oil, pelagic catch
-
-fd_eff_rast <- rast(file.path(biodiv_dir, "int/resampled_ingredient_rasts/fish-dominant/efficient/forage fish_fish meal_economic_benthic_catch_A.tif"))
-
-fd_reg_rast <- rast(file.path(biodiv_dir, "int/resampled_ingredient_rasts/fish-dominant/regular/forage fish_fish meal_economic_benthic_catch_A.tif"))
-
-
-diff_rast <- (fd_reg_rast - fd_eff_rast)/fd_reg_rast
-
-plot(diff_rast)
-
-
-
-pd_eff_rast <- rast(file.path(biodiv_dir, "int/resampled_ingredient_rasts/plant-dominant/efficient/forage fish_fish oil_economic_pelagic_catch_P.tif"))
-
-pd_reg_rast <- rast(file.path(biodiv_dir, "int/resampled_ingredient_rasts/plant-dominant/regular/forage fish_fish oil_economic_pelagic_catch_P.tif"))
-
-
-diff_rast <- (pd_reg_rast - pd_eff_rast)/pd_reg_rast
-
-plot(diff_rast)
 
 
 

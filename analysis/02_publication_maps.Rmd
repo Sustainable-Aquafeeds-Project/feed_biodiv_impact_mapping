@@ -359,7 +359,7 @@ all_df <-  qread(filepath) %>%
   loop_loop_df <- all_df %>%
     filter(diet == diet_type)
   
-quantile_value <- quantile(loop_loop_df$value, probs = 0.999, na.rm = TRUE)
+quantile_value <- quantile(loop_loop_df$value, probs = 0.99, na.rm = TRUE)
   
   loop_loop_df <- loop_loop_df %>% 
     mutate(value_new = ifelse(value > quantile_value, quantile_value, value))
@@ -396,6 +396,9 @@ ggsave(glue(here(this_dir, "SI_plots/economic_mean_prop.png")), plot = plot_grid
 
 Map stats!
  
+ 
+ - Look specifically at cell with highest value
+ 
 ```{r}
 
 land_eez_rgns <- read.csv(file.path(biodiv_dir, "spatial/rgns_xy_all.csv")) %>% 
@@ -419,8 +422,63 @@ maximum_location <- all_df %>%
   left_join(land_eez_rgns, by = c("long" = "x", "lat" = "y")) %>%
   left_join(moll_template_land, by = c("long" = "x", "lat" = "y")) # max value is 0.2235324 on land in Norway
 
+## how many spp impacted in that cell? 
+ filepath <- glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_ingredient/economic_nspp.qs"))
+
+nspp_df <-  qread(filepath) %>%
+  left_join(moll_template_xy, by = c("long" = "x", "lat" = "y")) %>%
+  filter(cell_id == 786772) # 39 spp impacted
+
+## how many spp are in that cell total that aren't impacted? Do I have this info saved somewhere??
+# since this is a terrestrial cell, we only need to look at terrestrial species
+
+spp_fp <- data.frame(filepath = list.files(file.path("/mnt/rdsi/raw_data/AOH_eyres/reprojected_mol_csv_fin"), full.names = TRUE)) %>%
+  mutate(species_full = str_after_last(filepath, "\\/")) %>%
+  mutate(species_id = as.numeric(str_remove_all(species_full, ".csv"))) %>%
+  left_join(iucn_ids_names, by = c("species_id" = "iucn_id")) %>%
+  dplyr::select(filepath, species_full = scientific_name, spp_type, species_id) %>%
+  mutate(spp_type = case_when(
+    spp_type == "mammals" ~ "Terrestrial mammal", 
+    spp_type == "birds" ~ "Bird",
+    spp_type == "reptiles" ~ "Reptiles",
+    spp_type == "amphibians" ~ "Amphibians"
+  ))
+
+spp_info_df <- readRDS(file.path(this_dir, "int/terrestrial_spp_habitat_suitability.rds")) %>%
+  inner_join(spp_fp, by = c("species" = "species_full", "spp_type")) %>% # change this to left join ? 
+  rename(species_full = species)
+
+
+source(here("src/fxns.R"))
+library(data.table)
+
+tx_maps <- collect_spp_rangemaps_terrestrial(spp_info_df$species_full, spp_info_df$filepath)
+
+max_cell <- tx_maps %>%
+  as.data.table() %>%
+   .[cell_id == 786772] # ok there are 97 spp total in this cell, meaning 97-39 = 58 are not impacted
+
+ all_spp_map <- tx_maps %>%
+   as.data.table() %>%
+                                                  .[ , .(
+                                                         n_spp       = length(unique(species_full))),
+                                                     by = 'cell_id'] %>%
+   as.data.frame() %>%
+   left_join(moll_template_xy) %>%
+            left_join(moll_template_xy) %>%
+            dplyr::select(x, y, n_spp) %>%
+            rast(., type = "xyz", crs = moll_template)
+ 
+ writeRaster(all_spp_map, here("data/spatial/output/terrestrial_spp_richness.tif"), overwrite = TRUE)
+
 rgn_id <- read.csv(here("data/spatial/output/region_ids.csv"))
 
+
+```
+
+Compare diet types and ncells impacted
+
+```{r}
 test <- all_df %>%
   group_by(diet, fcr_type) %>%
   summarise(prop_mean = mean(value, na.rm = TRUE)) %>%

@@ -1,0 +1,127 @@
+---
+title: "Save richness maps"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+## Setup
+
+Load libraries
+
+```{r setup, include=FALSE}
+
+library(tidyverse)
+library(here)
+library(strex)
+library(glue)
+library(qs)
+library(data.table)
+
+source(here("src/directories.R"))
+
+source(here("src/spatial.R"))
+
+setwd(dirname(rstudioapi::getSourceEditorContext()$path)) # set working directory to where this script is located
+this_dir <- getwd()
+
+biodiv_dir <- file.path(rdsi_dir, "biodiversity_impacts")
+
+impact_maps_dir <- file.path(biodiv_dir, "output")
+
+source(here("src/fxns.R"))
+
+```
+
+Save maps for number of species present in each cell for marine and terrestrial species
+
+```{r}
+iucn_ids_names <- readRDS(here(this_dir, "data/iucn/eyres_iucn_spp.rds"))
+
+spp_fp <- data.frame(filepath = list.files(file.path("/mnt/rdsi/raw_data/AOH_eyres/reprojected_mol_csv_fin"), full.names = TRUE)) %>%
+  mutate(species_full = str_after_last(filepath, "\\/")) %>%
+  mutate(species_id = as.numeric(str_remove_all(species_full, ".csv"))) %>%
+  left_join(iucn_ids_names, by = c("species_id" = "iucn_id")) %>%
+  dplyr::select(filepath, species_full = scientific_name, spp_type, species_id) %>%
+  mutate(spp_type = case_when(
+    spp_type == "mammals" ~ "Terrestrial mammal", 
+    spp_type == "birds" ~ "Bird",
+    spp_type == "reptiles" ~ "Reptiles",
+    spp_type == "amphibians" ~ "Amphibians"
+  ))
+
+
+tx_maps <- collect_spp_rangemaps_terrestrial(spp_fp$species_full, spp_fp$filepath)
+
+ all_spp_map <- tx_maps %>%
+   as.data.table() %>%
+                                                  .[ , .(
+                                                         n_spp       = length(unique(species_full))),
+                                                     by = 'cell_id'] %>%
+   as.data.frame() %>%
+   left_join(moll_template_xy) %>%
+            dplyr::select(x, y, n_spp) %>%
+            rast(., type = "xyz", crs = moll_template) %>%
+   project(., moll_template)
+ 
+ writeRaster(all_spp_map, here("data/spatial/output/terrestrial_spp_richness.tif"), overwrite = TRUE)
+
+
+## Now do marine
+ 
+ spp_fp <- data.frame(filepath = list.files(file.path("/mnt/rdsi/raw_data/aquamaps/reprojected_mol_csv"), full.names = TRUE)) %>%
+  mutate(species = str_remove_all(str_replace_all(str_after_last(filepath, "\\/"), "_", " "), ".csv"))
+ 
+ spp_info_df <- readRDS(file.path(biodiv_dir, "int/spp_vuln_depth_info.rds")) %>%
+  filter(spp_type != "Microorganisms") %>%
+   distinct(species, spp_type) %>%
+  left_join(spp_fp) %>%
+   distinct(species, spp_type, filepath)
+ 
+ for(taxa in sort(unique(spp_info_df$spp_type))){
+
+   # taxa = "Bird"
+  
+   tx_map_fps <- spp_info_df %>%
+     filter(spp_type == taxa) %>%
+     distinct(species, filepath)
+   
+  ### read in all spp maps for marine - might need to chunk this by taxon
+tx_maps <- collect_spp_rangemaps_marine(tx_map_fps$species, tx_map_fps$filepath)
+
+ all_spp_map <- tx_maps %>%
+   as.data.table() %>%
+                                                  .[ , .(
+                                                         n_spp       = length(unique(species))),
+                                                     by = 'cell_id'] %>%
+   as.data.frame() %>%
+   left_join(moll_template_xy) %>%
+            dplyr::select(x, y, n_spp) %>%
+   filter(!is.na(x)) %>%
+            rast(., type = "xyz", crs = moll_template) %>%
+   project(., moll_template)
+ 
+ writeRaster(all_spp_map, glue(here("data/spatial/output/marine_spp_richness_{taxa}.tif")), overwrite = TRUE)
+
+ }
+ 
+# stack and sum all richness maps and save 
+richness_files <- list.files(here("data/spatial/output"), pattern = "richness", full.names = TRUE) 
+
+
+richness_stack <- rast(richness_files) %>%
+  app(., "sum", na.rm = TRUE)
+  
+plot(richness_stack)
+plot(log(richness_stack + 1))
+  
+```
+
+
+
+
+
+
+
+
+

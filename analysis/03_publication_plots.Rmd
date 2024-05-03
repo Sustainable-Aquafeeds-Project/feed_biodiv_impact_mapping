@@ -31,6 +31,8 @@ biodiv_dir <- file.path(rdsi_dir, "biodiversity_impacts")
 
 impact_maps_dir <- file.path(biodiv_dir, "output")
 
+this_dir <- here("analysis/")
+
 ```
 
 ```{r}
@@ -171,6 +173,7 @@ summary_df_spp <- all_overlap_df %>%
   group_by(sciname, diet, fcr, allocation, taxon) %>%
   summarise(impact_total = sum(impact_total, na.rm = TRUE)) %>%
   ungroup() %>%
+  filter(impact_total > 0) %>%
   left_join(spp_assessed_plot_df) %>%
   left_join(spp_total_hab %>% dplyr::select(-spp_type, -id)) %>%
   mutate(prop_impact = impact_total/total_hab_area)  %>%
@@ -292,6 +295,117 @@ ggsave(here(this_dir, "MS_plots/fig2_economic_boxplot_prop.png"), width = 16, he
 
 ```
  
+Now make the same plot, but keep 0 impact species, for SI:
+
+```{r}
+
+summary_df_spp <- all_overlap_df %>%
+  group_by(sciname, diet, fcr, allocation, taxon) %>%
+  summarise(impact_total = sum(impact_total, na.rm = TRUE)) %>%
+  ungroup() %>%
+  left_join(spp_assessed_plot_df) %>%
+  left_join(spp_total_hab %>% dplyr::select(-spp_type, -id)) %>%
+  mutate(prop_impact = impact_total/total_hab_area)  %>%
+  group_by(taxon, diet, fcr) %>%
+  mutate(mean_prop = mean(prop_impact,na.rm=TRUE),
+         median_prop = median(prop_impact,na.rm=TRUE)) %>%
+  ungroup()
+
+quant_95 <- quantile(summary_df_spp$prop_impact, 0.95)
+
+summary_df_spp_out <- summary_df_spp %>%
+  filter(prop_impact >= quant_95) %>%
+  group_by(diet, fcr, allocation, taxon) %>%
+  mutate(spp_outliers = n_distinct(sciname)) %>%
+  ungroup() 
+
+join_df <- summary_df_spp_out %>%
+  distinct(taxon, diet, fcr, allocation, spp_outliers)
+
+summary_df_spp_reg <- summary_df_spp %>%
+  filter(prop_impact > quant_95) %>%
+  left_join(join_df) %>%
+  mutate(spp_impacted = spp_count_assessed - spp_outliers) 
+
+spp_assesed_reg_outlier <- distinct(summary_df_spp_reg, taxon, spp_outliers, spp_impacted) %>%
+  group_by(taxon) %>%
+  slice(1) %>%
+  mutate(total_spp = spp_outliers + spp_impacted) %>%
+    mutate(spp_impacted_str = glue("n = {spp_impacted}"),
+           spp_outliers_str = glue("n = {spp_outliers}"),
+           spp_count_assessed = glue("n = {total_spp}"))
+
+# Set the levels of the taxon variable in summary_df_test
+summary_df_spp$taxon <- with(summary_df_spp, reorder(taxon, prop_impact, FUN = function(x) mean(x)))
+
+diet_cols = c("Fish-dominant" = "#0D6EB5", "Plant-dominant" = "#7BD67F")
+
+## make boxplot of prop impacted
+
+plot1 <- ggplot(summary_df_spp, aes(x = prop_impact)) +
+  geom_point(aes(y = taxon, color = diet), alpha = 0.2, position = position_jitterdodge(dodge.width = -0.9)) + 
+  geom_vline(xintercept = 0, color = "black") +
+  geom_point(data = summary_df_spp, aes(x = mean_prop, y = taxon, group = diet),
+             position = position_dodge(width = -0.9),
+             shape = 21, color = "black", fill = "orange", size = 4) +
+     geom_boxplot(aes(y = taxon, fill = diet), outlier.fill = NA, outlier.color = NA, position = position_dodge(width = -0.9), alpha = 0, colour = "orange") +
+   geom_boxplot(aes(y = taxon, fill = diet), outlier.fill = NA, outlier.color = NA, position = position_dodge(width = -0.9), alpha = 0, fatten = NULL) +
+  theme_ohara() +
+      labs(x = "Proportion of habitat area impacted", fill = 'Diet', color = 'Diet') +
+  scale_x_continuous(expand = c(0,0), limits = c(0, quant_95)) +
+  scale_color_manual(values = diet_cols, breaks = names(diet_cols), guide = guide_legend(reverse = FALSE)) +
+  theme(panel.background = element_blank(),
+            axis.title.y = element_blank(),
+            axis.text.x = element_text(size = 16, angle = 45, hjust = 1),
+         axis.text.y = element_text(size = 16),
+        strip.text = element_text(size = 16),
+        axis.title = element_text(size = 16),
+        legend.position = "none", 
+        text = element_text(family = "Arial"))
+
+# get legend
+
+plot2 <- ggplot(summary_df_spp %>% filter(prop_impact > quant_95), aes(x = prop_impact)) +
+  geom_point(aes(y = taxon, color = diet), alpha = 0.4, position = position_jitterdodge(dodge.width = -0.9)) + 
+  geom_vline(xintercept = quant_95, color = "black") +
+  theme_ohara() +
+      labs(x = "", y = "") +
+  scale_x_continuous(expand = c(0,0), limits = c(quant_95, 0.012)) +
+  scale_color_manual(values = diet_cols, breaks = names(diet_cols), guide = guide_legend(reverse = FALSE)) +
+  theme(panel.background = element_blank(),
+            axis.title.y = element_blank(),
+            axis.text.x = element_text(size = 16, angle = 45, hjust = 1),
+         axis.text.y = element_blank(),
+        strip.text = element_text(size = 16),
+        axis.title = element_text(size = 16),
+        legend.position = "none", 
+        text = element_text(family = "arial")) +
+      geom_text(data = spp_assesed_reg_outlier, aes(label = spp_count_assessed, y = taxon),
+                x = 0.008, hjust = 0, color = 'black',
+                family = 'arial',
+                size = 6)
+
+plot1_legend <- get_legend(ggplot(summary_df_spp, aes(x = mean_prop)) +
+  geom_boxplot(aes(y = taxon, fill = diet, color = diet), 
+               width = 0.3, position = position_dodge(width = -0.7),
+               size = 0.3, outlier.size = 0.3) + 
+  theme_ohara() + 
+    theme(panel.background = element_blank(),
+            legend.text = element_text(size = 16),
+            legend.title = element_text(size = 16),
+            legend.key.size = unit(.20, 'cm'),
+            legend.background = element_blank()) + 
+    scale_fill_manual(values = diet_cols, breaks = names(diet_cols), guide = guide_legend(reverse = FALSE)) + 
+  scale_color_manual(values = diet_cols, breaks = names(diet_cols), guide = guide_legend(reverse = FALSE)) + 
+    labs(x = "Proportion of habitat area impacted", fill = 'Diet', color = 'Diet'))
+
+
+# draw plots together 
+ggdraw() + draw_plot((plot1 + plot2 +  plot_layout(widths = c(3, 1)))) + draw_plot(plot1_legend,  x = .78, y = 0.15, height = .10, width = .15) 
+
+ggsave(here(this_dir, "SI_plots/SIfig_economic_boxplot_prop.png"), width = 16, height = 9, units = "in", bg = "white") # technically for nature food the max width is 180 mm, however, I'm saving like this and adjusting save in post production because doing it here messing things up...
+```
+
 
 ```{r}
 
