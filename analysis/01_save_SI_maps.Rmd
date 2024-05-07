@@ -150,7 +150,7 @@ Maps!
 ## Save mean, sd, and nspp maps 
 
 Global impact maps across ingredients and taxon
- - dark red areas indicate >99.9th quantile of impacts
+ - dark red areas indicate >99th quantile of impacts
  - save a map for each scenario
 
 ```{r}
@@ -200,7 +200,7 @@ if(str_detect(type, "mean")){
     filter(diet == diet_type, 
            fcr_type == fcr)
   
-quantile_value <- quantile(loop_loop_df$value, probs = 0.999, na.rm = TRUE)
+quantile_value <- quantile(loop_loop_df$value, probs = 0.99, na.rm = TRUE)
   
 max_val =  round(max(loop_loop_df$value, na.rm = TRUE), 5)
 quant_val = round(quantile_value, 5)
@@ -340,7 +340,7 @@ if(str_detect(type, "mean")){
     filter(diet == diet_type, 
            fcr_type == fcr)
   
-quantile_value <- quantile(loop_loop_df$value, probs = 0.999, na.rm = TRUE)
+quantile_value <- quantile(loop_loop_df$value, probs = 0.99, na.rm = TRUE)
 
 max_val =  round(max(loop_loop_df$value), 5)
 quant_val = round(quantile_value, 5)
@@ -481,7 +481,7 @@ if(str_detect(type, "mean")){
     filter(diet == diet_type, 
            fcr_type == fcr)
   
-quantile_value <- quantile(loop_loop_df$value, probs = 0.999, na.rm = TRUE)
+quantile_value <- quantile(loop_loop_df$value, probs = 0.99, na.rm = TRUE)
   
 max_val =  round(max(loop_loop_df$value), 5)
 quant_val = round(quantile_value, 5)
@@ -887,7 +887,7 @@ loop_df_nspp <-  qs::qread(filepath_nspp) %>%
   
   for(diet_type in diets){
 
-# diet_type = "plant-dominant"
+# diet_type = "fish-dominant"
 # fcr = "regular"
       
   loop_loop_df <- loop_df_nspp %>%
@@ -928,5 +928,9 @@ ggsave(glue(here(this_dir, "SI_plots/across_taxon_ingredient/{allocation_type}_p
 
 stopCluster(cl)
 
+
+## for economic: Average proportion of species impacted across all cells is 0.31 (plant dominant) and 0.3 (fish dominant). Filtering out cells with no species impacted, average prop of species impacted is 0.68 (plant) and 0.68 (fish).
+
+## ~78% of spp are impacted, 85% are vulnerable
 ```
 

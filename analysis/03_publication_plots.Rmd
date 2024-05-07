@@ -94,6 +94,7 @@ Some stats for paper:
  - 54628 species assessed
  - 466 more spp impacted under plant-dominant
  - ~78% spp that are assessed are impacted
+ - ~85% are vulnerable
 
 ```{r}
 taxon_names <- all_overlap %>%
@@ -215,15 +216,28 @@ join_df <- summary_df_spp_out %>%
 summary_df_spp_reg <- summary_df_spp %>%
   filter(prop_impact > quant_95) %>%
   left_join(join_df) %>%
-  mutate(spp_impacted = spp_count_assessed - spp_outliers) 
+  mutate(spp_impacted = spp_count_assessed - spp_outliers) %>%
+  mutate(prop_outlier = spp_outliers/spp_count_assessed)
 
-spp_assesed_reg_outlier <- distinct(summary_df_spp_reg, taxon, spp_outliers, spp_impacted) %>%
+spp_assessed_reg_outlier <- distinct(summary_df_spp_reg, taxon, diet, spp_impacted, spp_outliers, prop_outlier) %>%
+    add_row(taxon = "Corals", diet = "Plant-dominant", spp_impacted = 249, spp_outliers = 0, prop_outlier = 0) %>%
+      add_row(taxon = "Marine plants", diet = "Plant-dominant", spp_impacted = 280, spp_outliers = 0, prop_outlier = 0) %>%
+  arrange(taxon, diet) %>% 
+  mutate(perc_outlier = round(prop_outlier, 3)*100) %>% 
+  distinct(taxon, perc_outlier) %>%
+group_by(taxon) %>%
+  summarize(perc_outlier = paste0("(", paste(perc_outlier, collapse = "%, "), "%)"))
+
+
+spp_assessed_reg <- distinct(summary_df_spp_reg, taxon, spp_impacted, spp_outliers) %>%
   group_by(taxon) %>%
   slice(1) %>%
   mutate(total_spp = spp_outliers + spp_impacted) %>%
+  left_join(spp_assessed_reg_outlier) %>%
     mutate(spp_impacted_str = glue("n = {spp_impacted}"),
            spp_outliers_str = glue("n = {spp_outliers}"),
-           spp_count_assessed = glue("n = {total_spp}"))
+           spp_count_assessed = glue("n = {total_spp}")) %>%
+      mutate(spp_count_assessed_perc = paste0(spp_count_assessed, ", ", perc_outlier))
 
 # Set the levels of the taxon variable in summary_df_test
 summary_df_spp$taxon <- with(summary_df_spp, reorder(taxon, prop_impact, FUN = function(x) mean(x)))
@@ -255,12 +269,14 @@ plot1 <- ggplot(summary_df_spp %>% filter(prop_impact > 0), aes(x = prop_impact)
 
 # get legend
 
+quant_95_round <- round(quant_95, 6)
+
 plot2 <- ggplot(summary_df_spp %>% filter(prop_impact > quant_95), aes(x = prop_impact)) +
   geom_point(aes(y = taxon, color = diet), alpha = 0.4, position = position_jitterdodge(dodge.width = -0.9)) + 
   geom_vline(xintercept = quant_95, color = "black") +
   theme_ohara() +
       labs(x = "", y = "") +
-  scale_x_continuous(expand = c(0,0), limits = c(quant_95, 0.012)) +
+  scale_x_continuous(expand = c(0,0), limits = c(quant_95, 0.012), breaks = c(quant_95, seq(0.003, 0.012, by = 0.003)), labels = c("0.000055", "0.003", "0.006", "0.009", "0.012")) +
   scale_color_manual(values = diet_cols, breaks = names(diet_cols), guide = guide_legend(reverse = FALSE)) +
   theme(panel.background = element_blank(),
             axis.title.y = element_blank(),
@@ -270,10 +286,11 @@ plot2 <- ggplot(summary_df_spp %>% filter(prop_impact > quant_95), aes(x = prop_
         axis.title = element_text(size = 16),
         legend.position = "none", 
         text = element_text(family = "arial")) +
-      geom_text(data = spp_assesed_reg_outlier, aes(label = spp_count_assessed, y = taxon),
+      geom_text(data = spp_assessed_reg, aes(label = spp_count_assessed, y = taxon),
                 x = 0.008, hjust = 0, color = 'black',
                 family = 'arial',
-                size = 6)
+                size = 6) 
+
 
 plot1_legend <- get_legend(ggplot(summary_df_spp, aes(x = mean_prop)) +
   geom_boxplot(aes(y = taxon, fill = diet, color = diet), 
@@ -291,9 +308,9 @@ plot1_legend <- get_legend(ggplot(summary_df_spp, aes(x = mean_prop)) +
 
 
 # draw plots together 
-ggdraw() + draw_plot((plot1 + plot2 +  plot_layout(widths = c(3, 1)))) + draw_plot(plot1_legend,  x = .78, y = 0.15, height = .10, width = .15) 
+p <- ggdraw() + draw_plot((plot1 + plot2 +  plot_layout(widths = c(3, 1)))) + draw_plot(plot1_legend,  x = .63, y = 0.15, height = .10, width = .15) 
 
-ggsave(here(this_dir, "MS_plots/fig2_economic_boxplot_prop.png"), width = 16, height = 9, units = "in", bg = "white") # technically for nature food the max width is 180 mm, however, I'm saving like this and adjusting save in post production because doing it here messing things up...
+ggsave(plot = p, here(this_dir, "MS_plots/fig2_economic_boxplot_prop.png"), width = 16, height = 9, units = "in", bg = "white") # technically for nature food the max width is 180 mm, however, I'm saving like this and adjusting save in post production because doing it here messing things up...
 
 ```
  
@@ -372,7 +389,8 @@ plot2 <- ggplot(summary_df_spp %>% filter(prop_impact > quant_95), aes(x = prop_
   geom_vline(xintercept = quant_95, color = "black") +
   theme_ohara() +
       labs(x = "", y = "") +
-  scale_x_continuous(expand = c(0,0), limits = c(quant_95, 0.012)) +
+scale_x_continuous(expand = c(0,0), limits = c(quant_95, 0.012), breaks = c(quant_95, seq(0.003, 0.012, by = 0.003)), labels = c("0.000042", "0.003", "0.006", "0.009", "0.012")) +
+ # scale_x_continuous(expand = c(0,0), limits = c(quant_95, 0.012)) +
   scale_color_manual(values = diet_cols, breaks = names(diet_cols), guide = guide_legend(reverse = FALSE)) +
   theme(panel.background = element_blank(),
             axis.title.y = element_blank(),
@@ -403,9 +421,9 @@ plot1_legend <- get_legend(ggplot(summary_df_spp, aes(x = mean_prop)) +
 
 
 # draw plots together 
-ggdraw() + draw_plot((plot1 + plot2 +  plot_layout(widths = c(3, 1)))) + draw_plot(plot1_legend,  x = .78, y = 0.15, height = .10, width = .15) 
+p <- ggdraw() + draw_plot((plot1 + plot2 +  plot_layout(widths = c(3, 1)))) + draw_plot(plot1_legend,  x = .63, y = 0.15, height = .10, width = .15) 
 
-ggsave(here(this_dir, "SI_plots/SIfig_economic_boxplot_prop.png"), width = 16, height = 9, units = "in", bg = "white") # technically for nature food the max width is 180 mm, however, I'm saving like this and adjusting save in post production because doing it here messing things up...
+ggsave(here(this_dir, "SI_plots/SIfig_economic_boxplot_prop.png"), width = 16, height = 9, units = "in", bg = "white", plot = p) # technically for nature food the max width is 180 mm, however, I'm saving like this and adjusting save in post production because doing it here messing things up...
 ```
 
 

@@ -77,14 +77,6 @@ am_spp_info <- am_spp_depth %>%
   dplyr::select(SpeciesID, species, mask) %>%
   distinct()
 
-# vuln_taxa <- read.csv(here("prep/03_prep_spp_habitats/data/spp_vuln_butt/vuln_gapfilled_tx.csv"))
-# taxa_seabirds <- vuln_taxa %>%
-#   filter(taxon == "seabirds") %>%
-#   distinct(species)
-# 
-# birds_spp_depth <- am_spp_depth %>%
-#   filter(species %in% c(unique(taxa_seabirds$species)))
-
 x <- list.files(am_dir_mol, full.names = TRUE)
 
 spp_done <- basename(x) %>% str_remove_all('.csv$') %>%
@@ -139,14 +131,6 @@ map_am_hcaf_to_moll <- function(s) {
       dplyr::select(prob = Probability, cell_id) %>%
       mutate(presence = 1)
 
-    # s_mol_rast <- s_mol %>%
-    #   left_join(moll_template_xy_ocean) %>%
-    #   dplyr::select(x, y, prob) %>%
-    #   rast(., type = "xyz", crs = crs(moll_template))
-    # 
-    # plot(s_mol_rast)
-
-    
     write_csv(s_mol, out_f)
   }
 }

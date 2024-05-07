@@ -1,6 +1,6 @@
 ## takes ~ 3 hours to complete! 
 
-# In this script we overlap [terrestrial area of habitat maps](https://www.nature.com/articles/s41597-022-01838-w) with our disturbance pressure maps created in the `02_feed` folder, and multiply by their vulnerability value. The goal of this script is to create impact maps, that is, the area of likely suitable habitat for each species that is exposured AND impacted to harvest of feed ingredients in salmon aquaculture. To do this, we: 
+# In this script we overlap [terrestrial area of habitat maps](https://www.researchgate.net/publication/376637364_LIFE_A_metric_for_quantitively_mapping_the_impact_of_land-cover_change_on_global_extinctions) with our disturbance pressure maps created in the `02_feed` folder, and multiply by their vulnerability value. The goal of this script is to create impact maps, that is, the area of likely suitable habitat for each species that is exposured AND impacted to harvest of feed ingredients in salmon aquaculture. To do this, we: 
 #   
 # - We have created maps of disturbance (km2) of harvest of crop aquafeed ingredients. They have these categories: 
 #   - Ingredient type; faba beans, guar meal, soybean meal, wheat meal, etc.
@@ -16,7 +16,8 @@
 # Code partially adapted from O'Hara et al. 2023 in prep 
 
 # * Eyres et al. 2023 (preprint): https://www.researchgate.net/publication/376637364_LIFE_A_metric_for_quantitively_mapping_the_impact_of_land-cover_change_on_global_extinctions
-# * O'Hara et al. 2023 (preprint) 
+# * O'Hara et al. 2023 (preprint): https://www.researchgate.net/publication/370573912_Cumulative_human_impacts_on_global_marine_fauna_highlight_risk_to_fragile_functional_diversity_of_marine_ecosystems
+# * Williams et al. 2021: https://www.nature.com/articles/s41893-020-00656-5#
 
 ## Setup
 
@@ -36,7 +37,6 @@ library(qs)
 select <- dplyr::select
 setwd(dirname(rstudioapi::getSourceEditorContext()$path)) # set working directory to where this script is located
 this_dir <- getwd()
-# feed_rast_dir <- here("prep/02_feed/output/resampled")
 
 options(dplyr.summarise.inform = FALSE)
 source(here("src/directories.R"))
@@ -94,17 +94,9 @@ crop_ingredient_cats <- read.csv(here("prep/02_feed/output/proportion_feed_per_c
   mutate(diet_fcr_crop_ingredient = paste(diet_fcr, GAEZ_category, sep = "/")) %>%
   mutate(diet_fcr_crop_ingredient = paste(diet_fcr_crop_ingredient, source_ingredient, sep = "_")) ## filter here if you only want to do regular or efficient scenario
 
-## should end up with: 
-# plant-dominant: 13 ingredients * 3 allocations * 2 taxon * 3 raster types * 2 fcr types = 468 outputs
-# fish-dominant: 5 ingredients * 3 allocations * 2 taxon * 3 raster types * 2 fcr types = 180 outputs
-
 allocations <- c("economic", "mass", "ge")
 spp_types <- unique(spp_info_df$spp_type)
-# ind_to_remove <- grep("Reptiles|Terrestrial mammal|Amphibians", spp_types)
-# spp_types <- spp_types[-ind_to_remove]
 diet_fcr_crop_ingredients <- unique(crop_ingredient_cats$diet_fcr_crop_ingredient)
-#ind_to_remove <- grep("efficient", diet_fcr_crop_ingredients)
-#diet_fcr_crop_ingredients <- diet_fcr_crop_ingredients[-ind_to_remove]
 
 for(tx_type in spp_types){
   
@@ -140,12 +132,6 @@ for(allocation_type in allocations){
 
           ## Read in harvest stressor maps, and create a dataframe of the results.  
           harvest_rast <- rast(sprintf(file.path(feed_rast_dir, "%s/%s/%s_%s_%s_A.tif"), diet_type, fcr, crop_type, ingredient_type, allocation_type))
-         
-          # file_pattern = glue("{crop_type}_.*_{allocation_type}_A.tif")
-          # 
-          # harvest_rast <- rast(
-          #   list.files(file.path(feed_rast_dir, diet_type, fcr), pattern = file_pattern, full.names = TRUE)
-          # )
           
           
           harvest_cells_df <- data.frame(harvest = as.vector(values(harvest_rast)),
@@ -215,7 +201,6 @@ for(allocation_type in allocations){
                                                     .[impact_km2>0]
                                                 
                                              return(list(chunk_sum_spp = chunk_sum_spp, chunk_sum_spp_global = chunk_sum_spp_global))
-                                            # return(list(chunk_sum_spp_global = chunk_sum_spp_global, chunk_sum = chunk_sum, chunk_sum_prop = chunk_sum_prop, chunk_sum_km2 = chunk_sum_km2))
                                             }) 
           
           
@@ -226,10 +211,6 @@ for(allocation_type in allocations){
           
           message(glue('Binding results for taxon {tx_type} {allocation_type} {diet_fcr_crop_ingredient_type}'))
          
-           # test <- rbindlist(lapply(result_list, function(x) x$chunk_sum_spp)) %>%
-           #  filter(!is.na(cell_id)) %>%
-           #  as.data.frame()
-          
           message(glue('Creating and saving global df for taxon {tx_type} {allocation_type} {diet_fcr_crop_ingredient_type}'))
                     
           global_df <- rbindlist(lapply(result_list, function(x) x$chunk_sum_spp_global)) %>% 
@@ -249,10 +230,6 @@ for(allocation_type in allocations){
 
           write_rds(global_df, glue(file.path(biodiv_dir, "int/aoh_impacts_terrestrial/{tx_type}_{diet_type}_{fcr}_{crop_ingredient_type}_{allocation_type}.rds")))
   
-          
-          
-        #  global_df <- rbindlist(lapply(result_list, function(x) x$chunk_sum_spp)) 
-          
 
           spp_list <- lapply(result_list, function(x) {
             if ("chunk_sum_spp" %in% names(x)) {

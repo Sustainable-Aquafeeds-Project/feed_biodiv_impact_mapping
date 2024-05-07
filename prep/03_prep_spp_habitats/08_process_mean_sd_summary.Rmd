@@ -247,10 +247,9 @@ pattern <- glue(".*_{diet}_{fcr}_.*_{allocation}_chunk_.*.qs")
 Next we need to read in the files we saved, by chunk (500k cells), summarise per cell the mean prop impacted, sd prop impacted, mean extinction risk, and nspp impacted, then rbind together into one big cell_id, prop_mean, prop_sd, extinction risk, and nspp dataframe
 
  - NOTE: If you want to run all scenarios, this will probably take ~12 hours...
- - NOTE: MAY 2, 2024 10AM: Everything below here, need to rerun fish-dominant, ge and mass, regular scenarios
+ - NOTE: May 3, 2024: NEED TO RUN FISH-DOMINANT EFFICIENT MASS AND GE FOR ACROSS TAXA INGREDIENT STUFF
 
 ```{r}
-
 diet_types <- c("fish-dominant")
 fcr_types <- c("efficient")
 allocation_types <- c("mass", "ge")
@@ -339,11 +338,14 @@ for(diet in diet_types){
 
 Now we need to stack and sum the rasters saved in the previous chunks to get marine and terrestrial impacts combined. There shouldn't be any cells which overlap, so simply stacking and summing should be appropriate.
  - only takes a few mins
+ ####HERERERERE
 
 ```{r}
 # establish scenarios
 diet_types <- c("fish-dominant", "plant-dominant")
+diet_types <- c("fish-dominant")
 fcr_types <- c("regular", "efficient")
+fcr_types <- c("efficient")
 allocation_types <- c("economic", "mass", "ge")
 allocation_types <- c("mass", "ge")
 calc_types <- c("mean_prop", "sd_prop", "nspp", "mean_ext_risk")

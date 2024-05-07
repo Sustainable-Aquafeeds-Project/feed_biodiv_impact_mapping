@@ -41,7 +41,6 @@ get_threat_api <- function(this_spp_id){
 }
 
 
-
 ## Common functions+packages
 select <- dplyr::select
 summarise <- dplyr::summarise

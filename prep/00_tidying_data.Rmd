@@ -190,65 +190,7 @@ values(base_raster_ea) <- 1:ncell(base_raster_ea)
 
 writeRaster(x = base_raster_ea, file = here("data/spatial/base_raster_gall_peters.tif"), overwrite=TRUE)
 
-
-
-
 ```
-
-IUCN threats of interest to feeds
-
-```{r}
-
-threats <- readRDS(file.path(iucn_dir, "threat_info/1_all_threats.rds")) |> 
-  drop_na(id) |>
-  janitor::clean_names()
-
-unique(threats$result_timing)
-
-current_severe_threats <- 
-  threats |> 
-  filter(result_timing %in% c("Ongoing", "Past, Likely to Return", "Past, Unlikely to Return", "Future") &
-        result_severity %in% c( "Rapid Declines", "Slow, Significant Declines", "Causing/Could cause fluctuations", "Very Rapid Declines"))
-
-threats_reduced <- 
-  current_severe_threats |> 
-  filter(!grepl("Invasive|invasive|Named species|named species|Problematic", result_title)) |> 
-  pull(result_title) |> 
-  unique()
-
-
-threats_of_interest <- current_severe_threats |> 
-  filter(result_title %in% threats_reduced) |> 
-  filter(result_title %in% c("Fishing & harvesting aquatic resources",
-  "Annual & perennial non-timber crops" ,
-  "Agro-industry farming",
-  "Livestock farming & ranching",
-  "Agro-industry grazing, ranching or farming" ,
-  "Agricultural & forestry effluents",
-  "Herbicides and pesticides",
-  "Nutrient loads",
-  "Herbicides and pesticides",
-  "Shifting agriculture",
-  "Small-holder farming",
-  "Small-holder grazing, ranching or farming",
-  "Abstraction of ground water (agricultural use)",
-  "Abstraction of surface water (agricultural use)",
-  "Agro-industry plantations",
-  "Small-holder plantations",
-  "Marine & freshwater aquaculture",
-  "Subsistence/artisinal aquaculture",
-  "Industrial aquaculture")) |> pull(result_title) |>  
-  unique() 
-
-current_severe_threats_of_interest <- 
-  current_severe_threats |> 
-  filter(result_title %in% threats_of_interest)
-
-write_csv(x = current_severe_threats_of_interest, file = here("data/tidy_data/iucn/current_severe_threats_of_interest.csv"))
-
-
-```
-
 
 #FISHERIES DATA 
 

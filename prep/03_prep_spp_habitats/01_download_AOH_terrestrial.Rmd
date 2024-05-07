@@ -38,6 +38,7 @@ this_dir <- getwd()
 
 
 ## Download the Lumbierres data 
+ - NOTE: you don't need to do this unless you plan to use the Lumbierres data. The Eyres data is more up-to-date and comprehensive.
 
 Check to make sure we downloaded all of the AOH species maps from https://datadryad.org/stash/dataset/doi:10.5061/dryad.02v6wwq48
 
@@ -117,6 +118,8 @@ plot(test_size)
 
 
 ## Download the Eyres data
+
+NOTE: This link and data were provided by Alison Eyres at Cambridge (ae491@cam.ac.uk)
 
 run these bash in the terminal and you will be able to recursively download all species AOH files from https://www.cl.cam.ac.uk/research/eeg/4c/data/aoh/ to your specific folder (mine is "AOH_eyres")
 

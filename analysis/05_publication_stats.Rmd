@@ -282,7 +282,7 @@ summary_spp_outliers <- summary_df_spp %>%
 ```
 
 
-Look at efficiency of raw materials; how does proportional contribution of impact differ from proportional contribution of feed forumation?
+Look at efficiency of raw materials; how does proportional contribution of impact differ from proportional contribution of feed formulation?
 
 1. Look at proportional contribution of total overall impacts per raw material
 2. Look at proportional contribution of average impacts per raw material?
@@ -478,9 +478,6 @@ test2 <- fcr_comparison_df %>%
 #   <chr>              <dbl>
 # 1 fish-dominant       10.0
 # 2 plant-dominant      10.0
-
-
-
 
 ## Check the global rasters:
 

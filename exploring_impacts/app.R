@@ -15,7 +15,6 @@ source(here("src/directories.R"))
 source(here("src/spatial.R"))
 
 countries_shp <- ne_countries(scale = 110, returnclass = "sf") |> st_transform(crs(moll_template))
-YlOrBr <- color("YlOrBr")
 
 d_brown <- "#515256"
 m_brown <- "#B27B54"
@@ -94,9 +93,7 @@ server <- function(input, output) {
        ggplot() +
       geom_tile(data = all_df, aes(x= long, y = lat, fill = value)) +
       facet_grid(fcr_type~diet) +
-         # scale_fill_gradientn(colors = YlOrBr(9), na.value = "white") +  # Set the color for missing values (NA) to white
          scale_fill_gradientn(colors = final_palette, na.value = "white") +
-         #  scale_fill_viridis(direction = -1) + 
          geom_sf(data = countries_shp, fill = NA, colour = "grey") + 
          theme_minimal() +
          theme(
@@ -151,9 +148,7 @@ server <- function(input, output) {
     ggplot() + 
       geom_tile(data = all_df, aes(x= long, y = lat, fill = value)) + 
       facet_grid(fcr_type~diet) + 
-      # scale_fill_gradientn(colors = YlOrBr(9), na.value = "white") +  # Set the color for missing values (NA) to white
       scale_fill_gradientn(colors = final_palette, na.value = "white") +
-      #  scale_fill_viridis(direction = -1) + 
       geom_sf(data = countries_shp, fill = NA, colour = "grey") + 
       theme_minimal() +
       theme(
@@ -207,9 +202,7 @@ server <- function(input, output) {
     ggplot() + 
       geom_tile(data = all_df, aes(x= long, y = lat, fill = value)) + 
       facet_grid(fcr_type~diet) + 
-      # scale_fill_gradientn(colors = YlOrBr(9), na.value = "white") +  # Set the color for missing values (NA) to white
    scale_fill_gradientn(colors = final_palette, na.value = "white") +
-   #  scale_fill_viridis(direction = -1) + 
               geom_sf(data = countries_shp, fill = NA, colour = "grey") + 
   theme_minimal() +
       theme(
@@ -263,9 +256,7 @@ server <- function(input, output) {
     ggplot() + 
       geom_tile(data = all_df, aes(x= long, y = lat, fill = value)) + 
       facet_grid(fcr_type~diet) + 
-      # scale_fill_gradientn(colors = YlOrBr(9), na.value = "white") +  # Set the color for missing values (NA) to white
       scale_fill_gradientn(colors = final_palette, na.value = "white") +
-      #  scale_fill_viridis(direction = -1) + 
       geom_sf(data = countries_shp, fill = NA, colour = "grey") + 
       theme_minimal() +
       theme(

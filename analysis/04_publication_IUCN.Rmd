@@ -104,9 +104,6 @@ Get IUCN categories for species
 spp_names_df <- all_overlap %>%
   distinct(sciname = tolower(sciname), taxon)
 
-rl_threats('Fratercula arctica', key = api_key)
-
-
 out <- rl_sp(all = TRUE, key = api_key) 
 
 length(out) 

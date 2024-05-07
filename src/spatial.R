@@ -41,22 +41,5 @@ crs <- "+proj=moll +lon_0=0 +x_0=0 +y_0=0 +ellps=WGS84 +units=m +no_defs"
 moll_template <- rast(nrow=nrow, ncol=ncol, nlyr=nlyr, xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax,
           res=c(x_res, y_res), crs=crs)
 
-
 moll_template_xy <- data.frame(cell_id = 1:ncell(moll_template), as.data.frame(moll_template %>% tidyterra::mutate(val = 1), xy = TRUE)) %>%
   dplyr::select(x, y, cell_id)
-
-## reproject the global food systems EEZ and land raster to be 10km mollweide and extract to get a csv 
-
-# land_eez_rgns <- rast(file.path("/mnt/rdsi/raw_data/food-systems-project/land_eez_rgns.tif"))
-# 
-# land_eez_rgns_mol <- project(land_eez_rgns, moll_template, method = "bilinear")
-# 
-# # plot(land_eez_rgns)
-# # plot(land_eez_rgns_mol)
-# 
-# land_eez_rgns_mol_df <- land_eez_rgns_mol %>%
-#   as.data.frame(., xy = TRUE)
-#  # left_join(rgn_ids, by = c("land_eez_rgns" = "ID_0"))
-# 
-# qsave(land_eez_rgns_mol_df, here("prep/03_prep_spp_habitats/data/spatial/land_eez_rgns_mol_xy.qs"))
-

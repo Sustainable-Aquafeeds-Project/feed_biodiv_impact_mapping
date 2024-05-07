@@ -7,7 +7,7 @@ editor_options:
 
 # Summary
 
-Wrangle MapSPAM crop category dataset.
+Wrangle GAEZ crop category dataset.
 
 # Data sources
 
@@ -89,8 +89,6 @@ fao_crop_prod_2015_2021 <- fao_crop_prod_raw %>%
 write.csv(fao_crop_prod_2015_2021, here("prep/01_crops_prep/data/FAOSTAT_crop_production_2015_2021.csv"), row.names = FALSE)
 ```
 
-
-
 # Check what crops are in each category.
 
 ```{r}
@@ -105,23 +103,5 @@ dsfdsf <- vroom::vroom(here("prep/01_crops_prep/data/FAO_crop_definitions.csv"))
   clean_names() %>% 
   dplyr::select(item_code, item, description) %>% 
   right_join(GAEZ_names)
-```
-
-# Add super categories
-```{r}
-# crop_codes <- 
-#   vroom::vroom(here("prep/01_crops_prep/data/MapSPAM_names.csv")) %>% 
-#   dplyr::select(SPAM_short_name, SPAM_full_name, item_code) %>% 
-#   left_join(vroom::vroom(here("prep/02_feed/data/MapSPAM_crop_info.csv"), 
-#                          col_select = c("SPAM_short_name", "SPAM_super"))) %>%
-#     mutate(SPAM_super = case_when(
-#     SPAM_short_name %in% c("sunf", "ooil", "rape", "opul") ~ SPAM_short_name, 
-#     TRUE ~ SPAM_super
-#   ))
-# 
-# str(crop_codes)
-# 
-# vroom::vroom_write(crop_codes, 
-#                    here("prep/01_crops_mapspam/data/crop_codes.csv"))
 ```
 

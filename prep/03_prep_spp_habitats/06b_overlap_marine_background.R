@@ -111,16 +111,12 @@ spp_info_df <- readRDS(file.path(biodiv_dir, "int/spp_vuln_depth_info.rds")) %>%
 
 allocations <- unique(spp_info_df$allocation)
 diets <- unique(spp_info_df$diet)
-diets <- c("fish-dominant")
 ingredients <- unique(spp_info_df$ingredient)
-ingredients <- c("fish meal")
 fish_types <- unique(spp_info_df$fish_type)
-fish_types <- c("forage fish")
-fcrs <- c("regular")
+fcrs <- c("regular", "efficient")
 spp_types <- unique(spp_info_df$taxon)
 indices_to_remove <- grep("fish|polychaetes", spp_types) # fish and polychaetes are the ones you don't want (we split fish in next script and polychaetes have no impacts)
 spp_types <- spp_types[-indices_to_remove] # remove fish category... we handle this separately in the next script `06c_overlap_fish_fix.R`
-spp_types <- c("molluscs")
 
 for(tx_type in spp_types){
   
@@ -163,10 +159,10 @@ for(fs_type in fish_types){
             outf_mean_df <- glue(file.path(biodiv_dir, "int/aoh_impacts_marine/{tx_type}_{diet_type}_{fcr}_{fs_type}_{ingredient_type}_{allocation_type}.rds"))
             
             ## comment this out if u want to rerun everything without skipping
-            # if(file.exists(glue(file.path(biodiv_dir, "output/impact_maps_by_spp_ingredient_lists/{tx_type}_{diet_type}_{fcr}_{fs_type}_{ingredient_type}_{allocation_type}.qs")))) {
-            #   message('Rasters exist for taxon ', tx_type, allocation_type, diet_type, fcr, ingredient_type, fs_type, ' for catch/bycatch stressor... skipping!')
-            #   next()
-            # }
+            if(file.exists(glue(file.path(biodiv_dir, "output/impact_maps_by_spp_ingredient_lists/{tx_type}_{diet_type}_{fcr}_{fs_type}_{ingredient_type}_{allocation_type}.qs")))) {
+              message('Rasters exist for taxon ', tx_type, allocation_type, diet_type, fcr, ingredient_type, fs_type, ' for catch/bycatch stressor... skipping!')
+              next()
+            }
             
             
             tx_vuln_df <- spp_info_df %>%

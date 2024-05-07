@@ -141,7 +141,7 @@ missing_spp <- setdiff(all_spp_list$sciname, impact_df_tidy$sciname)
 
 
 test_ag <- ag_suitability %>% 
-  filter(species %in% c(missing_spp)) # ok... majority of them should theoretically be impacted... does this just mean there was literally no overlap at all? I think so... explore this further in the week.
+  filter(species %in% c(missing_spp)) # ok... majority of them should theoretically be impacted... does this just mean there was literally no overlap at all? Yes, or they are not vulnerable.
 
 
 all_spp_list <- readRDS(here("prep/03_prep_spp_habitats/data/iucn/eyres_iucn_spp.rds")) %>%

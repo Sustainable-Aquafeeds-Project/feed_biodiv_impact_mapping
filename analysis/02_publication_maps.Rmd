@@ -94,8 +94,8 @@ theme_ohara <- function(base_size = 9) {
 
 Make map split by quantiles in each cell
  - regular quantiles up to 95th 
- - Then 95-99.9th
- - then >= 99.9th
+ - Then 95-99th
+ - then >= 99th
  
 Additionally, make a delta map, and color either fish dominant or plant dominant. Have the legend colors be the same as the green and blue we use for the boxplot, but split by quantile of delta (same as regular impact quantiles above).
  
@@ -125,7 +125,7 @@ quantiles <- all_df %>%
             q50 = quantile(value, 0.50),
             q75 = quantile(value, 0.75),
             q95 = quantile(value, 0.95),
-            q999 = quantile(value, 0.99)) %>%
+            q99 = quantile(value, 0.99)) %>%
   ungroup()
 
 all_df_quant <- all_df %>%
@@ -135,8 +135,8 @@ all_df_quant <- all_df %>%
     value >= q25 & value < q50 ~ "25-49",
     value >= q50 & value < q75 ~ "50-74",
     value >= q75 & value < q95 ~ "75-94",
-    value >= q95 & value < q999 ~ "95-99",
-    value >= q999 ~ "≥99"
+    value >= q95 & value < q99 ~ "95-99",
+    value >= q99 ~ "≥99"
   ))
 
 all_df_quant$category <- factor(all_df_quant$category, levels = c("0-24", "25-49", "50-74", "75-94", "95-99", "≥99"))
@@ -183,7 +183,7 @@ quantiles_delta_fish <- delta_df %>%
             q50 = quantile(delta, 0.50),
             q75 = quantile(delta, 0.75),
             q95 = quantile(delta, 0.95),
-            q999 = quantile(delta, 0.99)) %>%
+            q99 = quantile(delta, 0.99)) %>%
   ungroup()
 
 quantiles_delta_plant <- delta_df %>%
@@ -193,7 +193,7 @@ quantiles_delta_plant <- delta_df %>%
             q50 = quantile(-1*delta, 0.50),
             q75 = quantile(-1*delta, 0.75),
             q95 = quantile(-1*delta, 0.95),
-            q999 = quantile(-1*delta, 0.99)) %>%
+            q99 = quantile(-1*delta, 0.99)) %>%
   ungroup() %>%
   mutate(across(2:6, ~.x*-1))
 
@@ -206,7 +206,7 @@ delta_df_quant <- delta_df %>%
     abs(delta) >= abs(q25) & abs(delta) < abs(q50) ~ "25-49",
     abs(delta) >= abs(q50) & abs(delta) < abs(q75) ~ "50-74",
     abs(delta) >= abs(q75) & abs(delta) < abs(q95) ~ "75-94",
-    abs(delta) >= abs(q95) & abs(delta) < abs(q999) ~ "95-99",
+    abs(delta) >= abs(q95) & abs(delta) < abs(q99) ~ "95-99",
     abs(delta) >= abs(q999) ~ "≥99"
   ))
 

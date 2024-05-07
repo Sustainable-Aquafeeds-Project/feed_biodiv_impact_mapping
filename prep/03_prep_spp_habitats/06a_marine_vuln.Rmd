@@ -67,9 +67,7 @@ vuln_taxa <- read.csv(here("prep/03_prep_spp_habitats/data/spp_vuln_butt/vuln_ga
 unique(vuln_taxa$gapfill) # ok so they only had to gapfill by genus and then family
 # [1] "none"   "family" "genus" 
 
-
 aquamaps_spp <- read.csv(file.path(aquamaps_dir, "GTE10_SPECIESOCCURSUM/speciesoccursum_gte10.csv"))
-
 
 aquamaps_spp_clean <- aquamaps_spp %>%
   mutate(species = paste0(tolower(Genus), " ", Species)) %>%
@@ -83,7 +81,7 @@ aquamaps_spp_clean <- aquamaps_spp %>%
     Phylum %in% c("Mollusca", "Arthropoda", "Cnidaria", "Echinodermata", "Annelida", "Bryozoa", "Brachiopoda", "Porifera", "Phoronida", "Nemertea", "Chaetognatha", "Platyhelminthes", "Priapulida", "Acanthocephala", "Ctenophora", "Echiura", "Kamptozoa", "Gastrotricha", "Gnathostomulida", "Hemichordata", "Nematoda", "Rotifera", "Sipuncula", "Kamptozoa") | Class %in% c("Appendicularia", "Ascidiacea", "Thaliacea", "Cephalochordata", "Thaliacea") ~ "Invertebrates", 
     Kingdom %in% c("Protozoa", "Bacteria") | Phylum == "Sagenista" ~ "Microorganisms"
   )) %>%
-  filter(spp_type != "Microorganisms") 
+  filter(spp_type != "Microorganisms") # filter these out, we won't assess
 
 
 
@@ -213,7 +211,7 @@ Create final info dataset that can be used in the loop in the next script
 
 ```{r}
 forage_spp <- read.csv(here("data/raw_data/fisheries/forage_fish_list_final.csv")) %>%
-    mutate(species = tolower(sci_name)) # ok so some of these are family level... will need to fix that eventually...
+    mutate(species = tolower(sci_name)) 
   
 trimmings_spp <- read_csv(here("data/raw_data/biomar/trimmings_spp_list.csv")) %>% 
   mutate(species = tolower(scientific_name)) 
@@ -257,7 +255,7 @@ overlay_vuln <- info_df %>%
     TRUE ~ "bycatch"
   )) %>%
   mutate(vuln_quartile = case_when(
-    vuln <0.25 ~ 0,
+    vuln < 0.25 ~ 0,
     vuln <= 0.75 & vuln >= 0.25 ~ 0.5, 
     vuln > 0.75 ~ 1
   )) %>%
@@ -266,10 +264,3 @@ overlay_vuln <- info_df %>%
 
 write_rds(overlay_vuln, file.path(rdsi_dir, "biodiversity_impacts/int/spp_vuln_depth_info.rds"))
 ```
-
-
-
-```{r}
-test <- readRDS(file.path(rdsi_dir, "biodiversity_impacts/int/spp_vuln_depth_info.rds"))
-```
-

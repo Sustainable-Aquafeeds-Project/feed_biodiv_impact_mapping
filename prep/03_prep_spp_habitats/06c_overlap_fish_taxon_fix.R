@@ -13,8 +13,6 @@
 # 
 # - Overlap re-projected and clipped Aquamaps species suitable native habitat maps for FINFISH TAXON with the appropriate disturbance rasters based on depth range. This will provide a km2 estimate of the amount of suitable habitat that is exposed to harvest of forage or trimmings fish used for FMFO. 
 # - multiply by each species vulnerability values to get impact and save
-# - then we take a species weighted mean of each finfish raster to get the final fish taxon raster. We are doing this workaround because our server is memory limited and cannot handle all 9k species of finfish at once and fails. 
-
 
 # * Froese, R. and D. Pauly, Editors. 2000. FishBase 2000: concepts, design and data sources. ICLARM, Los Baños, Laguna, Philippines. 344 p.
 # * Houde, E.D. and C.E. Zastrow. 1993. Ecosystem- and taxon-specific dynamic energetics properties of fish larvae assemblages. Bull. Mar. Sci. 53(2):290-335.
@@ -113,12 +111,10 @@ spp_info_df_fish %>%
 
 allocations <- unique(spp_info_df_fish$allocation)
 diets <- unique(spp_info_df_fish$diet)
-diets <- c("fish-dominant")
 ingredients <- unique(spp_info_df_fish$ingredient)
 fish_types <- unique(spp_info_df_fish$fish_type)
-fish_types <- c("forage fish")
 spp_types <- unique(spp_info_df_fish$taxon)
-fcrs <- c("regular")
+fcrs <- c("regular", "efficient")
 
 for(tx_type in spp_types){
 
@@ -156,10 +152,10 @@ for(tx_type in spp_types){
 
           outf_mean_df <- glue(file.path(biodiv_dir, "int/aoh_impacts_marine/{tx_type}_{diet_type}_{fcr}_{fs_type}_{ingredient_type}_{allocation_type}.rds"))
 
-          # if(file.exists(glue(file.path(biodiv_dir, "output/impact_maps_by_spp_ingredient_lists/{tx_type}_{diet_type}_{fcr}_{fs_type}_{ingredient_type}_{allocation_type}.qs")))) {
-          #   message('Rasters exist for taxon ', tx_type, ' for pressure... skipping!')
-          #   next()
-          # }
+          if(file.exists(glue(file.path(biodiv_dir, "output/impact_maps_by_spp_ingredient_lists/{tx_type}_{diet_type}_{fcr}_{fs_type}_{ingredient_type}_{allocation_type}.qs")))) {
+            message('Rasters exist for taxon ', tx_type, ' for pressure... skipping!')
+            next()
+          }
 
           tx_vuln_df <- spp_info_df_fish %>%
             filter(taxon == tx_type,

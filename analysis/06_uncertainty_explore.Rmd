@@ -50,7 +50,6 @@ impact_maps_dir <- file.path(biodiv_dir, "output")
 marine_overlap <- readRDS(here("prep/03_prep_spp_habitats/output/aoh_marine_impact.rds")) %>%
     dplyr::select(sciname, spp_type, diet, fcr_type, allocation, ingredient, vulnerability, impact_total, total_hab_area)
 
-
 terrestrial_overlap <- readRDS(here("prep/03_prep_spp_habitats/output/aoh_terrestrial_impact.rds")) %>% 
   dplyr::select(-suitability) %>%
       dplyr::select(sciname, spp_type, diet, fcr_type, allocation, ingredient, vulnerability, impact_total, total_hab_area)
@@ -143,8 +142,6 @@ low_impact_rast <- moll_template
       # fcr_type = "efficient"
 
 for(allocation_type in allocation_types){
-  
-
       
       # allocation_type = "economic"
       

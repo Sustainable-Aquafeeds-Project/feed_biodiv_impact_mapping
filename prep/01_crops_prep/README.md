@@ -17,4 +17,4 @@ This folder organizes crop maps using GAEZ crop data as a foundation for calcula
 |prod_crop_rgns.csv|Crop production in tonnes for each production system, iso3c, and crop.|NA|
 
 ## Contributors
-[Gage Clawson](samuel.clawson@utas.edu.au)
+[Gage Clawson](gage.clawson@utas.edu.au)

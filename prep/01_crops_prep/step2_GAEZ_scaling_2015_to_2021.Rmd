@@ -25,7 +25,6 @@ source(here("src/spatial.R"))
 source(here("src/fxns.R"))
 source(here("src/directories.R"))
 
-
 food_rgns <- read.csv(here("data/spatial/output/food_rgns.csv"))
 
 ```
