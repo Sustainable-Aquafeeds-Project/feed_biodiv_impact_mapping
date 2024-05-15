@@ -24,6 +24,7 @@ library(smoothr)
 library(rredlist)
 library(ggpattern)
 library(ggpp)
+library(scales)
 
 source(here("src/directories.R"))
 
@@ -88,12 +89,16 @@ all_overlap <- rbind(marine_overlap, terrestrial_overlap) %>%
     TRUE ~ taxon)) %>%
   mutate(sciname = tolower(sciname))
 
+length(unique(all_overlap$sciname)) # 54622
 
 spp_habs <- all_overlap %>%
   distinct(sciname, taxon, total_hab_area) %>%
   group_by(sciname, taxon) %>%
   summarise(total_hab_area = max(total_hab_area)) %>%
   ungroup()
+
+length(unique(spp_habs$sciname)) # 54622
+
 
 ```
 
@@ -103,6 +108,7 @@ Get IUCN categories for species
 
 spp_names_df <- all_overlap %>%
   distinct(sciname = tolower(sciname), taxon)
+
 
 out <- rl_sp(all = TRUE, key = api_key) 
 
@@ -175,12 +181,10 @@ test <- spp_cats %>%
   group_by(taxon) %>%
   summarise(n_distinct(sciname))
 
-unique(test$taxon)
+unique(test$taxon) ## cool none are empty
 
-test <- data.frame(dups = duplicated(spp_cats$sciname)) %>%
-  mutate(id = row_number()) %>%
-  filter(dups == TRUE) %>%
-  left_join(spp_cats)
+test <- spp_cats %>% filter(category == "NE") %>%   group_by(taxon) %>%
+  summarise(n_distinct(sciname))
 
 
 ```
@@ -199,7 +203,7 @@ all_overlap_summary <- all_overlap %>%
   left_join(spp_habs) %>%
     left_join(spp_cats) %>%
   mutate(prop_impact = impact_km2/total_hab_area) %>%
-  group_by(diet, allocation, fcr_type) %>%
+  group_by(allocation, fcr_type) %>%
   mutate(
     quantile_25 = quantile(prop_impact, probs = 0.25),
     quantile_50 = quantile(prop_impact, probs = 0.50),
@@ -235,97 +239,29 @@ all_overlap_summary <- all_overlap %>%
 
 ```
 
-Make a plot! 
+
+Make plots of the % of species in each taxon impacted (we only want to show impacted spp in the main plot)
+ - We will add these circle plots to the main plot in post processing, since I can't figure out how to do it in R. 
 
 ```{r}
 
-plot_df <- all_overlap_summary %>%
+nspp_df <- all_overlap_summary %>%
+    filter(allocation == "economic",
+         fcr_type == "regular", 
+         diet == "plant-dominant" # just filter for one diet as same amount assessed regardless
+         ) %>%
+  group_by(taxon_plot) %>%
+  summarise(n_spp_assessed  = n_distinct(sciname)) %>%
+  ungroup()
+
+ sum(nspp_df$n_spp_assessed) # 54615 - ok cool
+ 
+ quantile_df <- all_overlap_summary %>%
   filter(allocation == "economic",
          fcr_type == "regular"
          ) %>%
-  group_by(diet, category, iucn_cat, taxon_plot, impact_category) %>%
-  summarise(n_spp = n_distinct(sciname)) %>%
-  ungroup()
-
-plot_df_new <- plot_df
-
-x_axis_order <- c("<25", "25-49", "50-74", "75-94", "≥95")
-plot_df_new$impact_category <- factor(plot_df_new$impact_category, levels = x_axis_order)
-
-fill_order <- c("Least Concern", "Near Threatened", "Data Deficient", "Not Evaluated", "Vulnerable", "Endangered", "Critically Endangered")
-plot_df_new$iucn_cat <- factor(plot_df_new$iucn_cat, levels = fill_order)
-
-plot_df_new$taxon_plot <- factor(plot_df_new$taxon_plot, levels = c("Birds", "Finfish", "Reptiles", "Molluscs", "Amphibians", "Terrestrial mammals", "Arthropods", "Other marine species"))
-
-iucn_cat_pal <- c(
-  "Least Concern" = "#54B050",
-  "Near Threatened" = "#C9CE3A", 
-  "Data Deficient" = "#C5C5C5", 
-  "Not Evaluated" = "darkgray",
-  "Vulnerable" = "#FED339", 
-  "Endangered" = "#FD643E", 
-  "Critically Endangered" = "#D40A1E"
-)
-
-iucn_plot <- ggplot() +
-  geom_col(plot_df_new %>% filter(diet == "fish-dominant"),
-             mapping = aes(x = impact_category, y = n_spp, fill = iucn_cat), 
-               width = 0.4, position_stacknudge(x = -0.21)) +
-    geom_col_pattern(plot_df_new %>% filter(diet == "plant-dominant"),
-             mapping = aes(x = impact_category, y = n_spp, fill = iucn_cat, pattern_fill = diet), 
-               width = 0.4, position = position_stacknudge(x = 0.21), pattern_alpha = 0.3,
-             pattern_size = 0.5, pattern_spacing = 0.025, pattern = "stripe") + 
-  facet_wrap(~taxon_plot, nrow = 2, scales = "free_x") +
-  labs(
-       x = "Impact Quantile",
-       y = "Number of Species") +
-  theme_ohara() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 7, family = "Arial"),
-        axis.text.y = element_text(size = 7, family = "Arial", colour = "black"),
-        axis.title = element_text(size = 7, family = "Arial", colour = "black"),
-        strip.text = element_text(size = 7, family = "Arial", colour = "black"), 
-        text = element_text(family = "Arial", size = 7, colour = "black"),
-        legend.position  = "none",
-        plot.margin = margin(t = 0.25, r = 0.25, b = 3, l = 0.25, unit = "cm")) +
-  scale_fill_manual(values = iucn_cat_pal)
-
-legend_iucn <- get_legend( ggplot() +
-  geom_col(plot_df_new %>% filter(diet == "fish-dominant"),
-             mapping = aes(x = impact_category, y = n_spp, fill = iucn_cat)) +
-              theme(legend.position = "bottom",
-                    legend.spacing.x = unit(0.28, 'cm')) +
-    labs(fill = "Current IUCN Category") + 
-    guides(fill = guide_legend(title.position = "bottom", title.hjust = 0.5)) +
-      scale_fill_manual(values = iucn_cat_pal) + 
-    theme(legend.text = element_text(size = 7, family = "Arial", colour = "black"), 
-          legend.title = element_text(size = 7, colour = "black"), 
-          legend.key.size = unit(5, "mm")))  
-
-legend_pattern <-  get_legend(ggplot() + geom_col_pattern(plot_df_new,
-             mapping = aes(x = impact_category, y = n_spp, pattern = diet), 
-               width = 0.4, position = position_stacknudge(x = 0.21), pattern_alpha = 0.3,
-             pattern_size = 0.5, pattern_spacing = 0.025, pattern_key_scale_factor = 0.5, pattern_color = "white") +
-               theme(legend.position = "bottom",
-                     legend.spacing.x = unit(0.28, 'cm'),
-                     legend.text = element_text(size = 7, family = "Arial", colour = "black"),
-                     legend.title = element_text(size = 7, colour = "black"), 
-                     legend.key.size = unit(5, "mm")) + 
-                 labs(pattern = "Diet") + 
-                guides(pattern = guide_legend(title.position = "bottom", title.hjust = 0.5, nrow = 1)) +
-               scale_pattern_manual(values=c('fish-dominant' = 'none', 'plant-dominant' = 'stripe'), 
-                                    labels = c("Fish-dominant", "Plant-dominant")))
-
-
-p <- ggdraw() + draw_plot(iucn_plot) + draw_plot(legend_iucn, x = 0.1, y = 0.005, width = 0.5, height = 0.15) + draw_plot(legend_pattern, x = 0.6, y = 0.005, width = 0.5, height = 0.118)
-
-ggsave(here("analysis/MS_plots/fig4_iucn_plot.png"), units = "mm", width = 180, height = 180)
-
-
-```
-
-Now save it without 0 impact species:
-
-```{r}
+  filter(impact_km2 > 0) %>% 
+   distinct(diet, fcr_type, quantile_25, quantile_50, quantile_75, quantile_95, quantile_99)
 
 plot_df <- all_overlap_summary %>%
   filter(allocation == "economic",
@@ -334,6 +270,159 @@ plot_df <- all_overlap_summary %>%
   filter(impact_km2 > 0) %>% 
   group_by(diet, category, iucn_cat, taxon_plot, impact_category) %>%
   summarise(n_spp = n_distinct(sciname)) %>%
+  ungroup() %>%
+  left_join(nspp_df) %>%
+  group_by(diet, taxon_plot) %>%
+  mutate(total_spp_impacted = sum(n_spp)) %>%
+  ungroup()
+
+nspp_props <- plot_df %>% 
+  distinct(taxon_plot, diet, n_spp_assessed, total_spp_impacted) %>%
+  mutate(prop_impacted = round(total_spp_impacted/n_spp_assessed, 3)) %>%
+  dplyr::select(-n_spp_assessed, -total_spp_impacted) %>%
+      mutate(percent_imp = percent(prop_impacted))
+
+# max_prop <- data.frame(taxon_plot = "test taxa", diet = "plant-dominant", prop_impacted = 1, percent_imp = "100%")
+
+diet_cols = c("fish-dominant" = "#474747", "plant-dominant" = "#474747") # fd is dark grey, pd is grey?
+
+for(taxa in unique(plot_df$taxon_plot)){
+
+#  taxa = "Amphibians"
+nspp_props_loop <- nspp_props %>% 
+  filter(taxon_plot == taxa) 
+  
+p <- ggplot(nspp_props_loop,
+         aes(x = 1,
+             y = prop_impacted,
+             fill = diet, 
+             label = percent_imp)) +
+  geom_col() +
+    geom_col_pattern(data = nspp_props_loop %>% filter(diet == "plant-dominant"),
+                                             aes(pattern_fill = diet),
+                     pattern_alpha = 0.3,
+             # pattern_size = 0.5, pattern_spacing = 0.025,
+             pattern = "stripe", pattern_color = "white", pattern_fill = "white") +
+    coord_polar(theta = "y", direction = -1, clip = "off") +
+      theme_void() +
+    scale_fill_manual(values = diet_cols, breaks = names(diet_cols)) +
+   theme(
+        # strip.text = element_blank(), 
+         strip.background = element_blank(),
+         panel.spacing.x = unit(-25, "mm"),
+         panel.spacing.y = unit(-15, "mm")
+         ) + 
+   facet_grid(diet ~ taxon_plot) +
+   geom_text(x = -2, y = -2, size = 9) +
+guides(fill = "none") +
+  scale_y_continuous(expand = c(0,0), limits = c(0,1)) +
+  scale_x_continuous(expand = c(0,0), limits = c(-2, 2))
+
+
+ggsave(plot = p, glue(here("analysis/SI_plots/taxon_props/{taxa}_props_vert.png")), units = "mm", width = 180, height = 100)
+
+}
+
+# W : 25.204
+# H : 12.628
+
+# W: 9.634
+# H: 19.735
+```
+
+
+Now make IUCN plot, only with >0 impact species
+
+```{r}
+
+plot_df_new <- plot_df
+
+x_axis_order <- c("<25", "25-49", "50-74", "75-94", "≥95")
+plot_df_new$impact_category <- factor(plot_df_new$impact_category, levels = x_axis_order)
+
+fill_order <- c("Least Concern", "Near Threatened", "Data Deficient", "Not Evaluated", "Vulnerable", "Endangered", "Critically Endangered")
+
+plot_df_new$iucn_cat <- factor(plot_df_new$iucn_cat, levels = fill_order)
+
+plot_df_new$taxon_plot <- factor(plot_df_new$taxon_plot, levels = c("Birds", "Finfish", "Reptiles", "Molluscs", "Amphibians", "Terrestrial mammals", "Arthropods", "Other marine species"))
+
+iucn_cat_pal <- c(
+  "Least Concern" = "#54B050",
+  "Near Threatened" = "#C9CE3A", 
+  "Data Deficient" = "#C5C5C5", 
+  "Not Evaluated" = "darkgray",
+  "Vulnerable" = "#FED339", 
+  "Endangered" = "#FD643E", 
+  "Critically Endangered" = "#D40A1E"
+)
+
+iucn_plot <- ggplot() +
+  geom_col(plot_df_new %>% filter(diet == "fish-dominant"),
+             mapping = aes(x = impact_category, y = n_spp, fill = iucn_cat), 
+               width = 0.4, position_stacknudge(x = -0.21)) +
+    geom_col_pattern(plot_df_new %>% filter(diet == "plant-dominant"),
+             mapping = aes(x = impact_category, y = n_spp, fill = iucn_cat, pattern_fill = diet), 
+               width = 0.4, position = position_stacknudge(x = 0.21), pattern_alpha = 0.3,
+             pattern_size = 0.5, pattern_spacing = 0.025, pattern = "stripe") + 
+  facet_wrap(~taxon_plot, nrow = 2, scales = "free_x") +
+  labs(
+       x = "Impact Quantile",
+       y = "Number of Species") +
+  theme_ohara() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 7, family = "Arial"),
+        axis.text.y = element_text(size = 7, family = "Arial", colour = "black"),
+        axis.title = element_text(size = 7, family = "Arial", colour = "black"),
+        strip.text = element_text(size = 7, family = "Arial", colour = "black"), 
+        text = element_text(family = "Arial", size = 7, colour = "black"),
+        legend.position  = "none",
+        plot.margin = margin(t = 0.25, r = 0.25, b = 3, l = 0.25, unit = "cm")) +
+  scale_fill_manual(values = iucn_cat_pal)
+
+legend_iucn <- get_legend( ggplot() +
+  geom_col(plot_df_new %>% filter(diet == "fish-dominant"),
+             mapping = aes(x = impact_category, y = n_spp, fill = iucn_cat)) +
+              theme(legend.position = "bottom",
+                    legend.spacing.x = unit(0.28, 'cm')) +
+    labs(fill = "Current IUCN Category") + 
+    guides(fill = guide_legend(title.position = "bottom", title.hjust = 0.5)) +
+      scale_fill_manual(values = iucn_cat_pal) + 
+    theme(legend.text = element_text(size = 7, family = "Arial", colour = "black"), 
+          legend.title = element_text(size = 7, colour = "black"), 
+          legend.key.size = unit(5, "mm")))  
+
+legend_pattern <-  get_legend(ggplot() + geom_col_pattern(plot_df_new,
+             mapping = aes(x = impact_category, y = n_spp, pattern = diet), 
+               width = 0.4, position = position_stacknudge(x = 0.21), pattern_alpha = 0.3,
+             pattern_size = 0.5, pattern_spacing = 0.025, pattern_key_scale_factor = 0.5, pattern_color = "white") +
+               theme(legend.position = "bottom",
+                     legend.spacing.x = unit(0.28, 'cm'),
+                     legend.text = element_text(size = 7, family = "Arial", colour = "black"),
+                     legend.title = element_text(size = 7, colour = "black"), 
+                     legend.key.size = unit(5, "mm")) + 
+                 labs(pattern = "Diet") + 
+                guides(pattern = guide_legend(title.position = "bottom", title.hjust = 0.5, nrow = 1)) +
+               scale_pattern_manual(values=c('fish-dominant' = 'none', 'plant-dominant' = 'stripe'), 
+                                    labels = c("Fish-dominant", "Plant-dominant")))
+
+
+p <- ggdraw() + draw_plot(iucn_plot) + draw_plot(legend_iucn, x = 0.1, y = 0.005, width = 0.5, height = 0.15) + draw_plot(legend_pattern, x = 0.6, y = 0.005, width = 0.5, height = 0.118)
+
+ggsave(here("analysis/MS_plots/fig4_iucn_plot_no_props.png"), units = "mm", width = 180, height = 180)
+
+## ok, now we will add the proportions created above in post processing, using inkscape; https://inkscape.org/
+
+```
+
+Save plot with 0 impact species 
+
+```{r}
+
+plot_df <- all_overlap_summary %>%
+  filter(allocation == "economic",
+         fcr_type == "regular"
+         ) %>%
+  group_by(diet, category, iucn_cat, taxon_plot, impact_category) %>%
+  summarise(n_spp = n_distinct(sciname)) %>%
   ungroup()
 
 plot_df_new <- plot_df
@@ -407,16 +496,24 @@ legend_pattern <-  get_legend(ggplot() + geom_col_pattern(plot_df_new,
 
 p <- ggdraw() + draw_plot(iucn_plot) + draw_plot(legend_iucn, x = 0.1, y = 0.005, width = 0.5, height = 0.15) + draw_plot(legend_pattern, x = 0.6, y = 0.005, width = 0.5, height = 0.118)
 
-ggsave(here("analysis/SI_plots/SIfig_iucn_plot_no_zeros.png"), units = "mm", width = 180, height = 180)
+ggsave(here("analysis/SI_plots/SIfig_iucn_plot_zeros.png"), units = "mm", width = 180, height = 180)
 
 
 ```
-
 
 ```{r}
 test <- plot_df %>% group_by(diet, category) %>% summarise(nspp = sum(n_spp)) %>% ungroup()
 
 test2 <- plot_df %>% group_by(diet, category, taxon_plot) %>% summarise(nspp = sum(n_spp)) %>% ungroup() %>% filter(diet == "plant-dominant") %>% filter(category %in% c("NE", "DD"))
+
+sum(test2$nspp) # 17763
+17763/54622 # 0.3251986
+
+test2 %>%
+  filter(!(taxon_plot %in% c("Amphibians", "Birds", "Terrestrial mammals", "Reptiles"))) %>%
+  pull(nspp) %>%
+  sum()
+14718/17763 # 0.8285763
 
 test3 <- plot_df  %>%
   group_by(taxon_plot, diet, impact_category) %>%
@@ -430,8 +527,8 @@ test3 <- plot_df  %>%
   )) %>%
     group_by(taxon_plot, diet, impact_category, category_2) %>%
     summarise(prop = sum(prop,na.rm = TRUE)) %>%
-  ungroup() %>%
-  filter(!(taxon_plot %in% c("Arthropods", "Other marine species", "Molluscs", "Finfish")))
+  ungroup() 
+
 
 test <- plot_df %>% group_by(diet, category, impact_category) %>% summarise(nspp = sum(n_spp)) %>% filter(impact_category %in% c("≥95"))
 

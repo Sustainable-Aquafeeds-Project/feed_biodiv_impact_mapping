@@ -30,46 +30,122 @@ source(here("src/directories.R"))
 
 source(here("src/spatial.R"))
 
-aoh_dir <- file.path(rdsi_raw_data_dir, "AOH_eyres/reprojected_mol_csv/")
+aoh_dir <- file.path(rdsi_raw_data_dir, "AOH_eyres/reprojected_mol_csv_fin/")
 
 biodiv_dir <- file.path(rdsi_dir, "biodiversity_impacts")
 ```
 
-Bind all chunked data together, tidy, and save
+
+First, save habitat ares for each species. Additionally, find the habitat areas for any species that are missing (3617 of them, because they have no overlap)
 
 ```{r}
 
 impact_df <-  purrr::map_df(list.files(file.path(biodiv_dir, "int/aoh_impacts_terrestrial/"), full.names = TRUE), readRDS) %>%
   rename(sciname = species_full)
 
-length(unique(impact_df$sciname)) # 27911
+length(unique(impact_df$sciname)) # 27911 - shouldn't there be more... ? 
 
 spp_habs_df <- impact_df %>%
   distinct(sciname, total_hab_area = hab_area)
 
-write.csv(spp_habs_df, here("prep/03_prep_spp_habitats/int/terrestrial_habitat_areas.csv"), row.names = FALSE)
-
-test <- data.frame(dups = duplicated(spp_habs_df$sciname)) %>%
-  filter(dups == TRUE) # good, 0 duplicates
   
 
 # now lets clean up the data a bit 
 
 all_spp_list <- readRDS(here("prep/03_prep_spp_habitats/data/iucn/eyres_iucn_spp.rds")) %>%
   dplyr::select(sciname = scientific_name, order = order_name, iucn_rl_cat = category) %>%
-  filter(!is.na(sciname))
+  filter(!is.na(sciname)) %>%
+  distinct() ## ok this is the correct number of species
 
+## what species are missing? 
+
+missing_spp <- setdiff(all_spp_list$sciname, spp_habs_df$sciname) # ~3685 species missing
+
+## get their species IDs so we can read in the maps and save total habitat area
+all_iucn_spp <- readRDS(here("prep/03_prep_spp_habitats/data/iucn/all_iucn_spp.rds"))
+
+missing_iucn_spp <- all_iucn_spp %>%
+  filter(scientific_name %in% missing_spp) %>%
+  distinct(taxonid) %>%
+  pull() # grab the taxon id so we can loop through the csvs
+
+test <- ag_suitability %>%
+  filter(species %in% missing_spp)
+
+test2 <- all_iucn_spp %>%
+  filter(scientific_name %in% missing_spp) 
+
+missing_spp_habs <- data.frame(taxonid = NA, total_hab_area = NA)
+
+for(spp_id in missing_iucn_spp){
+  
+  # spp_id = 58058 # ok so, the missing ones all seem to have realllllly small habitats, and that's why they don't show. We will just save those as having 100km2 of habitat as this is the minumum amount a species could have with our resolution... And assume no habitat area impact.
+  
+  spp_rast <- read.csv(glue(file.path(aoh_dir, "{spp_id}.csv")))
+  
+  if(nrow(spp_rast) == 0){
+    
+    spp_hab <- data.frame(taxonid = spp_id, total_hab_area = 100)
+    
+  }else{ # i don't think there are any "else" instances but just in case
+  
+  total_hab <- sum(spp_rast$presence)*100
+  
+  spp_hab <- data.frame(taxonid = spp_id, total_hab_area = total_hab)
+    
+  }
+  
+  
+  missing_spp_habs <- rbind(missing_spp_habs, spp_hab)
+  
+}
+
+## ok so i guess they all only have really small habitat areas... make sense
+
+# join with iucn data to get sciname
+missing_spp_fin <- missing_spp_habs %>%
+  left_join(all_iucn_spp) %>%
+  filter(!is.na(total_hab_area)) %>%
+  dplyr::select(sciname = scientific_name, total_hab_area)
+
+
+spp_habs_df_fin <- spp_habs_df %>%
+  rbind(., missing_spp_fin)
+
+write.csv(spp_habs_df_fin, here("prep/03_prep_spp_habitats/int/terrestrial_habitat_areas.csv"), row.names = FALSE)
+
+test <- data.frame(dups = duplicated(spp_habs_df_fin$sciname)) %>%
+  filter(dups == TRUE) # good, 0 duplicates
+
+```
+
+Bind together all habitat impact data from the overlap script
+
+
+```{r}
+
+## need to do some sort of expand.grid with missing species and all fcr/diet scenarios
+
+diets <- unique(impact_df$diet)
+fcr_types <- unique(impact_df$fcr_type)
+allocations <- unique(impact_df$allocation)
+crop_ingredients <- unique(impact_df$crop_ingredient)
+
+expand_df <- expand_grid(missing_spp_fin, diet = diets, fcr_type = fcr_types, allocation = allocations, crop_ingredient = crop_ingredients) %>%
+  mutate(impact_total = 0) %>%
+  dplyr::select(-total_hab_area)
 
 impact_df_tidy <- impact_df %>%
     group_by(sciname, diet, fcr_type, allocation, crop_ingredient) %>%
   summarise(impact_total = sum(impact_total, na.rm = TRUE)) %>%
   ungroup() %>%
+  rbind(., expand_df) %>%
   mutate(aoh_filepath = paste0(aoh_dir, sciname), 
          feed_filepath = sprintf(here("prep/02_feed/output/resampled/%s/%s/%s_%s_A.tif"), diet, fcr_type, crop_ingredient, allocation)) %>%
   rename("ingredient" = "crop_ingredient") %>%
   mutate(sciname = str_replace_all(sciname, "_", " ")) %>%
   left_join(all_spp_list, by = c("sciname")) %>%
-  left_join(spp_habs_df, by = "sciname") %>%
+  left_join(spp_habs_df_fin, by = "sciname") %>%
   mutate(impact_total = ifelse(is.na(impact_total), 0, impact_total))
 
 test <- data.frame(sciname = setdiff(all_spp_list$sciname, impact_df_tidy$sciname)) %>%
@@ -77,7 +153,9 @@ test <- data.frame(sciname = setdiff(all_spp_list$sciname, impact_df_tidy$scinam
 
 species_list <- c(unique(impact_df_tidy$sciname))
 
-writeLines(species_list, here("prep/03_prep_spp_habitats/int/assessed_species_list.txt"))
+writeLines(species_list, here("prep/03_prep_spp_habitats/int/terr_assessed_species_list.txt"))
+
+writeLines(impact_df_tidy %>% filter(impact_total > 0) %>% pull(sciname) %>% unique(), here("prep/03_prep_spp_habitats/int/terr_impacted_species_list.txt"))
 
 hab_areas <- impact_df_tidy %>% ungroup() %>% distinct(sciname, total_hab_area) %>%
   group_by(sciname) %>%
@@ -101,11 +179,15 @@ Bind species' tolerances to the full aoh impacted dataframe.
 ```{r}
 ag_suitability <- readRDS(here("prep/03_prep_spp_habitats/int/terrestrial_spp_habitat_suitability.rds"))
 
+test <- ag_suitability %>%
+  filter(species %in% missing_spp) 
+
 aoh_df <- impact_df_tidy %>%
-  ungroup() %>%
   left_join(., ag_suitability, by = c("sciname" = "species")) %>%
   rename(suitability = cropland_suitability) %>%
-  mutate(vulnerability = 1 - suitability)
+  mutate(vulnerability = 1 - suitability) 
+
+## need to create a dataframe with non overlapping spps (~4k of them)
 
 saveRDS(aoh_df, here("prep/03_prep_spp_habitats/output/aoh_terrestrial_impact.rds")) # save as rds to save space
 
@@ -116,29 +198,20 @@ test <- aoh_df %>%
   summarise(n_distinct(sciname)) ## ok missing a lot of species... is this because they aren't vulnerable? 
 
 length(unique(all_spp_list$sciname)) # 31596
-length(unique(aoh_df$sciname)) # 27911
-# missing 3685 species...
+length(unique(aoh_df$sciname)) # 31596
+# perfect
 
 test_ag <- ag_suitability %>% 
   group_by(spp_type, cropland_suitability) %>%
   summarise(n_distinct(species))
 
-2927 + 626 + 1003 + 627 # 5183 not vulnerable
-
-31596 - 3685 # 27911 total species accounted for... 
 
 ## paper reports: 
 
 length(unique(ag_suitability$species)) # 31596
 ag_suitability %>% filter(cropland_suitability != 1) %>% pull(species) %>% unique() %>% length() # 26413
 
-# how many do we assess? 31596... but only have 27911 in our dataset after running everything??
-
 ## filter for our missing spp and see their suitability
-
-
-missing_spp <- setdiff(all_spp_list$sciname, impact_df_tidy$sciname)
-
 
 test_ag <- ag_suitability %>% 
   filter(species %in% c(missing_spp)) # ok... majority of them should theoretically be impacted... does this just mean there was literally no overlap at all? Yes, or they are not vulnerable.
@@ -161,12 +234,10 @@ all_spp_list
 
 ```
 
-  
-  
-  
 Look at soybean impacts:
 
 ```{r}
+
 soybean_imps <- aoh_df %>%
   filter(fcr_type == "regular",
          str_detect(ingredient, "Soybean"),
@@ -175,7 +246,4 @@ soybean_imps <- aoh_df %>%
   summarise(total_impact = sum(impact_total, na.rm = TRUE)) %>%
   ungroup()
 
-
-
 ```
-

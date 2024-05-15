@@ -1,5 +1,5 @@
 ---
-title: "Summary plots: non maps"
+title: "Publication plots: non maps"
 output: html_document
 editor_options: 
   chunk_output_type: console
@@ -73,9 +73,16 @@ Read in marine and terrestrial dfs and combine
 marine_overlap <- readRDS(here("prep/03_prep_spp_habitats/output/aoh_marine_impact.rds")) %>%
     dplyr::select(sciname, spp_type, diet, fcr_type, allocation, ingredient, vulnerability, impact_total, total_hab_area)
 
+length(unique(marine_overlap$sciname)) # 23029
+
 terrestrial_overlap <- readRDS(here("prep/03_prep_spp_habitats/output/aoh_terrestrial_impact.rds")) %>% 
   dplyr::select(-suitability) %>%
       dplyr::select(sciname, spp_type, diet, fcr_type, allocation, ingredient, vulnerability, impact_total, total_hab_area)
+
+length(unique(terrestrial_overlap$sciname)) # 31596
+
+23029 + 31596 # 54625 - perfect
+
 
 all_overlap <- rbind(marine_overlap, terrestrial_overlap) %>%
     mutate(taxon = str_to_sentence(spp_type)) %>%
@@ -86,6 +93,9 @@ all_overlap <- rbind(marine_overlap, terrestrial_overlap) %>%
     taxon == "Marine mammal" ~ "Marine mammals",
     taxon == "Marine plant" ~ "Marine plants",
     TRUE ~ taxon))
+
+length(unique(all_overlap$sciname)) # 54625
+
 
 ```
 
@@ -172,6 +182,8 @@ all_overlap_df <- all_overlap %>%
     filter(allocation == "Economic",
            fcr == "Regular")
 
+length(unique(all_overlap_df$sciname)) # 54625
+
 summary_df_spp <- all_overlap_df %>%
   group_by(sciname, diet, fcr, allocation, taxon) %>%
   summarise(impact_total = sum(impact_total, na.rm = TRUE)) %>%
@@ -184,6 +196,10 @@ summary_df_spp <- all_overlap_df %>%
   mutate(mean_prop = mean(prop_impact,na.rm=TRUE),
          median_prop = median(prop_impact,na.rm=TRUE)) %>%
   ungroup()
+
+length(unique(summary_df_spp$sciname)) # 42939 affected
+
+42939/54625 # 0.7860686 - ~79% of spp impacted
 
 taxon_hab_area <- spp_total_hab %>%
   dplyr::select(-sciname, -id) %>%
@@ -255,7 +271,7 @@ plot1 <- ggplot(summary_df_spp %>% filter(prop_impact > 0), aes(x = prop_impact)
      geom_boxplot(aes(y = taxon, fill = diet), outlier.fill = NA, outlier.color = NA, position = position_dodge(width = -0.9), alpha = 0, colour = "orange") +
    geom_boxplot(aes(y = taxon, fill = diet), outlier.fill = NA, outlier.color = NA, position = position_dodge(width = -0.9), alpha = 0, fatten = NULL) +
   theme_ohara() +
-      labs(x = "Proportion of habitat area impacted", fill = 'Diet', color = 'Diet') +
+      labs(x = "Proportion of global habitat area impacted", fill = 'Diet', color = 'Diet') +
   scale_x_continuous(expand = c(0,0), limits = c(0, quant_95)) +
   scale_color_manual(values = diet_cols, breaks = names(diet_cols), guide = guide_legend(reverse = FALSE)) +
   theme(panel.background = element_blank(),
@@ -370,7 +386,7 @@ plot1 <- ggplot(summary_df_spp, aes(x = prop_impact)) +
      geom_boxplot(aes(y = taxon, fill = diet), outlier.fill = NA, outlier.color = NA, position = position_dodge(width = -0.9), alpha = 0, colour = "orange") +
    geom_boxplot(aes(y = taxon, fill = diet), outlier.fill = NA, outlier.color = NA, position = position_dodge(width = -0.9), alpha = 0, fatten = NULL) +
   theme_ohara() +
-      labs(x = "Proportion of habitat area impacted", fill = 'Diet', color = 'Diet') +
+      labs(x = "Proportion of global habitat area impacted", fill = 'Diet', color = 'Diet') +
   scale_x_continuous(expand = c(0,0), limits = c(0, quant_95)) +
   scale_color_manual(values = diet_cols, breaks = names(diet_cols), guide = guide_legend(reverse = FALSE)) +
   theme(panel.background = element_blank(),
@@ -429,10 +445,25 @@ ggsave(here(this_dir, "SI_plots/SIfig_economic_boxplot_prop.png"), width = 16, h
 
 ```{r}
 
+impacted_spp <- all_overlap_df %>%
+  filter(impact_total > 0) %>%
+  pull(sciname) %>%
+  unique()
+
+taxon_hab_area <- spp_total_hab %>%
+  filter(sciname %in% impacted_spp) %>%
+  dplyr::select(-sciname, -id) %>%
+  group_by(spp_type) %>%
+  summarise(total_hab_area = sum(total_hab_area, na.rm = TRUE)) %>%
+  ungroup() %>%
+  left_join(taxon_names) %>%
+  dplyr::select(-spp_type)
+
 summary_df_barcharts <- all_overlap_df %>%
   group_by(diet, fcr, raw_material, allocation, taxon) %>%
   summarise(impact_total = sum(impact_total, na.rm = TRUE)) %>%
   ungroup() %>%
+  filter(impact_total > 0) %>%
   left_join(taxon_hab_area) %>%
   mutate(prop_impact = impact_total/total_hab_area)
 
@@ -443,7 +474,7 @@ summary_df_barcharts$taxon <- with(summary_df_barcharts, reorder(taxon, prop_imp
 ggplot(summary_df_barcharts, aes(x = taxon, y = prop_impact, fill = raw_material)) +
     geom_bar(stat = "identity") +
   facet_wrap(~diet) +
-  labs(x = "Taxon", y = "Proportion of total habitat impacted", fill = NULL) +
+  labs(x = "Taxon", y = "Proportion of global habitat area impacted", fill = NULL) +
   theme_minimal() + 
   scale_fill_manual(values = pal_mats) + 
   coord_flip()  + 
@@ -460,6 +491,49 @@ ggplot(summary_df_barcharts, aes(x = taxon, y = prop_impact, fill = raw_material
 
 ggsave(here(this_dir, "/MS_plots/fig3_economic_barchart.png"), width = 178.9, height =100.92 , units = "mm", bg = "white")
 
+## now save same but with 0 impact species
+
+taxon_hab_area <- spp_total_hab %>%
+#  filter(sciname %in% impacted_spp) %>%
+  dplyr::select(-sciname, -id) %>%
+  group_by(spp_type) %>%
+  summarise(total_hab_area = sum(total_hab_area, na.rm = TRUE)) %>%
+  ungroup() %>%
+  left_join(taxon_names) %>%
+  dplyr::select(-spp_type)
+
+summary_df_barcharts <- all_overlap_df %>%
+  group_by(diet, fcr, raw_material, allocation, taxon) %>%
+  summarise(impact_total = sum(impact_total, na.rm = TRUE)) %>%
+  ungroup() %>%
+ # filter(impact_total > 0) %>%
+  left_join(taxon_hab_area) %>%
+  mutate(prop_impact = impact_total/total_hab_area)
+
+## switch the raw materials and species in that plot
+
+summary_df_barcharts$taxon <- with(summary_df_barcharts, reorder(taxon, prop_impact, FUN = function(x) sum(x)))
+
+ggplot(summary_df_barcharts, aes(x = taxon, y = prop_impact, fill = raw_material)) +
+    geom_bar(stat = "identity") +
+  facet_wrap(~diet) +
+  labs(x = "Taxon", y = "Proportion of global habitat area impacted", fill = NULL) +
+  theme_minimal() + 
+  scale_fill_manual(values = pal_mats) + 
+  coord_flip()  + 
+  theme(panel.background = element_blank(),
+            axis.title.y = element_blank(),
+            axis.text.x = element_text(size = 7, angle = 45, hjust = 1),
+         axis.text.y = element_text(size = 7),
+        strip.text = element_text(size = 7),
+        axis.title = element_text(size = 7),
+        legend.text = element_text(size = 7),
+        text = element_text(family = "arial")) + 
+    scale_y_continuous(expand = c(0,0))
+
+
+ggsave(here(this_dir, "/SI_plots/SI_fig3_economic_barchart.png"), width = 178.9, height =100.92 , units = "mm", bg = "white")
+
 summary_df_barcharts$raw_material <- with(summary_df_barcharts, reorder(raw_material, prop_impact, FUN = function(x) mean(x)))
 
 
@@ -472,7 +546,7 @@ ggplot(summary_df_barcharts, aes(x = raw_material, y = prop_impact, fill = taxon
   coord_flip()  + 
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Adjust the 'angle' value as needed
 
-ggsave(here(this_dir, "SI_plots/barchart_by_raw_mat.png"), width = 178.9, height =100.92 , units = "mm", bg = "white")
+ggsave(here(this_dir, "SI_plots/SI_fig_barchart_by_raw_mat.png"), width = 178.9, height =100.92 , units = "mm", bg = "white")
 
 ```
 
@@ -689,7 +763,7 @@ total_panel <- panel_1 + panel_2
 
 ggdraw() + 
   draw_plot(total_panel) +
-  draw_label('Nspp weighted average proportion of habitat impacted', x = 0.35, y = .034, hjust = 0, vjust = 1, 
+  draw_label('Average proportion of habitat area impacted', x = 0.35, y = .034, hjust = 0, vjust = 1, 
              size = 11, fontfamily = 'Helvetica') +
     theme(plot.margin = margin(0, 3, 0, 0, "cm")) + # Adjust the right margin as needed
     draw_plot(legend_plot,  x = 1.02, y = 0.5, height = .10, width = .15)
@@ -724,7 +798,6 @@ material_stats_1$raw_material <- with(material_stats_1, reorder(raw_material, me
 ggplot(material_stats_1, aes(x = raw_material, y = mean_prop_weighted, fill = raw_material)) +
     geom_bar(stat = "identity") +
   facet_wrap(~diet) +
-  labs(x = "Raw material", y = "Average proportion of habitat impacted", fill = NULL) +
   theme_minimal() + 
   scale_fill_manual(values = pal_mats) + 
   coord_flip()  + 
@@ -735,8 +808,11 @@ ggplot(material_stats_1, aes(x = raw_material, y = mean_prop_weighted, fill = ra
         strip.text = element_text(size = 7),
         axis.title = element_text(size = 7),
         legend.text = element_text(size = 7),
-        text = element_text(family = "arial")) + 
-    scale_y_continuous(expand = c(0,0))
+        text = element_text(family = "arial"),
+        legend.position = "none") + 
+    scale_y_continuous(expand = c(0,0)) + 
+    labs(x = "Raw material", y = "Average proportion of habitat area impacted", fill = NULL)
+
 
 ggsave(here(this_dir, "SI_plots/average_raw_mat_impact.png"), bg = "white", width = 178.9, height = 100.92 , units = "mm")
 

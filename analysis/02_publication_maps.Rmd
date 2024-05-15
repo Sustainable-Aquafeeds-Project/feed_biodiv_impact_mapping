@@ -119,17 +119,24 @@ all_df <-  qread(filepath) %>%
     filter(!is.na(value)) %>%
     mutate(diet_cap = str_to_sentence(diet))
 
-quantiles <- all_df %>%
-  group_by(diet) %>%
-  summarise(q25 = quantile(value, 0.25),
-            q50 = quantile(value, 0.50),
-            q75 = quantile(value, 0.75),
-            q95 = quantile(value, 0.95),
-            q99 = quantile(value, 0.99)) %>%
-  ungroup()
+q25 <- quantile(all_df$value, 0.25)
+q50 <- quantile(all_df$value, 0.50)
+q75 <- quantile(all_df$value, 0.75)
+q95 <- quantile(all_df$value, 0.95)
+q99 <- quantile(all_df$value, 0.99)
+
+
+quantile_labels <- c(
+  trimws(as.character(round(q25[[1]], 10)), "both", "0"),
+  trimws(as.character(round(q50[[1]], 8)), "both", "0"),
+  trimws(as.character(round(q75[[1]], 7)), "both", "0"),
+  trimws(as.character(round(q95[[1]], 5)), "both", "0"),
+  trimws(as.character(round(q99[[1]], 4)), "both", "0"),
+  trimws(as.character(round(max(all_df$value), 2)), "both", "0")
+)
+
 
 all_df_quant <- all_df %>%
-  left_join(quantiles, by = "diet") %>%
     mutate(category = case_when(
     value < q25 ~ "0-24",
     value >= q25 & value < q50 ~ "25-49",
@@ -137,77 +144,111 @@ all_df_quant <- all_df %>%
     value >= q75 & value < q95 ~ "75-94",
     value >= q95 & value < q99 ~ "95-99",
     value >= q99 ~ "≥99"
-  ))
+  )) %>%
+  mutate(new_category = case_when(
+      category == "0-24" ~ "0.0000000004",
+      category == "25-49" ~ "0.00000001",
+      category == "50-74" ~ "0.0000004",
+      category == "75-94" ~ "0.00005",
+      category == "95-99" ~ "0.0005", 
+      category == "≥99" ~ "0.22"
+    ))
+
+  new_pal <- c(
+    "0.0000000004" = "#D4F7F0", 
+    "0.00000001" = "#538AC6", 
+    "0.0000004" = "#1E438F", 
+    "0.00005" = "#F8D422", 
+    "0.0005" = "#E95D08", 
+    "0.22" = "#781211"
+)
 
 all_df_quant$category <- factor(all_df_quant$category, levels = c("0-24", "25-49", "50-74", "75-94", "95-99", "≥99"))
+all_df_quant$new_category <- factor(all_df_quant$new_category, levels = c("0.0000000004", "0.00000001", "0.0000004", "0.00005", "0.0005", "0.22"))
 
   quantile_plot <-  ggplot() + 
-      geom_tile(data = all_df_quant, aes(x = long, y = lat, fill = category, color = category)) +
+      geom_tile(data = all_df_quant, aes(x = long, y = lat, fill = new_category, color = category)) +
                  geom_sf(data = countries_shp, fill = NA, colour = "grey", alpha = 0.2)  +
                  geom_sf(data = globe_border, fill = NA, colour = "grey") + 
     scale_x_continuous(expand = c(0, 0)) +
     scale_y_continuous(expand = c(0, 0)) +
     theme_minimal() + 
-      theme(plot.title = element_text(hjust = 0.5), 
-          axis.title = element_blank(),
-          axis.text = element_blank(),
-          axis.ticks = element_blank(),
-          legend.margin = margin(r = 10), # add a margin to legend text so it isn't cut off when saving 
-          legend.position = "bottom",
-          text = element_text(family = "Arial", colour = "black"),
-          legend.title = element_text(size = 8),
-          strip.text.x = element_text(size = 8, family = "Arial", colour = "black"),
-          legend.key.size = unit(4, "mm")) + # change legend box sizes
-  labs(fill = "Impact by Quantile") + 
-     guides(color = "none",
-             fill = guide_legend(title.position = "top", title.hjust = 0.5, nrow = 1)) + 
+  theme(plot.title = element_text(hjust = 0.5), 
+        axis.title.y = element_blank(),
+        axis.title.x = element_text(size = 8, family = "Arial", vjust  = -4, colour = "black"),
+        axis.text = element_blank(),
+        axis.ticks = element_blank(),
+       legend.margin = margin(b = 0, t = 0), 
+        legend.position = "bottom",
+        text = element_text(family = "Arial", colour = "black"),
+        legend.title = element_text(size = 8, margin = margin(b = 3, t = 3)),
+        strip.text.x = element_text(size = 8, family = "Arial", colour = "black"),
+        legend.key.width = unit(26, "mm"),
+        legend.key.height = unit(0.3, "cm"),
+        legend.box = "vertical",  # Stack legends vertically
+        legend.box.just = "top",
+        legend.spacing.y = unit(0, "pt"),
+       # legend.box.background = element_rect(colour = "black"), 
+        legend.text = element_text(margin = margin(t = 3))
+      ) +
+  guides(
+    color = guide_legend(
+    #  title.position = "top",
+      title = NULL,
+      title.hjust = 0.5, 
+      nrow = 1, 
+      label.position = "top",  
+      label.hjust = 0.5,
+      label.vjust = 1, 
+      byrow = TRUE,
+      order = 1,
+      keyheight = 0
+    ),
+    fill = guide_legend(
+      title.position = "bottom",  
+      title.hjust = 0.5, 
+      title.vjust = 1,
+      nrow = 1, 
+      label.position = "bottom",  
+      label.hjust = 0.5,
+      label.vjust = 1,
+      byrow = TRUE,
+      order = 2
+    )
+    ) + 
     facet_wrap(~diet_cap) + 
-    scale_fill_manual(values = quantile_pal) +
-    scale_colour_manual(values = quantile_pal) 
-  
-    ggsave(glue(here(this_dir, "SI_plots/economic_mean_prop_quantiles.png")), plot = quantile_plot, width = 8, height = 8, bg = "white")
+    scale_fill_manual(values = new_pal) +
+    scale_colour_manual(values = quantile_pal) + 
+        labs(color = "", 
+             fill = "Upper limit of quantile",
+             x = "\nMean proportion of habitat impacted by quantile") 
+
+
+  ggsave(glue(here(this_dir, "SI_plots/economic_mean_prop_quantiles.png")), plot = quantile_plot, width = 8, height = 8, bg = "white")
     
     
 ## Delta plot 
-    
- filepath <- glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_ingredient/delta/economic_mean_prop.qs"))
+filepath <- glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_ingredient/delta/economic_mean_prop.qs"))
 
 delta_df <-  qread(filepath) %>%
   filter(fcr_type == "regular", 
          delta_cat != "No difference") # there are only a few pixels where there is no difference... so just filter out.
 
-quantiles_delta_fish <- delta_df %>%
-  filter(delta_cat == "Fish-dominant") %>%
-  group_by(delta_cat) %>%
-  summarise(q25 = quantile(delta, 0.25),
-            q50 = quantile(delta, 0.50),
-            q75 = quantile(delta, 0.75),
-            q95 = quantile(delta, 0.95),
-            q99 = quantile(delta, 0.99)) %>%
-  ungroup()
-
-quantiles_delta_plant <- delta_df %>%
-  filter(delta_cat == "Plant-dominant") %>%
-  group_by(delta_cat) %>%
-  summarise(q25 = quantile(-1*delta, 0.25),
-            q50 = quantile(-1*delta, 0.50),
-            q75 = quantile(-1*delta, 0.75),
-            q95 = quantile(-1*delta, 0.95),
-            q99 = quantile(-1*delta, 0.99)) %>%
-  ungroup() %>%
-  mutate(across(2:6, ~.x*-1))
-
-quantiles_delta <- rbind(quantiles_delta_plant, quantiles_delta_fish) # bind back together
-
 delta_df_quant <- delta_df %>%
-  left_join(quantiles_delta, by = "delta_cat") %>%
-    mutate(category = case_when(
+  mutate(delta_abs = abs(delta)) %>%
+  mutate(q25 = quantile(delta_abs, 0.25),
+            q50 = quantile(delta_abs, 0.50),
+            q75 = quantile(delta_abs, 0.75),
+            q95 = quantile(delta_abs, 0.95),
+            q99 = quantile(delta_abs, 0.99)) %>%
+  ungroup() %>%
+  mutate(category = case_when(
     abs(delta) < abs(q25) ~ "0-24",
     abs(delta) >= abs(q25) & abs(delta) < abs(q50) ~ "25-49",
     abs(delta) >= abs(q50) & abs(delta) < abs(q75) ~ "50-74",
     abs(delta) >= abs(q75) & abs(delta) < abs(q95) ~ "75-94",
     abs(delta) >= abs(q95) & abs(delta) < abs(q99) ~ "95-99",
-    abs(delta) >= abs(q999) ~ "≥99"
+    abs(delta) >= abs(q99) ~ "≥99"
   ))
 
 # establish palettes for delta map 
@@ -237,17 +278,16 @@ delta_df_quant_plant <- delta_df_quant %>% filter(delta_cat == "Plant-dominant")
 delta_df_quant_plant$category <- factor(delta_df_quant_plant$category, levels = c("0-24", "25-49", "50-74", "75-94", "95-99", "≥99"))
 
 
-   delta_plot <-  ggplot() + 
+delta_plot <-  ggplot() + 
       geom_tile(data = delta_df_quant_plant, aes(x = long, y = lat, fill = category, color = category)) +
         scale_fill_manual(values = plant_pal) +
     scale_colour_manual(values = plant_pal) +
     scale_x_continuous(expand = c(0, 0)) +
     scale_y_continuous(expand = c(0, 0)) +
      theme_ohara() + 
-  labs() +
   guides(color = "none") +
           theme(legend.position = "none", 
-                text = element_text(family = "Arial")) + 
+                text = element_text(family = "Arial", colour = "black")) + 
      new_scale_color() +
      new_scale_fill() + 
            geom_tile(data = delta_df_quant_fis, aes(x = long, y = lat, fill = category, color = category)) +
@@ -255,13 +295,13 @@ delta_df_quant_plant$category <- factor(delta_df_quant_plant$category, levels = 
                  geom_sf(data = countries_shp, fill = NA, colour = "grey", alpha = 0.2)  +
                  geom_sf(data = globe_border, fill = NA, colour = "grey") + 
     scale_colour_manual(values = fish_pal) +
-       labs(fill = "Fish-dominant", x = "Difference of Impact by Quantile", y = "") +
+       labs(x = "\nDifference of proportion of habitat impacted by quantile", y = "") +
   guides(color = "none") + 
      theme(legend.position = "none", 
            axis.text.y = element_blank(), 
            axis.text.x = element_blank(),
-           axis.title.x = element_text(size = 8, family = "Arial"),
-           plot.margin = margin(t = 10, r = 10, b = 50, l = 10, unit = "pt"),
+           axis.title.x = element_text(size = 8, family = "Arial", colour = "black"),
+           plot.margin = margin(t = 10, r = 10, b = 70, l = 10, unit = "pt"),
            text = element_text(family = "Arial", colour = "black"))
    
    fish_legend <- get_legend(ggplot() + 
@@ -269,46 +309,114 @@ delta_df_quant_plant$category <- factor(delta_df_quant_plant$category, levels = 
              scale_fill_manual(values = fish_pal) +
               scale_colour_manual(values = fish_pal) +
                   labs(fill = "Fish-dominant") +
-          guides(color = "none",
-            fill = guide_legend(title.position = "bottom", title.hjust = 0.5, nrow = 1)) +
-          theme(legend.position = "bottom", 
-                  legend.title = element_text(size = 8),
-                legend.text = element_text(size = 8), 
-      text = element_text(family = "Arial", colour = "black"),
-      legend.margin = margin(r = 10),
-      legend.key.size = unit(4, "mm")))
+ theme(plot.title = element_text(hjust = 0.5), 
+        axis.title.y = element_blank(),
+        axis.title.x = element_text(size = 8, family = "Arial", vjust  = -4, colour = "black"),
+        axis.text = element_blank(),
+        axis.ticks = element_blank(),
+       legend.margin = margin(b = 0, t = 0), 
+        legend.position = "bottom",
+        text = element_text(family = "Arial", colour = "black"),
+        legend.title = element_text(size = 8, margin = margin(b = 3, t = 3)),
+        strip.text.x = element_text(size = 8, family = "Arial", colour = "black"),
+        legend.key.width = unit(26, "mm"),
+        legend.key.height = unit(0.3, "cm"),
+        legend.box = "vertical",  # Stack legends vertically
+        legend.box.just = "top",
+        legend.spacing.y = unit(0, "pt"),
+        legend.text = element_text(margin = margin(t = 3)),
+        legend.background = element_rect(fill = "transparent")
+      ) +
+  guides(
+    color = "none",
+    fill = guide_legend(
+      title.position = "left",  
+     # title.hjust = 0, 
+      title.vjust = -0.2,
+      nrow = 1, 
+      label.position = "top",  
+      label.hjust = 0.5,
+      label.vjust = 1,
+      byrow = TRUE
+    )
+    ) 
+   )
+   
+   quant_val_labels <- c(
+     trimws(round(unique(delta_df_quant$q25),10), "right", whitespace = "0"),
+     trimws(round(unique(delta_df_quant$q50),8), "right", "0"),
+      trimws(round(unique(delta_df_quant$q75),7), "right", "0"),
+      trimws(round(unique(delta_df_quant$q95),5), "right", "0"),
+      round(unique(delta_df_quant$q99),4),
+            round(max(delta_df_quant$delta_abs), 2)
+   )
    
    plant_legend <- get_legend(ggplot() + 
       geom_tile(data = delta_df_quant_plant, aes(x = long, y = lat, fill = category, color = category)) +
-             scale_fill_manual(values = plant_pal) +
+             scale_fill_manual(values = plant_pal, labels = quant_val_labels) +
               scale_colour_manual(values = plant_pal) +
-                  labs(fill = "Plant-dominant") +
-          guides(color = "none",
-            fill = guide_legend(title.position = "bottom", title.hjust = 0.5, nrow = 1)) +
-          theme(legend.position = "bottom",
-                legend.title = element_text(size = 8),
-                legend.text = element_text(size = 8), 
-                text = element_text(family = "Arial", colour = "black"), 
-      legend.margin = margin(r = 10),
-      legend.key.size = unit(4, "mm")))
+              labs(fill = "Plant-dominant") +
+ theme(plot.title = element_text(hjust = 0.5), 
+        axis.title.y = element_blank(),
+        axis.title.x = element_text(size = 8, family = "Arial", vjust  = -4, colour = "black"),
+        axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        legend.margin = margin(b = 0, t = 0), 
+        legend.position = "bottom",
+        text = element_text(family = "Arial", colour = "black"),
+        legend.title = element_text(size = 8, margin = margin(b = 3, t = 3)),
+        strip.text.x = element_text(size = 8, family = "Arial", colour = "black"),
+        legend.key.width = unit(26, "mm"),
+        legend.key.height = unit(0.3, "cm"),
+        legend.box = "vertical",  # Stack legends vertically
+        legend.box.just = "top",
+        legend.spacing.y = unit(0, "pt"),
+        legend.text = element_text(margin = margin(t = 3)),
+        legend.background = element_rect(fill = "transparent")
+      ) +
+  guides(
+    color = "none",
+    fill = guide_legend(
+      title.position = "left",  
+     # title.hjust = 0, 
+      title.vjust = 1,
+      nrow = 1, 
+      label.position = "bottom",  
+      label.hjust = 0.5,
+      label.vjust = 1,
+      byrow = TRUE
+    )
+    ) 
+   )
      
-   full_plot <- ggdraw() +
-                draw_plot(delta_plot) +
-                draw_plot(fish_legend, height = 0.25, width = 0.52) +
-                draw_plot(plant_legend, height = 0.25, width = 1.54)
-     
+   full_plot_si <- ggdraw(delta_plot) +
+                draw_plot(fish_legend, height = 0.5, width = 1) +
+                draw_plot(plant_legend, height = 0.425, width = 0.9945) +
+     draw_label("Upper limit of quantile", y = 0.18, x = 0.508, size = 8, fontfamily = "Arial")
+   
+   
+      full_plot_ms <- ggdraw(delta_plot) +
+                draw_plot(fish_legend, height = 0.4, width = 1) +
+                draw_plot(plant_legend, height = 0.25, width = 0.9945) +
+     draw_label("Upper limit of quantile", y = 0.05, x = 0.505, size = 8, fontfamily = "Arial")
+   
    ## saving two separetely because I can
    
         ggsave(glue(here(this_dir, "MS_plots/fig1_economic_mean_prop_quantiles_delta.png")),
-                plot = plot_grid(quantile_plot, full_plot, nrow = 2, labels = c("A", "B"), label_fontfamily = "Arial", label_fontface = "bold", label_size = 8), 
+                plot = plot_grid(quantile_plot, full_plot_ms, nrow = 2, labels = c("A", "B"), label_fontfamily = "Arial", label_fontface = "bold", label_size = 8), 
                 width = 180, height = 180, bg = "white", units = "mm")
+              
       
-         ggsave(glue(here(this_dir, "SI_plots/economic_mean_prop_delta_plot.png")),
-                plot = full_plot, 
+    ggsave(glue(here(this_dir, "SI_plots/economic_mean_prop_delta_plot.png")),
+                plot = full_plot_si, 
                 width = 180, height = 180, bg = "white", units = "mm")
-   
-    
+        
 ```
+
+
+
+
+
 
 Histogram of impact values by quantile group 
  - SI
@@ -369,6 +477,7 @@ quantile_value <- quantile(loop_loop_df$value, probs = 0.99, na.rm = TRUE)
      geom_tile(fill = ifelse(loop_loop_df$value_new < quantile_value, "#B90000", NA)) + 
             geom_sf(data = countries_shp, fill = NA, colour = "grey") + 
        scale_fill_gradientn(colors = palette_red, na.value = "white") +
+    # scale_fill_gradientn(breaks = c(round(quantile_value[[1]]/2, 4), round(quantile_value[[1]], 4), max(loop_loop_df$value)), colors = palette_red) + 
             scale_color_gradientn(colors = palette_red, na.value = "white") +
             geom_sf(data = globe_border,
             fill = NA, color = 'grey70', 
@@ -395,86 +504,7 @@ ggsave(glue(here(this_dir, "SI_plots/economic_mean_prop.png")), plot = plot_grid
 
 
 Map stats!
- 
- 
- - Look specifically at cell with highest value
- 
-```{r}
 
-land_eez_rgns <- read.csv(file.path(biodiv_dir, "spatial/rgns_xy_all.csv")) %>% 
-  dplyr::select(x, y, rgn_id)
-
-## read in plant-dominant, economic, regulat
- filepath <- glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_ingredient/economic_mean_prop.qs"))
-
-all_df <-  qread(filepath)  %>%
-  filter(value > 0) %>%
-  filter(!is.na(value))
-
-max(all_df$value) # 0.2235324 - plant-dominant regular
-
-moll_template_land <- readRDS(here("prep/03_prep_spp_habitats/data/spatial/moll_template_land_xy.rds"))
-moll_template_ocean <- readRDS(here("prep/03_prep_spp_habitats/data/spatial/moll_template_ocean_xy.rds"))
-
-
-maximum_location <- all_df %>%
-  filter(value > 0.22) %>%
-  left_join(land_eez_rgns, by = c("long" = "x", "lat" = "y")) %>%
-  left_join(moll_template_land, by = c("long" = "x", "lat" = "y")) # max value is 0.2235324 on land in Norway
-
-## how many spp impacted in that cell? 
- filepath <- glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_ingredient/economic_nspp.qs"))
-
-nspp_df <-  qread(filepath) %>%
-  left_join(moll_template_xy, by = c("long" = "x", "lat" = "y")) %>%
-  filter(cell_id == 786772) # 39 spp impacted
-
-## how many spp are in that cell total that aren't impacted? Do I have this info saved somewhere??
-# since this is a terrestrial cell, we only need to look at terrestrial species
-
-spp_fp <- data.frame(filepath = list.files(file.path("/mnt/rdsi/raw_data/AOH_eyres/reprojected_mol_csv_fin"), full.names = TRUE)) %>%
-  mutate(species_full = str_after_last(filepath, "\\/")) %>%
-  mutate(species_id = as.numeric(str_remove_all(species_full, ".csv"))) %>%
-  left_join(iucn_ids_names, by = c("species_id" = "iucn_id")) %>%
-  dplyr::select(filepath, species_full = scientific_name, spp_type, species_id) %>%
-  mutate(spp_type = case_when(
-    spp_type == "mammals" ~ "Terrestrial mammal", 
-    spp_type == "birds" ~ "Bird",
-    spp_type == "reptiles" ~ "Reptiles",
-    spp_type == "amphibians" ~ "Amphibians"
-  ))
-
-spp_info_df <- readRDS(file.path(this_dir, "int/terrestrial_spp_habitat_suitability.rds")) %>%
-  inner_join(spp_fp, by = c("species" = "species_full", "spp_type")) %>% # change this to left join ? 
-  rename(species_full = species)
-
-
-source(here("src/fxns.R"))
-library(data.table)
-
-tx_maps <- collect_spp_rangemaps_terrestrial(spp_info_df$species_full, spp_info_df$filepath)
-
-max_cell <- tx_maps %>%
-  as.data.table() %>%
-   .[cell_id == 786772] # ok there are 97 spp total in this cell, meaning 97-39 = 58 are not impacted
-
- all_spp_map <- tx_maps %>%
-   as.data.table() %>%
-                                                  .[ , .(
-                                                         n_spp       = length(unique(species_full))),
-                                                     by = 'cell_id'] %>%
-   as.data.frame() %>%
-   left_join(moll_template_xy) %>%
-            left_join(moll_template_xy) %>%
-            dplyr::select(x, y, n_spp) %>%
-            rast(., type = "xyz", crs = moll_template)
- 
- writeRaster(all_spp_map, here("data/spatial/output/terrestrial_spp_richness.tif"), overwrite = TRUE)
-
-rgn_id <- read.csv(here("data/spatial/output/region_ids.csv"))
-
-
-```
 
 Compare diet types and ncells impacted
 

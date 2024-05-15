@@ -338,7 +338,6 @@ for(diet in diet_types){
 
 Now we need to stack and sum the rasters saved in the previous chunks to get marine and terrestrial impacts combined. There shouldn't be any cells which overlap, so simply stacking and summing should be appropriate.
  - only takes a few mins
- ####HERERERERE
 
 ```{r}
 # establish scenarios

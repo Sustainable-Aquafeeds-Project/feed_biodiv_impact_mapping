@@ -1,0 +1,228 @@
+---
+title: "Publication plots: non maps"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+## Setup
+
+Load libraries
+
+```{r setup, include=FALSE}
+
+library(tidyverse)
+library(here)
+library(data.table)
+library(terra)
+library(strex)
+library(patchwork)
+library(cowplot)
+library(glue)
+library(RColorBrewer)
+library(ggpubr)
+library(qs)
+library(parallel)
+library(doParallel)
+
+source(here("src/directories.R"))
+
+source(here("src/spatial.R"))
+
+biodiv_dir <- file.path(rdsi_dir, "biodiversity_impacts")
+
+impact_maps_dir <- file.path(biodiv_dir, "output")
+
+this_dir <- here("analysis/")
+
+```
+
+Let's explore the cell with the highest impacts:
+ - in Norway, plant-dominant 22% average habitat area impacted
+ - in Norway, fish-dominant XX% average habitat area impacted
+ 
+ 
+```{r}
+land_eez_rgns <- read.csv(file.path(biodiv_dir, "spatial/rgns_xy_all.csv")) %>% 
+  dplyr::select(x, y, rgn_id)
+
+## read in plant-dominant, economic, regulat
+ filepath <- glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_ingredient/economic_mean_prop.qs"))
+
+all_df <-  qread(filepath)  %>%
+  filter(value > 0) %>%
+  filter(!is.na(value))
+
+max_scen <- all_df %>%
+  group_by(diet, fcr_type) %>%
+  summarise(max_val = max(value, na.rm = TRUE)) %>%
+  ungroup()
+
+# A tibble: 4 × 3
+#   diet           fcr_type  max_val
+#   <chr>          <chr>       <dbl>
+# 1 fish-dominant  efficient  0.0958
+# 2 fish-dominant  regular    0.106 
+# 3 plant-dominant efficient  0.201 
+# 4 plant-dominant regular    0.224 
+
+## lets find the exact cell of these impacts
+moll_template_land <- readRDS(here("prep/03_prep_spp_habitats/data/spatial/moll_template_land_xy.rds")) %>%
+  mutate(type = "land")
+moll_template_ocean <- readRDS(here("prep/03_prep_spp_habitats/data/spatial/moll_template_ocean_xy.rds")) %>%
+  mutate(type = "ocean")
+
+moll_template_all <- rbind(moll_template_land, moll_template_ocean)
+land_eez_rgns <- read.csv(file.path(biodiv_dir, "spatial/rgns_xy_all.csv")) %>% 
+  dplyr::select(x, y, rgn_id)
+
+maximum_location <- all_df %>%
+  filter(value >  0.0958) %>%
+  left_join(land_eez_rgns, by = c("long" = "x", "lat" = "y")) %>%
+  left_join(moll_template_all, by = c("long" = "x", "lat" = "y"))
+
+# All max values in each scenario are in the same cell, on land, in Norway: cell_id = 786772
+# side note - the maximum ocean cells are also in Norway
+
+## how many spp impacted in that cell? 
+ filepath <- glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_ingredient/economic_nspp.qs"))
+
+nspp_df <-  qread(filepath) %>%
+  left_join(moll_template_xy, by = c("long" = "x", "lat" = "y")) %>%
+  dplyr::select(cell_id, diet, fcr_type, nspp_impacted = value) # 39 spp impacted in all scenarios
+
+## how many species are actually in that cell? 
+
+all_richness <- rast(list.files(here("data/spatial/output"), pattern = "richness", full.names = TRUE)) %>% 
+    app(., "sum", na.rm = TRUE) %>%
+  as.data.frame(., xy = TRUE) %>%
+  left_join(moll_template_xy) %>%
+  dplyr::select(cell_id, sum_spp = sum)
+
+max_impacts <- maximum_location %>% 
+  left_join(all_richness) %>%
+  left_join(nspp_df)
+# %>%
+#  filter(cell_id == 786772)
+
+## ok so, 39 spp impacted, 97 spp present
+
+```
+
+
+What species are impacted in largest impact cells:
+ - Lets grab any terrestrial cell that has >1km2 of impact (presumably meaning that any species in that cell will have at leats 1% habitat disruption in that cell)
+
+```{r}
+# take code from aggregation script
+
+diet_types <- c("fish-dominant", "plant-dominant")
+fcr_types <- c("regular", "efficient")
+allocation_types <- c("economic")
+
+
+max_impact_df <- data.frame(species_full = NA, cell_id = NA, cropland_suitability = NA, spp_type = NA, filepath = NA,
+                            species_id = NA, harvest = NA, hab_area = NA, impact_km2 = NA, source_file = NA,
+                            raw_material = NA, diet = NA, allocation = NA, fcr = NA)
+
+for(diet in diet_types){
+  for(fcr in fcr_types){
+    for(allocation in allocation_types){
+
+# allocation = "economic"
+# diet = "plant-dominant"
+# fcr = "regular"
+
+all_files <- list.files(file.path(biodiv_dir, "output/impact_maps_by_spp_ingredient_lists"), pattern = glue(".*_{diet}_{fcr}_.*_{allocation}"), full.names = TRUE)
+
+to_remove <- grep("fish oil|fish meal", all_files)
+all_files <- all_files[-to_remove]
+
+
+all_files_list <- lapply(all_files, qread)
+
+## now filter for specific cell_id and see what is impacted...
+
+max_cells <- all_files_list %>%
+  map(~ .x %>%
+        map(~ filter(.x, impact_km2 >= 1))) %>% 
+    bind_rows() %>%
+  pull(cell_id) %>% 
+  unique()
+
+max_cell_impacts <- all_files_list %>% 
+  map(~ .x %>%
+        map(~ filter(.x, cell_id %in% c(max_cells))))  # filter for any cells that have at least 1 km2 of impact (this way we know that at least one species in that cell will have 1% of their habitat area impacted; generally should be all species in that cell will have 1% impact, but it is possible that a species could be 50% vulnerable, so it would only have 0.5km2 impacted)
+
+
+for (i in seq_along(max_cell_impacts)) {
+  for (j in seq_along(max_cell_impacts[[i]])) {
+    max_cell_impacts[[i]][[j]]$source_file <- all_files[i]
+  }
+}
+
+max_cell_impacts_fin <- max_cell_impacts %>%
+  bind_rows() %>%
+  mutate(raw_material = str_before_first(str_after_nth(str_after_last(source_file, "/"), "_", 3), "_")) %>%
+  mutate(diet = diet, 
+         allocation = allocation, 
+         fcr = fcr)
+
+max_impact_df <- rbind(max_cell_impacts_fin, max_impact_df)
+
+    }
+  }
+}
+
+max_impact_df <- max_impact_df %>%
+  filter(!is.na(cell_id))
+
+test <- max_impact_df %>%
+  group_by(cell_id, species_full) %>%
+  summarise(impact_km2 = sum(impact_km2))
+
+qsave(max_impact_df, here(this_dir, "int/terrestrial_spp_1%_impacted.qs")) ## save this data
+
+## consider for marine species? Maybe... if i did it would take ~8 hours I'm guessing, and might be quite a lot more data
+
+```
+
+What IUCN category are these heavily impacted species? 
+
+```{r}
+max_impact_df <- qread( here(this_dir, "int/terrestrial_spp_1%_impacted.qs"))
+iucn_cats <- read.csv(here("prep/03_prep_spp_habitats/int/spp_iucn_cats.csv"))
+
+iucn_big_impacts <- max_impact_df %>% 
+  mutate(species_full = tolower(species_full)) %>%
+  left_join(iucn_cats, by = c("species_full" = "sciname")) %>%
+  filter(!(category %in% c("NE", "LC", "DD"))) %>%
+  group_by(species_full, cell_id) %>%
+  mutate(total_impacts = sum(impact_km2)) %>%
+  ungroup() %>%
+  filter(total_impacts >= 1)
+
+## ok wheat and rapeseed really bad! 
+
+```
+
+Are adjacent cells less biodiverse, and do they have farmland? Would it be feasible to shift the production elsewhere in Norway? 
+
+```{r}
+
+```
+
+Is it a matter of not using Rapeseed? How much impact do you alleviate if you don't use rapeseed?
+
+```{r}
+
+```
+
+
+If shifting within country is not feasible to dilute impacts, where would be the most likely place to shift to, and do those areas have high biodiversity and imapcts (probably CAN and BRA/ARG, big trade partners for Soy, Wheat, Rapeseed)?
+
+```{r}
+
+```
+
+
