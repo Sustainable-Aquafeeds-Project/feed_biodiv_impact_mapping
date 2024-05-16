@@ -247,12 +247,11 @@ pattern <- glue(".*_{diet}_{fcr}_.*_{allocation}_chunk_.*.qs")
 Next we need to read in the files we saved, by chunk (500k cells), summarise per cell the mean prop impacted, sd prop impacted, mean extinction risk, and nspp impacted, then rbind together into one big cell_id, prop_mean, prop_sd, extinction risk, and nspp dataframe
 
  - NOTE: If you want to run all scenarios, this will probably take ~12 hours...
- - NOTE: May 3, 2024: NEED TO RUN FISH-DOMINANT EFFICIENT MASS AND GE FOR ACROSS TAXA INGREDIENT STUFF
 
 ```{r}
-diet_types <- c("fish-dominant")
-fcr_types <- c("efficient")
-allocation_types <- c("mass", "ge")
+diet_types <- c("fish-dominant", "plant-dominant")
+fcr_types <- c("efficient", "regular")
+allocation_types <- c("mass", "ge", "economic")
 
 
 for(diet in diet_types){

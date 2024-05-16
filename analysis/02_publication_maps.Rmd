@@ -154,6 +154,18 @@ all_df_quant <- all_df %>%
       category == "≥99" ~ "0.22"
     ))
 
+land_eez_rgns <- read.csv(file.path(biodiv_dir, "spatial/rgns_xy_all.csv"))
+
+large_impact_cells <- all_df_quant %>%
+  filter(category %in% c("95-99", "≥99")) %>%
+  left_join(moll_template_xy, by = c("long" = "x", "lat" = "y")) %>%
+  left_join(land_eez_rgns, by = c("long" = "x", "lat" = "y")) %>%
+  filter(iso3c %in% c("NOR", "CAN", "ARG", "CHL", "AUS")) %>%
+  distinct(cell_id) %>%
+  pull() # ok down to 40k cells maybe thats small enough
+
+saveRDS(large_impact_cells, here("analysis/int/large_impact_cells.rds"))
+
   new_pal <- c(
     "0.0000000004" = "#D4F7F0", 
     "0.00000001" = "#538AC6", 

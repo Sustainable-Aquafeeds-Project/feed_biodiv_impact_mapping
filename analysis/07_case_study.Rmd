@@ -66,6 +66,9 @@ max_scen <- all_df %>%
 # 3 plant-dominant efficient  0.201 
 # 4 plant-dominant regular    0.224 
 
+max_cell <- all_df %>%
+  filter(value > 0.09) # 786772 cell_id
+
 ## lets find the exact cell of these impacts
 moll_template_land <- readRDS(here("prep/03_prep_spp_habitats/data/spatial/moll_template_land_xy.rds")) %>%
   mutate(type = "land")
@@ -89,7 +92,8 @@ maximum_location <- all_df %>%
 
 nspp_df <-  qread(filepath) %>%
   left_join(moll_template_xy, by = c("long" = "x", "lat" = "y")) %>%
-  dplyr::select(cell_id, diet, fcr_type, nspp_impacted = value) # 39 spp impacted in all scenarios
+  dplyr::select(cell_id, diet, fcr_type, nspp_impacted = value) %>%
+  filter(cell_id == 786772) # 39 spp impacted in all scenarios
 
 ## how many species are actually in that cell? 
 
@@ -101,9 +105,8 @@ all_richness <- rast(list.files(here("data/spatial/output"), pattern = "richness
 
 max_impacts <- maximum_location %>% 
   left_join(all_richness) %>%
-  left_join(nspp_df)
-# %>%
-#  filter(cell_id == 786772)
+  left_join(nspp_df) %>%
+ filter(cell_id == 786772)
 
 ## ok so, 39 spp impacted, 97 spp present
 
@@ -111,13 +114,15 @@ max_impacts <- maximum_location %>%
 
 
 What species are impacted in largest impact cells:
- - Lets grab any terrestrial cell that has >1km2 of impact (presumably meaning that any species in that cell will have at leats 1% habitat disruption in that cell)
+ - grab any cells that fall into the 95-99 or >= 99 quantile categories; cell list saved in 02_publication_maps.Rmd
 
 ```{r}
 # take code from aggregation script
 
+large_impact_cells <- readRDS(here("analysis/int/large_impact_cells.rds")) # ok... might need to filter for cells in specific countries... e.g., NOR, CHL, BRA, UK, CAN to cut down on computational load needed to save this information if this doesnt work, then will need to save country by country.. or only >99 impacts
+
 diet_types <- c("fish-dominant", "plant-dominant")
-fcr_types <- c("regular", "efficient")
+fcr_types <- c("regular")
 allocation_types <- c("economic")
 
 
@@ -143,16 +148,9 @@ all_files_list <- lapply(all_files, qread)
 
 ## now filter for specific cell_id and see what is impacted...
 
-max_cells <- all_files_list %>%
-  map(~ .x %>%
-        map(~ filter(.x, impact_km2 >= 1))) %>% 
-    bind_rows() %>%
-  pull(cell_id) %>% 
-  unique()
-
 max_cell_impacts <- all_files_list %>% 
   map(~ .x %>%
-        map(~ filter(.x, cell_id %in% c(max_cells))))  # filter for any cells that have at least 1 km2 of impact (this way we know that at least one species in that cell will have 1% of their habitat area impacted; generally should be all species in that cell will have 1% impact, but it is possible that a species could be 50% vulnerable, so it would only have 0.5km2 impacted)
+        map(~ filter(.x, cell_id %in% c(large_impact_cells))))  # filter for any cells that are in the cells that have an average impact in the 95-99 or >=99th quantiles
 
 
 for (i in seq_along(max_cell_impacts)) {
@@ -168,24 +166,57 @@ max_cell_impacts_fin <- max_cell_impacts %>%
          allocation = allocation, 
          fcr = fcr)
 
-max_impact_df <- rbind(max_cell_impacts_fin, max_impact_df)
+qsave(max_cell_impacts_fin, glue(here("analysis/int/large_cell_impacts_terrestrial_{diet}_{fcr}_{allocation}.qs")))
+
 
     }
   }
 }
 
-max_impact_df <- max_impact_df %>%
-  filter(!is.na(cell_id))
 
-test <- max_impact_df %>%
-  group_by(cell_id, species_full) %>%
-  summarise(impact_km2 = sum(impact_km2))
-
-qsave(max_impact_df, here(this_dir, "int/terrestrial_spp_1%_impacted.qs")) ## save this data
 
 ## consider for marine species? Maybe... if i did it would take ~8 hours I'm guessing, and might be quite a lot more data
 
 ```
+
+Need to do the same thing for marine impacts...
+
+```{r}
+diet_types <- c("fish-dominant", "plant-dominant")
+fcr_types <- c("efficient", "regular")
+allocation_types <- c("mass", "ge", "economic")
+
+
+for(diet in diet_types){
+  for(fcr in fcr_types){
+    for(allocation in allocation_types){
+      
+        all_impact_df <- data.frame(cell_id = NA, prop_mean = NA, prop_sd = NA, prop_nspp = NA, prop_ext_risk = NA)
+      
+      for(chunk_id in 1:13){
+        
+       # chunk_id = 1
+        
+        files <- list.files(file.path(biodiv_dir, "int/marine_aggregation/sub_chunk_dfs/"), pattern = glue(".*_{diet}_{fcr}_.*_{allocation}_chunk_{chunk_id}.qs"), full.names = TRUE)
+        
+        impacts_chunk <- lapply(files, qread) %>%
+          bind_rows() %>%
+          filter(!is.na(cell_id)) %>%
+          filter(cell_id %in% large_impact_cells) %>%
+  as.data.frame()
+
+        
+    all_impact_df <- rbind(all_impact_df, impacts_chunk)
+        
+      }
+                 
+
+            
+    }
+  }
+}  
+```
+
 
 What IUCN category are these heavily impacted species? 
 
@@ -200,29 +231,64 @@ iucn_big_impacts <- max_impact_df %>%
   group_by(species_full, cell_id) %>%
   mutate(total_impacts = sum(impact_km2)) %>%
   ungroup() %>%
-  filter(total_impacts >= 1)
+  filter(total_impacts >= 1) 
 
 ## ok wheat and rapeseed really bad! 
 
+max_impact_cell_spp <- max_impact_df %>% 
+  filter(cell_id == 786772) %>%
+  mutate(species_full = tolower(species_full)) %>% 
+  left_join(iucn_cats, by = c("species_full" = "sciname")) ## ok they are all LC lol
 ```
 
-Are adjacent cells less biodiverse, and do they have farmland? Would it be feasible to shift the production elsewhere in Norway? 
+Ok, let's pull the "hotspot" areas for 4 examples:
+
+ - Norway
+ - Argentina
+ - Chile (coastal)
+ - Canada
+
 
 ```{r}
+max_impact_df <- qread( here(this_dir, "int/terrestrial_spp_1%_impacted.qs"))
+land_eez_rgns <- read.csv(file.path(biodiv_dir, "spatial/rgns_xy_all.csv")) %>%
+  dplyr::select(x, y, iso3c) %>% 
+  left_join(moll_template_xy)
+
+
+max_impact_iso3c <- max_impact_df %>%
+  left_join(land_eez_rgns) 
+
+max_impact_rast <- max_impact_iso3c %>%
+  group_by(x, y, diet, allocation, fcr) %>%
+  summarise(impact_km2 = sum(impact_km2, na.rm = TRUE)) %>%
+  ungroup() %>%
+  filter(diet == "plant-dominant", fcr == "regular") %>%
+  dplyr::select(x, y, impact_km2) %>%
+  rast(., crs = moll_template)
+
+plot(max_impact_rast, col = "red")
+
+unique(max_impact_iso3c$iso3c) # [1] "NOR" "SWE" "CAN" "NLD" "CHL" "CHN" "ARG" ... ok.... this isn't right
+
+
+max_impact_nor <- max_impact_iso3c %>%
+  filter(iso3c == "NOR")
+
+
+max_impact_can <- max_impact_iso3c %>%
+  filter(iso3c == "CAN")
+
+
+max_impact_chl <- max_impact_iso3c %>%
+  filter(iso3c == "CHL")
+
+max_impact_arg <- max_impact_iso3c %>%
+  filter(iso3c == "ARG")
+
+
+max_impact_bra <- max_impact_iso3c %>%
+  filter(iso3c == "BRA")
 
 ```
-
-Is it a matter of not using Rapeseed? How much impact do you alleviate if you don't use rapeseed?
-
-```{r}
-
-```
-
-
-If shifting within country is not feasible to dilute impacts, where would be the most likely place to shift to, and do those areas have high biodiversity and imapcts (probably CAN and BRA/ARG, big trade partners for Soy, Wheat, Rapeseed)?
-
-```{r}
-
-```
-
 
