@@ -31,6 +31,7 @@ library(raster)
 source(here("src/directories.R"))
 source(here("src/spatial.R"))
 
+fishstat_dir <- file.path(rdsi_raw_data_dir, "fao/FAO_fishstat_2020")
 ```
 
 
@@ -136,6 +137,26 @@ aquaculture_prod <-
 saveRDS(object = aquaculture_prod, file = here("data", "tidy_data", "production-data", "aquaculture_production_tidy.rds"))
 
 
+test <- aquaculture_prod %>% 
+  filter(year == 2020)
+
+test %>% filter(species == "Atlantic salmon") %>% pull(value) %>% sum() # 2721876
+
+test %>% pull(value) %>% sum() # 122579080
+2721876/122579080 # salmon aquaculture is ~2% of ALL production
+
+# lets take out invertebrates and seaweeds
+
+test2 <- test %>% filter(!str_detect(species, "seaweed|seaweeds|kelp|invertebrate|invertebrates|mussel|frog|oyster|crayfish|Abalone|abalone|clam|moss|turtle|Nori|worms|cockle|Roach|cucumber|urchin|squirts|Seaweed|weed|Tangle|scallop")) %>% pull(value) %>% sum() # 80765212
+
+
+test %>% filter(!str_detect(species, "seaweed|seaweeds|kelp|moss|Nori|Roach|cucumber|squirts|Seaweed|weed|Tangle")) %>% pull(value) %>% sum()
+
+2721876/80765212 # 0.03370109 - 3%? 
+
+# lets check literature 
+# SOFIA says 88 million tonnes of animal aquaculture - 63 relies on feed 
+2721876/63000000 # based on that it would be ~4%
 
 ```
 

@@ -197,6 +197,12 @@ summary_df_spp <- all_overlap_df %>%
          median_prop = median(prop_impact,na.rm=TRUE)) %>%
   ungroup()
 
+
+mean_df <- summary_df_spp %>%
+  distinct(diet, taxon, mean_prop) %>%
+  pivot_wider(values_from = mean_prop, names_from = diet) %>%
+  mutate(Plant-dominant/Fish-dominant)
+
 length(unique(summary_df_spp$sciname)) # 42939 affected
 
 42939/54625 # 0.7860686 - ~79% of spp impacted
@@ -467,6 +473,13 @@ summary_df_barcharts <- all_overlap_df %>%
   left_join(taxon_hab_area) %>%
   mutate(prop_impact = impact_total/total_hab_area)
 
+test <- summary_df_barcharts %>%
+  group_by(diet, fcr, raw_material, allocation) %>%
+  summarise(impact_total = sum(impact_total, na.rm = TRUE),
+            total_hab_area = sum(total_hab_area, na.rm = TRUE)) %>%
+  ungroup() %>%
+  mutate(prop_impact = impact_total/total_hab_area)
+
 ## switch the raw materials and species in that plot
 
 summary_df_barcharts$taxon <- with(summary_df_barcharts, reorder(taxon, prop_impact, FUN = function(x) sum(x)))
@@ -617,6 +630,7 @@ land_eez_rgns <- read.csv(file.path(biodiv_dir, "spatial/rgns_xy_all.csv")) %>%
   dplyr::select(x, y, rgn_id)
 
 land_eez_rgns_ids <- read.csv(here("data/spatial/output/region_ids.csv"))
+setdiff(land_eez_rgns_ids$rgn_id, land_eez_rgns$rgn_id) # 0 good
 
 num_cores <- 9
 cl <- makeCluster(num_cores)
@@ -629,10 +643,10 @@ for(allocation_type in allocations){
   for(fcr_type in fcr_types){
     for(diet_type in diet_types){
           
-# diet_type = "fish-dominant"
+# diet_type = "plant-dominant"
 # fcr_type = "regular"
 # allocation_type = "economic"
-# raw_mat = "Soybean"
+# raw_mat = "Rapeseed"
 
           if(length(list.files(file.path(glue(impact_maps_dir, "/impact_maps_across_taxon_by_material/{diet_type}/{fcr_type}")), pattern = glue("{allocation_type}_{raw_mat}_mean_prop.tif"), full.names = TRUE)) > 0 ){
         
@@ -644,7 +658,8 @@ for(allocation_type in allocations){
           left_join(land_eez_rgns) %>%
           group_by(rgn_id) %>%
           summarise(mean_prop_weighted = weighted.mean(mean_prop, nspp, na.rm = TRUE),
-                    mean_prop = mean(mean_prop, na.rm = TRUE)) %>%
+                    mean_prop = mean(mean_prop, na.rm = TRUE),
+                    sum_prop = sum(mean_prop, na.rm = TRUE)) %>%
           mutate(allocation = allocation_type, 
                  diet = diet_type, 
                  fcr = fcr_type, 
@@ -816,5 +831,26 @@ ggplot(material_stats_1, aes(x = raw_material, y = mean_prop_weighted, fill = ra
 
 ggsave(here(this_dir, "SI_plots/average_raw_mat_impact.png"), bg = "white", width = 178.9, height = 100.92 , units = "mm")
 
+```
+
+
+```{r}
+            files <- c(list.files(file.path(glue(impact_maps_dir, "/impact_maps_across_taxon_ingredient/{diet_type}/{fcr_type}")), pattern = glue("{allocation_type}_mean_prop.tif"), full.names = TRUE))
+            
+        
+        map_df <- rast(files) %>%
+          as.data.frame(., xy = TRUE) %>%
+          left_join(land_eez_rgns) %>%
+          group_by(rgn_id) %>%
+          summarise(
+                    mean_prop = mean(sum, na.rm = TRUE),
+                    sum_prop = sum(sum, na.rm = TRUE)) %>%
+          mutate(allocation = allocation_type, 
+                 diet = diet_type, 
+                 fcr = fcr_type) %>%
+          ungroup()
+        
+        
+        # qsave(map_df, file.path(glue(impact_maps_dir, "/csvs/by_material_country_summary/mean_impacts_{allocation_type}_{diet_type}_{fcr_type}_{raw_mat}.qs")))
 ```
 

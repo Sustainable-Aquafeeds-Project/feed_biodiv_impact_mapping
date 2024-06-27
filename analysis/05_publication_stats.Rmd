@@ -53,6 +53,29 @@ all_overlap <- rbind(marine_overlap, terrestrial_overlap) %>%
 spp_total_hab <- all_overlap %>%
   distinct(sciname, spp_type, total_hab_area) %>%
   mutate(id = row_number())
+
+
+ocean_impacts <- marine_overlap %>% 
+  group_by(diet, fcr_type, allocation) %>%
+  summarise(total_km2_impact = sum(impact_total, na.rm = TRUE)) %>%
+  ungroup() %>%
+  filter(fcr_type == "regular", allocation == "economic") %>%
+  mutate(type = "ocean")
+
+terrestrial_impacts <- terrestrial_overlap %>%
+  filter(!str_detect(ingredient, "fish meal|fish oil")) %>%
+  group_by(diet, fcr_type, allocation) %>%
+  summarise(total_km2_impact = sum(impact_total, na.rm = TRUE)) %>%
+  ungroup() %>%
+  filter(fcr_type == "regular", allocation == "economic") %>%
+  mutate(type = "terrestrial")
+
+
+322308.2 + 123897.6
+304212.8+174105.1
+
+
+all_impacts <- rbind(ocean_impacts, terrestrial_impacts)
 ```
 
 Get some stats about differences between formulations and average impacts.
@@ -64,6 +87,35 @@ Get some stats about differences between formulations and average impacts.
 all_df <-  qread(filepath)  %>%
   filter(value > 0) %>%
   filter(!is.na(value))
+
+test <- all_df %>% 
+  group_by(diet, fcr_type) %>%
+  summarise(avg = mean(value, na.rm = TRUE),
+            min = min(value, na.rm = TRUE),
+            max = max(value, na.rm = TRUE), 
+            median = median(value, na.rm = TRUE),
+            q_95 = quantile(value, c(0.05, 0.95))) %>%
+  ungroup()
+
+options(scipen=0)
+
+fd_df <- all_df %>% filter(diet == "fish-dominant")
+quantile(fd_df$value, c(0.05,0.95)) 
+## fish-dominant
+#                    5%                   95% 
+# 0.0000000000007554628 0.0000433040193456690 
+
+pd_df <- all_df %>% filter(diet == "plant-dominant")
+quantile(pd_df$value, c(0.05,0.95))
+## plant-dominant
+#                    5%                   95% 
+# 0.0000000000007491303 0.0000603930651777774 
+
+quantile(all_df$value, c(0.05,0.95))
+## both scenarios
+#                    5%                   95% 
+# 0.0000000000007520312 0.0000510675588884619 
+
 
 max(all_df$value) # 0.2235324 # can dive into prep/03_prep_spp_habitats/08_process_mean_sd_summary.Rmd to find out more of whats happening in this cell. 
 
@@ -146,19 +198,20 @@ vuln_taxa <- readRDS(file.path(rdsi_dir, "biodiversity_impacts/int/spp_vuln_dept
     ingredient == "trimmings fish_fish oil" ~ "trimmings fish_fish oil, cut offs",
     TRUE ~ ingredient
   )) %>%
-  distinct(species,ingredient, vuln_quartile)
+  distinct(species,ingredient, vuln_quartile) %>%
+  filter(species %in% unique(marine_overlap$sciname))
 
-mean(vuln_taxa$vuln_quartile) # 0.44618
+mean(vuln_taxa$vuln_quartile) # 0.4579552
 
 # Additionally, of all species (impacted or not), marine species, on average, have a vulnerability value of 0.45, while terrestrial species have a vulnerability value of 0.82. This means that within our methods, marine species are, on average, more resilient to fishing pressures than terrestrial species are to cropland used for aquafeeds.
 
-length(unique(vuln_taxa$species)) # 23639
+length(unique(vuln_taxa$species)) # 23029
 length(unique(ag_suitability$species)) # 31596
 
 
 terr_vuln_spp <- ag_suitability %>% 
   filter(cropland_suitability != 1)
-length(terr_vuln_spp$species) # 26413 terrestrial vuln
+length(terr_vuln_spp$species) # 26413 terrestrial species are sensitive to cropland
 
 
 marine_vuln_spp <- vuln_taxa %>%
@@ -167,9 +220,9 @@ marine_vuln_spp <- vuln_taxa %>%
   ungroup() %>%
   filter(total_vuln != 0)
 
-length(marine_vuln_spp$species) # 20684 terrestrial vuln
+length(marine_vuln_spp$species) # 20682 marine species are sensitive to harvest
 
-(20684 + 26413)/(23639 + 31596) # 0.8526659 are vulnerable in some capacity
+(20682 + 26413)/(23029 + 31596) # 0.8526659 are vulnerable in some capacity
 
 ```
 
@@ -185,8 +238,21 @@ spp_impacted <- all_overlap %>%
   summarise(spp_count_impacted = n_distinct(sciname)) %>%
   ungroup()
 
+spp_impacted_economic <- spp_impacted %>% 
+  filter(allocation == "economic", 
+         fcr_type == "regular") %>%
+  group_by(diet) %>%
+  summarise(total_spp_impacted = sum(spp_count_impacted))
+
+## so 42939 out of 54268 spp are impacted. 47097 species are actually sensitive to harvest. 
+
 aquamaps_spp <- readRDS(file.path(rdsi_dir, "biodiversity_impacts/int/spp_vuln_depth_info.rds")) %>%
-  distinct(spp_type = taxon, sciname = species)
+  distinct(spp_type = taxon, sciname = species) %>%
+  filter(spp_type != "polychaetes")
+
+setdiff(aquamaps_spp$sciname, marine_overlap$sciname) # [1] "artedidraco mirus"      "careproctus georgianus"
+
+setdiff(marine_overlap$sciname, aquamaps_spp$sciname) # 0
   
 eyres_spp <- readRDS(here("prep/03_prep_spp_habitats/data/iucn/eyres_iucn_spp.rds")) %>%
   dplyr::select(spp_type, sciname = scientific_name) %>%
@@ -214,6 +280,24 @@ summary_info <- spp_assessed_impacted %>%
             total_impacted = sum(spp_count_impacted, na.rm = TRUE)) %>%
   ungroup() %>%
   mutate(prop_impacted = total_impacted/total_assessed)
+
+
+marine_vs_terr <- spp_assessed_impacted %>%
+  filter(diet == "plant-dominant", allocation == "economic", fcr_type == "regular") %>%
+  mutate(type = ifelse(taxon %in% c("Amphibians", "Birds", "Terrestrial mammals", "Reptiles"), "terrestrial", "marine")) %>%
+  group_by(type) %>%
+    summarise(total_assessed = sum(spp_count_assessed, na.rm = TRUE),
+            total_impacted = sum(spp_count_impacted, na.rm = TRUE)) %>%
+  ungroup() %>%
+  mutate(prop_impacted = total_impacted/total_assessed)
+
+#  A tibble: 2 × 4
+#   type        total_assessed total_impacted prop_impacted
+#   <chr>                <int>          <int>         <dbl>
+# 1 marine               22985          20538         0.894
+# 2 terrestrial          31643          22401         0.708
+
+spp_assessed %>% filter(taxon %in% c("Amphibians", "Reptiles", "Terrestrial mammals", "Birds")) %>% pull(spp_count_assessed) %>% sum() # 31643 assessed terrestial spp
 
 ```
 
@@ -382,7 +466,7 @@ summary_df_stats_diet <- material_stats_1 %>%
 
 How much of impact does Norway account for? 
 
- - Norway has the highest impact among all countries, representing a share of 30% - 32% of global average impacts from aquafeed, depending on the feed scenario. While Norway contributes a considerable share of the world’s impacts, it produces 51% of the world's salmon, and produces and utilises 19%-27% of their terrestrial aquafeed ingredients in the country depending on the feed scenario, a large portion of the worlds’ raw materials which are used for aquafeed. 
+ - While Norway contributes the highest share of the world’s impacts from aquafeed production (30%-32%), it produces 51% of the world's salmon, and produces and utilises 19%-27% of their terrestrial aquafeed ingredients in the country, depending on the feed scenario. 
 
 ```{r}
 rgn_ids <- read.csv(here("data/spatial/output/region_ids.csv"))
@@ -403,14 +487,28 @@ combined_impact_df <- do.call(rbind, list_of_dfs) %>%
 
 
 summary_iso3c_impacts <- combined_impact_df %>%
-  group_by(iso3c, allocation, diet, fcr) %>%
+  group_by(iso3c, rgn_id, Country, allocation, diet, fcr) %>%
   summarise(sum_mean_impact = sum(mean_prop_weighted, na.rm = TRUE)) %>%
   ungroup() %>%
-  filter(allocation == "Economic") %>%
+  filter(allocation == "Economic", diet == "Plant-dominant", fcr == "Regular") %>%
   group_by(allocation, diet, fcr) %>%
   mutate(total_impact = sum(sum_mean_impact)) %>%
   ungroup() %>%
-  mutate(prop_contribute = sum_mean_impact/total_impact)
+  mutate(prop_contribute = sum_mean_impact/total_impact) %>%
+  filter(!is.na(iso3c)) %>%
+  filter(iso3c != "XD")
+
+
+test <- summary_iso3c_impacts %>% 
+  filter(!iso3c %in% c("HSX", "ATA"))
+  
+test <- rgn_ids %>% 
+  filter(!iso3c %in% c("HSX", "ATA"))
+
+test2 <- rgn_ids %>%
+  filter(!iso3c %in% c(unique(summary_iso3c_impacts$iso3c)))
+  
+  
 ```
 
 
@@ -449,8 +547,10 @@ salmon_production <- production %>%
 ```
 
 Check to see how efficient FCR impacts compare to regular. 
- - Does a 10% decrease in FCR = 10% decrease in impacts? YES - because we assume trade relationships stay the same.
-   - Look at a species level, average impact level, etc
+ - Does a 10% decrease in FCR = 10% decrease in impacts? 
+ 
+ YES - because we assume trade relationships stay the same regardless of scenario.
+
    
 ```{r}
 
@@ -498,6 +598,103 @@ test2 <- all_df %>%
   ungroup()
 
 ## ok we see the same thing here... all 10% decrease... good
+
+```
+
+
+How many species have both marine and terrestrial impacts? 
+
+```{r}
+
+test <- all_overlap %>%
+  filter(spp_type %in% c("Bird", "Amphibians", "Reptiles")) %>%
+  filter(impact_total > 0) %>%
+  filter(allocation == "economic", fcr_type == "regular") %>%
+  mutate(ingredient_type = ifelse(str_detect(ingredient, "forage fish|trimmings fish"), "marine", "terrestrial")) %>%
+  pivot_wider(names_from = ingredient_type, values_from = impact_total)
+
+unique(test$sciname) # 46 amphibians, reptiles, or birds which have marine impacts
+
+## do any of them have both??
+test2 <- test %>%
+  group_by(sciname, spp_type, diet) %>%
+  summarise(marine = sum(marine, na.rm = TRUE),
+            terrestrial = sum(terrestrial, na.rm = TRUE)) %>%
+  ungroup() %>% 
+  filter(marine > 0, terrestrial > 0) ## nope, none of them have both
+
+```
+
+Why do we see higher impacts for macrophytes and benthic creates nave high prop impacted? 
+
+1. Lower total AOH, so higher props. 
+2. Destructive gear types liek trawling and dregding
+
+```{r}
+
+
+test <- readRDS(file.path(rdsi_dir, "biodiversity_impacts/int/spp_vuln_depth_info.rds")) %>% 
+  filter(taxon %in% c("arthropods", "molluscs", "echinoderms", "cnidaria", "sponges", "corals", "Marine plant"))
+
+test2 <- test %>% group_by(depth_position) %>% summarise(n())
+
+test3 <- test %>% group_by(depth_position, taxon, catch_type) %>% summarise(n())
+
+# arrange(taxon_hab_area, total_hab_area)
+# # A tibble: 15 × 2
+#    total_hab_area taxon              
+#             <dbl> <chr>              
+#  2      836560700 Corals             
+#  3      847877200 Marine plants      
+#  4     1228453400 Sponges            
+#  5     1570267500 Echinoderms        
+#  6     2405192600 Cnidaria           
+#  9     4047208500 Cephalopods        
+# 10     4522806100 Marine mammals     
+# 12     5708949800 Elasmobranchs      
+# 13    17981181900 Molluscs           
+# 14    18339709000 Arthropods         
+# 15    77370257100 Finfish   
+
+# lets look at gears used for forage fish catch
+
+
+source(here("src/directories.R"))
+catch <- readRDS(file.path(watson_dir, "v5.0/int/all_catch_foragefish.rds"))
+
+test_catch <- catch %>% 
+  filter(FOFM_catch > 0) %>%
+  group_by(water_col_position, VBDesc) %>%
+  summarise(forage_catch = sum(FOFM_catch,na.rm = TRUE)) %>%
+  ungroup()
+
+sum(catch$FOFM_catch) # 24765797
+
+unique(test_catch$VBDesc)
+
+test_catch %>%
+  filter(VBDesc %in% c("bottom trawls", "conical and drum-like traps", "trapping gear", "traps", "by diving", "explosives")) %>%
+  pull(forage_catch) %>%
+  sum()
+
+# 3339241/24765797
+
+trimmingsfish <- readRDS(file.path(watson_dir, "v5.0/int/all_catch_trimmingsfish.rds")) %>%
+  filter(trimmings_catch > 0) %>%
+  group_by(water_col_position, VBDesc) %>%
+  summarise(trimmings_catch = sum(trimmings_catch,na.rm = TRUE)) %>%
+  ungroup()
+
+sum(trimmingsfish$trimmings_catch) # 18282816
+
+unique(trimmingsfish$VBDesc)
+
+trimmingsfish %>%
+  filter(VBDesc %in% c("bottom trawls", "conical and drum-like traps", "trapping gear", "traps", "by diving", "explosives")) %>%
+  pull(trimmings_catch) %>%
+  sum()
+
+(1129209 + 3339241)/(18282816 +24765797) # 10% of catch comes from destructive benthic gears
 
 ```
 

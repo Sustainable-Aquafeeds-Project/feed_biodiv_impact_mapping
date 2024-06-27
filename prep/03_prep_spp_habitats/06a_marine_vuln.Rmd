@@ -263,4 +263,7 @@ overlay_vuln <- info_df %>%
   mutate(taxon = ifelse(species == "cystophora retroflexa", "Marine plant", taxon))
 
 write_rds(overlay_vuln, file.path(rdsi_dir, "biodiversity_impacts/int/spp_vuln_depth_info.rds"))
+
+
+
 ```

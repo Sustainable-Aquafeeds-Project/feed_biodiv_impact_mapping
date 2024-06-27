@@ -25,7 +25,11 @@ source(here("src/spatial.R"))
 Read in ocean EEZs from the Ocean Health Index (https://mazu.nceas.ucsb.edu/data/), and rasterize this to our mollweide projection. The OHI dataset contains all countries (landlocked and coastal).
 
 ```{r}
-ohi_regions <- st_read(file.path(rdsi_raw_data_dir, "ohi/regions_gcs.shp"))
+ohi_regions <- st_read(file.path(rdsi_raw_data_dir, "ohi/regions_gcs.shp")) %>%
+    mutate(rgn_id = case_when(rgn_key == "AZE" ~  "258",
+                            rgn_key == "KAZ" ~ "257", 
+                            rgn_key == "TKM" ~ "256",
+                            TRUE ~ rgn_id))
 
 # template raster create
 ohi_map_raster <- dplyr::select(ohi_regions, rgn_id) %>%
@@ -43,11 +47,12 @@ ohi_regions_df <- ohi_regions %>%
   mutate(rgn_id = as.numeric(rgn_id)) %>%
   dplyr::select(iso3c = rgn_key, rgn_id, Country = rgn_nam) %>%
   unique() %>%
-  mutate(iso3c = ifelse(between(rgn_id, 260,277), "HSX", iso3c)) %>%
-  mutate(rgn_id = case_when(iso3c == "AZE" ~  258,
-                            iso3c == "KAZ" ~ 257, 
-                            iso3c == "TKM" ~ 256,
-                            TRUE ~ rgn_id))
+  mutate(iso3c = ifelse(between(rgn_id, 260,277), "HSX", iso3c)) 
+# %>%
+#   mutate(rgn_id = case_when(iso3c == "AZE" ~  258,
+#                             iso3c == "KAZ" ~ 257, 
+#                             iso3c == "TKM" ~ 256,
+#                             TRUE ~ rgn_id))
 
 write.csv(ohi_regions_df, here("data/spatial/output/region_ids.csv"), row.names = FALSE)
 
