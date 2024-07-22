@@ -99,22 +99,27 @@ test <- all_df %>%
 
 options(scipen=0)
 
-fd_df <- all_df %>% filter(diet == "fish-dominant")
-quantile(fd_df$value, c(0.05,0.95)) 
-## fish-dominant
-#                    5%                   95% 
-# 0.0000000000007554628 0.0000433040193456690 
-
-pd_df <- all_df %>% filter(diet == "plant-dominant")
-quantile(pd_df$value, c(0.05,0.95))
-## plant-dominant
-#                    5%                   95% 
-# 0.0000000000007491303 0.0000603930651777774 
-
-quantile(all_df$value, c(0.05,0.95))
+quantile(all_df %>% filter(fcr_type == "regular") %>% pull(value), c(0.05,0.95))
 ## both scenarios
 #                    5%                   95% 
-# 0.0000000000007520312 0.0000510675588884619 
+# 0.0000000000007917118 0.0000538178921487997 
+
+quantiles_by_diet <- all_df %>%
+  filter(fcr_type == "regular") %>%
+  group_by(diet) %>%
+  summarise(
+    lower_quantile = quantile(value, 0.05),
+    upper_quantile = quantile(value, 0.95)
+  )
+
+# Display the results
+quantiles_by_diet
+
+# # A tibble: 2 × 3
+#   diet           lower_quantile upper_quantile
+#   <chr>                   <dbl>          <dbl>
+# 1 fish-dominant        7.96e-13      0.0000456
+# 2 plant-dominant       7.88e-13      0.0000636
 
 
 max(all_df$value) # 0.2235324 # can dive into prep/03_prep_spp_habitats/08_process_mean_sd_summary.Rmd to find out more of whats happening in this cell. 
@@ -189,6 +194,13 @@ vuln_values <- all_overlap %>%
 
 ag_suitability <- readRDS(here("prep/03_prep_spp_habitats/int/terrestrial_spp_habitat_suitability.rds"))
 
+test <- ag_suitability %>% 
+  mutate(sensitivity = 1 - cropland_suitability) %>%
+  group_by(sensitivity) %>%
+  summarise(count_sens = n())
+
+5487/sum(test$count_sens) # ~81% of terrestrial species are fully sensitive
+
 1 - mean(ag_suitability$cropland_suitability) # 0.8213065
 
 vuln_taxa <- readRDS(file.path(rdsi_dir, "biodiversity_impacts/int/spp_vuln_depth_info.rds")) %>%
@@ -200,6 +212,15 @@ vuln_taxa <- readRDS(file.path(rdsi_dir, "biodiversity_impacts/int/spp_vuln_dept
   )) %>%
   distinct(species,ingredient, vuln_quartile) %>%
   filter(species %in% unique(marine_overlap$sciname))
+
+test2 <- vuln_taxa %>%
+  group_by(species) %>% 
+  summarise(sensitivity = mean(vuln_quartile)) %>%
+  ungroup() %>%
+  group_by(sensitivity) %>% 
+  summarise(count_sens = n())
+
+412/sum(test2$count_sens) # 0.01789049 ==> ~2% of marine species are full sensitive.. vast majority (~88% are marginal)
 
 mean(vuln_taxa$vuln_quartile) # 0.4579552
 
@@ -628,7 +649,7 @@ test2 <- test %>%
 Why do we see higher impacts for macrophytes and benthic creates nave high prop impacted? 
 
 1. Lower total AOH, so higher props. 
-2. Destructive gear types liek trawling and dregding
+2. Destructive gear types like trawling and dregding
 
 ```{r}
 
@@ -695,6 +716,80 @@ trimmingsfish %>%
   sum()
 
 (1129209 + 3339241)/(18282816 +24765797) # 10% of catch comes from destructive benthic gears
+
+```
+
+How much bigger are marine habitats than terrestrial habitats?
+
+```{r}
+
+marine_hab_areas <-  marine_overlap %>%
+  filter(impact_total > 0) %>%
+  distinct(sciname, total_hab_area)
+
+mean(marine_hab_areas$total_hab_area) # 6577977
+
+terr_hab_areas <- terrestrial_overlap %>%
+  filter(impact_total > 0) %>%
+  distinct(sciname, total_hab_area)
+
+mean(terr_hab_areas$total_hab_area) # 523836.1
+
+
+6577977/523836.1 # 12.55732 marine habitat areas are ~12.5x larger than terrestrial on average
+
+
+## what about impacts 
+test <- marine_overlap %>%
+  filter(
+          impact_total > 0,
+         allocation == "economic") %>%
+  group_by(sciname, diet, fcr_type, allocation) %>%
+  summarise(impact_total = sum(impact_total, na.rm = TRUE)) %>%
+  ungroup() %>%
+  left_join(marine_hab_areas) %>%
+  mutate(prop_impact = impact_total/total_hab_area) %>% 
+  group_by(diet, fcr_type) %>%
+  summarise(mean_prop = mean(prop_impact, na.rm = TRUE)) %>% 
+  ungroup()
+
+## mean plant-dominant marine spp prop impact is 
+## filter 0s: 0.000003810617
+
+test2 <- terrestrial_overlap %>%
+  filter(
+          impact_total > 0,
+         allocation == "economic") %>%
+  group_by(sciname, diet, fcr_type, allocation) %>%
+  summarise(impact_total = sum(impact_total, na.rm = TRUE)) %>%
+  ungroup() %>%
+  left_join(terr_hab_areas) %>%
+  mutate(prop_impact = impact_total/total_hab_area) %>% 
+  group_by(diet, fcr_type) %>%
+  summarise(mean_prop = mean(prop_impact, na.rm = TRUE)) %>% 
+  ungroup()
+
+# mean plant-dominant terrestrial spp prop impact is 
+# 0.00002844402
+
+## terrestrial plant-dominant impacts are on average 7.5x more than marine plant-dominant impacts
+0.00002844402/0.000003810617
+
+## terrestrial fish-domiannt impacts are on average 1.4x more than marine fish-dominant impacts
+0.000009356426 # marine fd
+0.00001272571 # terr fd
+
+0.00001272571/0.000009356426 # 1.360104
+
+## look at average habitat areas for terrestrial taxa 
+
+terr_taxa_avg <- terrestrial_overlap %>% 
+  filter(impact_total > 0) %>%
+  distinct(sciname, spp_type, total_hab_area) %>%
+  group_by(spp_type) %>%
+  summarise(avg_hab = mean(total_hab_area, na.rm = TRUE),
+            total_hab = sum(total_hab_area, na.rm = TRUE)) %>%
+  ungroup()
 
 ```
 

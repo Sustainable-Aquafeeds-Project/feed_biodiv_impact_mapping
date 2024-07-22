@@ -49,7 +49,7 @@ pal_mats <- c("Soybean" = "#328C41",
               "Pulses" = "#79E0DA",
               "Forage fish" = "#3DB1AB",
               "Maize" = "#0A6B66",
-              "Cropsnes" = "#BC94C6")
+              "Other crops" = "#BC94C6")
 
 theme_ohara <- function(base_size = 9) {
   theme(axis.ticks = element_blank(),
@@ -92,10 +92,11 @@ all_overlap <- rbind(marine_overlap, terrestrial_overlap) %>%
     taxon == "Fish" ~ "Finfish", 
     taxon == "Marine mammal" ~ "Marine mammals",
     taxon == "Marine plant" ~ "Marine plants",
-    TRUE ~ taxon))
+    TRUE ~ taxon)) %>%
+  mutate(ingredient = str_replace(ingredient, "CropsNES", "Other crops"))
 
 length(unique(all_overlap$sciname)) # 54625
-
+unique(all_overlap$ingredient)
 
 ```
 
@@ -161,11 +162,12 @@ test2 <- spp_total_hab %>%
 
 ```
 
-**Mean proportion impacted**
+**Figure 2: Mean proportion impacted**
 
  - Look at ranges of values
  - Split into two plots, like in global food paper; 1 is <95th quantile, 1 is >95th quantile 
  - One point for each species with box and whisker chart overlaid
+ - Add colored (orange) points for average within taxa
  
 ```{r}
 spp_assessed_plot_df <- spp_assessed %>%
@@ -198,10 +200,10 @@ summary_df_spp <- all_overlap_df %>%
   ungroup()
 
 
-mean_df <- summary_df_spp %>%
-  distinct(diet, taxon, mean_prop) %>%
-  pivot_wider(values_from = mean_prop, names_from = diet) %>%
-  mutate(Plant-dominant/Fish-dominant)
+# mean_df <- summary_df_spp %>%
+#   distinct(diet, taxon, mean_prop) %>%
+#   pivot_wider(values_from = mean_prop, names_from = diet) %>%
+#   mutate(Plant-dominant/Fish-dominant)
 
 length(unique(summary_df_spp$sciname)) # 42939 affected
 
@@ -255,6 +257,7 @@ spp_assessed_reg <- distinct(summary_df_spp_reg, taxon, spp_impacted, spp_outlie
   group_by(taxon) %>%
   slice(1) %>%
   mutate(total_spp = spp_outliers + spp_impacted) %>%
+  mutate(total_spp = format(total_spp, big.mark = ",")) %>%
   left_join(spp_assessed_reg_outlier) %>%
     mutate(spp_impacted_str = glue("n = {spp_impacted}"),
            spp_outliers_str = glue("n = {spp_outliers}"),
@@ -368,10 +371,10 @@ summary_df_spp_reg <- summary_df_spp %>%
   left_join(join_df) %>%
   mutate(spp_impacted = spp_count_assessed - spp_outliers) 
 
-spp_assesed_reg_outlier <- distinct(summary_df_spp_reg, taxon, spp_outliers, spp_impacted) %>%
+spp_assessed_reg_outlier <- distinct(summary_df_spp_reg, taxon, spp_outliers, spp_impacted) %>%
   group_by(taxon) %>%
   slice(1) %>%
-  mutate(total_spp = spp_outliers + spp_impacted) %>%
+  mutate(total_spp = format(spp_outliers + spp_impacted, big.mark = ",")) %>%
     mutate(spp_impacted_str = glue("n = {spp_impacted}"),
            spp_outliers_str = glue("n = {spp_outliers}"),
            spp_count_assessed = glue("n = {total_spp}"))
@@ -422,7 +425,7 @@ scale_x_continuous(expand = c(0,0), limits = c(quant_95, 0.012), breaks = c(quan
         axis.title = element_text(size = 16),
         legend.position = "none", 
         text = element_text(family = "arial")) +
-      geom_text(data = spp_assesed_reg_outlier, aes(label = spp_count_assessed, y = taxon),
+      geom_text(data = spp_assessed_reg_outlier, aes(label = spp_count_assessed, y = taxon),
                 x = 0.008, hjust = 0, color = 'black',
                 family = 'arial',
                 size = 6)
@@ -448,6 +451,7 @@ p <- ggdraw() + draw_plot((plot1 + plot2 +  plot_layout(widths = c(3, 1)))) + dr
 ggsave(here(this_dir, "SI_plots/SIfig_economic_boxplot_prop.png"), width = 16, height = 9, units = "in", bg = "white", plot = p) # technically for nature food the max width is 180 mm, however, I'm saving like this and adjusting save in post production because doing it here messing things up...
 ```
 
+**Figure 3: Proportion of taxa global habitat area impacted**
 
 ```{r}
 
@@ -479,6 +483,7 @@ test <- summary_df_barcharts %>%
             total_hab_area = sum(total_hab_area, na.rm = TRUE)) %>%
   ungroup() %>%
   mutate(prop_impact = impact_total/total_hab_area)
+
 
 ## switch the raw materials and species in that plot
 
@@ -639,7 +644,7 @@ registerDoParallel(cl)
 
 foreach(raw_mat = raw_materials,
         .packages = c("qs", "terra", "tidyverse", "dplyr", "glue")) %dopar% {
-for(allocation_type in allocations){
+for(allocation_type in c("economic", "mass", "ge")){
   for(fcr_type in fcr_types){
     for(diet_type in diet_types){
           
@@ -687,16 +692,15 @@ rgn_ids <- read.csv(here("data/spatial/output/region_ids.csv"))
 
 csv_files <- list.files(file.path(impact_maps_dir, "csvs/by_material_country_summary"), pattern = ".qs", full.names = TRUE)
 
-list_of_dfs <- lapply(csv_files, qread)
+list_of_dfs <- lapply(csv_files, qread) 
 
 combined_impact_df <- do.call(rbind, list_of_dfs) %>%
   left_join(rgn_ids) %>%
   mutate(raw_material = str_to_sentence(raw_material), 
          allocation = str_to_sentence(allocation),
          diet = str_to_sentence(diet),
-         fcr = str_to_sentence(fcr)) 
-# %>%
-#  mutate(raw_material = ifelse(raw_material == "Cropsnes", "CropsNES", raw_material)) 
+         fcr = str_to_sentence(fcr))  %>%
+ mutate(raw_material = ifelse(raw_material == "Cropsnes", "Other crops", raw_material))
 
 ## do the same thing but make a plot with raw material as the fill value
 

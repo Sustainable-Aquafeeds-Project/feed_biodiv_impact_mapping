@@ -146,12 +146,12 @@ all_df_quant <- all_df %>%
     value >= q99 ~ "≥99"
   )) %>%
   mutate(new_category = case_when(
-      category == "0-24" ~ "0.0000000004",
-      category == "25-49" ~ "0.00000001",
-      category == "50-74" ~ "0.0000004",
-      category == "75-94" ~ "0.00005",
-      category == "95-99" ~ "0.0005", 
-      category == "≥99" ~ "0.22"
+      category == "0-24" ~ "0-\n0.00000004",
+      category == "25-49" ~ "0.00000004-\n0.000001",
+      category == "50-74" ~ "0.000001-\n0.00004",
+      category == "75-94" ~ "0.00004-\n0.005",
+      category == "95-99" ~ "0.005-\n0.05", 
+      category == "≥99" ~ "0.05-\n22"
     ))
 
 land_eez_rgns <- read.csv(file.path(biodiv_dir, "spatial/rgns_xy_all.csv"))
@@ -167,16 +167,16 @@ large_impact_cells <- all_df_quant %>%
 saveRDS(large_impact_cells, here("analysis/int/large_impact_cells.rds"))
 
   new_pal <- c(
-    "0.0000000004" = "#D4F7F0", 
-    "0.00000001" = "#538AC6", 
-    "0.0000004" = "#1E438F", 
-    "0.00005" = "#F8D422", 
-    "0.0005" = "#E95D08", 
-    "0.22" = "#781211"
+    "0-\n0.00000004" = "#D4F7F0", 
+    "0.00000004-\n0.000001" = "#538AC6", 
+    "0.000001-\n0.00004" = "#1E438F", 
+    "0.00004-\n0.005" = "#F8D422", 
+    "0.005-\n0.05" = "#E95D08", 
+    "0.05-\n22" = "#781211"
 )
 
 all_df_quant$category <- factor(all_df_quant$category, levels = c("0-24", "25-49", "50-74", "75-94", "95-99", "≥99"))
-all_df_quant$new_category <- factor(all_df_quant$new_category, levels = c("0.0000000004", "0.00000001", "0.0000004", "0.00005", "0.0005", "0.22"))
+all_df_quant$new_category <- factor(all_df_quant$new_category, levels = c("0-\n0.00000004", "0.00000004-\n0.000001", "0.000001-\n0.00004", "0.00004-\n0.005", "0.005-\n0.05", "0.05-\n22"))
 
   quantile_plot <-  ggplot() + 
       geom_tile(data = all_df_quant, aes(x = long, y = lat, fill = new_category, color = category)) +
@@ -190,17 +190,17 @@ all_df_quant$new_category <- factor(all_df_quant$new_category, levels = c("0.000
         axis.title.x = element_text(size = 8, family = "Arial", vjust  = -4, colour = "black"),
         axis.text = element_blank(),
         axis.ticks = element_blank(),
-       legend.margin = margin(b = 0, t = 0), 
+        legend.margin = margin(b = 0, t = 0), 
         legend.position = "bottom",
         text = element_text(family = "Arial", colour = "black"),
         legend.title = element_text(size = 8, margin = margin(b = 3, t = 3)),
+        legend.key.spacing.x = unit(-0.1, "pt"),
         strip.text.x = element_text(size = 8, family = "Arial", colour = "black"),
         legend.key.width = unit(26, "mm"),
         legend.key.height = unit(0.3, "cm"),
         legend.box = "vertical",  # Stack legends vertically
         legend.box.just = "top",
-        legend.spacing.y = unit(0, "pt"),
-       # legend.box.background = element_rect(colour = "black"), 
+        legend.spacing.y = unit(-1, "pt"),
         legend.text = element_text(margin = margin(t = 3))
       ) +
   guides(
@@ -231,12 +231,16 @@ all_df_quant$new_category <- factor(all_df_quant$new_category, levels = c("0.000
     facet_wrap(~diet_cap) + 
     scale_fill_manual(values = new_pal) +
     scale_colour_manual(values = quantile_pal) + 
-        labs(color = "", 
-             fill = "Upper limit of quantile",
-             x = "\nMean proportion of habitat impacted by quantile") 
+        labs(color = "",
+             fill = "",
+             x = "")
+  
+   quantile_prop_si <- ggdraw(quantile_plot) +
+     draw_label("Proportion of habitat impacted (%)", y = 0.3, x = 0.508, size = 8, fontfamily = "Arial") +
+     draw_label("Quantiles", y = 0.4, x = 0.508, size = 8, fontfamily = "Arial")
+   
 
-
-  ggsave(glue(here(this_dir, "SI_plots/economic_mean_prop_quantiles.png")), plot = quantile_plot, width = 8, height = 8, bg = "white")
+  ggsave(glue(here(this_dir, "SI_plots/economic_mean_prop_quantiles.png")), plot = quantile_prop_si, width = 8, height = 8, bg = "white")
     
     
 ## Delta plot 
@@ -307,7 +311,7 @@ delta_plot <-  ggplot() +
                  geom_sf(data = countries_shp, fill = NA, colour = "grey", alpha = 0.2)  +
                  geom_sf(data = globe_border, fill = NA, colour = "grey") + 
     scale_colour_manual(values = fish_pal) +
-       labs(x = "\nDifference of proportion of habitat impacted by quantile", y = "") +
+       labs(x = "", y = "") +
   guides(color = "none") + 
      theme(legend.position = "none", 
            axis.text.y = element_blank(), 
@@ -329,7 +333,7 @@ delta_plot <-  ggplot() +
        legend.margin = margin(b = 0, t = 0), 
         legend.position = "bottom",
         text = element_text(family = "Arial", colour = "black"),
-        legend.title = element_text(size = 8, margin = margin(b = 3, t = 3)),
+        legend.title = element_text(size = 8, margin = margin(b = 3, t = 3, r = 3)),
         strip.text.x = element_text(size = 8, family = "Arial", colour = "black"),
         legend.key.width = unit(26, "mm"),
         legend.key.height = unit(0.3, "cm"),
@@ -337,7 +341,8 @@ delta_plot <-  ggplot() +
         legend.box.just = "top",
         legend.spacing.y = unit(0, "pt"),
         legend.text = element_text(margin = margin(t = 3)),
-        legend.background = element_rect(fill = "transparent")
+        legend.background = element_rect(fill = "transparent"),
+       legend.key.spacing.x = unit(-1, "pt")
       ) +
   guides(
     color = "none",
@@ -363,6 +368,15 @@ delta_plot <-  ggplot() +
             round(max(delta_df_quant$delta_abs), 2)
    )
    
+   quant_val_labels <- c(
+     "0-\n0.00000004",
+     "0.00000004-\n0.000002",
+     "0.000002-\n0.00004",
+     "0.00004-\n0.004",
+     "0.004-\n0.03",
+     "0.03-\n15"
+   )
+   
    plant_legend <- get_legend(ggplot() + 
       geom_tile(data = delta_df_quant_plant, aes(x = long, y = lat, fill = category, color = category)) +
              scale_fill_manual(values = plant_pal, labels = quant_val_labels) +
@@ -376,7 +390,7 @@ delta_plot <-  ggplot() +
         legend.margin = margin(b = 0, t = 0), 
         legend.position = "bottom",
         text = element_text(family = "Arial", colour = "black"),
-        legend.title = element_text(size = 8, margin = margin(b = 3, t = 3)),
+        legend.title = element_text(size = 8, margin = margin(b = 3, t = 3, r = 3)),
         strip.text.x = element_text(size = 8, family = "Arial", colour = "black"),
         legend.key.width = unit(26, "mm"),
         legend.key.height = unit(0.3, "cm"),
@@ -384,7 +398,8 @@ delta_plot <-  ggplot() +
         legend.box.just = "top",
         legend.spacing.y = unit(0, "pt"),
         legend.text = element_text(margin = margin(t = 3)),
-        legend.background = element_rect(fill = "transparent")
+        legend.background = element_rect(fill = "transparent"),
+       legend.key.spacing.x = unit(-1, "pt")
       ) +
   guides(
     color = "none",
@@ -401,22 +416,31 @@ delta_plot <-  ggplot() +
     ) 
    )
      
+   
+  quantile_prop_si <- ggdraw(quantile_plot) +
+     draw_label("Proportion of habitat impacted (%)", y = 0.1, x = 0.508, size = 8, fontfamily = "Arial") +
+     draw_label("Quantiles", y = 0.28, x = 0.508, size = 8, fontfamily = "Arial")
+   
+   
    full_plot_si <- ggdraw(delta_plot) +
-                draw_plot(fish_legend, height = 0.5, width = 1) +
+                draw_plot(fish_legend, height = 0.52, width = 1) +
                 draw_plot(plant_legend, height = 0.425, width = 0.9945) +
-     draw_label("Upper limit of quantile", y = 0.18, x = 0.508, size = 8, fontfamily = "Arial")
+     draw_label("Difference of proportion of habitat impacted (%)", y = 0.17, x = 0.508, size = 8, fontfamily = "Arial") +
+     draw_label("Quantiles", y = 0.29, x = 0.508, size = 8, fontfamily = "Arial")
    
    
       full_plot_ms <- ggdraw(delta_plot) +
-                draw_plot(fish_legend, height = 0.4, width = 1) +
-                draw_plot(plant_legend, height = 0.25, width = 0.9945) +
-     draw_label("Upper limit of quantile", y = 0.05, x = 0.505, size = 8, fontfamily = "Arial")
+                draw_plot(plant_legend, height = 0.25, width = 1) +
+                        draw_plot(fish_legend, height = 0.442, width = 1.005) +
+     draw_label("Difference of proportion of habitat impacted (%)", y = 0.04, x = 0.508, size = 8, fontfamily = "Arial") +
+     draw_label("Quantiles", y = 0.28, x = 0.508, size = 8, fontfamily = "Arial")
+
    
-   ## saving two separetely because I can
+   ## saving two separately because I can
    
         ggsave(glue(here(this_dir, "MS_plots/fig1_economic_mean_prop_quantiles_delta.png")),
-                plot = plot_grid(quantile_plot, full_plot_ms, nrow = 2, labels = c("A", "B"), label_fontfamily = "Arial", label_fontface = "bold", label_size = 8), 
-                width = 180, height = 180, bg = "white", units = "mm")
+                plot = plot_grid(quantile_prop_si, full_plot_ms, nrow = 2, labels = c("A", "B"), label_fontfamily = "Arial", label_fontface = "bold", label_size = 8), 
+                width = 190, height = 180, bg = "white", units = "mm")
               
       
     ggsave(glue(here(this_dir, "SI_plots/economic_mean_prop_delta_plot.png")),

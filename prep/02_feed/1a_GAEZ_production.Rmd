@@ -15,9 +15,9 @@ editor_options:
 # Methods
 
 ## Determine total crop grown in each region
-This should be run if there are changes to the MAPSPAM production data.
+This should be run if there are changes to the GAEZ production data.
 
-Calculates total crop production using the MAPSPAM data adjusted to 2021 production. These data include all growing systems (intensive, irrigated, etc.) and are in units of metric tonnes.
+Calculates total crop production using the GAEZ data adjusted to mean of 2019-2021 production. These data include all growing systems (intensive, irrigated, etc.) and are in units of metric tonnes.
 
 This is used in subsequent script to estimate the proportion of each crop going to animal (salmon) feed in each country.
 
@@ -96,5 +96,7 @@ compare
 sum(compare$our_tonnes, na.rm=TRUE)/sum(compare$total, na.rm = TRUE) # oilpalmfruit, millet, and stimulants are a little problematic (stimulants is the worst ~50%...)
 
 write_csv(crop_production_df, here("prep/02_feed/data/GAEZcrop_production.csv"))
+
+test <- read.csv(here("prep/02_feed/data/GAEZcrop_production.csv"))
 
 ```
