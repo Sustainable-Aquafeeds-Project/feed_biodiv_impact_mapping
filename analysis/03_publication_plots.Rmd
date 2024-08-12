@@ -200,15 +200,6 @@ summary_df_spp <- all_overlap_df %>%
   ungroup()
 
 
-# mean_df <- summary_df_spp %>%
-#   distinct(diet, taxon, mean_prop) %>%
-#   pivot_wider(values_from = mean_prop, names_from = diet) %>%
-#   mutate(Plant-dominant/Fish-dominant)
-
-length(unique(summary_df_spp$sciname)) # 42939 affected
-
-42939/54625 # 0.7860686 - ~79% of spp impacted
-
 taxon_hab_area <- spp_total_hab %>%
   dplyr::select(-sciname, -id) %>%
   group_by(spp_type) %>%

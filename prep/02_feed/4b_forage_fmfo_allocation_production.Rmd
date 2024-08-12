@@ -346,7 +346,7 @@ sum(country_demand$ingredient_demand) # 3565490 missing ~38k tonnes...
 Next, we can use the species specific allocation rates that Rich put together to convert the fish oil and fish meal to raw material live weight equivalents. Now we have total tonnes of fish oil and fish meal live weight equivalents per landing country per species. 
     - for adjustments: 
        - If possible use species and region specific rates 
-       - If a species exists outside of a region, but is in the allocation data, use global species specific rates.. right now we only have species and region specific allocation rates.. so this is kind of moot. 
+       - If a species exists outside of a region, but is in the allocation data, use global species specific rates. right now we only have species and region specific allocation rates. so this is kind of moot. 
        - Otherwise, use a global average of all species and regions 
 
 ```{r}

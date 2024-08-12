@@ -448,20 +448,29 @@ ggplot() +
    geom_tile(data = summary_fin, aes(x = x, y = y, fill = dom_raw_material)) + 
        geom_sf(data = country_sf, fill = NA, colour = "grey69")  +
   theme_minimal() +
-      theme(legend.position = "left", ## put legend on bottom
-        #legend.title=element_blank(), 
+      theme(legend.position = "bottom", ## put legend on bottom
         axis.title.x = element_blank(), 
         axis.title.y = element_blank(),
         legend.key = element_rect(fill = NA),
         axis.text.x = element_text(angle = 60, hjust = 1),
         text=element_text(family="Arial"),
+              #  legend.text = element_text(angle = 90, hjust = 1),  # Tilt legend labels
 panel.border = element_rect(colour = "grey69", fill=NA, size=3, linetype = "longdash")) +
-  scale_fill_manual(values = pal_mats) + 
-    labs(fill = "Highest impact \nraw material", 
+  scale_fill_manual(values = pal_mats, labels = c("Rapeseed", "Forage\nfish", "Wheat", "Pulses", "Other\ncrops")) + 
+    labs(fill = "Highest impact raw material", 
          x = "", y = "",
-                  tag = bquote(bold("B")))
+                  tag = bquote(bold("B"))) +
+    guides(fill = guide_legend(
+    title.position = "top", 
+    title.hjust = 0.5, 
+    barheight = 1,
+    label.position = "bottom",
+    label.hjust = 0.5,
+    label.vjust = 1,
+    keywidth = unit(1.5, "cm")
+  ))
 
-ggsave(here("analysis/MS_plots/fig5_raw_material.png"), dpi = 300, bg = "white")
+ggsave(here("analysis/MS_plots/fig5_raw_material.png"), dpi = 300, bg = "white",  height = 16, width = 16, units = "cm")
 
 
 summary_fin$imp_category <- factor(summary_fin$imp_category, levels = c("0-24", "25-49", "50-74", "75-94", "95-99", "≥99"))
@@ -470,7 +479,7 @@ ggplot() +
   geom_tile(data = summary_fin, aes(x = x, y = y, fill = imp_category)) + 
        geom_sf(data = country_sf, fill = NA, colour = "grey69")  +
   theme_minimal() +
-      theme(legend.position = "left", ## put legend on bottom
+      theme(legend.position = "bottom", ## put legend on bottom
         axis.title.x = element_blank(), 
         axis.title.y = element_blank(),
         legend.key = element_rect(fill = NA),
@@ -478,16 +487,60 @@ ggplot() +
         text=element_text(family="Arial"),
 panel.border = element_rect(colour = "grey69", fill=NA, size=3, linetype = "longdash")) +
   scale_fill_manual(values = quantile_pal) + 
-    labs(fill = "Mean proportion \nof \nhabitat impacted \nby quantile",
+    labs(fill = "Proportion of habitat impacted \nQuantiles",
          x = "", y = "",
-                  tag = bquote(bold("A")))
+                  tag = bquote(bold("A"))) + 
+      guides(fill = guide_legend(
+    title.position = "top", 
+    title.hjust = 0.5, 
+    barheight = 1,
+    label.position = "bottom",
+    label.hjust = 0.5,
+    label.vjust = 1,
+    keywidth = unit(1.5, "cm")
+  ))
 
-ggsave(here("analysis/MS_plots/fig5_hotspot_quantile.png"), dpi = 300, bg = "white")
+ggsave(here("analysis/MS_plots/fig5_hotspot_quantile.png"), dpi = 300, bg = "white", height = 16, width = 16, units = "cm")
 
 
 
 ## it would be nice to see the proportion of species impacted in the worst category out of the total species in that cell: so number of impacted species in the worst category in the cell / total number of species assessed - so in this case we don't care about the category of the non-impacted species, right? Lets try that out..
 
+
+# iucn_plot_df <- summary_iucn %>%
+#   mutate(iucn_rank = case_when(category %in% c("NE") ~ 0,
+#                                category == "DD" ~ 1, 
+#                                category == "LC" ~ 2,
+#                                category == "NT" ~ 3,
+#                                category == "VU" ~ 4,
+#                                category == 'EN' ~ 5,
+#                                category == "CR" ~ 6)) %>%
+#   left_join(all_richness, by = "cell_id") %>%
+#   rename(sum_spp_assessed = sum_spp) %>%
+#   group_by(x, y, cell_id, category) %>%
+#   mutate(nspp_cats = n_distinct(species)) %>%
+#   ungroup() %>%
+#   group_by(x, y, cell_id) %>%
+#   mutate(total_spp_impacted = n_distinct(species),
+#          max_iucn_rank = max(iucn_rank, na.rm = TRUE)) %>%
+#   ungroup() %>%
+#   mutate(prop_spp_worst_iucn = nspp_cats/total_spp_impacted,
+#              prop_spp_worst_iucn_assessed = nspp_cats/sum_spp_assessed) %>%
+#   group_by(x, y, cell_id) %>%
+#   filter(iucn_rank == max_iucn_rank) %>%
+#   summarise(max_iucn_rank = max(iucn_rank, na.rm = TRUE), 
+#             prop_spp_worst_iucn_impacted = mean(prop_spp_worst_iucn, na.rm = TRUE),
+#             prop_spp_worst_iucn_assessed = mean(prop_spp_worst_iucn_assessed, na.rm = TRUE)) %>% 
+#   ungroup() %>%
+#   mutate(max_iucn_cat = case_when(max_iucn_rank == 0 ~ "NE",
+#                                max_iucn_rank == 1 ~ "DD", 
+#                                max_iucn_rank == 2 ~ "LC",
+#                                max_iucn_rank == 3 ~ "NT",
+#                                max_iucn_rank == 4 ~ "VU",
+#                                max_iucn_rank == 5 ~ "EN",
+#                                max_iucn_rank == 6 ~ "CR")) 
+# 
+# iucn_plot_df$max_iucn_cat <- factor(iucn_plot_df$max_iucn_cat, levels = c("NE", "DD", "LC", "NT", "VU", "EN", "CR"))
 
 iucn_plot_df <- summary_iucn %>%
   mutate(iucn_rank = case_when(category %in% c("NE") ~ 0,
@@ -497,32 +550,30 @@ iucn_plot_df <- summary_iucn %>%
                                category == "VU" ~ 4,
                                category == 'EN' ~ 5,
                                category == "CR" ~ 6)) %>%
+  mutate(category_large = case_when(category %in% c("NE", "DD", "LC") ~ "Not threatened or data deficient",
+                                    TRUE ~ "At-risk"),
+         new_rank = case_when(category %in% c("NE", "DD", "LC") ~ 1,
+                                    TRUE ~ 2)) %>%
   left_join(all_richness, by = "cell_id") %>%
   rename(sum_spp_assessed = sum_spp) %>%
-  group_by(x, y, cell_id, category) %>%
+  group_by(x, y, cell_id, category_large) %>%
   mutate(nspp_cats = n_distinct(species)) %>%
   ungroup() %>%
   group_by(x, y, cell_id) %>%
   mutate(total_spp_impacted = n_distinct(species),
-         max_iucn_rank = max(iucn_rank, na.rm = TRUE)) %>%
+         max_iucn_rank = max(new_rank, na.rm = TRUE)) %>%
   ungroup() %>%
   mutate(prop_spp_worst_iucn = nspp_cats/total_spp_impacted,
              prop_spp_worst_iucn_assessed = nspp_cats/sum_spp_assessed) %>%
   group_by(x, y, cell_id) %>%
-  filter(iucn_rank == max_iucn_rank) %>%
-  summarise(max_iucn_rank = max(iucn_rank, na.rm = TRUE), 
-            prop_spp_worst_iucn_impacted = mean(prop_spp_worst_iucn, na.rm = TRUE),
-            prop_spp_worst_iucn_assessed = mean(prop_spp_worst_iucn_assessed, na.rm = TRUE)) %>% 
+  filter(new_rank == max_iucn_rank) %>%
+  summarise(max_iucn_rank = max(new_rank, na.rm = TRUE), 
+            prop_at_risk_impacted = mean(prop_spp_worst_iucn, na.rm = TRUE),
+            prop_at_risk_assessed = mean(prop_spp_worst_iucn_assessed, na.rm = TRUE)) %>% 
   ungroup() %>%
-  mutate(max_iucn_cat = case_when(max_iucn_rank == 0 ~ "NE",
-                               max_iucn_rank == 1 ~ "DD", 
-                               max_iucn_rank == 2 ~ "LC",
-                               max_iucn_rank == 3 ~ "NT",
-                               max_iucn_rank == 4 ~ "VU",
-                               max_iucn_rank == 5 ~ "EN",
-                               max_iucn_rank == 6 ~ "CR")) 
-
-iucn_plot_df$max_iucn_cat <- factor(iucn_plot_df$max_iucn_cat, levels = c("NE", "DD", "LC", "NT", "VU", "EN", "CR"))
+  mutate(max_iucn_cat = case_when(max_iucn_rank == 1 ~ "Not threatened or data deficient",
+                                    TRUE ~ "At-risk")) %>%
+  mutate(prop_at_risk_impacted = ifelse(max_iucn_rank == 1, 0, prop_at_risk_impacted))
 
 
 ## this shows the worst IUCN rank of the IMPACTED species, with the shading showing the proportion of species which are impacted in that worst category out of the total species assessed
@@ -549,24 +600,50 @@ iucn_plot_df$max_iucn_cat <- factor(iucn_plot_df$max_iucn_cat, levels = c("NE", 
 
 ## this shows the worst IUCN rank of the IMPACTED species, with the shading showing the proportion of IMPACTED species which are in that worst category
 
+# ggplot() +
+#   geom_tile(data = iucn_plot_df, aes(x = x, y = y, fill = max_iucn_cat, alpha = prop_spp_worst_iucn_impacted)) + 
+#   geom_sf(data = country_sf, fill = NA, colour = "grey69")  +
+#   theme_minimal() +
+#       theme(legend.position = "left", ## put legend on bottom
+#         axis.title.x = element_blank(), 
+#         axis.title.y = element_blank(),
+#         legend.key = element_rect(fill = NA),
+#         axis.text.x = element_text(angle = 60, hjust = 1),
+#         text=element_text(family="Arial"),
+# panel.border = element_rect(colour = "grey69", fill=NA, size=3, linetype = "longdash")) +
+#     scale_fill_manual(values = iucn_pal) + 
+#     labs(fill = "Most severe \nIUCN category", 
+#          alpha = "Proportion of \nimpacted \nspecies in the \nIUCN category",
+#          x = "", y = "", 
+#          tag = bquote(bold("C")))
+
 ggplot() +
-  geom_tile(data = iucn_plot_df, aes(x = x, y = y, fill = max_iucn_cat, alpha = prop_spp_worst_iucn_impacted)) + 
+  geom_tile(data = iucn_plot_df, aes(x = x, y = y, fill = prop_at_risk_impacted)) + 
   geom_sf(data = country_sf, fill = NA, colour = "grey69")  +
   theme_minimal() +
-      theme(legend.position = "left", ## put legend on bottom
+      theme(legend.position = "bottom", ## put legend on bottom
         axis.title.x = element_blank(), 
         axis.title.y = element_blank(),
         legend.key = element_rect(fill = NA),
         axis.text.x = element_text(angle = 60, hjust = 1),
         text=element_text(family="Arial"),
 panel.border = element_rect(colour = "grey69", fill=NA, size=3, linetype = "longdash")) +
-    scale_fill_manual(values = iucn_pal) + 
-    labs(fill = "Most severe \nIUCN category", 
-         alpha = "Proportion of \nimpacted \nspecies in the \nIUCN category",
+     scale_fill_gradientn(
+    colors = c("#46A440", "#F8D422", "#781211"),
+    values = c(0, 0.04, 1),  # Adjusting the values to handle the 0 case
+    na.value = "#46A440"  # In case of any NAs, but your data summary doesn't show NAs
+  ) +
+    labs(fill = "Proportion of impacted species at-risk", 
          x = "", y = "", 
-         tag = bquote(bold("C")))
+         tag = bquote(bold("C"))) +
+  guides(fill = guide_colorbar(
+    title.position = "top", 
+    title.hjust = 0.5,
+    barwidth = unit(6.244166667, "cm"),
+    barheight = 1
+  ))
 
-ggsave(here("analysis/MS_plots/fig5_iucn.png"), dpi = 300, bg = "white")
+ggsave(here("analysis/MS_plots/fig5_iucn_new.png"), dpi = 300, bg = "white",  height = 16, width = 16, units = "cm")
 
 
 ## Now save reference plot: 
@@ -586,9 +663,26 @@ panel.border = element_rect(colour = "grey69", fill=NA, size=3, linetype = "long
   scale_fill_manual(values = pal_mats) + 
     labs(
          x = "", y = "", 
-                  tag = bquote(bold("D")))
+                  tag = bquote(bold("D"))
+         ) + 
+  ggspatial::annotation_scale(
+    location = "br",
+   # pad_x = unit(0.7, "in"),
+  #  pad_y = unit(0.3, "in"),
+    bar_cols = c("grey60", "white"),
+    text_family = "ArcherPro Book"
+  ) +
+  ggspatial::annotation_north_arrow(
+    location = "bl", which_north = "false",
+    #pad_x = unit(0.4, "in"), pad_y = unit(0.4, "in"),
+    style = ggspatial::north_arrow_nautical(
+      fill = c("grey40", "white"),
+      line_col = "grey20",
+      text_family = "ArcherPro Book"
+    )
+  )
 
-ggsave(here("analysis/MS_plots/fig5_basemap.png"), dpi = 300, bg = "white")
+ggsave(here("analysis/MS_plots/fig5_basemap.png"), dpi = 300, bg = "white", height = 16, width = 16, units = "cm")
 
 
 ```
@@ -696,7 +790,8 @@ nor_summary <- max_impact_nor %>%
   group_by(x, y, cell_id) %>%
   mutate(avg_impact = mean(prop_total_spp_impact, na.rm = TRUE)) %>%
   ungroup() %>%
-  left_join(iucn_cats, by = c("species" = "sciname"))
+  left_join(iucn_cats, by = c("species" = "sciname")) %>%
+  mutate(raw_material = ifelse(raw_material == "Cropsnes", "Other crops", raw_material))
 
 nor_raw_mat_summary <- nor_summary %>% 
   group_by(x, y, cell_id) %>%
@@ -744,43 +839,49 @@ country_sf <- countries_shp %>%
   st_crop(., st_bbox(nor_limits))
 
 ggplot() +
-   annotation_map_tile(data = country_sf, zoom = 0) + 
-  geom_tile(data = nor_summary_fin, aes(x = x, y = y, fill = dom_raw_material)) + 
-                 geom_sf(data = country_sf, fill = NA, colour = "grey")  +
+   geom_tile(data = nor_summary_fin, aes(x = x, y = y, fill = dom_raw_material)) + 
+       geom_sf(data = country_sf, fill = NA, colour = "grey69")  +
   theme_minimal() +
       theme(legend.position = "left", ## put legend on bottom
-        legend.title=element_blank(), 
+        #legend.title=element_blank(), 
         axis.title.x = element_blank(), 
         axis.title.y = element_blank(),
         legend.key = element_rect(fill = NA),
         axis.text.x = element_text(angle = 60, hjust = 1),
-        text=element_text(family="Times New Roman"),
+        text=element_text(family="Arial"),
 panel.border = element_rect(colour = "grey69", fill=NA, size=3, linetype = "longdash")) +
   scale_fill_manual(values = pal_mats) + 
-    labs( # caption = glue("{perc_threatened_impacts}% of total impacts (km²) shown are on a threatened species"),
-         x = "", y = "")
+    labs(fill = "Highest impact \nraw material", 
+         x = "", y = "",
+                  tag = bquote(bold("B")))
+
+ggsave(here("analysis/SI_plots/CS_NOR_raw_material.png"), height = 8, width = 8, units = "in", bg = "white")
 
 nor_summary_fin$imp_category <- factor(nor_summary_fin$imp_category, levels = c("0-24", "25-49", "50-74", "75-94", "95-99", "≥99"))
 
 ggplot() +
-  annotation_map_tile(data = country_sf, type = "osm", zoomin = 0) + 
   geom_tile(data = nor_summary_fin, aes(x = x, y = y, fill = imp_category)) + 
-  geom_sf(data = country_sf, fill = NA, colour = "grey")  +
+       geom_sf(data = country_sf, fill = NA, colour = "grey69")  +
   theme_minimal() +
       theme(legend.position = "left", ## put legend on bottom
-        legend.title=element_blank(), 
         axis.title.x = element_blank(), 
         axis.title.y = element_blank(),
         legend.key = element_rect(fill = NA),
         axis.text.x = element_text(angle = 60, hjust = 1),
-        text=element_text(family="Times New Roman"),
+        text=element_text(family="Arial"),
 panel.border = element_rect(colour = "grey69", fill=NA, size=3, linetype = "longdash")) +
   scale_fill_manual(values = quantile_pal) + 
-    labs( #caption = glue("{perc_threatened_impacts}% of total impacts (km²) shown are on a threatened species"),
-         x = "", y = "")
+    labs(fill = "Mean proportion \nof \nhabitat impacted \nby quantile",
+         x = "", y = "",
+                  tag = bquote(bold("A")))
+
+ggsave(here("analysis/SI_plots/CS_NOR_hotspot_quantile.png"), height = 8, width = 8, units = "in", bg = "white")
 
 
-iucn_plot_df <- nor_summary_iucn %>%
+summary_iucn <- nor_summary %>% 
+  filter(cell_id %in% unique(nor_summary_fin$cell_id))
+
+iucn_plot_df <- summary_iucn %>%
   mutate(iucn_rank = case_when(category %in% c("NE") ~ 0,
                                category == "DD" ~ 1, 
                                category == "LC" ~ 2,
@@ -788,8 +889,22 @@ iucn_plot_df <- nor_summary_iucn %>%
                                category == "VU" ~ 4,
                                category == 'EN' ~ 5,
                                category == "CR" ~ 6)) %>%
+  left_join(all_richness, by = "cell_id") %>%
+  rename(sum_spp_assessed = sum_spp) %>%
+  group_by(x, y, cell_id, category) %>%
+  mutate(nspp_cats = n_distinct(species)) %>%
+  ungroup() %>%
   group_by(x, y, cell_id) %>%
-  summarise(max_iucn_rank = max(iucn_rank, na.rm = TRUE)) %>% 
+  mutate(total_spp_impacted = n_distinct(species),
+         max_iucn_rank = max(iucn_rank, na.rm = TRUE)) %>%
+  ungroup() %>%
+  mutate(prop_spp_worst_iucn = nspp_cats/total_spp_impacted,
+             prop_spp_worst_iucn_assessed = nspp_cats/sum_spp_assessed) %>%
+  group_by(x, y, cell_id) %>%
+  filter(iucn_rank == max_iucn_rank) %>%
+  summarise(max_iucn_rank = max(iucn_rank, na.rm = TRUE), 
+            prop_spp_worst_iucn_impacted = mean(prop_spp_worst_iucn, na.rm = TRUE),
+            prop_spp_worst_iucn_assessed = mean(prop_spp_worst_iucn_assessed, na.rm = TRUE)) %>% 
   ungroup() %>%
   mutate(max_iucn_cat = case_when(max_iucn_rank == 0 ~ "NE",
                                max_iucn_rank == 1 ~ "DD", 
@@ -797,16 +912,34 @@ iucn_plot_df <- nor_summary_iucn %>%
                                max_iucn_rank == 3 ~ "NT",
                                max_iucn_rank == 4 ~ "VU",
                                max_iucn_rank == 5 ~ "EN",
-                               max_iucn_rank == 6 ~ "CR"))
+                               max_iucn_rank == 6 ~ "CR")) 
 
 iucn_plot_df$max_iucn_cat <- factor(iucn_plot_df$max_iucn_cat, levels = c("NE", "DD", "LC", "NT", "VU", "EN", "CR"))
 
 
+ggplot() +
+  geom_tile(data = iucn_plot_df, aes(x = x, y = y, fill = max_iucn_cat, alpha = prop_spp_worst_iucn_impacted)) + 
+  geom_sf(data = country_sf, fill = NA, colour = "grey69")  +
+  theme_minimal() +
+      theme(legend.position = "left", ## put legend on bottom
+        axis.title.x = element_blank(), 
+        axis.title.y = element_blank(),
+        legend.key = element_rect(fill = NA),
+        axis.text.x = element_text(angle = 60, hjust = 1),
+        text=element_text(family="Arial"),
+panel.border = element_rect(colour = "grey69", fill=NA, size=3, linetype = "longdash")) +
+    scale_fill_manual(values = iucn_pal) + 
+    labs(fill = "Most severe \nIUCN category", 
+         alpha = "Proportion of \nimpacted \nspecies in the \nIUCN category",
+         x = "", y = "", 
+         tag = bquote(bold("C")))
+
+ggsave(here("analysis/SI_plots/CS_NOR_iucn.png"), height = 8, width = 8, units = "in", bg = "white")
+
 
 ggplot() +
- # annotation_map_tile(data = country_sf, type = "osm", zoomin = 0, ) + 
-  geom_tile(data = iucn_plot_df, aes(x = x, y = y, fill = max_iucn_cat)) + 
- geom_sf(data = country_sf, fill = NA, colour = "grey")  +
+   geom_sf(data = country_sf, fill = NA, colour = NA)  +
+   annotation_map_tile(type = "cartolight", zoom = 8) + 
   theme_minimal() +
       theme(legend.position = "left", ## put legend on bottom
         legend.title=element_blank(), 
@@ -814,11 +947,15 @@ ggplot() +
         axis.title.y = element_blank(),
         legend.key = element_rect(fill = NA),
         axis.text.x = element_text(angle = 60, hjust = 1),
-        text=element_text(family="Times New Roman"),
+        text=element_text(family="Arial"),
 panel.border = element_rect(colour = "grey69", fill=NA, size=3, linetype = "longdash")) +
-    scale_fill_manual(values = iucn_pal) + 
+  scale_fill_manual(values = pal_mats) + 
     labs(
-         x = "", y = "")
+         x = "", y = "", 
+                  tag = bquote(bold("D")))
+
+ggsave(here("analysis/SI_plots/NOR_basemap.png"), height = 8, width = 8, units = "in", bg = "white")
+
 ```
 
 
