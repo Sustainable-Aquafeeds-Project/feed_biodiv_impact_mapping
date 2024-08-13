@@ -576,29 +576,9 @@ iucn_plot_df <- summary_iucn %>%
   mutate(prop_at_risk_impacted = ifelse(max_iucn_rank == 1, 0, prop_at_risk_impacted))
 
 
-## this shows the worst IUCN rank of the IMPACTED species, with the shading showing the proportion of species which are impacted in that worst category out of the total species assessed
+## this shows the worst IUCN rank of the IMPACTED species, with the shading showing the proportion of species which are impacted in that worst category out of the total species impacted
 
 ## so for example, one of the cells is CR with a value of 0.14. This means that 14% of the species in the cell are impacted and CR, while the remainder are not impacted
-
-# ggplot() +
-#   annotation_map_tile(data = country_sf, type = "osm", zoomin = 0, cachedir = system.file("rosm.cache", package = "ggspatial")) + 
-#   geom_tile(data = iucn_plot_df, aes(x = x, y = y, fill = max_iucn_cat, alpha = prop_spp_worst_iucn_assessed)) + 
-#   geom_sf(data = country_sf, fill = NA, colour = "grey")  +
-#   theme_minimal() +
-#       theme(legend.position = "left", ## put legend on bottom
-#         legend.title=element_blank(), 
-#         axis.title.x = element_blank(), 
-#         axis.title.y = element_blank(),
-#         legend.key = element_rect(fill = NA),
-#         axis.text.x = element_text(angle = 60, hjust = 1),
-#         text=element_text(family="Times New Roman"),
-# panel.border = element_rect(colour = "grey69", fill=NA, size=3, linetype = "longdash")) +
-#     scale_fill_manual(values = iucn_pal) + 
-#     labs( #caption = glue("{perc_threatened_impacts}% of total impacts (km²) shown are on a threatened species"),
-#          x = "", y = "")
-
-
-## this shows the worst IUCN rank of the IMPACTED species, with the shading showing the proportion of IMPACTED species which are in that worst category
 
 # ggplot() +
 #   geom_tile(data = iucn_plot_df, aes(x = x, y = y, fill = max_iucn_cat, alpha = prop_spp_worst_iucn_impacted)) + 
@@ -684,6 +664,56 @@ panel.border = element_rect(colour = "grey69", fill=NA, size=3, linetype = "long
 
 ggsave(here("analysis/MS_plots/fig5_basemap.png"), dpi = 300, bg = "white", height = 16, width = 16, units = "cm")
 
+
+
+map_plot <- ggplot() +
+   geom_sf(data = country_sf, fill = NA, colour = NA) +
+   annotation_map_tile(type = "cartolight", zoom = 8) +
+   theme_minimal() +
+   theme(
+      legend.position = "left",
+      legend.title = element_blank(),
+      axis.title.x = element_blank(),
+      axis.title.y = element_blank(),
+      legend.key = element_rect(fill = NA),
+      axis.text.x = element_text(angle = 60, hjust = 1),
+      text = element_text(family = "sans"),
+      panel.border = element_rect(colour = "grey69", fill = NA, size = 3, linetype = "longdash")
+   ) +
+   scale_fill_manual(values = pal_mats) +
+   labs(
+      x = "", y = "",
+      tag = bquote(bold("D"))
+   )      +
+     theme(
+      plot.margin = margin(t = 0, r = 0, b = 70, l = 0)  # Adjust margins to align with the map
+   )
+
+
+scale_arrow_plot <- ggplot() +
+     geom_sf(data = country_sf, fill = NA, colour = NA) +
+   theme_void() +
+   ggspatial::annotation_north_arrow(
+      location = "br",
+      which_north = "false",
+      style = ggspatial::north_arrow_nautical(
+         fill = c("grey40", "white"),
+         line_col = "grey20",
+         text_family = "sans"
+      )
+   )  +
+  ggspatial::annotation_scale(
+      location = "bl",
+      bar_cols = c("grey60", "white"),
+      text_family = "sans",
+      width_hint = 0.5,  # Adjust the width of the scale bar
+      pad_y = unit("0.7", "cm")
+   ) 
+
+
+ggsave(here("analysis/MS_plots/fig5_scale.png"), plot = scale_arrow_plot, dpi = 300, bg = "white", height = 16, width = 16, units = "cm")
+
+ggsave(here("analysis/MS_plots/fig5_base_map.png"), plot = map_plot, dpi = 300, bg = "white", height = 16, width = 16, units = "cm")
 
 ```
 
@@ -818,13 +848,6 @@ nor_summary_fin <- max_impact_nor %>%
 
 
 
-nor_summary_iucn <-nor_summary %>% 
-  filter(cell_id %in% unique(nor_summary_fin$cell_id))
-  
-nor_iucn <- nor_summary %>% 
-  filter(cell_id %in% unique(nor_summary_fin$cell_id)) %>%
-  filter(!(category %in% c("NE", "DD", "LC")))
-
 perc_threatened_impacts <- round((sum(nor_iucn$impact_km2)/sum(nor_summary_iucn$impact_km2))*100,1) # 1.8%
 
 
@@ -842,18 +865,27 @@ ggplot() +
    geom_tile(data = nor_summary_fin, aes(x = x, y = y, fill = dom_raw_material)) + 
        geom_sf(data = country_sf, fill = NA, colour = "grey69")  +
   theme_minimal() +
-      theme(legend.position = "left", ## put legend on bottom
-        #legend.title=element_blank(), 
+      theme(legend.position = "bottom", ## put legend on bottom
         axis.title.x = element_blank(), 
         axis.title.y = element_blank(),
         legend.key = element_rect(fill = NA),
         axis.text.x = element_text(angle = 60, hjust = 1),
         text=element_text(family="Arial"),
+              #  legend.text = element_text(angle = 90, hjust = 1),  # Tilt legend labels
 panel.border = element_rect(colour = "grey69", fill=NA, size=3, linetype = "longdash")) +
-  scale_fill_manual(values = pal_mats) + 
-    labs(fill = "Highest impact \nraw material", 
+  scale_fill_manual(values = pal_mats, labels = c("Forage\nfish", "Other\ncrops", "Pulses", "Rapeseed", "Wheat")) + 
+    labs(fill = "Highest impact raw material", 
          x = "", y = "",
-                  tag = bquote(bold("B")))
+                  tag = bquote(bold("B"))) +
+    guides(fill = guide_legend(
+    title.position = "top", 
+    title.hjust = 0.5, 
+    barheight = 1,
+    label.position = "bottom",
+    label.hjust = 0.5,
+    label.vjust = 1,
+    keywidth = unit(1.5, "cm")
+  ))
 
 ggsave(here("analysis/SI_plots/CS_NOR_raw_material.png"), height = 8, width = 8, units = "in", bg = "white")
 
@@ -863,7 +895,7 @@ ggplot() +
   geom_tile(data = nor_summary_fin, aes(x = x, y = y, fill = imp_category)) + 
        geom_sf(data = country_sf, fill = NA, colour = "grey69")  +
   theme_minimal() +
-      theme(legend.position = "left", ## put legend on bottom
+      theme(legend.position = "bottom", ## put legend on bottom
         axis.title.x = element_blank(), 
         axis.title.y = element_blank(),
         legend.key = element_rect(fill = NA),
@@ -871,17 +903,34 @@ ggplot() +
         text=element_text(family="Arial"),
 panel.border = element_rect(colour = "grey69", fill=NA, size=3, linetype = "longdash")) +
   scale_fill_manual(values = quantile_pal) + 
-    labs(fill = "Mean proportion \nof \nhabitat impacted \nby quantile",
+    labs(fill = "Proportion of habitat impacted \nQuantiles",
          x = "", y = "",
-                  tag = bquote(bold("A")))
+                  tag = bquote(bold("A"))) + 
+      guides(fill = guide_legend(
+    title.position = "top", 
+    title.hjust = 0.5, 
+    barheight = 1,
+    label.position = "bottom",
+    label.hjust = 0.5,
+    label.vjust = 1,
+    keywidth = unit(1.5, "cm")
+  ))
 
 ggsave(here("analysis/SI_plots/CS_NOR_hotspot_quantile.png"), height = 8, width = 8, units = "in", bg = "white")
 
 
-summary_iucn <- nor_summary %>% 
+
+nor_summary_iucn <- nor_summary %>% 
+  filter(cell_id %in% unique(nor_summary_fin$cell_id))
+  
+nor_iucn <- nor_summary %>% 
+  filter(cell_id %in% unique(nor_summary_fin$cell_id)) %>%
+  filter(!(category %in% c("NE", "DD", "LC")))
+
+nor_summary_iucn <- nor_summary %>% 
   filter(cell_id %in% unique(nor_summary_fin$cell_id))
 
-iucn_plot_df <- summary_iucn %>%
+iucn_plot_df <- nor_summary_iucn %>%
   mutate(iucn_rank = case_when(category %in% c("NE") ~ 0,
                                category == "DD" ~ 1, 
                                category == "LC" ~ 2,
@@ -889,75 +938,115 @@ iucn_plot_df <- summary_iucn %>%
                                category == "VU" ~ 4,
                                category == 'EN' ~ 5,
                                category == "CR" ~ 6)) %>%
+  mutate(category_large = case_when(category %in% c("NE", "DD", "LC") ~ "Not threatened or data deficient",
+                                    TRUE ~ "At-risk"),
+         new_rank = case_when(category %in% c("NE", "DD", "LC") ~ 1,
+                                    TRUE ~ 2)) %>%
   left_join(all_richness, by = "cell_id") %>%
   rename(sum_spp_assessed = sum_spp) %>%
-  group_by(x, y, cell_id, category) %>%
+  group_by(x, y, cell_id, category_large) %>%
   mutate(nspp_cats = n_distinct(species)) %>%
   ungroup() %>%
   group_by(x, y, cell_id) %>%
   mutate(total_spp_impacted = n_distinct(species),
-         max_iucn_rank = max(iucn_rank, na.rm = TRUE)) %>%
+         max_iucn_rank = max(new_rank, na.rm = TRUE)) %>%
   ungroup() %>%
   mutate(prop_spp_worst_iucn = nspp_cats/total_spp_impacted,
              prop_spp_worst_iucn_assessed = nspp_cats/sum_spp_assessed) %>%
   group_by(x, y, cell_id) %>%
-  filter(iucn_rank == max_iucn_rank) %>%
-  summarise(max_iucn_rank = max(iucn_rank, na.rm = TRUE), 
-            prop_spp_worst_iucn_impacted = mean(prop_spp_worst_iucn, na.rm = TRUE),
-            prop_spp_worst_iucn_assessed = mean(prop_spp_worst_iucn_assessed, na.rm = TRUE)) %>% 
+  filter(new_rank == max_iucn_rank) %>%
+  summarise(max_iucn_rank = max(new_rank, na.rm = TRUE), 
+            prop_at_risk_impacted = mean(prop_spp_worst_iucn, na.rm = TRUE),
+            prop_at_risk_assessed = mean(prop_spp_worst_iucn_assessed, na.rm = TRUE)) %>% 
   ungroup() %>%
-  mutate(max_iucn_cat = case_when(max_iucn_rank == 0 ~ "NE",
-                               max_iucn_rank == 1 ~ "DD", 
-                               max_iucn_rank == 2 ~ "LC",
-                               max_iucn_rank == 3 ~ "NT",
-                               max_iucn_rank == 4 ~ "VU",
-                               max_iucn_rank == 5 ~ "EN",
-                               max_iucn_rank == 6 ~ "CR")) 
-
-iucn_plot_df$max_iucn_cat <- factor(iucn_plot_df$max_iucn_cat, levels = c("NE", "DD", "LC", "NT", "VU", "EN", "CR"))
+  mutate(max_iucn_cat = case_when(max_iucn_rank == 1 ~ "Not threatened or data deficient",
+                                    TRUE ~ "At-risk")) %>%
+  mutate(prop_at_risk_impacted = ifelse(max_iucn_rank == 1, 0, prop_at_risk_impacted))
 
 
 ggplot() +
-  geom_tile(data = iucn_plot_df, aes(x = x, y = y, fill = max_iucn_cat, alpha = prop_spp_worst_iucn_impacted)) + 
+  geom_tile(data = iucn_plot_df, aes(x = x, y = y, fill = prop_at_risk_impacted)) + 
   geom_sf(data = country_sf, fill = NA, colour = "grey69")  +
   theme_minimal() +
-      theme(legend.position = "left", ## put legend on bottom
+      theme(legend.position = "bottom", ## put legend on bottom
         axis.title.x = element_blank(), 
         axis.title.y = element_blank(),
         legend.key = element_rect(fill = NA),
         axis.text.x = element_text(angle = 60, hjust = 1),
         text=element_text(family="Arial"),
 panel.border = element_rect(colour = "grey69", fill=NA, size=3, linetype = "longdash")) +
-    scale_fill_manual(values = iucn_pal) + 
-    labs(fill = "Most severe \nIUCN category", 
-         alpha = "Proportion of \nimpacted \nspecies in the \nIUCN category",
+     scale_fill_gradientn(
+    colors = c("#46A440", "#F8D422", "#781211"),
+    values = c(0, 0.04, 1),  # Adjusting the values to handle the 0 case
+    na.value = "#46A440"  # In case of any NAs, but your data summary doesn't show NAs
+  ) +
+    labs(fill = "Proportion of impacted species at-risk", 
          x = "", y = "", 
-         tag = bquote(bold("C")))
+         tag = bquote(bold("C"))) +
+  guides(fill = guide_colorbar(
+    title.position = "top", 
+    title.hjust = 0.5,
+    barwidth = unit(6.244166667, "cm"),
+    barheight = 1
+  ))
 
 ggsave(here("analysis/SI_plots/CS_NOR_iucn.png"), height = 8, width = 8, units = "in", bg = "white")
 
 
-ggplot() +
-   geom_sf(data = country_sf, fill = NA, colour = NA)  +
-   annotation_map_tile(type = "cartolight", zoom = 8) + 
-  theme_minimal() +
-      theme(legend.position = "left", ## put legend on bottom
-        legend.title=element_blank(), 
-        axis.title.x = element_blank(), 
-        axis.title.y = element_blank(),
-        legend.key = element_rect(fill = NA),
-        axis.text.x = element_text(angle = 60, hjust = 1),
-        text=element_text(family="Arial"),
-panel.border = element_rect(colour = "grey69", fill=NA, size=3, linetype = "longdash")) +
-  scale_fill_manual(values = pal_mats) + 
-    labs(
-         x = "", y = "", 
-                  tag = bquote(bold("D")))
 
-ggsave(here("analysis/SI_plots/NOR_basemap.png"), height = 8, width = 8, units = "in", bg = "white")
+map_plot <- ggplot() +
+   geom_sf(data = country_sf, fill = NA, colour = NA) +
+   annotation_map_tile(type = "cartolight", zoom = 8) +
+   theme_minimal() +
+   theme(
+      legend.position = "left",
+      legend.title = element_blank(),
+      axis.title.x = element_blank(),
+      axis.title.y = element_blank(),
+      legend.key = element_rect(fill = NA),
+      axis.text.x = element_text(angle = 60, hjust = 1),
+      text = element_text(family = "sans"),
+      panel.border = element_rect(colour = "grey69", fill = NA, size = 3, linetype = "longdash")
+   ) +
+   scale_fill_manual(values = pal_mats) +
+   labs(
+      x = "", y = "",
+      tag = bquote(bold("D"))
+   )      +
+     theme(
+      plot.margin = margin(t = 0, r = 0, b = 70, l = 0)  # Adjust margins to align with the map
+   )
+
+
+scale_arrow_plot <- ggplot() +
+     geom_sf(data = country_sf, fill = NA, colour = NA) +
+   theme_void() +
+   ggspatial::annotation_north_arrow(
+      location = "br",
+      which_north = "false",
+      style = ggspatial::north_arrow_nautical(
+         fill = c("grey40", "white"),
+         line_col = "grey20",
+         text_family = "sans"
+      )
+   )  +
+  ggspatial::annotation_scale(
+      location = "bl",
+      bar_cols = c("grey60", "white"),
+      text_family = "sans",
+      width_hint = 0.5,  # Adjust the width of the scale bar
+      pad_y = unit("0.7", "cm")
+   ) 
+
+
+ggsave(here("analysis/SI_plots/NOR_scale.png"), plot = scale_arrow_plot, dpi = 300, bg = "white", height = 16, width = 16, units = "cm")
+
+ggsave(here("analysis/SI_plots/NOR_basemap.png"), plot = map_plot, dpi = 300, bg = "white", height = 16, width = 16, units = "cm")
+
 
 ```
 
+ARCHIVE:
 
 ```{r}
 # now do canada
