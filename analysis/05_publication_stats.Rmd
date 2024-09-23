@@ -71,11 +71,14 @@ terrestrial_impacts <- terrestrial_overlap %>%
   mutate(type = "terrestrial")
 
 
-322308.2 + 123897.6
-304212.8+174105.1
+322308.2 + 123897.6 # total plant dominant
+304212.8+174105.1 # total fish dominant
+# so fish dominant has more total impacts what about averages per cell? 
 
 
 all_impacts <- rbind(ocean_impacts, terrestrial_impacts)
+
+
 ```
 
 
@@ -142,6 +145,21 @@ maximum_location <- all_df %>%
 st_as_sf(coords = c("long", "lat"), crs = crs(moll_template)) # in Akershus county
 mapview(maximum_location)
 
+## lets look at differences between average cellular impacts on land and in ocean
+
+land_impacts <- all_df %>%
+  left_join(moll_template_land, by = c("long" = "x", "lat" = "y")) %>%
+  filter(!is.na(cell_id)) %>% 
+  group_by(diet, fcr_type) %>%
+  summarise(avg_imp = mean(value, na.rm = TRUE)) %>%
+  ungroup()
+
+ocean_impacts <- all_df %>%
+  left_join(moll_template_ocean, by = c("long" = "x", "lat" = "y")) %>%
+  filter(!is.na(cell_id)) %>% 
+  group_by(diet, fcr_type) %>%
+  summarise(avg_imp = mean(value, na.rm = TRUE)) %>%
+  ungroup()
 
 
 

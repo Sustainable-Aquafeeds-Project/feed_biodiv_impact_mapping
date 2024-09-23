@@ -197,7 +197,8 @@ summary_df_spp <- all_overlap_df %>%
   group_by(taxon, diet, fcr) %>%
   mutate(mean_prop = mean(prop_impact,na.rm=TRUE),
          median_prop = median(prop_impact,na.rm=TRUE)) %>%
-  ungroup()
+  ungroup() %>%
+  mutate(terr_marine = ifelse(taxon %in% c("Terrestrial mammals", "Birds", "Reptiles", "Amphibians"), "Terrestrial", "Marine"))
 
 
 taxon_hab_area <- spp_total_hab %>%
@@ -268,12 +269,16 @@ plot1 <- ggplot(summary_df_spp %>% filter(prop_impact > 0), aes(x = prop_impact)
   geom_point(data = summary_df_spp, aes(x = mean_prop, y = taxon, group = diet),
              position = position_dodge(width = -0.9),
              shape = 21, color = "black", fill = "orange", size = 4) +
+  # geom_point(data = summary_df_spp, aes(x = mean_prop, y = taxon, group = diet, fill = terr_marine),
+  #            position = position_dodge(width = -0.9),
+  #            shape = 21, color = "black", size = 4) +
      geom_boxplot(aes(y = taxon, fill = diet), outlier.fill = NA, outlier.color = NA, position = position_dodge(width = -0.9), alpha = 0, colour = "orange") +
    geom_boxplot(aes(y = taxon, fill = diet), outlier.fill = NA, outlier.color = NA, position = position_dodge(width = -0.9), alpha = 0, fatten = NULL) +
   theme_ohara() +
       labs(x = "Proportion of global habitat area impacted", fill = 'Diet', color = 'Diet') +
   scale_x_continuous(expand = c(0,0), limits = c(0, quant_95)) +
   scale_color_manual(values = diet_cols, breaks = names(diet_cols), guide = guide_legend(reverse = FALSE)) +
+   # scale_fill_manual(values = c("Marine" = "lightblue", "Terrestrial" = "darkgreen")) +  # Customize fill colors for terr_marine
   theme(panel.background = element_blank(),
             axis.title.y = element_blank(),
             axis.text.x = element_text(size = 16, angle = 45, hjust = 1),
@@ -282,6 +287,9 @@ plot1 <- ggplot(summary_df_spp %>% filter(prop_impact > 0), aes(x = prop_impact)
         axis.title = element_text(size = 16),
         legend.position = "none", 
         text = element_text(family = "Arial"))
+
+ggsave(plot = plot1, here(this_dir, "MS_plots/test.png"), width = 16, height = 9, units = "in", bg = "white")
+
 
 # get legend
 
@@ -292,7 +300,7 @@ plot2 <- ggplot(summary_df_spp %>% filter(prop_impact > quant_95), aes(x = prop_
   geom_vline(xintercept = quant_95, color = "black") +
   theme_ohara() +
       labs(x = "", y = "") +
-  scale_x_continuous(expand = c(0,0), limits = c(quant_95, 0.012), breaks = c(quant_95, seq(0.003, 0.012, by = 0.003)), labels = c("0.000055", "0.003", "0.006", "0.009", "0.012")) +
+  scale_x_continuous(expand = c(0,0), limits = c(quant_95, 0.018), breaks = c(quant_95, seq(0.003, 0.018, by = 0.006)), labels = c("0.000055", "0.003", "0.009", "0.015")) +
   scale_color_manual(values = diet_cols, breaks = names(diet_cols), guide = guide_legend(reverse = FALSE)) +
   theme(panel.background = element_blank(),
             axis.title.y = element_blank(),
@@ -303,7 +311,7 @@ plot2 <- ggplot(summary_df_spp %>% filter(prop_impact > quant_95), aes(x = prop_
         legend.position = "none", 
         text = element_text(family = "arial")) +
       geom_text(data = spp_assessed_reg, aes(label = spp_count_assessed, y = taxon),
-                x = 0.008, hjust = 0, color = 'black',
+                x = 0.012, hjust = 0, color = 'black',
                 family = 'arial',
                 size = 6) 
 
@@ -326,7 +334,7 @@ plot1_legend <- get_legend(ggplot(summary_df_spp, aes(x = mean_prop)) +
 # draw plots together 
 p <- ggdraw() + draw_plot((plot1 + plot2 +  plot_layout(widths = c(3, 1)))) + draw_plot(plot1_legend,  x = .63, y = 0.15, height = .10, width = .15) 
 
-ggsave(plot = p, here(this_dir, "MS_plots/fig2_economic_boxplot_prop.png"), width = 16, height = 9, units = "in", bg = "white") # technically for nature food the max width is 180 mm, however, I'm saving like this and adjusting save in post production because doing it here messing things up...
+ggsave(plot = p, here(this_dir, "MS_plots/fig2_economic_boxplot_prop_orange.png"), width = 16, height = 9, units = "in", bg = "white") # technically for nature food the max width is 180 mm, however, I'm saving like this and adjusting save in post production because doing it here messing things up...
 
 ```
  
@@ -439,7 +447,7 @@ plot1_legend <- get_legend(ggplot(summary_df_spp, aes(x = mean_prop)) +
 # draw plots together 
 p <- ggdraw() + draw_plot((plot1 + plot2 +  plot_layout(widths = c(3, 1)))) + draw_plot(plot1_legend,  x = .63, y = 0.15, height = .10, width = .15) 
 
-ggsave(here(this_dir, "SI_plots/SIfig_economic_boxplot_prop.png"), width = 16, height = 9, units = "in", bg = "white", plot = p) # technically for nature food the max width is 180 mm, however, I'm saving like this and adjusting save in post production because doing it here messing things up...
+ggsave(here(this_dir, "SI_plots/SIfig_economic_boxplot_prop.png"), width = 16, height = 9, units = "in", bg = "white", plot = p, dpi = 300) # technically for nature food the max width is 180 mm, however, I'm saving like this and adjusting save in post production because doing it here messing things up...
 ```
 
 **Figure 3: Proportion of taxa global habitat area impacted**

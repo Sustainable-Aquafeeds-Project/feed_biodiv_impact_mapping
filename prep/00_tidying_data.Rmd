@@ -5,7 +5,17 @@ date: "05/02/2023"
 output: html_document
 ---
 
+######### DO NOT RUN UNLESS YOU HAVE ACCESS TO UTAS SUSTAINABLE AQUAFEEDS PROJECT RDSI DRIVE #########
+
 ## Summary
+
+This script takes the raw_data from databases and publications (much of
+which is stored in the rdsi storage at UTAS) and tidies it to be useable
+for this project. Spatial products are stored here("data/spatial"), some
+raw_data products which are not modified or summarised but format has
+been adjusted e.g. wide to long format are here("data/raw_data") and new
+(non-spatial) data products from this analysis are stored
+here("data/tidy_data").
 
 This script preps necessary data used in subsequent scripts. 
 
@@ -13,7 +23,6 @@ This script preps necessary data used in subsequent scripts.
  - preps FAOSTAT aquaculture data
  - preps FAOSTAT crop production data
  - create a base spatial raster 
- - download IUCN threats of interest to feeds
  - prep Watson fisheries catch data 
  - download and prep forage fish species lists
  - filter Watson spatialised catch data for forage fish species so it can be stored in the project

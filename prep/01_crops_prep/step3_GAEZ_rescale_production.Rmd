@@ -15,7 +15,7 @@ editor_options:
 Crop Allocation Source: GAEZ 2015 [Accessed: 07/12/2023]
 
 
-We will be rescaling the Production_*_Total rasters to represent 2021 FAO tonnage estimates. These represent the 2015 total production (it is actually the average of 2014, 2015, and 2016) in tonnes per each crop in each cell. Units are 1000 tonnes per 5-arcminute grid cell.
+We will be rescaling the Production_*_Total rasters (downloaed from GAEZ website and stored on Sustainable Aquafeeds Project server) to represent 2021 FAO tonnage estimates. These represent the 2015 total production (it is actually the average of 2014, 2015, and 2016) in tonnes per each crop in each cell. Units are 1000 tonnes per 5-arcminute grid cell.
 
 ```{r setup, include = FALSE}
 # getting packages we want
@@ -90,8 +90,8 @@ sum(test_prod$early) # 78030351
 ```{r}
 scale_from_2015_to_2021 <- function(crop, prod_system) {
   
-  crop = "Banana"
-  prod_system = "_Total"
+  # crop = "Banana"
+  # prod_system = "_Total"
   
   coef_raster <- 
     scaling_coef %>% 
@@ -213,6 +213,7 @@ for(crop in crops){
 }
 
 # stimulants and Yamsandotherroots are problems... luckily we don't use these for our project! The rest are all basically <5% difference from FAO, so in the same ballpark. And definitely better than mapspam. 
+
 ```
 
 

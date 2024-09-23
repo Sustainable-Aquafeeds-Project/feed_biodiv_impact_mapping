@@ -12,7 +12,7 @@ This folder organizes crop maps using GAEZ crop data as a foundation for calcula
 |File Name|Process Extent|Description|Source|
 |---	|--- |---	|---	|
 |FAOSTAT_crop_production_2015_2021.csv|Raw|Crop production data extracted for year 2015-2021.|FAOSTAT database: crop production.|
-|GAEZ_crop_info.csv|Raw|Dataset extracted from GAEZ with FAO codes for each SPAM crop category.|[GAEZ data webpage](https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/KJFUO1).|
+|GAEZ_crop_info.csv|Raw|Dataset downloaded from GAEZ with FAO codes for each SPAM crop category.|[GAEZ data webpage](https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/KJFUO1).|
 |scaling_coef.csv|Modified|Crop production (2015-2021) coefficients by GAEZ crop category.|Output from step 2.|
 |prod_crop_rgns.csv|Crop production in tonnes for each production system, iso3c, and crop.|NA|
 

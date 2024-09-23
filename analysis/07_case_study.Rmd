@@ -368,14 +368,15 @@ max_impact <- max_impact_iso3c_terr %>%
   rbind(max_impact_iso3c_marine %>% filter(iso3c == "CHL")) %>%
   filter(y > -4250000) %>%
   filter(y < -3900000) %>%
-  filter(x< -6000000) # filter for a small part of the coast that has both marine and land large impacts. kind of near Valparaíso I think?
+  filter(x< -6000000)  # filter for a small part of the coast that has both marine and land large impacts. kind of near Valparaíso I think?
 
 impact_rast <- max_impact %>%
   # filter(raw_material == "forage fish") %>%
   group_by(x, y) %>%
   summarise(impact_km2 = sum(impact_km2, na.rm = TRUE)) %>%
   ungroup() %>%
-  rast(., crs = moll_template)
+  rast(., crs = moll_template) %>%
+  project(., "EPSG:4326")
 
 plot(impact_rast) # ok this is looking good now...
 
@@ -437,16 +438,37 @@ limits <- summary_fin %>%
 ## now lets try plotting this:
 country_sf <- countries_shp %>%
                           filter(sov_a3 == "CHL") %>%
-  st_crop(., st_bbox(limits))
+  #   st_transform(crs(impact_rast)) %>%
+  # st_crop(., st_bbox(impact_rast))
+   st_crop(., st_bbox(limits))
 
 summary_fin <- summary_fin %>%
   mutate(dom_raw_material = ifelse(dom_raw_material == "Cropsnes", "Other crops", dom_raw_material))
 
 summary_fin$dom_raw_material <- factor(summary_fin$dom_raw_material, levels = c("Rapeseed", "Forage fish", "Wheat", "Pulses", "Other crops"))
 
+# test <- summary_fin %>%
+#   dplyr::select(x, y, dom_raw_material) %>%
+#   mutate(dom_raw_material = as.character(dom_raw_material)) %>%
+#   mutate(dom_raw_material = case_when(
+#     dom_raw_material == "Forage fish" ~ 1,
+#     dom_raw_material == "Rapeseed" ~ 2,
+#     dom_raw_material == "Other crops" ~ 3,
+#     dom_raw_material == "Pulses" ~ 4,
+#     dom_raw_material == "Wheat" ~ 5
+#   )) %>%
+#   rast(., type = "xyz", crs = moll_template) %>%
+#   project(., "EPSG:4326", method = "near") %>%
+#   aggregate(., fact = 3, na.rm = TRUE) %>%
+#   disagg(., fact = 2)
+#   as.data.frame(., xy = TRUE)
+
+
+
 ggplot() +
-   geom_tile(data = summary_fin, aes(x = x, y = y, fill = dom_raw_material)) + 
-       geom_sf(data = country_sf, fill = NA, colour = "grey69")  +
+  geom_tile(data = summary_fin, aes(x = x, y = y, fill = dom_raw_material)) + 
+  #   geom_sf(data = summary_fin_sf, aes(fill = dom_raw_material)) + 
+       geom_sf(data = country_sf, fill = NA, colour = "black", lwd = 0.3)  +
   theme_minimal() +
       theme(legend.position = "bottom", ## put legend on bottom
         axis.title.x = element_blank(), 
@@ -468,7 +490,9 @@ panel.border = element_rect(colour = "grey69", fill=NA, size=3, linetype = "long
     label.hjust = 0.5,
     label.vjust = 1,
     keywidth = unit(1.5, "cm")
-  ))
+  )) 
+#+
+ # coord_sf(crs = "EPSG:4326")
 
 ggsave(here("analysis/MS_plots/fig5_raw_material.png"), dpi = 300, bg = "white",  height = 16, width = 16, units = "cm")
 
@@ -477,7 +501,7 @@ summary_fin$imp_category <- factor(summary_fin$imp_category, levels = c("0-24", 
 
 ggplot() +
   geom_tile(data = summary_fin, aes(x = x, y = y, fill = imp_category)) + 
-       geom_sf(data = country_sf, fill = NA, colour = "grey69")  +
+       geom_sf(data = country_sf, fill = NA,  colour = "black", lwd = 0.3)  +
   theme_minimal() +
       theme(legend.position = "bottom", ## put legend on bottom
         axis.title.x = element_blank(), 
@@ -598,8 +622,9 @@ iucn_plot_df <- summary_iucn %>%
 #          tag = bquote(bold("C")))
 
 ggplot() +
+     #annotation_map_tile(type = "cartolight", zoom = 8) +
   geom_tile(data = iucn_plot_df, aes(x = x, y = y, fill = prop_at_risk_impacted)) + 
-  geom_sf(data = country_sf, fill = NA, colour = "grey69")  +
+  geom_sf(data = country_sf, fill = NA,  colour = "black", lwd = 0.3)  +
   theme_minimal() +
       theme(legend.position = "bottom", ## put legend on bottom
         axis.title.x = element_blank(), 
@@ -628,47 +653,10 @@ ggsave(here("analysis/MS_plots/fig5_iucn_new.png"), dpi = 300, bg = "white",  he
 
 ## Now save reference plot: 
 
-ggplot() +
-   geom_sf(data = country_sf, fill = NA, colour = NA)  +
-   annotation_map_tile(type = "cartolight", zoom = 8) + 
-  theme_minimal() +
-      theme(legend.position = "left", ## put legend on bottom
-        legend.title=element_blank(), 
-        axis.title.x = element_blank(), 
-        axis.title.y = element_blank(),
-        legend.key = element_rect(fill = NA),
-        axis.text.x = element_text(angle = 60, hjust = 1),
-        text=element_text(family="Arial"),
-panel.border = element_rect(colour = "grey69", fill=NA, size=3, linetype = "longdash")) +
-  scale_fill_manual(values = pal_mats) + 
-    labs(
-         x = "", y = "", 
-                  tag = bquote(bold("D"))
-         ) + 
-  ggspatial::annotation_scale(
-    location = "br",
-   # pad_x = unit(0.7, "in"),
-  #  pad_y = unit(0.3, "in"),
-    bar_cols = c("grey60", "white"),
-    text_family = "ArcherPro Book"
-  ) +
-  ggspatial::annotation_north_arrow(
-    location = "bl", which_north = "false",
-    #pad_x = unit(0.4, "in"), pad_y = unit(0.4, "in"),
-    style = ggspatial::north_arrow_nautical(
-      fill = c("grey40", "white"),
-      line_col = "grey20",
-      text_family = "ArcherPro Book"
-    )
-  )
-
-ggsave(here("analysis/MS_plots/fig5_basemap.png"), dpi = 300, bg = "white", height = 16, width = 16, units = "cm")
-
-
-
 map_plot <- ggplot() +
-   geom_sf(data = country_sf, fill = NA, colour = NA) +
+      geom_sf(data = country_sf, fill = NA,  colour = "black", lwd = 0.3) +
    annotation_map_tile(type = "cartolight", zoom = 8) +
+        geom_sf(data = country_sf, fill = NA,  colour = "black", lwd = 0.3) +
    theme_minimal() +
    theme(
       legend.position = "left",
@@ -677,10 +665,9 @@ map_plot <- ggplot() +
       axis.title.y = element_blank(),
       legend.key = element_rect(fill = NA),
       axis.text.x = element_text(angle = 60, hjust = 1),
-      text = element_text(family = "sans"),
+      text = element_text(family = "Arial"),
       panel.border = element_rect(colour = "grey69", fill = NA, size = 3, linetype = "longdash")
    ) +
-   scale_fill_manual(values = pal_mats) +
    labs(
       x = "", y = "",
       tag = bquote(bold("D"))
@@ -690,28 +677,28 @@ map_plot <- ggplot() +
    )
 
 
-scale_arrow_plot <- ggplot() +
-     geom_sf(data = country_sf, fill = NA, colour = NA) +
-   theme_void() +
-   ggspatial::annotation_north_arrow(
-      location = "br",
-      which_north = "false",
-      style = ggspatial::north_arrow_nautical(
-         fill = c("grey40", "white"),
-         line_col = "grey20",
-         text_family = "sans"
-      )
-   )  +
-  ggspatial::annotation_scale(
-      location = "bl",
-      bar_cols = c("grey60", "white"),
-      text_family = "sans",
-      width_hint = 0.5,  # Adjust the width of the scale bar
-      pad_y = unit("0.7", "cm")
-   ) 
-
-
-ggsave(here("analysis/MS_plots/fig5_scale.png"), plot = scale_arrow_plot, dpi = 300, bg = "white", height = 16, width = 16, units = "cm")
+# scale_arrow_plot <- ggplot() +
+#      geom_sf(data = country_sf, fill = NA, colour = NA) +
+#    theme_void() +
+#    ggspatial::annotation_north_arrow(
+#       location = "br",
+#       which_north = "false",
+#       style = ggspatial::north_arrow_nautical(
+#          fill = c("grey40", "white"),
+#          line_col = "grey20",
+#          text_family = "sans"
+#       )
+#    )  +
+#   ggspatial::annotation_scale(
+#       location = "bl",
+#       bar_cols = c("grey60", "white"),
+#       text_family = "sans",
+#       width_hint = 0.5,  # Adjust the width of the scale bar
+#       pad_y = unit("0.7", "cm")
+#    ) 
+# 
+# 
+# ggsave(here("analysis/MS_plots/fig5_scale.png"), plot = scale_arrow_plot, dpi = 300, bg = "white", height = 16, width = 16, units = "cm")
 
 ggsave(here("analysis/MS_plots/fig5_base_map.png"), plot = map_plot, dpi = 300, bg = "white", height = 16, width = 16, units = "cm")
 
@@ -722,11 +709,11 @@ ggsave(here("analysis/MS_plots/fig5_base_map.png"), plot = map_plot, dpi = 300, 
 #### Calculate some stats about this area
 
 test <- iucn_plot_df %>% 
-  filter(max_iucn_cat == "LC", prop_spp_worst_iucn_impacted == 1)
-46/389 # 0.5398458 of cells are LC
+  filter(max_iucn_rank == 1)
+210/389 # 0.539845at of cells are not threatened
 test <- iucn_plot_df %>% 
-  filter(max_iucn_cat == "CR", prop_spp_worst_iucn_impacted == 1)
-7/389
+  filter(max_iucn_rank == 2, prop_at_risk_impacted == 1)
+8/389
 
 summary_distinct <- distinct(summary, cell_id, avg_impact)
 
@@ -756,36 +743,44 @@ sum(rapeseed_imps$avg_impact)/sum(summary$avg_impact) # 0.1609909
 
 
 test <- iucn_plot_df %>% 
-  filter(max_iucn_cat %in% c("CR")) %>%
+  filter(max_iucn_rank == 2) %>%
   left_join(raw_mat_summary) %>%
   filter(dom_raw_material == "Forage fish")
 
-mean(test$prop_spp_worst_iucn_impacted) # 0.01868094 forage fish - of the forage fish cells, only ~2% of spceies in the cell are CR
+mean(test$prop_at_risk_impacted, na.rm = TRUE) # 0.07497449 forage fish - of the forage fish cells, only ~7.5% of species in the cells are at-risk
 
-76/101 # forage fish
-21/101 # rapeseed
-2/101 # wheat
-1/101 # pulses
+test <- iucn_plot_df %>% 
+  filter(max_iucn_rank == 2) %>%
+  left_join(raw_mat_summary) %>%
+  group_by(dom_raw_material) %>%
+  summarise(prop_mean = mean(prop_at_risk_impacted,na.rm = TRUE)) %>%
+  ungroup()
 
-## 29 CR cells with nowhere to disperse to. 
-29/101
 
-ggplot() +
-  annotation_map_tile(data = country_sf, type = "osm", zoomin = 0, cachedir = system.file("rosm.cache", package = "ggspatial")) + 
-  geom_tile(data = iucn_plot_df, aes(x = x, y = y, fill = max_iucn_cat, color = "black")) + 
-  geom_sf(data = country_sf, fill = NA, colour = "grey")  +
-  theme_minimal() +
-      theme(legend.position = "left", ## put legend on bottom
-        legend.title=element_blank(), 
-        axis.title.x = element_blank(), 
-        axis.title.y = element_blank(),
-        legend.key = element_rect(fill = NA),
-        axis.text.x = element_text(angle = 60, hjust = 1),
-        text=element_text(family="Times New Roman"),
-panel.border = element_rect(colour = "grey69", fill=NA, size=3, linetype = "longdash")) +
-    scale_fill_manual(values = iucn_pal) + 
-    labs( #caption = glue("{perc_threatened_impacts}% of total impacts (km²) shown are on a threatened species"),
-         x = "", y = "")
+# # A tibble: 5 × 2
+#   dom_raw_material prop_mean
+#   <chr>                <dbl>
+# 1 Cropsnes            0.104 
+# 2 Forage fish         0.0750
+# 3 Pulses              0.529 
+# 4 Rapeseed            0.250 
+# 5 Wheat               0.169
+
+test <- iucn_plot_df %>% 
+  filter(max_iucn_rank == 2) %>%
+  left_join(raw_mat_summary) %>%
+  group_by(dom_raw_material) %>%
+  summarise(n()) %>%
+  mutate(prop = `n()`/179)
+
+# # A tibble: 5 × 3
+#   dom_raw_material `n()`   prop
+#   <chr>            <int>  <dbl>
+# 1 Cropsnes            33 0.184 
+# 2 Forage fish         76 0.425 
+# 3 Pulses               2 0.0112
+# 4 Rapeseed            61 0.341 
+# 5 Wheat                7 0.0391
 
 
 ```
@@ -848,22 +843,25 @@ nor_summary_fin <- max_impact_nor %>%
 
 
 
-perc_threatened_impacts <- round((sum(nor_iucn$impact_km2)/sum(nor_summary_iucn$impact_km2))*100,1) # 1.8%
+# perc_threatened_impacts <- round((sum(nor_iucn$impact_km2)/sum(nor_summary_iucn$impact_km2))*100,1) # 1.8%
 
 
 nor_limits <- nor_summary_fin %>%
   dplyr::select(x, y, prop_impact_mean) %>%
   rast(., crs = moll_template)
 
+nor_rast <- nor_rast %>%
+  crop(., nor_limits)
+
 
 ## now lets try plotting this:
 country_sf <- countries_shp %>%
                           filter(sov_a3 == "NOR") %>%
-  st_crop(., st_bbox(nor_limits))
+  st_crop(., st_bbox(nor_rast))
 
 ggplot() +
    geom_tile(data = nor_summary_fin, aes(x = x, y = y, fill = dom_raw_material)) + 
-       geom_sf(data = country_sf, fill = NA, colour = "grey69")  +
+      geom_sf(data = country_sf, fill = NA,  colour = "black", lwd = 0.3) +
   theme_minimal() +
       theme(legend.position = "bottom", ## put legend on bottom
         axis.title.x = element_blank(), 
@@ -893,7 +891,7 @@ nor_summary_fin$imp_category <- factor(nor_summary_fin$imp_category, levels = c(
 
 ggplot() +
   geom_tile(data = nor_summary_fin, aes(x = x, y = y, fill = imp_category)) + 
-       geom_sf(data = country_sf, fill = NA, colour = "grey69")  +
+      geom_sf(data = country_sf, fill = NA,  colour = "black", lwd = 0.3) +
   theme_minimal() +
       theme(legend.position = "bottom", ## put legend on bottom
         axis.title.x = element_blank(), 
@@ -966,7 +964,7 @@ iucn_plot_df <- nor_summary_iucn %>%
 
 ggplot() +
   geom_tile(data = iucn_plot_df, aes(x = x, y = y, fill = prop_at_risk_impacted)) + 
-  geom_sf(data = country_sf, fill = NA, colour = "grey69")  +
+      geom_sf(data = country_sf, fill = NA,  colour = "black", lwd = 0.3) +
   theme_minimal() +
       theme(legend.position = "bottom", ## put legend on bottom
         axis.title.x = element_blank(), 
@@ -995,8 +993,10 @@ ggsave(here("analysis/SI_plots/CS_NOR_iucn.png"), height = 8, width = 8, units =
 
 
 map_plot <- ggplot() +
-   geom_sf(data = country_sf, fill = NA, colour = NA) +
+      geom_sf(data = country_sf, fill = NA,  colour = "black", lwd = 0.3) +
+    geom_tile(data = iucn_plot_df, aes(x = x, y = y), fill = NA) + # make sure extent matches
    annotation_map_tile(type = "cartolight", zoom = 8) +
+        geom_sf(data = country_sf, fill = NA,  colour = "black", lwd = 0.3) +
    theme_minimal() +
    theme(
       legend.position = "left",
@@ -1005,7 +1005,7 @@ map_plot <- ggplot() +
       axis.title.y = element_blank(),
       legend.key = element_rect(fill = NA),
       axis.text.x = element_text(angle = 60, hjust = 1),
-      text = element_text(family = "sans"),
+      text = element_text(family = "Arial"),
       panel.border = element_rect(colour = "grey69", fill = NA, size = 3, linetype = "longdash")
    ) +
    scale_fill_manual(values = pal_mats) +
