@@ -7,6 +7,9 @@ editor_options:
   chunk_output_type: console
 ---
 
+GOAL: Get proportion of fish oil and fish meal live weight equivalents that is consumed by salmon aquaculture in each country per species that come from fish trimmings. Allocate to live weight fish using mass, economic, and energetic allocation rates. 
+
+Outputs: a raster and dataset for each fish oil and fish meal, under each diet scenario, describing the harvest of each FMFO live weight equivalents (tonnes) from trimmings that are consumed in each country by salmon aquaculture systems.
 
 ```{r}
 # load relevant packages, etc.
@@ -581,13 +584,13 @@ for(diet_type in diets){
     #  pos = "pelagic"
     #   fcr = "regular"
         
-        ## comment this in if u want to skip those already run
-        #         if(all(file.exists(sprintf(here("prep/02_feed/output/%s/%s/trimmings fish_%s_%s_%s_catch_P.tif"), diet_type, fcr, ingredient_type, allocation, pos), sprintf(here("prep/02_feed/output/%s/%s/trimmings fish_%s_%s_%s_bycatch_P.tif"), diet_type, fcr, ingredient_type, allocation, pos)))){
-        # 
-        #   print(cat("rasters exists, skipping!"))
-        #   
-        #   next()
-        # }
+        ## comment this out if u want to skip those already run
+      if(all(file.exists(sprintf(here("prep/02_feed/output/%s/%s/trimmings fish_%s_%s_%s_catch_P.tif"), diet_type, fcr, ingredient_type, allocation, pos), sprintf(here("prep/02_feed/output/%s/%s/trimmings fish_%s_%s_%s_bycatch_P.tif"), diet_type, fcr, ingredient_type, allocation, pos)))){
+
+          print(cat("rasters exists, skipping!"))
+
+          next()
+        }
 
         
   watson_raster_template <- terra::rast(ncol=720, nrow=360, vals=c(1:259200))
@@ -649,7 +652,11 @@ for(diet_type in diets){
   }
 }
 
+```
 
+Data check 
+
+```{r}
 trim_files <- list.files(here("prep/02_feed/output/fish-dominant/regular"), pattern = "fish oil|fish meal|trimmings", full.names = TRUE)
 
 trim_files <- trim_files[grep("_P", trim_files)]
@@ -678,8 +685,6 @@ test <- trimmings_fofm_allocation %>%
   summarise(sum = sum(tonnes_fofm_trimmings_spp_live_weight)) %>%
   ungroup()
 test
-
-
 
 ```
  

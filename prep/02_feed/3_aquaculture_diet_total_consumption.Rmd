@@ -10,8 +10,8 @@ editor_options:
 Use following data to calculate tonnes of each feedstuff item consumed by each aquaculture system in each country:
 
 * Tonnes of production: From FAOSTAT
-* Diet composition: From Aas et al. 2022 and Cottrell et al. 2023 in prep
-* feed conversion ratio: From Tacon & Metian 2008
+* Diet composition: From Aas et al. 2022 and Cottrell et al. 2024 in review
+* feed conversion ratio: From Tacon & Metian 2008; 2015
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)

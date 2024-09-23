@@ -7,7 +7,7 @@ editor_options:
 
 GOAL: Get proportion of each GAEZ crop that is consumed by salmon aquaculture in each country. Allocate to raw weight materials using mass, economic, and energetic allocation rates.
 
-Outputs: a raster for each crop describing the amount of each crop produced (tonnes) in each country used by salmon aquaculture systems for each allocation method, diet type, and FCR scenario. 
+Outputs: a raster for each crop describing the amount of each crop produced (tonnes) and area based disturbance (km2 equivalents) used by salmon aquaculture systems for each scenario.
 
 ```{r}
 
@@ -29,6 +29,7 @@ source(here("src/directories.R"))
 # STEP 1: determine amount of crop produced in each country for each food system.
 
 Trade proportion data:
+
 ```{r}
 
 trade_data <- read_csv(here("prep/02_feed/data/FAO_GAEZcrop_trade_data.csv")) 
@@ -37,6 +38,7 @@ trade_data <- read_csv(here("prep/02_feed/data/FAO_GAEZcrop_trade_data.csv"))
 
 
 Total consumption by animals per country in MAPSPAM crops
+
 ```{r}
 
 consumption <- read_csv(here("prep/02_feed/data/demand/total_aquaculture_ingredient_demand.csv")) %>%
@@ -46,9 +48,9 @@ consumption <- read_csv(here("prep/02_feed/data/demand/total_aquaculture_ingredi
   mutate(fcr_type = ifelse(fcr_type == "ingredient_demand", "regular", "efficient")) %>% 
   select(iso3c_consuming = iso3c, animal_system, diet, source_ingredient, fcr_type, consuming_ingredient_consumed_tonnes) 
 
-## need to match `consumption` ingredients to equivalent crop.. need lookup table 
+## need to match `consumption` ingredients to equivalent crop.. need look up table 
 
-feed_cats <- read_xlsx(here("data/tidy_data/plant_ingredient_codes.xlsx")) %>% ## this table was created manually. It matches our ingredient names from Aas et al. 2022 to mapspam names. Must also update product_to_fao_spam.csv. Taken from our IMAS Sustainable Aquafeed Proejct - Mapping directory on OneDrive, specifically the "allocation_new" folder. 
+feed_cats <- read_xlsx(here("data/tidy_data/plant_ingredient_codes.xlsx")) %>% ## this table was created manually. It matches our ingredient names from Aas et al. 2022 to GAEZ raw material crop names. Must also update product_to_fao_spam.csv. Taken from our IMAS Sustainable Aquafeed Project - Mapping directory on OneDrive, specifically the "allocation_new" folder. 
   dplyr::select(-reference)
   
 
@@ -91,8 +93,6 @@ feed_source <- ingredient_production_location %>%
   summarize(consumed_ingredient_tonnes = sum(producing_ingredient_consumed_tonnes)) %>% 
   ungroup()
 
-
-
 tmp <- filter(feed_source, animal_system == "salmon_aquaculture_meat") %>%
     group_by(source_ingredient, diet, fcr_type) %>%
   slice_max(order_by = consumed_ingredient_tonnes, n = 15) %>%
@@ -108,7 +108,7 @@ ggplot(data = tmp %>%
   theme_bw() + 
   theme(axis.text.x = element_text(angle = 30, vjust = 0.5)) 
 
-ggsave(here("prep/02_feed/plots/total_ingredient_feed_origins_fish.png"), units = "in", height = 11, width = 11)
+
 ```
  
 
@@ -177,7 +177,7 @@ feed_source <- read.csv(here("prep/02_feed/data/demand/ingredient_crop_demand_pr
   dplyr::rename("SPAM_super" = "map_spam_code",
                 "GAEZ_category" = "gaez_code")
 
-# if the data were perfect, none would be > 1
+# if the data were perfect, none would be > 1, however, since we are modelling scenarios, we don't care if it is above 1.
 
 proportion <- left_join(feed_source, crop_production_df, by=c("iso3c_producing", "GAEZ_category")) %>%
   mutate(tonnes_producing_crop = ifelse(is.na(tonnes_producing_crop), 0, tonnes_producing_crop)) %>%
@@ -192,11 +192,9 @@ write_csv(proportion, here("prep/02_feed/output/proportion_feed_per_country_syst
 
 # Step 3
 
-Combine with yield information per country to calculate the amount of km2 disturbance per each crop/ingredient per cell. 
+Rasterize this information to get rasters describing the amount of tonnages for each crop in each cell global that goes to salmon aquaculture feed ingredients, additionally, divide by crop yield estimates from the FAO to get estimates of crop area (km2 disturbance) in each cell that end up as salmon aquaculture feed ingredients. 
 
-Then rasterize this information to get rasters describing the amount of tonnages for each crop in each cell global that goes to salmon aquaculture feed ingredients, additionally, divide by crop yield estimates from the FAO to get estimates of crop area in each cell that goes to salmon aquaculture feed ingredients. 
-
- - we will use the uncapped proportion for this for now.. we are assuming this is a scenario where we completely fulfill demand, regardless of what the current-day production looks like. So if we need to produce more crop to meet ingredient demand in a country, then we will. Vast majority of the proportions are below one. 
+ - we will use the uncapped proportion for this for now.. we are assuming this is a scenario where we completely fulfill demand, regardless of what the current-day production looks like. So if we need to produce more crop to meet ingredient demand in a country, then we will. Nearly all of the proportions are below one anyway. 
 
 
 ```{r}
@@ -254,11 +252,11 @@ allocation = todo$allocation_type[i]
 fcr <- todo$fcr_type[i]
 
 
-
-# if(all(file.exists(sprintf(here("prep/02_feed/output/%s/%s/%s_%s_%s_A.tif"), diet_type, fcr, crop_gaez, product_type, allocation), sprintf(here("prep/02_feed/output/%s/%s/%s_%s_%s_P.tif"), diet_type, fcr, crop_gaez, product_type, allocation)))){
-#   cat("skipping because area and production rasters both exist!")
-#   next()
-# }
+## you can comment this out if you want to rerun everything
+if(all(file.exists(sprintf(here("prep/02_feed/output/%s/%s/%s_%s_%s_A.tif"), diet_type, fcr, crop_gaez, product_type, allocation), sprintf(here("prep/02_feed/output/%s/%s/%s_%s_%s_P.tif"), diet_type, fcr, crop_gaez, product_type, allocation)))){
+  cat("skipping because area and production rasters both exist!")
+  next()
+}
 
 # total country feed production
 feed_crop <- filter(total_prop, GAEZ_category==crop_gaez, diet == diet_type, fcr_type == fcr, ingredient == product_type , allocation_type == allocation) %>%
@@ -308,9 +306,16 @@ area_crop_feed_raster <- (tonnes_crop_feed_raster/yield_feed_crop_raster)/100 # 
 # plot(log(area_crop_feed_raster+1)) 
 # plot(area_crop_feed_raster)
 
-# global(area_crop_feed_raster, "sum", na.rm = TRUE) # 3428.596 km2 of soybean for SPC for plant-dominant??; 1746.714 km2 for SBM fish dominant?
+# global(area_crop_feed_raster, "sum", na.rm = TRUE) # just a check
+
 writeRaster(area_crop_feed_raster, filename= sprintf(here("prep/02_feed/output/%s/%s/%s_%s_%s_A.tif"), diet_type, fcr, crop_gaez, product_type, allocation), overwrite=TRUE)
 }
+
+```
+
+Data check 
+
+```{r}
 
 # take a look at plant dominant
 demand_test <- consumption %>%
@@ -376,6 +381,7 @@ test_df %>% arrange(-sum)
 ```
  
 Make some plots
+
 ```{r}
 feed_source <- read.csv(here("prep/02_feed/data/demand/ingredient_crop_demand_production_conversions.csv")) %>%
   left_join(feed_cats, by = c("source_ingredient" = "ingredient", "FAOSTAT_name", "FAO_code")) %>%
@@ -397,7 +403,7 @@ ggplot(data = tmp %>%
   labs(x = "Tonnes of crop produced for ingredient", y = "Country") + 
   theme_bw() + 
   theme(axis.text.x = element_text(angle = 30, vjust = 0.5)) 
-ggsave(here("prep/02_feed/plots/total_crop_feed_origins_fish_energetic.png"), units = "in", height = 20, width = 20)
+
 ```
 
 

@@ -2,8 +2,8 @@ Feed folder organization
 
 ## 1a_GAEZ_production.Rmd
 
-GOAL: calculate tonnes of production for each GAEZ crop in each country.
-These data are used in several places in the analysis.
+GOAL: calculate total tonnes of production for each GAEZ crop in each country.
+These data are used in several places throughout the analysis.
 
 Inputs: 
 * GAEZ production tiff files
@@ -14,7 +14,9 @@ Outputs:
 
 ## 1b_GAEZ_trade_proportions.Rmd
 
-GOAL: This uses the FAO Food balance sheets to determine imports vs. local production (minus exports).  Then, we use FAO Detailed Trade Matrix to determine the proportion of total imports coming from each country.  We use crop production data to gapfill countries with no trade data, if a country has no trade data we assume imports are proportional to global production.
+GOAL: This uses the FAO Food balance sheets to determine imports vs. local production (minus exports). Then, we use FAO Detailed Trade Matrix to determine the proportion of total imports coming from each country.  We use crop production data to gapfill countries with no trade data, if a country has no trade data we assume imports are proportional to global production.
+
+This results in a dataset that describes for each country the country of origin for each crop. This is presented as a proportion so for each country/crop the total will sum to 1.  
 
 This is used later in the 4a script where we determine country of origin for feed items consumed in each country.
 
@@ -57,31 +59,31 @@ Outputs:
 
 ## 4a_crop_ingredient_allocation.Rmd
 
-GOAL: Get proportion of each GAEZ crop that is consumed by salmon aquaculture in each country. Allocate to raw weight materials using mass and energetic allocation rates.
+GOAL: Get proportion of each GAEZ crop that is consumed by salmon aquaculture in each country. Allocate to raw weight materials using mass, economic, and energetic allocation rates.
 
-Outputs: a raster for each crop describing the amount of each crop produced (tonnes) in each country used by salmon aquaculture systems.
+Outputs: a raster for each crop describing the amount of each crop produced (tonnes) and area based disturbance (km2 equivalents) used by salmon aquaculture systems.
 
 
-## 4b_forage_fmfo_allocation.Rmd
+## 4b_forage_fmfo_allocation_production.Rmd
 
-GOAL: Get proportion of fish oil and fish meal live weight equivalents that is consumed by salmon aquaculture in each country per forage fish species. Allocate to live weight fish using mass and energetic allocation rates.
+GOAL: Get proportion of fish oil and fish meal live weight equivalents that is consumed by salmon aquaculture in each country per forage fish species. Allocate to live weight fish using mass, economic, and energetic allocation rates. 
 
 Outputs: a raster and dataset for each fish oil and fish meal, under each diet scenario, describing the harvest of each FMFO live weight equivalents (tonnes) that are consumed in each country by salmon aquaculture systems.
 
-## 4c_trimmings_fmfo_allocation.Rmd
+## 4c_trimmings_fmfo_allocation_production.Rmd
 
-GOAL: Get proportion of fish oil and fish meal live weight equivalents that is consumed by salmon aquaculture in each country per species that come from fish trimmings. Allocate to live weight fish using mass and energetic allocation rates.
+GOAL: Get proportion of fish oil and fish meal live weight equivalents that is consumed by salmon aquaculture in each country per species that come from fish trimmings. Allocate to live weight fish using mass, economic, and energetic allocation rates. 
 
 Outputs: a raster and dataset for each fish oil and fish meal, under each diet scenario, describing the harvest of each FMFO live weight equivalents (tonnes) from trimmings that are consumed in each country by salmon aquaculture systems.
 
 ## 5_fish_disturbance_prod_rasters.Rmd
 
-GOAL: Convert the tonnes of liveweight fish oil and fish meal to km2 equivalent using a PPR/NPP method taken from [Cashion et al.2017](https://doi.org/10.1111/faf.12222).
+GOAL: Convert the tonnes of liveweight fish oil and fish meal to km2 equivalent using a PPR/NPP method taken from [Cashion et al.2017](https://doi.org/10.1111/faf.12222) and Cottrell et al. 2024 in review. 
 
 Outputs: A rastser for each fish oil and fish meal, under each diet scenario, describing the km2 equivalent of the harvest of FMFO liveweight equivalents (tonnes) from trimmings and regular FMFO catch that are consumed in each country by salmon aquaculture systems. 
 
 ## 6_resample_feed_rasters.Rmd
 
-Goal: Resample all crop and fish based feed rasters to 100km2 cells. 
+Goal: Resample all crop and fish based feed rasters to 10km x 10km cells. 
 
 

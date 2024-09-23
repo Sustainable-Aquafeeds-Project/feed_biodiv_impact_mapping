@@ -30,7 +30,7 @@ source(here("src/directories.R"))
 
 Get tonnes production from GAEZ data adjusted to 2021 production.  These data include all growing systems (intensive, irrigated, etc.) and are in units of metric tonnes. This is used to adjust some of the trade values and for gapfilling when trade data are not available. 
 
-GAEZcrop_production.csv created in 1.1.
+`GAEZcrop_production.csv` created in 1.1.
 
 ```{r}
 
@@ -72,6 +72,7 @@ feed_products[duplicated(feed_products$FAO_Item_Code_NFB), ] # mostly FAO_item_c
 summary(feed_products)
 
 ```
+
 
 ```{r}
 
@@ -519,6 +520,7 @@ import_export_gf <- import_export %>%
 
 
 Multiply country imports by proportion of imports (these all sum to one regardless of what proportion of supply are from imports) to reflect the total proportion of imports into the country.
+
 ```{r}
 
 import_export_gf <- import_export_gf %>%

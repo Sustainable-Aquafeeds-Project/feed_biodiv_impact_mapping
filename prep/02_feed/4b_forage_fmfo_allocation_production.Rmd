@@ -188,8 +188,6 @@ length(unique(demand_trade$partner_iso3c)) # 113 countries
 sum(demand_trade$tonnes_ingredient_demand_traded, na.rm = TRUE) # 3565490/2 # looks good
 ```
 
-
-
 Group by exporter country to get total amount of FO or FM ingredients they export under each diet demand scenario
     - EX: USA exports 60 tonnes to NOR, 40 tonnes to CHL, then they export 100 tonnes of FO total for salmon feed.
     
@@ -529,12 +527,13 @@ for(diet_type in diets){
 #  pos = "benthic"
 #  fcr = "efficient"
 
-        # if(all(file.exists(sprintf(here("prep/02_feed/output/%s/%s/forage fish_%s_%s_%s_bycatch_P.tif"), diet_type, fcr, ingredient_type, allocation, pos), sprintf(here("prep/02_feed/output/%s/%s/forage fish_%s_%s_%s_catch_P.tif"), diet_type, fcr, ingredient_type, allocation, pos)))){
-        # 
-        #   print(cat("rasters exists, skipping!"))
-        #   
-        #   next()
-        # }
+        ## feel free to comment this out if you want to rerun things
+        if(all(file.exists(sprintf(here("prep/02_feed/output/%s/%s/forage fish_%s_%s_%s_bycatch_P.tif"), diet_type, fcr, ingredient_type, allocation, pos), sprintf(here("prep/02_feed/output/%s/%s/forage fish_%s_%s_%s_catch_P.tif"), diet_type, fcr, ingredient_type, allocation, pos)))){
+
+          print(cat("rasters exists, skipping!"))
+
+          next()
+        }
         
   watson_raster_template <- terra::rast(ncol=720, nrow=360, vals=c(1:259200))
 
@@ -593,7 +592,11 @@ for(diet_type in diets){
   }
 }
 
+```
 
+Data check 
+
+```{r}
 forage_files <- list.files(here("prep/02_feed/output/plant-dominant/regular/"), pattern = "bycatch_P|catch_P", full.names = TRUE)
 forage_files <- forage_files[grep("forage fish", forage_files)]
 

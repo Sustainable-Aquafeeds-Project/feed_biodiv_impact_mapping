@@ -9,7 +9,7 @@ editor_options:
 
 Using the marine footprint approach outlined in Cashion et al https://onlinelibrary.wiley.com/doi/full/10.1111/faf.12222 based off of the primary production required for catch in a given cell.
 
-We need to calculate this separately for fishmeal and oil as we are interested in the allocation of pressures to ingredients
+We need to calculate this separately for fishmeal and oil.
   
 ```{r, setup}
 
@@ -32,6 +32,7 @@ select <- dplyr::select
 
 
 Equal area projection resources
+
 ```{r}
 
 gall_peters <- "+proj=cea +lon_0=0 +x_0=0 +y_0=0 +lat_ts=45 +ellps=WGS84 +datum=WGS84 +units=m +no_defs"
@@ -61,10 +62,10 @@ cell_area <- terra::as.data.frame(cellSize(rast(res=0.5), unit="km"), xy=TRUE) |
 
 
 Import net primary productivity data
+
 ```{r}
 
-
-#make npp into an xy file
+#make npp into an xyz file
 
 mean_npp <- rast(here("../npp_synthesis/data/npp_2013_2022_mean.tif"))
 median_npp <- rast(here("../npp_synthesis/data/npp_2013_2022_median.tif"))
@@ -284,7 +285,6 @@ write.csv(forage_tls_gf, here("prep/02_feed/data/forage_fish_tls.csv"), row.name
 
 Get trimmings species trophic levels  - needed for calculating the primary productivity required
 
-
 ```{r}
 trim_catch <-  readRDS(file.path(watson_dir, "v5.0/int/all_catch_trimmingsfish.rds"))
 
@@ -362,7 +362,6 @@ sort(unique(trim_tls$TaxonName))
 write.csv(trim_tls, here("prep/02_feed/data/trimmings_fish_tls.csv"), row.names = FALSE)
 
 ```
-
 
 
 Attach NPP, TL, data to forage and trimmings catch data and calculate the primary productivity required for the catch, the proportion of the annual PPR that is and tmultiply this proportion by the size of the cell.  
@@ -563,24 +562,6 @@ for(diet_type in diets){
 }
 
 
-
-test_ben <- rast(here("prep/02_feed/output/plant-dominant/regular/trimmings fish_fish meal, cut offs_mass_benthic_catch_A.tif"))
-test_pel <- rast(here("prep/02_feed/output/plant-dominant/regular/trimmings fish_fish meal, cut offs_mass_pelagic_catch_A.tif"))
-
-global(test_ben, "sum", na.rm = TRUE) + global(test_pel, "sum", na.rm = TRUE)  # 2306.942 km2
-
-## looks good
-
-
-
-test_reg <- rast(here("prep/02_feed/output/fish-dominant/regular/forage fish_fish meal_economic_benthic_catch_A.tif"))
-  
-test_eff <- rast(here("prep/02_feed/output/fish-dominant/efficient/forage fish_fish meal_economic_benthic_catch_A.tif"))
-
-
-test_diff <- (test_reg - test_eff)/test_reg
-
-plot(test_diff) # should all be ~0.1; 10% decrease in FCR
 ```  
 
 Data checking:

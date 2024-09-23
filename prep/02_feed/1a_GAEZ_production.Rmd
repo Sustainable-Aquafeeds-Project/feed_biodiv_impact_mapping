@@ -1,5 +1,5 @@
 ---
-title: "MAPSPAM_tonnes_production.Rmd"
+title: "Calculate total tonnes of production in GAEZ data"
 output: html_document
 editor_options: 
   chunk_output_type: console
