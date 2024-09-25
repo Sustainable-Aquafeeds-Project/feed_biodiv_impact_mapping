@@ -35,6 +35,8 @@ eyres_dir_mol <- file.path(eyres_dir, "reprojected_mol_csv")
 moll_template_xy_land <- readRDS(here("prep/03_prep_spp_habitats/data/spatial/moll_template_land_xy.rds"))
 moll_template_raster <- raster(moll_template)
 
+
+## Get list of species to loop through
 spp_info <- data.frame(aoh_files = basename(list.files(file.path(rdsi_raw_data_dir, "AOH_eyres"), full.names = TRUE, recursive = TRUE))) %>%
   filter(str_detect(aoh_files, ".tif")) %>%
   pull(aoh_files) %>%
@@ -46,16 +48,16 @@ x <- list.files(eyres_dir_mol, full.names = TRUE)
 spp_done <- basename(x) %>% str_remove_all('.csv$')
 
 spp_vec <- setdiff(spp_info, spp_done) %>% unique() %>% sort()
-# spp_vec <- spp_info
 
+# spp_vec <- spp_done
 
 # Specify the directories
-directories <- grep(list.files(eyres_dir, full.names = TRUE), pattern = "reprojected", value = TRUE, invert = TRUE)
+directories <- grep(list.files(eyres_dir, full.names = TRUE), pattern = "reprojected", value = TRUE, invert = TRUE) # invert = TRUE means we want only NON REPROJECTED FILES
 
 # Create a list to store the file names
 file_list <- list()
 
-# Loop through each directory and get the file names
+# Loop through each directory (since there are 4) and get the file names for birds, mammals, reptiles, and amphibians
 for (dir in directories) {
   files <- list.files(path = dir, full.names = TRUE)
   file_list[[dir]] <- files
@@ -65,10 +67,10 @@ for (dir in directories) {
 all_files <- unlist(file_list)
 
 map_terrestrial_to_moll <- function(s) {
-  # s <- spp_vec[20]
+  # s <- spp_vec[20] # test one file if you like 
     i <- which(spp_vec == s)
   
-  # test <- rast(file.path(eyres_dir, "birds/Seasonality.BREEDING-22697109.tif"))
+  # test <- rast(file.path(eyres_dir, "birds/Seasonality.BREEDING-22697109.tif")) # just taking a look 
   
   out_f <- file.path(eyres_dir_mol, paste0(s, ".csv"))
   
@@ -76,16 +78,9 @@ map_terrestrial_to_moll <- function(s) {
     message('Processing map for ', s, '... (', i, ' of ', length(spp_vec), ')')
     
     spp_file <- grep(all_files, pattern = glue("{s}.tif"), value = TRUE)
-  
-    #spp_file <- grep(list.files(eyres_dir, recursive = TRUE, pattern = glue("{s}"), full.names = TRUE), pattern = "reprojected", invert = TRUE, value = TRUE)
-    
-   # test <- rast(spp_file) %>% as.data.frame(., xy = TRUE) %>% rename("vals" = 3) %>% filter(vals > 0)
-    
-  # spp_rast <- rast(spp_file)
-  # spp_rast[spp_rast > 0] <- 1    
 
   spp_csv <- # rast(spp_file) %>% 
-    raster::raster(spp_file) %>%
+    raster::raster(spp_file) %>% # using raster instead of terra here because it was working faster at the time of analysis
    raster::projectRaster(., moll_template_raster, method = "ngb") %>%
    rast() %>%
     # project(., moll_template, method = "near") %>%
@@ -99,7 +94,7 @@ map_terrestrial_to_moll <- function(s) {
   # test <- spp_csv %>%
   # left_join(moll_template_xy) %>%
   # dplyr::select(x, y, presence) %>%
-  # rast(., type = "xyz", crs = moll_template)
+  # rast(., type = "xyz", crs = moll_template) # just some checking to see it worked
   
     if(nrow(spp_csv) == 0){
       
@@ -117,12 +112,12 @@ map_terrestrial_to_moll <- function(s) {
     #   dplyr::select(x, y, presence) %>%
     #   rast(., type = "xyz", crs = moll_template)
       
+      ## switched to using raster package because it was much faster than terra for aggregating this
     rast(spp_file) %>%
         aggregate(fact = 10, fun = "mean", na.rm = TRUE) %>%  
         raster() %>%
         projectRaster(., moll_template, method = "ngb") %>% 
         rast() %>%
-      # project(moll_template, method = "near") %>% 
         as.data.frame(., xy = TRUE) %>%
         rename(presence = 3) %>%
         filter(presence >0) %>%
@@ -134,7 +129,7 @@ map_terrestrial_to_moll <- function(s) {
   
       
     }else{
-      write_csv(spp_csv, out_f)
+      write_csv(spp_csv, out_f) # save the reprojected file
     }
 
   
@@ -142,6 +137,6 @@ map_terrestrial_to_moll <- function(s) {
   }
 }
 
-tmp <- parallel::mclapply(spp_vec, map_terrestrial_to_moll, mc.cores = 12)
+tmp <- parallel::mclapply(spp_vec, map_terrestrial_to_moll, mc.cores = 12) # run this with 12 cores (or however many you can handle)
 
 

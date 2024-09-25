@@ -38,7 +38,7 @@ Note: `00_tidying_data` cannot be run unless the user is a member of the Sustain
 
 ### 'src' folder
 
-Contains three reference scripts `directories.R`, `functions.R`, and `spatial.R`, which hold regularly used directory file paths and functions respectively. These are sourced within individual markdown scripts when needed.
+Contains three reference scripts `directories.R`, `fxns.R`, and `spatial.R`, which hold regularly used directory file paths and functions respectively. These are sourced within individual markdown scripts when needed. `fxns.R` is the most complicated one, and contains helper functions for the calculation of exposure and impact for AOH maps and the disturbance pressures. 
  
  
 ### 'data' folder

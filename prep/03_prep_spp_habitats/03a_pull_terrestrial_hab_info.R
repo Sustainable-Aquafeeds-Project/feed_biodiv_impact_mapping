@@ -1,8 +1,8 @@
 ## Pull terrestrial habitat suitability information from the IUCN
 # Habitat suitability is derived from IUCN habitat classifications: Whether each species can survive and reproduce in agricultural land, defined as unsuitable (0), marginal (0.5), suitable (1).
-# Run as background job if you'd like
+# Run as background job if you'd like (I like doing this so I can work on other things while it is running)
 
-# Method adapted from Williams et al. 2021.
+# Method and code adapted from Williams et al. 2021.
 
 ## Data sources
 # * Williams et al. 2021: https://www.nature.com/articles/s41893-020-00656-5#Sec30
@@ -19,31 +19,17 @@ library(rredlist)
 
 source(here("src/directories.R"))
 
-# 
-# species_list <- readRDS(here("prep/03_prep_spp_habitats/int/terrestrial_species_list.rds")) %>%
-#   pull(binomial) %>%
-#   unique()
-
-data_list <- lapply(list.files(here("prep/03_prep_spp_habitats/int/habitat_suitability_chunks_archive/"), full.names = TRUE), readRDS)
-
-hab_suitability_df_old <- bind_rows(data_list) %>%
-  filter(!is.na(name)) %>% 
-  pull(name) %>%
-  unique()
-
 species_list <- readRDS(here("prep/03_prep_spp_habitats/data/iucn/eyres_iucn_spp.rds")) %>%
   filter(!is.na(scientific_name)) %>%
   pull(scientific_name) %>%
   unique()
-
-species_list <- setdiff(species_list, hab_suitability_df_old)
 
 api_version <- '2022-2'
 
 api_key = read.csv(file.path(rdsi_raw_data_dir, "iucn/api_key/api_token.txt"))
 api_key = colnames(api_key)
 
-
+## We're going to split this into chunks so that it is easier for the IUCN api to process
 num_chunks <- length(species_list) / 100 # Number of chunks
 species_chunks <- split(species_list, rep(1:num_chunks, each = 112, length.out = length(species_list)))
 
@@ -54,7 +40,7 @@ pull_habitats <- function(species_chunk, chunk_number) {
   
   chunk_filename <- sprintf(here("prep/03_prep_spp_habitats/int/habitat_suitability_chunks/full_df_chunk_%s.rds"), chunk_number)
   
-  # Check if the chunk file already exists
+  # Check if the chunk file already exists, and if it does, we'll skip it (comment this out if you want to rerun things)
   if (file.exists(chunk_filename)) {
     message(paste("Skipping chunk", chunk_number, "as the file already exists."))
     habitat_df <- readRDS(chunk_filename)
@@ -120,7 +106,7 @@ stopCluster(cl)
 
 
 
-## Estimate species' tolerance for croplands
+## Now that we've pulled the info from IUCN, we're going to estimate species' tolerance for croplands by rescaling suitable and marginal into numbers.
 
 data_list <- lapply(list.files(here("prep/03_prep_spp_habitats/int/habitat_suitability_chunks/"), full.names = TRUE), readRDS)
 
@@ -186,4 +172,4 @@ old_info <- readRDS(here("prep/03_prep_spp_habitats/int/archive/terrestrial_spp_
 ag_suitability_fin <- rbind(ag_suitability, old_info)
 
   
-write_rds(ag_suitability_fin, here("prep/03_prep_spp_habitats/int/terrestrial_spp_habitat_suitability.rds"))
+write_rds(ag_suitability_fin, here("prep/03_prep_spp_habitats/int/terrestrial_spp_habitat_suitability.rds")) # save final rds file

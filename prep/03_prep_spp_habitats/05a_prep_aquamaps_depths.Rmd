@@ -12,7 +12,7 @@ editor_options:
 In this script we find depth information for all AquaMaps species. 
     
  - Categorize each Aquamaps species into depth zones of reef, pelagic, bentho-pelagic, or benthic. This code was adapted from Casey O'Hara (O'Hara et al. 2023, in prep), and pulls from Fishbase, Sealifebase, and Butt et al. 2022 to obtain the appropriate depth ranges; https://github.com/mapping-marine-spp-vuln/spp_vuln_mapping/tree/master
- - This is necessary for the next script, in which we clip downscaled and re-projected Aqua<aps species suitable habitat maps (>0.6 probability) (from 0.5 to ~10km resolution) to a bathymetric layer, so as to constrain neritic and shallow-water species to areas no deeper than 200 m (adapted from O'Hara et al. 2021). Save each as a csv with cell id and presence/absence column
+ - This is necessary for the next script, in which we clip downscaled and re-projected AquaMaps species suitable habitat maps (>0.6 probability) (from 0.5 to ~10km resolution) to a bathymetric layer, so as to constrain neritic and shallow-water species to areas no deeper than 200 m (adapted from O'Hara et al. 2021). It is also necessary for the script in which we overlap and calculate habitat impact, as some species may not be exposed to certain gear types of catch based on their depth preferences. Basically, we are trying to introduce a 3D component while still using 2D AOH raster maps. Save each as a csv with cell id and presence/absence column
 
 
 ## References
@@ -91,7 +91,7 @@ rm(aquamaps_csv)
 
 ### Find depth information for all aquamaps species
 
-Grab depth information (continuous depth values) that Aquamaps team provided. Then we need to classify each species into "reef associated", "pelagic", "bentho-pelagic", and "benthic", for exposure calculations. These depth classifications are based on depth classifications in Butt et al. 2022 and O'Hara et al. 2023 (in prep).
+Grab depth information (continuous depth values) that AquaMaps team provided. Then we need to classify each species into "reef associated", "pelagic", "bentho-pelagic", and "benthic", for exposure calculations. These depth classifications are based on depth classifications in Butt et al. 2022 and O'Hara et al. 2023 (in review).
 
 
 ```{r}
@@ -198,7 +198,7 @@ Remaining pelagic species will not be benthic or reef-associated.
 
 Some reef spp are also benthic, but reef association seems more likely to be important as a trait, so these will be assigned as reef. 
 
-Because many species from FishBase/vulnerability paper appear to have non-matched names from aquamaps (e.g., unaccepted synonyms), while many aquamaps species in the same genus are unscored, use genus-level (then family, order, class, phylum, and kingdom, in that order) gapfill to assign traits from unmatched species to aquamaps-matched species. Identify genera with more than one scored spp; select those traits that appear in the majority of the genus (e.g., use the mode).
+Because many species from FishBase/Butt vulnerability paper appear to have non-matched names from aquamaps (e.g., unaccepted synonyms), while many aquamaps species in the same genus are unscored, use genus-level (then family, order, class, phylum, and kingdom, in that order) gapfill to assign traits from unmatched species to aquamaps-matched species. Identify genera with more than one scored spp; select those traits that appear in the majority of the genus (e.g., use the mode).
  - Gapfilling is only necessary for ~3% of the species. 
 
 ```{r}

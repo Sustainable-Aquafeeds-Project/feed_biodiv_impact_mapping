@@ -47,6 +47,8 @@ vuln_taxa <- readRDS(file.path(rdsi_dir, "biodiversity_impacts/int/spp_vuln_dept
 
 ```
 
+Read in saved dfs from overlap scripts and combine and save 
+
 ```{r}
 
 aquamaps_spp <- read.csv(file.path(rdsi_raw_data_dir, "aquamaps/GTE10_SPECIESOCCURSUM/speciesoccursum_gte10.csv"))
@@ -90,6 +92,7 @@ saveRDS(impact_vuln, here("prep/03_prep_spp_habitats/output/aoh_marine_impact.rd
 
 ```
 
+Data checking
 
 ```{r}
 ## take al look at some stuff

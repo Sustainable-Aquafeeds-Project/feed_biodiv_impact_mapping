@@ -1,5 +1,5 @@
 ---
-title: ""
+title: "Calculate sensitivity values for marine species"
 name: "Gage Clawson"
 date: "September 25, 2023"
 output: html_document
@@ -9,7 +9,7 @@ editor_options:
 
 ## Summary 
 
-In this script we assign and gapfill vulnerability values for each species and stressor combination. Each species is vulnerable to either bycatch, biomass removal, or both, depending upon the ingredient which is being fished. 
+In this script we assign and gapfill vulnerability values for each species and pressure combination. Each species is vulnerable to either bycatch, biomass removal, or both, depending upon the ingredient which is being fished. 
 
  - Read in vulnerability data from [Butt et al. 2022](https://esajournals.onlinelibrary.wiley.com/doi/10.1002/ecs2.3919) and match to Aquamaps species. 
   - ~57% of the Aquamaps species do not have vulnerability scores. We will need to gapfill these. We will gapfill using the same method that the source data used (by genus, family, order, class, etc.)
@@ -207,7 +207,7 @@ hist(aquamaps_vuln_scores$bycatch_gf) # really concentrated around 0.3/0.4... I 
 hist(aquamaps_vuln_scores$biomass_removal_gf) # much higher.. makes sense 
 ```
 
-Create final info dataset that can be used in the loop in the next script 
+Create final info dataset that can be used in the loop in the next script. Here we rescale the vulnerability values to 0, 0.5, and 1, so as to match the terrestrial rescaling.
 
 ```{r}
 forage_spp <- read.csv(here("data/raw_data/fisheries/forage_fish_list_final.csv")) %>%

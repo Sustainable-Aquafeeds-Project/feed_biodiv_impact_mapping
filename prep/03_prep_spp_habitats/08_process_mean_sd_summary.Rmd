@@ -16,7 +16,7 @@ In this script we summarize the impact rasters created in 03b, 06a and 06b by fi
 
 ## Setup
 
-Load libraries
+Load libraries and directories
 
 ```{r setup, include=FALSE}
 
@@ -90,21 +90,16 @@ for(diet in diet_types){
 
       all_impact_df <- data.frame(cell_id = NA, prop_mean = NA, prop_sd = NA, prop_nspp = NA, prop_ext_risk = NA)
 
-      for(i in 1:14){
+      for(i in 1:14){ # 14 because there are 14 difference indices in the list
               # i = 2
 
 
         i_dfs <- lapply(all_files_list, function(x) x[[i]])
 
-  #        for (j in seq_along(i_dfs)) {
-  #   i_dfs[[j]] <- i_dfs[[j]][, source_file := all_files[j]] # Add a column for source file
-  # }
-
 
  combined_dataframe <- bind_rows(i_dfs) %>%
     filter(!is.na(cell_id)) %>%
   as.data.table() %>%
-  # mutate(taxon = str_before_first(str_after_last(source_file, "/"), "_")) %>%
   group_by(cell_id, species_full) %>%
   summarise(impact_km2 = sum(impact_km2, na.rm = TRUE)) %>% # divide by 100 after this for prop and cap prop at 1
   ungroup() %>%
@@ -118,14 +113,14 @@ for(diet in diet_types){
             prop_ext_risk = mean(ext_risk, na.rm = TRUE)) %>%
   ungroup() %>%
   as.data.frame()
-  #%>%
-   # mutate(file_number = i)
+
 
 
         all_impact_df <- rbind(all_impact_df, combined_dataframe)
 
       }
 
+      ## save rasters
       rast_impact <- all_impact_df %>%
         dplyr::select(cell_id, prop_mean) %>%
         filter(!is.na(cell_id)) %>%
@@ -194,13 +189,14 @@ for(diet in diet_types){
 
 pattern <- glue(".*_{diet}_{fcr}_.*_{allocation}_chunk_.*.qs")
 
-# if(
-# any(file.exists(list.files(file.path(biodiv_dir, "int/marine_aggregation/sub_chunk_dfs/"), pattern = pattern, full.names = TRUE)))
-# ){
-#         
-#         message(glue("skipping processing for {diet} {fcr} {allocation} because they exist"))
-#         next()
-#       }
+## comment this out if you don't want to skip things while rerunning
+if(
+any(file.exists(list.files(file.path(biodiv_dir, "int/marine_aggregation/sub_chunk_dfs/"), pattern = pattern, full.names = TRUE)))
+){
+
+        message(glue("skipping processing for {diet} {fcr} {allocation} because they exist"))
+        next()
+      }
       
       all_files <- list.files(file.path(biodiv_dir, "output/impact_maps_by_spp_ingredient_lists"), pattern = glue(".*_{diet}_{fcr}_.*_{allocation}"), full.names = TRUE)
     
@@ -212,7 +208,7 @@ pattern <- glue(".*_{diet}_{fcr}_.*_{allocation}_chunk_.*.qs")
         # file = 50
                all_files_list <- lapply(all_files[[file]], qread)
 
-        for(i in 1:13){
+        for(i in 1:13){ # 13 because there are 13 parts of the list
          # i = 2
           
           

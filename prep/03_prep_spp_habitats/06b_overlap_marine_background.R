@@ -1,5 +1,5 @@
 ### Takes ~12 hours if doing all scenarios and allocations
-# In this script we overlap [Aquamaps probability of suitable habitat maps](https://www.aquamaps.org/) with our disturbance pressure maps created in the `02_feed` folder, and multiply by their vulnerability value. The goal of this script is to create impact maps, that is, the area of likely suitable habitat (>0.6 probability) for each species that is exposured AND impacted to harvest of forage or trimmings fish that is ultimately processed into FMFO. To do this, we: 
+# In this script we overlap [Aquamaps probability of suitable habitat maps](https://www.aquamaps.org/) with our disturbance pressure maps created in the `02_feed` folder, and multiply by their sensitivity value. The goal of this script is to create impact maps, that is, the area of likely suitable habitat (>0.6 probability) for each species that is exposed AND impacted to harvest of forage and trimmings fish that is ultimately processed into FMFO. To do this, we: 
 #   
 #   - We have created maps of disturbance (km2) of harvest of forage and trimmings fish species that end up as FMFO. They have these categories: 
 #   - Ingredient type; Fish oil or fish meal
@@ -10,7 +10,7 @@
 # 
 # 
 # - Overlap re-projected and clipped Aquamaps species suitable habitat maps with the appropriate disturbance rasters based on depth range. This will provide a km2 estimate of the amount of suitable habitat that is exposed to harvest of forage or trimmings fish used for FMFO. 
-# - multiply by each species vulnerability values to get impact and save
+# - multiply by each species sensitivity values to get impact and save
 
 # * Froese, R. and D. Pauly, Editors. 2000. FishBase 2000: concepts, design and data sources. ICLARM, Los Baños, Laguna, Philippines. 344 p.
 # * Houde, E.D. and C.E. Zastrow. 1993. Ecosystem- and taxon-specific dynamic energetics properties of fish larvae assemblages. Bull. Mar. Sci. 53(2):290-335.
@@ -29,6 +29,7 @@
 # * when referring to a set of values extracted from a FishBase table, cite the author(s) of the original data, e.g., "Houde and Zastrow (1993)", or "Welcomme (1988)". To help us track the use of FishBase in the literature, we would appreciate your also citing Froese and Pauly (2000) in an appropriate part of your text, as the source of the information;
 # * when discussing the features of a FishBase table, cite the section documenting that table, e.g., "Sa-a et al. (2000)."
 
+## Setup 
 
 library(tidyverse)
 library(tidyr)
@@ -58,11 +59,12 @@ aquamaps_dir <- file.path(rdsi_raw_data_dir, "aquamaps")
 biodiv_dir <- file.path(rdsi_dir, "biodiversity_impacts")
 feed_rast_dir <- file.path(biodiv_dir, "int/resampled_ingredient_rasts")
 
+## read in spatial templates 
 gall_peters <- "+proj=cea +lon_0=0 +x_0=0 +y_0=0 +lat_ts=45 +ellps=WGS84 +datum=WGS84 +units=m +no_defs"
 
 moll_ocean_template <- readRDS(file.path(this_dir, "data/spatial/moll_template_ocean_xy.rds"))
 
-## Setup spp map source and vulnerability data 
+## Setup species map sources and sensitivity data 
 spp_fp <- data.frame(filepath = list.files(file.path(aquamaps_dir, "reprojected_mol_csv"), full.names = TRUE)) %>%
   mutate(species = str_remove_all(str_replace_all(str_after_last(filepath, "\\/"), "_", " "), ".csv"))
 
@@ -103,11 +105,8 @@ spp_info_df <- readRDS(file.path(biodiv_dir, "int/spp_vuln_depth_info.rds")) %>%
 # 14 polychaetes     608
 # 15 sponges         455
 
-## will save a total of X rasters from this script: 
-# 3 allocations * 2 diets * 2 ingredients * 2 fish ingredient spp (forage vs trimmings) * 2 efficiencies = 48 scenarios
-# 48 scenarios * 12 spp type * 3 raster types (mean, sd, nspp) = 1728 total or 432 per diet per fcr
 
-## for fish species, need to split in half, and then take species weighted average. My server is memory limited and can't handle all 9k at once...  
+## for fish species, need to split in half and run (see 06c script). My server is memory limited and can't handle all 9k at once...  
 
 allocations <- unique(spp_info_df$allocation)
 diets <- unique(spp_info_df$diet)

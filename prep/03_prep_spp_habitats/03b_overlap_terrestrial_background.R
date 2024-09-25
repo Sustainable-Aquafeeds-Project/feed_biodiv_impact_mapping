@@ -10,11 +10,12 @@
 #   - fcr type; regular and efficient
  
 
-# - Overlap re-projected and AOH species suitable habitat maps with the appropriate disturbance rasters. This will provide a km2 estimate of the amount of suitable habitat that is exposed to harvest of aquafeed ingredients.  
-# - multiply by each species vulnerability values (downloaded in script 3a) to get impact (both extinction risk and prop of habitat impacted) and save
+# - Overlap re-projected and AOH species suitable habitat maps with the appropriate disturbance rasters. This will provide a km2 estimate of the amount of suitable habitat that is EXPOSED to harvest of aquafeed ingredients.  
+# - multiply by each species sensitivity values (downloaded in script 3a) to get IMPACT (km2) and save
 
-# Code partially adapted from O'Hara et al. 2023 in prep 
+# Code adapted from O'Hara et al. 2024 in review
 
+## Data sources
 # * Eyres et al. 2023 (preprint): https://www.researchgate.net/publication/376637364_LIFE_A_metric_for_quantitively_mapping_the_impact_of_land-cover_change_on_global_extinctions
 # * O'Hara et al. 2023 (preprint): https://www.researchgate.net/publication/370573912_Cumulative_human_impacts_on_global_marine_fauna_highlight_risk_to_fragile_functional_diversity_of_marine_ecosystems
 # * Williams et al. 2021: https://www.nature.com/articles/s41893-020-00656-5#
@@ -49,16 +50,19 @@ biodiv_dir <- file.path(rdsi_dir, "biodiversity_impacts")
 feed_rast_dir <- file.path(biodiv_dir, "int/resampled_ingredient_rasts")
 
 
+## Read in raster templates
 gall_peters <- "+proj=cea +lon_0=0 +x_0=0 +y_0=0 +lat_ts=45 +ellps=WGS84 +datum=WGS84 +units=m +no_defs"
 
 moll_land_template <- readRDS(file.path(this_dir, "data/spatial/moll_template_land_xy.rds"))
 
+## get IUCN ids for each species
 iucn_ids_names <- readRDS(here(this_dir, "data/iucn/eyres_iucn_spp.rds"))
 
 ## For loop
 
-## Setup spp map source and vulnerability data 
+## Setup species map source and sensitivity data 
 
+## get list of species 
 spp_fp <- data.frame(filepath = list.files(file.path(terrestrial_dir, "reprojected_mol_csv_fin"), full.names = TRUE)) %>%
   mutate(species_full = str_after_last(filepath, "\\/")) %>%
   mutate(species_id = as.numeric(str_remove_all(species_full, ".csv"))) %>%
@@ -71,10 +75,12 @@ spp_fp <- data.frame(filepath = list.files(file.path(terrestrial_dir, "reproject
     spp_type == "amphibians" ~ "Amphibians"
   ))
 
+## get sensitivity info dataframe
 spp_info_df <- readRDS(file.path(this_dir, "int/terrestrial_spp_habitat_suitability.rds")) %>%
   inner_join(spp_fp, by = c("species" = "species_full", "spp_type")) %>% # change this to left join ? 
   rename(species_full = species)
 
+## how many species are we running through?
 spp_info_df %>% 
   group_by(spp_type) %>%
   summarize(nspp = n_distinct(species_full))
@@ -87,6 +93,7 @@ spp_info_df %>%
 # 3 Reptiles            9279
 # 4 Terrestrial mammal  5501
 
+## get disturbance raster categories which we will run through
 crop_ingredient_cats <- read.csv(here("prep/02_feed/output/proportion_feed_per_country_system_diet.csv")) %>%
   dplyr::select(diet, fcr_type, source_ingredient, GAEZ_category) %>%
   distinct() %>%
@@ -95,7 +102,7 @@ crop_ingredient_cats <- read.csv(here("prep/02_feed/output/proportion_feed_per_c
   mutate(diet_fcr_crop_ingredient = paste(diet_fcr_crop_ingredient, source_ingredient, sep = "_")) ## filter here if you only want to do regular or efficient scenario
 
 allocations <- c("economic", "mass", "ge")
-spp_types <- unique(spp_info_df$spp_type)
+spp_types <- unique(spp_info_df$spp_type) # we'll loop through based on larger taxanomic groupings
 diet_fcr_crop_ingredients <- unique(crop_ingredient_cats$diet_fcr_crop_ingredient)
 
 for(tx_type in spp_types){
@@ -109,14 +116,15 @@ for(tx_type in spp_types){
     dplyr::select(species_full, filepath) %>%
     distinct()
   
-  ### read in all harvest stressor maps for this taxon -
+  ### read in all harvest AOH maps for this taxon 
   message(glue('Loading aoh maps for taxon {tx_type}'))
-  tx_maps <- collect_spp_rangemaps_terrestrial(tx_maps_df$species_full, tx_maps_df$filepath)
+  tx_maps <- collect_spp_rangemaps_terrestrial(tx_maps_df$species_full, tx_maps_df$filepath) # this function is defined in src/fxns.R
   
   
   
-  message('Taxon ', tx_type, ' harvest stressor dataframe: ', nrow(tx_maps[["parent"]]),
+  message('Taxon ', tx_type, ' area of habitat maps: ', nrow(tx_maps[["parent"]]),
           ' cell observations for ', nrow(tx_maps_df), ' species...')
+  
 for(allocation_type in allocations){
     for(diet_fcr_crop_ingredient_type in diet_fcr_crop_ingredients){
 
@@ -130,7 +138,7 @@ for(allocation_type in allocations){
 
           
 
-          ## Read in harvest stressor maps, and create a dataframe of the results.  
+          ## Read in harvest pressure maps, and create a dataframe of the results.  
           harvest_rast <- rast(sprintf(file.path(feed_rast_dir, "%s/%s/%s_%s_%s_A.tif"), diet_type, fcr, crop_type, ingredient_type, allocation_type))
           
           
@@ -143,24 +151,23 @@ for(allocation_type in allocations){
           
           
           ## Calculate mean impacts per species grouping 
-          # Loop over each taxon; pull all rangemaps for that taxon. For each species in the taxon, multiply harvest stressor map by the spp vulnerability to identify impact map for that species. Summarize across the entire taxon to mean, sd, and nspp.
+          # Loop over each taxon; pull all AOH maps for that taxon. For each species in the taxon, multiply harvest pressure map by the spp vulnerability to identify impact map for that species. Summarize across the entire taxon to mean, sd, and nspp.
 
           outf_mean_df <- glue(file.path(this_dir, "int/aoh_impacts_terrestrial/{tx_type}_{diet_type}_{fcr}_{crop_type}_{ingredient_type}_{allocation_type}.rds"))
 
-          
-          # if(file.exists(glue(file.path(biodiv_dir, "output/impact_maps_by_spp_ingredient_lists/{tx_type}_{diet_type}_{fcr}_{crop_type}_{ingredient_type}_{allocation_type}.rds")))) {
-          #   message('Rasters exist for taxon ', tx_type, crop_type, ingredient_type, diet_type, allocation_type, fcr, ' for harvest stressor... skipping!')
-          #   next()
-          # }
+          ## comment this out if you want to rerun things
+          if(file.exists(glue(file.path(biodiv_dir, "output/impact_maps_by_spp_ingredient_lists/{tx_type}_{diet_type}_{fcr}_{crop_type}_{ingredient_type}_{allocation_type}.rds")))) {
+            message('Data exist for taxon ', tx_type, crop_type, ingredient_type, diet_type, allocation_type, fcr, ' for harvest stressor... skipping!')
+            next()
+          }
 
           
-          
-          message('Processing mean/sd vulnerability by species in taxon ', tx_type, 
-                  ' to harvest stressor for ', allocation_type, diet_type, fcr, crop_type, ingredient_type)
+          message('Processing impact by species in taxon ', tx_type, 
+                  ' to harvest pressure for ', allocation_type, diet_type, fcr, crop_type, ingredient_type)
           
           ### because failures might occur with summarizing a huge dataset,
           ### let's break this into chunks by cell_id - there are 6.6e+06 cells total
-          ### but no ocean cells past 6.5e6
+          ### but there are no ocean cells past 6.5e6, so we can cut out those cells
           
           chunk_size <- 500000
           n_chunks <- ceiling(6.6e6 / chunk_size)
@@ -173,32 +180,32 @@ for(allocation_type in allocations){
                                               ### n <- 6
                                               cell_id_min <- as.integer((n - 1) * chunk_size + 1)
                                               cell_id_max <- as.integer(n * chunk_size)
-                                              message('Summarizing harvest stressor on taxon ', tx_type, 
+                                              message('Summarizing harvest pressure to impact on taxon ', tx_type, 
                                                       ': cells ', cell_id_min, ' - ', cell_id_max, '...')
                                               
                                               chunk_sum_spp <- tx_maps %>%
-                                                filter(between(cell_id, cell_id_min, cell_id_max)) %>%
-                                                left_join(tx_vuln_df, by = c('species_full')) %>%
+                                                filter(between(cell_id, cell_id_min, cell_id_max)) %>% # filter for chunked cells
+                                                left_join(tx_vuln_df, by = c('species_full')) %>% # join to sensitivity df
                                                 left_join(harvest_cells_df, 
-                                                          by = c('cell_id')) %>%
+                                                          by = c('cell_id')) %>% # join to pressure cells
                                                 as.data.table() %>%
-                                                .[ , harvest := ifelse(is.na(harvest), 0, harvest)] %>%
-                                                .[ , hab_area := 100] %>%
-                                                .[ , impact_km2  := (1-cropland_suitability)*harvest]
+                                                .[ , harvest := ifelse(is.na(harvest), 0, harvest)] %>% # if no pressure present then its 0 (obvi)
+                                                .[ , hab_area := 100] %>% # the cell size is approx 100km2
+                                                .[ , impact_km2  := (1-cropland_suitability)*harvest] # calculate impact (1-suitability) = sensitivity
                                             
                                                 chunk_sum_spp_hab <- chunk_sum_spp %>%
                                                   .[, .(species_full, cell_id, hab_area)] %>%
                                                 .[, .SD[!duplicated(.SD, by = c('species_full', 'cell_id', 'hab_area'))]] %>%
                                                   .[ , .(hab_area = sum(hab_area)),
-                                                     by = c('species_full')]
+                                                     by = c('species_full')] # get a dataframe that has habitat area summarised for each spp 
                                                 
                                                 chunk_sum_spp_global <- chunk_sum_spp %>%
                                                   .[ , .(impact_total = sum(impact_km2)),
-                                                     by = c('species_full')] %>%
-                                                  merge(., chunk_sum_spp_hab, by = "species_full", all = TRUE)
+                                                     by = c('species_full')] %>% 
+                                                  merge(., chunk_sum_spp_hab, by = "species_full", all = TRUE) # save df that have global spp level impacts summarised 
                                                 
                                                 chunk_sum_spp <- chunk_sum_spp %>%
-                                                    .[impact_km2>0]
+                                                    .[impact_km2>0] # this is impact for each cell for each species
                                                 
                                              return(list(chunk_sum_spp = chunk_sum_spp, chunk_sum_spp_global = chunk_sum_spp_global))
                                             }) 
@@ -222,7 +229,7 @@ for(allocation_type in allocations){
             mutate(diet = str_before_first(diet_fcr_crop_ingredient, "\\/")) %>%
             mutate(fcr_type = str_before_first(str_after_first(diet_fcr_crop_ingredient, "\\/"), "\\/")) %>%
             mutate(crop_ingredient = str_after_nth(diet_fcr_crop_ingredient, "\\/", 2)) %>%
-            ungroup()
+            ungroup() # save a global df for each spp and crop impact
           
           diet_type = unique(global_df$diet)
           fcr <- unique(global_df$fcr_type)
@@ -239,6 +246,7 @@ for(allocation_type in allocations){
             }
           })
           
+          # we are saving these datasets as .qs files are they are great at compacting data... some of these are VERY LARGE datasets
           qsave(spp_list, glue(file.path(biodiv_dir, "output/impact_maps_by_spp_ingredient_lists/{tx_type}_{diet_type}_{fcr}_{crop_ingredient_type}_{allocation_type}.qs")))
 
           }

@@ -31,7 +31,7 @@ spp_info <- data.frame(aoh_files = basename(list.files(file.path(rdsi_raw_data_d
   pull(aoh_files) %>%
   str_remove_all('.tif$')
   
-
+# get list of species from reprojected maps 
 x <- list.files(eyres_dir_mol, full.names = TRUE)
 
 spp_done <- basename(x) %>% str_remove_all('.csv$') 
@@ -41,6 +41,8 @@ spp_ids <- str_after_last(spp_done, "-") %>%
 
 
 all_files <- list.files(eyres_dir_mol, full.names = TRUE)
+
+## loop through species, if there are duplicates, only save distinct cells, otherwise just resave the csv file. 
 
 map_terrestrial_to_moll <- function(s) {
  # s <- 20
