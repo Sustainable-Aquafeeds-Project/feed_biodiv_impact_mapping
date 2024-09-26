@@ -5,6 +5,13 @@ editor_options:
   chunk_output_type: console
 ---
 
+## Summary
+
+The code here produces Figure 1:  
+> (A) Map of mean proportion of habitat area impacted (expressed as %) for sensitive species. Impacts are split by quantile group and aquafeed formulation. (B) Map of differences in mean impact (%) between the feed formulation scenarios. The magnitude of the difference is split into quantile groups, where darker shades indicate larger differences.
+
+Additionally, we save some supplementary information plots of the values in histograms and maps of the actual impact values (rather than split by quantile groups).
+
 ## Setup
 
 Load libraries

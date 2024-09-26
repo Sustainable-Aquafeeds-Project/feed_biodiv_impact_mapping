@@ -4,6 +4,11 @@ output: html_document
 editor_options: 
   chunk_output_type: console
 ---
+##  Summary
+
+In this script we create supplementary figure 6. In this figure, we split impacts by taxon and species IUCN risk category:
+
+> Number of species within each impact quantile and taxon, split by current IUCN status and feed formulation scenario. Percentage wheels show the percentage of species from each assessed taxonomic group that are impacted, and thus, shown in the plot. It is well established that the IUCN has major data deficiencies, particularly in marine species 1, and we find that approximately 33% of the species we assessed lack adequate evaluation (data deficient or not evaluated), the majority of which (~83%) are marine (Figure 4). Least concern (LC) species predominate in both dietary scenarios and across all impact categories for all taxa except molluscs, arthropods, and other marine species, which are majority data deficient or not evaluated. The amphibian taxon has a high percentage of species falling into categories that are of a high threat level (i.e., above that of Least Concern). For example, under the plant-dominant diet, 43% of amphibian species represented in the 75-94th impact quantile are at-risk of extinction. However, most often critically endangered and endangered species are in the 25-49th impact category for both fish- and plant-dominant dietary scenarios. Evaluating these impacts against IUCN categories can guide conservation efforts by identifying at-risk taxa which could benefit most from adjusting production areas or raw material types used in feeds. 
 
 ## Setup
 

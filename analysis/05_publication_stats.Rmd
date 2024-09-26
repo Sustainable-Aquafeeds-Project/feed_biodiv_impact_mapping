@@ -5,6 +5,10 @@ editor_options:
   chunk_output_type: console
 ---
 
+## Summary
+This script contains code and data to fill out the various statistics requested for the main manuscript. Above each chunk is either an excerpt from the paper, or a specific request for a statistic.
+
+
 ## Setup
 
 Load libraries

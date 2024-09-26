@@ -5,6 +5,13 @@ editor_options:
   chunk_output_type: console
 ---
 
+## Summary
+
+Here we save supplementary maps. We save mean, standard deviation, number of species impacted, coefficient of variation, and proportion of species impacted maps for:
+ - across all species and materials
+ - by taxon across materials
+ - by raw material across taxon
+
 ## Setup
 
 Load libraries

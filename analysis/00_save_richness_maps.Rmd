@@ -5,6 +5,10 @@ editor_options:
   chunk_output_type: console
 ---
 
+## Summary
+
+Here we save species richness maps aggregated into each of the taxon groupings we use (i.e., terrestrial mammals, reptiles, birds, echinoderms, marine mammals, etc.), and later we use these in `01_save_SI_maps.Rmd` to calculate and save some exploratory maps. 
+
 ## Setup
 
 Load libraries

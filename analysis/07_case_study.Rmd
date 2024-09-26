@@ -5,6 +5,14 @@ editor_options:
   chunk_output_type: console
 ---
 
+## Summary
+
+This script has code which produces our example case study figure, Figure 4: 
+
+> Figure 4. Impact hotspot map of central Chile, under the plant-dominant feed scenario. (A) Cells with average impacts greater than or equal to the 95th quantile. (B) The raw material which contributes most to the impact in each hotspot cell. (C) The proportion of impacted species in each cell which is at-risk of extinction (i.e., the IUCN Red List category is worse than “Least Concern”). (D) Reference map to show location, using the Open Street Map (https://www.openstreetmap.org/).
+
+For reference, I had to combine each of the panels in an image editor (I used inkspace), because I could not get it to look good in R. 
+
 ## Setup
 
 ```{r setup, include=FALSE}
@@ -530,42 +538,6 @@ ggsave(here("analysis/MS_plots/fig5_hotspot_quantile.png"), dpi = 300, bg = "whi
 
 ## it would be nice to see the proportion of species impacted in the worst category out of the total species in that cell: so number of impacted species in the worst category in the cell / total number of species assessed - so in this case we don't care about the category of the non-impacted species, right? Lets try that out..
 
-
-# iucn_plot_df <- summary_iucn %>%
-#   mutate(iucn_rank = case_when(category %in% c("NE") ~ 0,
-#                                category == "DD" ~ 1, 
-#                                category == "LC" ~ 2,
-#                                category == "NT" ~ 3,
-#                                category == "VU" ~ 4,
-#                                category == 'EN' ~ 5,
-#                                category == "CR" ~ 6)) %>%
-#   left_join(all_richness, by = "cell_id") %>%
-#   rename(sum_spp_assessed = sum_spp) %>%
-#   group_by(x, y, cell_id, category) %>%
-#   mutate(nspp_cats = n_distinct(species)) %>%
-#   ungroup() %>%
-#   group_by(x, y, cell_id) %>%
-#   mutate(total_spp_impacted = n_distinct(species),
-#          max_iucn_rank = max(iucn_rank, na.rm = TRUE)) %>%
-#   ungroup() %>%
-#   mutate(prop_spp_worst_iucn = nspp_cats/total_spp_impacted,
-#              prop_spp_worst_iucn_assessed = nspp_cats/sum_spp_assessed) %>%
-#   group_by(x, y, cell_id) %>%
-#   filter(iucn_rank == max_iucn_rank) %>%
-#   summarise(max_iucn_rank = max(iucn_rank, na.rm = TRUE), 
-#             prop_spp_worst_iucn_impacted = mean(prop_spp_worst_iucn, na.rm = TRUE),
-#             prop_spp_worst_iucn_assessed = mean(prop_spp_worst_iucn_assessed, na.rm = TRUE)) %>% 
-#   ungroup() %>%
-#   mutate(max_iucn_cat = case_when(max_iucn_rank == 0 ~ "NE",
-#                                max_iucn_rank == 1 ~ "DD", 
-#                                max_iucn_rank == 2 ~ "LC",
-#                                max_iucn_rank == 3 ~ "NT",
-#                                max_iucn_rank == 4 ~ "VU",
-#                                max_iucn_rank == 5 ~ "EN",
-#                                max_iucn_rank == 6 ~ "CR")) 
-# 
-# iucn_plot_df$max_iucn_cat <- factor(iucn_plot_df$max_iucn_cat, levels = c("NE", "DD", "LC", "NT", "VU", "EN", "CR"))
-
 iucn_plot_df <- summary_iucn %>%
   mutate(iucn_rank = case_when(category %in% c("NE") ~ 0,
                                category == "DD" ~ 1, 
@@ -603,23 +575,6 @@ iucn_plot_df <- summary_iucn %>%
 ## this shows the worst IUCN rank of the IMPACTED species, with the shading showing the proportion of species which are impacted in that worst category out of the total species impacted
 
 ## so for example, one of the cells is CR with a value of 0.14. This means that 14% of the species in the cell are impacted and CR, while the remainder are not impacted
-
-# ggplot() +
-#   geom_tile(data = iucn_plot_df, aes(x = x, y = y, fill = max_iucn_cat, alpha = prop_spp_worst_iucn_impacted)) + 
-#   geom_sf(data = country_sf, fill = NA, colour = "grey69")  +
-#   theme_minimal() +
-#       theme(legend.position = "left", ## put legend on bottom
-#         axis.title.x = element_blank(), 
-#         axis.title.y = element_blank(),
-#         legend.key = element_rect(fill = NA),
-#         axis.text.x = element_text(angle = 60, hjust = 1),
-#         text=element_text(family="Arial"),
-# panel.border = element_rect(colour = "grey69", fill=NA, size=3, linetype = "longdash")) +
-#     scale_fill_manual(values = iucn_pal) + 
-#     labs(fill = "Most severe \nIUCN category", 
-#          alpha = "Proportion of \nimpacted \nspecies in the \nIUCN category",
-#          x = "", y = "", 
-#          tag = bquote(bold("C")))
 
 ggplot() +
      #annotation_map_tile(type = "cartolight", zoom = 8) +
@@ -676,29 +631,6 @@ map_plot <- ggplot() +
       plot.margin = margin(t = 0, r = 0, b = 70, l = 0)  # Adjust margins to align with the map
    )
 
-
-# scale_arrow_plot <- ggplot() +
-#      geom_sf(data = country_sf, fill = NA, colour = NA) +
-#    theme_void() +
-#    ggspatial::annotation_north_arrow(
-#       location = "br",
-#       which_north = "false",
-#       style = ggspatial::north_arrow_nautical(
-#          fill = c("grey40", "white"),
-#          line_col = "grey20",
-#          text_family = "sans"
-#       )
-#    )  +
-#   ggspatial::annotation_scale(
-#       location = "bl",
-#       bar_cols = c("grey60", "white"),
-#       text_family = "sans",
-#       width_hint = 0.5,  # Adjust the width of the scale bar
-#       pad_y = unit("0.7", "cm")
-#    ) 
-# 
-# 
-# ggsave(here("analysis/MS_plots/fig5_scale.png"), plot = scale_arrow_plot, dpi = 300, bg = "white", height = 16, width = 16, units = "cm")
 
 ggsave(here("analysis/MS_plots/fig5_base_map.png"), plot = map_plot, dpi = 300, bg = "white", height = 16, width = 16, units = "cm")
 
@@ -785,6 +717,7 @@ test <- iucn_plot_df %>%
 
 ```
 
+Do the same thing, but for Norway, and save it as a supplementary plot
 
 ```{r}
 # filter for NOR

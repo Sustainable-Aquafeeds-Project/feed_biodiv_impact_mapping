@@ -5,6 +5,12 @@ editor_options:
   chunk_output_type: console
 ---
 
+## Summary
+
+Here we map how well our maps agree across allocation approaches. 
+
+We split impacts into high (>95th quantile) or low (<25th quantile), and see if each allocation approach (economic, ge, mass) agrees in those categories. So for example, we count how many of the allocation approaches agree in each cell. We also calculate cells in which there is disagreement (i.e., where one approach reports high impact cells but another reports low impact cells).
+
 ## Setup
 
 Load libraries
@@ -118,10 +124,10 @@ ggsave(filename = glue(here("analysis/uncertainty/sd_explore/mean_sd_scaling_{al
 
 
 Lets map how each scenario agrees (or not) with one another on high vs low impact areas:
-  	  - most impacted cells (>90 quantile?) in 1, 2, 3, or 4 scenarios (different colors); least impacted cells (<25th quantile) in 1, 2, 3, or 4 scenarios (different colors); this will tell us the places that for sure have high or low impacts 
+  	  - most impacted cells (>95 quantile?) in 1, 2, 3 scenarios (different colors); least impacted cells (<25th quantile) in 1, 2, 3 scenarios (different colors); this will tell us the places that for sure have high or low impacts 
   	  - Fig 1 from [Stock et al.](https://conbio.onlinelibrary.wiley.com/doi/full/10.1111/cobi.13141?saml_referrer)
-  	  - Maybe try with mean impacts for each allocation, diet, and fcr? So will be reading in 12 rasters (3 allocations X 2 diets X 2 FCRs)
-
+      - do this across allocation approaches 
+      
 ```{r}
 
 # read in each scenario, filter for >95th quantile, set all cells to 1; filter for <25th quantile, set all cells to 1. Stack all and count what cells match up 

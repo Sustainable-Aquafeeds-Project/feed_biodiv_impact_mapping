@@ -5,6 +5,27 @@ editor_options:
   chunk_output_type: console
 ---
 
+## Summary
+
+This code produces figures 2 and 3, as well as some supplementary plots:
+
+Figure 2: 
+> Figure 2. Distribution of proportion of global habitat area impacted for species. Each point represents an individual species. Only impacted species are shown in the plot (i.e., species are exposed to and vulnerable to harvest pressure). To see distributions including species with zero impact, refer to Supplementary Fig. 3. Light blue points indicate mean across all species in marine taxon and dark green points indicate mean across species in terrestrial taxon. Orange points indicate mean across all species within the taxon and scenario and orange lines indicate the median. Boxes represent the interquartile range (IQR, quartile Q1 to Q3); whiskers indicate observations 1.5x IQR below (above) Q1 (Q3) the box. The panel on the right shows points >95th percentile, and total number of assessed species per taxon. 
+
+SI Figure 3:
+> Supplementary Figure 3. Distribution of the proportion of global habitat area impacted for each assessed species. Each point represents an individual species within the taxon. Orange points indicate mean across all species in taxon and orange lines indicate median. Boxes represent the interquartile range (IQR, quartile Q1 to Q3); whiskers indicate observations 1.5x IQR below (above) Q1 (Q3) the box. Panel on the right shows points >95th quantile, and total number of observations per taxon. 
+
+Figure 3: 
+> Proportion of each taxon’s global habitat area which is impacted by raw material for each aquafeed scenario. To see proportions including species with zero impact, refer to Supplementary Fig. 4. 
+
+SI Figure 4:
+> Supplementary Fig 4. Proportion of each taxon’s global habitat area impacted of all assessed species by raw material for each aquafeed scenario. 
+
+
+SI Figure 2: 
+> Supplementary Figure 2. Top 25 average proportion of habitat area impacted in cells within country and EEZ boundaries, by raw materials, ranked by country (iso3c code). 
+
+
 ## Setup
 
 Load libraries
@@ -163,6 +184,8 @@ test2 <- spp_total_hab %>%
 ```
 
 **Figure 2: Mean proportion impacted**
+
+ > Figure 2. Distribution of proportion of global habitat area impacted for species. Each point represents an individual species. Only impacted species are shown in the plot (i.e., species are exposed to and vulnerable to harvest pressure). To see distributions including species with zero impact, refer to Supplementary Fig. 3. Light blue points indicate mean across all species in marine taxon and dark green points indicate mean across species in terrestrial taxon. Orange points indicate mean across all species within the taxon and scenario and orange lines indicate the median. Boxes represent the interquartile range (IQR, quartile Q1 to Q3); whiskers indicate observations 1.5x IQR below (above) Q1 (Q3) the box. The panel on the right shows points >95th percentile, and total number of assessed species per taxon. 
 
  - Look at ranges of values
  - Split into two plots, like in global food paper; 1 is <95th quantile, 1 is >95th quantile 
@@ -451,6 +474,10 @@ ggsave(here(this_dir, "SI_plots/SIfig_economic_boxplot_prop.png"), width = 16, h
 ```
 
 **Figure 3: Proportion of taxa global habitat area impacted**
+> Figure 3. Proportion of each taxon’s global habitat area which is impacted by raw material for each aquafeed scenario. To see proportions including species with zero impact, refer to Supplementary Fig. 4. 
+
+SI Figure 4:
+> Supplementary Fig 4. Proportion of each taxon’s global habitat area impacted of all assessed species by raw material for each aquafeed scenario. 
 
 ```{r}
 
@@ -567,55 +594,13 @@ ggsave(here(this_dir, "SI_plots/SI_fig_barchart_by_raw_mat.png"), width = 178.9,
 
 ```
 
-**Plot showing diet percentages**
-
-```{r}
-diet_comps <- read.csv(here("prep/02_feed/data/aquaculture_diet_composition.csv")) %>%
-  distinct(raw_name, prop_diet, diet) %>%
-  filter(prop_diet > 0)
-
-# check sums 
-diet_comps %>% filter(diet == "fish-dominant") %>% pull(prop_diet) %>% sum()
-diet_comps %>% filter(diet == "plant-dominant") %>% pull(prop_diet) %>% sum()
-
-
-ingredient_levels <- c( "Fish meal, forage fish",  "Fish oil, forage fish", "Fish meal, trimmings", "Fish oil, trimmings", "Soybean meal", "Corn gluten meal" , "Faba beans" , "Wheat gluten" ,"Wheat" , "Soy protein concentrate",  "Guar meal",  "Pea protein concentrate", "Sunflower meal", "Canola oil", "Linseed oil", "Soy oil", "Pea flour", "Coconut oil", "Micro ingredients")
-
-
-both_diets <- diet_comps %>% 
-  mutate(raw_name = str_replace_all(raw_name, "cut offs", "trimmings")) %>%
-      mutate(hjust = if_else(condition = diet == "fish-dominant", true = 1, false = 0)) |> 
-    mutate(label_x_pos = if_else(diet =="fish-dominant", true =0.5, false = 2.5)) |> 
-  mutate(diet = if_else(condition = diet == "fish-dominant", true = "Fish-\ndominant", false = "Plant-\ndominant")) %>% 
-   mutate(diet = factor(diet, levels = rev(c("Plant-\ndominant", "Fish-\ndominant")))) %>%
-  filter(raw_name != "other") %>%
-  mutate(ingredients = str_to_sentence(raw_name)) %>% 
-  mutate(ingredients = factor(ingredients, levels = rev(ingredient_levels))) 
-
-
-ggplot(data = both_diets,
-       aes(x = diet , y = prop_diet, fill = ingredients))+
-  geom_col()+
-  scale_fill_manual(values =  c("darkgoldenrod4", rev(colorRampPalette(brewer.pal(n=9, name = "Greens"))(14)),  brewer.pal(n=5, name = "Blues")[c(2:5)]))+
-  theme_pubr()+
-  theme(legend.title = element_blank(),
-        legend.text = element_text(size=7),
-        text = element_text(size=8),
-        legend.position = "right",
-        #legend.box.spacing = unit(-0.1, "cm"),
-        panel.grid = element_blank(),
-        legend.key.size = unit(0.25, "cm")
-        )+
-  labs(x = "Feed scenario", y = "Proportion")+
-  guides(fill = guide_legend(byrow=TRUE, reverse = FALSE, ncol = 1))
-
-ggsave(filename = here(this_dir, "SI_plots/feed_composition.jpg"), dpi = 600, width = 10, height = 9, units = "cm")
-
-
-```
 
 **Look at per country land/eez impacts**
  - grab by raw material rasters 
+ 
+ 
+SI Figure 2: 
+> Supplementary Figure 2. Top 25 average proportion of habitat area impacted in cells within country and EEZ boundaries, by raw materials, ranked by country (iso3c code). 
 
 ```{r}
 allocations <- c("economic")
@@ -836,24 +821,50 @@ ggsave(here(this_dir, "SI_plots/average_raw_mat_impact.png"), bg = "white", widt
 
 ```
 
-
+**Plot showing diet percentages**
+ - We didn't end up using this. 
+ 
 ```{r}
-            files <- c(list.files(file.path(glue(impact_maps_dir, "/impact_maps_across_taxon_ingredient/{diet_type}/{fcr_type}")), pattern = glue("{allocation_type}_mean_prop.tif"), full.names = TRUE))
-            
-        
-        map_df <- rast(files) %>%
-          as.data.frame(., xy = TRUE) %>%
-          left_join(land_eez_rgns) %>%
-          group_by(rgn_id) %>%
-          summarise(
-                    mean_prop = mean(sum, na.rm = TRUE),
-                    sum_prop = sum(sum, na.rm = TRUE)) %>%
-          mutate(allocation = allocation_type, 
-                 diet = diet_type, 
-                 fcr = fcr_type) %>%
-          ungroup()
-        
-        
-        # qsave(map_df, file.path(glue(impact_maps_dir, "/csvs/by_material_country_summary/mean_impacts_{allocation_type}_{diet_type}_{fcr_type}_{raw_mat}.qs")))
-```
+diet_comps <- read.csv(here("prep/02_feed/data/aquaculture_diet_composition.csv")) %>%
+  distinct(raw_name, prop_diet, diet) %>%
+  filter(prop_diet > 0)
 
+# check sums 
+diet_comps %>% filter(diet == "fish-dominant") %>% pull(prop_diet) %>% sum()
+diet_comps %>% filter(diet == "plant-dominant") %>% pull(prop_diet) %>% sum()
+
+
+ingredient_levels <- c( "Fish meal, forage fish",  "Fish oil, forage fish", "Fish meal, trimmings", "Fish oil, trimmings", "Soybean meal", "Corn gluten meal" , "Faba beans" , "Wheat gluten" ,"Wheat" , "Soy protein concentrate",  "Guar meal",  "Pea protein concentrate", "Sunflower meal", "Canola oil", "Linseed oil", "Soy oil", "Pea flour", "Coconut oil", "Micro ingredients")
+
+
+both_diets <- diet_comps %>% 
+  mutate(raw_name = str_replace_all(raw_name, "cut offs", "trimmings")) %>%
+      mutate(hjust = if_else(condition = diet == "fish-dominant", true = 1, false = 0)) |> 
+    mutate(label_x_pos = if_else(diet =="fish-dominant", true =0.5, false = 2.5)) |> 
+  mutate(diet = if_else(condition = diet == "fish-dominant", true = "Fish-\ndominant", false = "Plant-\ndominant")) %>% 
+   mutate(diet = factor(diet, levels = rev(c("Plant-\ndominant", "Fish-\ndominant")))) %>%
+  filter(raw_name != "other") %>%
+  mutate(ingredients = str_to_sentence(raw_name)) %>% 
+  mutate(ingredients = factor(ingredients, levels = rev(ingredient_levels))) 
+
+
+ggplot(data = both_diets,
+       aes(x = diet , y = prop_diet, fill = ingredients))+
+  geom_col()+
+  scale_fill_manual(values =  c("darkgoldenrod4", rev(colorRampPalette(brewer.pal(n=9, name = "Greens"))(14)),  brewer.pal(n=5, name = "Blues")[c(2:5)]))+
+  theme_pubr()+
+  theme(legend.title = element_blank(),
+        legend.text = element_text(size=7),
+        text = element_text(size=8),
+        legend.position = "right",
+        #legend.box.spacing = unit(-0.1, "cm"),
+        panel.grid = element_blank(),
+        legend.key.size = unit(0.25, "cm")
+        )+
+  labs(x = "Feed scenario", y = "Proportion")+
+  guides(fill = guide_legend(byrow=TRUE, reverse = FALSE, ncol = 1))
+
+ggsave(filename = here(this_dir, "SI_plots/feed_composition.jpg"), dpi = 600, width = 10, height = 9, units = "cm")
+
+
+```
