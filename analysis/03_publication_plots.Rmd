@@ -436,7 +436,7 @@ plot2 <- ggplot(summary_df_spp %>% filter(prop_impact > quant_95), aes(x = prop_
   geom_vline(xintercept = quant_95, color = "black") +
   theme_ohara() +
       labs(x = "", y = "") +
-scale_x_continuous(expand = c(0,0), limits = c(quant_95, 0.012), breaks = c(quant_95, seq(0.003, 0.012, by = 0.003)), labels = c("0.000042", "0.003", "0.006", "0.009", "0.012")) +
+  scale_x_continuous(expand = c(0,0), limits = c(quant_95, 0.018), breaks = c(quant_95, seq(0.003, 0.018, by = 0.006)), labels = c("0.000055", "0.003", "0.009", "0.015")) +
  # scale_x_continuous(expand = c(0,0), limits = c(quant_95, 0.012)) +
   scale_color_manual(values = diet_cols, breaks = names(diet_cols), guide = guide_legend(reverse = FALSE)) +
   theme(panel.background = element_blank(),
