@@ -34,10 +34,16 @@ Trade proportion data:
 
 trade_data <- read_csv(here("prep/02_feed/data/FAO_GAEZcrop_trade_data.csv")) 
 
+
+nor_trade <- trade_data %>% 
+  filter(iso3c_consuming == "NOR" | iso3c_producing == "NOR") %>%
+  filter(GAEZ_category %in% c("Rapeseed", "Soybean"))
+
+
 ```
 
 
-Total consumption by animals per country in MAPSPAM crops
+Total demand by animals per country in MAPSPAM crops
 
 ```{r}
 

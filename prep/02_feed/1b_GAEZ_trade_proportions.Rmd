@@ -73,14 +73,21 @@ summary(feed_products)
 
 ```
 
+Here we use the food balance sheets to determine the local production vs. imported production of GAEZ crop categories (i.e., soybean, wheat, pulses, etc.)
 
 ```{r}
+
+item_codes <- read.csv(file.path(rdsi_raw_data_dir, "fao/FAO_FoodBalanceSheets/d2023/FoodBalanceSheets_E_ItemCodes.csv")) %>%
+  clean_names() %>%
+  dplyr::select(item_code, item)
 
 fbs <- read.csv(file.path(rdsi_raw_data_dir, "fao/FAO_FoodBalanceSheets/d2023/FoodBalanceSheets_E_All_Data_(Normalized).csv"), fileEncoding = "ISO-8859-1") %>%
   filter(Year == 2020) %>% # have to use 2020 here because fbs doesn't have 2021 yet... 
   clean_names() %>%
   dplyr::select(consuming_area_code = area_code, consuming_country = area, element, FAO_Item_Code_NFB = item_code, item, value) %>%
-  filter(element %in% c("Domestic supply quantity", "Export Quantity", "Feed", "Import Quantity", "Production", "Stock Variation")) # filter for relevant element 
+  filter(element %in% c("Domestic supply quantity", "Export Quantity", "Feed", "Import Quantity", "Production", "Stock Variation")) 
+#%>% # filter for relevant element 
+ # left_join(item_codes, by = c("FAO_Item_Code_NFB" = "item_code"))
 
 ## provides China average that we want to delete
 dim(fbs)
