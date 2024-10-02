@@ -369,6 +369,9 @@ demand_test <- consumption %>%
 
 sum(demand_test$consuming_ingredient_consumed_tonnes) # 3182323
 
+test <- rast(list.files(here("prep/02_feed/output/plant-dominant/regular"), full.names = TRUE, pattern = "economic_P.tif"))
+sum(global(test, "sum", na.rm = TRUE)$sum) # 3271915 - ok pretty close, that's good off by less than 100k tonnes
+
 test_names <- str_replace_all(str_before_last(list.files(here("prep/02_feed/output/plant-dominant/regular"), pattern = "economic_A.tif"), ".tif"), "_", ":")
 
 test <- rast(list.files(here("prep/02_feed/output/plant-dominant/regular"), full.names = TRUE, pattern = "economic_A.tif"))
@@ -382,19 +385,19 @@ test_df <- as.data.frame(global(test, "sum", na.rm = TRUE))
 test_df %>% arrange(-sum)
 
 #                                                   sum
-# Rapeseed:canola oil:economic:A             3350.17145
-# Soybean:soy protein concentrate:economic:A 2482.72642
-# Wheat:wheat gluten:economic:A              1954.18908
-# Pulses:pea protein concentrate:economic:A   572.73846
-# Pulses:faba beans:economic:A                570.68376
-# Wheat:wheat:economic:A                      507.38673
-# Pulses:pea flour:economic:A                 466.24491
-# CropsNES:linseed oil:economic:A             439.87800
-# Sunflower:sunflower meal:economic:A         315.45644
-# Pulses:guar meal:economic:A                 305.56726
-# CropsNES:coconut oil:economic:A              81.27246
-# Soybean:soy oil:economic:A                   73.95469
-# Maize:corn gluten meal:economic:A            14.18603
+# Rapeseed:canola oil:economic:A             4581.70200
+# Soybean:soy protein concentrate:economic:A 2459.66028
+# Wheat:wheat gluten:economic:A              1909.82016
+# Pulses:pea protein concentrate:economic:A   587.29734
+# Pulses:faba beans:economic:A                585.16919
+# Wheat:wheat:economic:A                      495.86676
+# Pulses:pea flour:economic:A                 477.81140
+# Sunflower:sunflower meal:economic:A         379.33434
+# CropsNES:linseed oil:economic:A             323.19909
+# Pulses:guar meal:economic:A                 312.98079
+# Soybean:soy oil:economic:A                   73.17686
+# CropsNES:coconut oil:economic:A              59.71471
+# Maize:corn gluten meal:economic:A            13.26594
 
 # take a look at fish dominant
 demand_test <- consumption %>%
@@ -417,11 +420,11 @@ sum(test_df$sum) # 5114.828 km2 of cropland for salmon aquaculture feeds under f
 test_df %>% arrange(-sum)
 
 #                                          sum
-# Wheat:wheat gluten:economic:A     2592.29164
-# Soybean:soybean meal:economic:A   1578.01008
-# Wheat:wheat:economic:A             546.41648
-# Pulses:faba beans:economic:A       317.04654
-# Maize:corn gluten meal:economic:A   81.06304
+# Wheat:wheat gluten:economic:A     2533.43490
+# Soybean:soybean meal:economic:A   1563.19855
+# Wheat:wheat:economic:A             534.01036
+# Pulses:faba beans:economic:A       324.73856
+# Maize:corn gluten meal:economic:A   75.80536
 
 
 ```
@@ -429,7 +432,7 @@ test_df %>% arrange(-sum)
 Make some plots
 
 ```{r}
-feed_source <- read.csv(here("prep/02_feed/data/demand/ingredient_crop_demand_production_conversions.csv")) %>%
+feed_source <- read.csv(here("prep/02_feed/data/demand/ingredient_crop_demand_production_conversions_10-02-2024.csv")) %>%
   left_join(feed_cats, by = c("source_ingredient" = "ingredient", "FAOSTAT_name", "FAO_code")) %>%
   dplyr::select(-raw_material) %>%
   dplyr::rename("GAEZ_category" = "gaez_code", "ingredient" = "source_ingredient") %>%
@@ -443,7 +446,7 @@ tmp <- filter(feed_source) %>%
   ungroup() %>%
   filter(produced_ingredient_tonnes_ge > 0)
 ggplot(data = tmp %>%
-         filter(diet == "fish-dominant"), aes(x = produced_ingredient_tonnes_ge, y = reorder_within(iso3c_producing, produced_ingredient_tonnes_ge, GAEZ_category))) + 
+         filter(diet == "plant-dominant"), aes(x = produced_ingredient_tonnes_ge, y = reorder_within(iso3c_producing, produced_ingredient_tonnes_ge, GAEZ_category))) + 
   geom_bar(stat = "identity") + 
   facet_grid(fcr_type~ingredient, scales = "free") + 
   labs(x = "Tonnes of crop produced for ingredient", y = "Country") + 

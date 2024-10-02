@@ -14,6 +14,8 @@ This summarizes FAO trade data by GAEZ crop category (vs. FAO crop category) to 
 
 Output: feed_consumption/data/FAO_GAEZcrop_trade_data.csv"
 
+Here, we apply a filter that for any country that produces <1000 tonnes of a raw material, we assume that if they are trading it, this is low likelihood of being domestically produced. This is the assumption that to be attractive and competitive as an exporter globally, you need economies of scale. 
+
 ```{r}
 
 library(here)
@@ -21,7 +23,6 @@ library(tidyverse)
 library(countrycode)
 library(janitor)
 
-focus_year = 2021
 
 source(here("src/directories.R"))
 
@@ -45,7 +46,7 @@ crop_production_gf <- crop_production_df %>%
 summary(crop_production_gf)
 
 crop_production_gf <- crop_production_gf %>%
-  dplyr::select(iso3c_producing, GAEZ_category, imports_per = prop_global_tonnes) 
+  dplyr::select(iso3c_producing, GAEZ_category, imports_per = prop_global_tonnes, tonnes_producing_crop) 
 
 ```
 
@@ -53,14 +54,14 @@ crop_production_gf <- crop_production_gf %>%
 
 Consolidate data to determine the proportional amount of local production and total imports for each crop and country.
 
+Here we take the file `01_crops_prep/data/GAEZ_names.csv` and edit it to only include salmon feed primary and intermediate product items that we include in our diets (e.g., include both Wheat and Gluten, wheat). We save this to `02_feed/data/GAEZ_names_FEED.csv`
 
 ```{r}
 mapspam_feed_products <- read_csv(here("prep/02_feed/data/MapSPAM_to_FAO_v2.csv")) %>%
   rename(FAONAMES_mapspam = FAONAMES) # read in old mapspam categories
 
-feed_products <- read_csv(here("prep/01_crops_prep/data/GAEZ_names.csv")) %>%
+feed_products <- read_csv(here("prep/02_feed/data/GAEZ_names_FEED.csv")) %>%
   left_join(mapspam_feed_products, by = c("item_code" = "FAO_item_code")) %>% # match to GAEZ categories
-  mutate(FAO_item_code_NFB = ifelse(GAEZ_category == "Cotton", 2559, FAO_item_code_NFB)) %>% 
   filter(!is.na(FAO_item_code_NFB)) %>%
     filter(is.na(non_food)) %>%
   filter(!(FAONAMES %in% c("Mustard_seed", "Lupins", "Vetches"))) %>% # filter out duplicates
@@ -70,6 +71,10 @@ feed_products <- read_csv(here("prep/01_crops_prep/data/GAEZ_names.csv")) %>%
 
 feed_products[duplicated(feed_products$FAO_Item_Code_NFB), ] # mostly FAO_item_code is unique, but be aware of duplicates: occurs when MAPSPAM reports crops with more specificity (e.g. millet = small millet and pearl millet in MapSPAM)
 summary(feed_products)
+
+# FAO_Item_Code_NFB           item
+# 1               2575 Cottonseed Oil
+# 10              2582 Maize Germ Oil
 
 ```
 
@@ -85,9 +90,9 @@ fbs <- read.csv(file.path(rdsi_raw_data_dir, "fao/FAO_FoodBalanceSheets/d2023/Fo
   filter(Year == 2020) %>% # have to use 2020 here because fbs doesn't have 2021 yet... 
   clean_names() %>%
   dplyr::select(consuming_area_code = area_code, consuming_country = area, element, FAO_Item_Code_NFB = item_code, item, value) %>%
-  filter(element %in% c("Domestic supply quantity", "Export Quantity", "Feed", "Import Quantity", "Production", "Stock Variation")) 
-#%>% # filter for relevant element 
- # left_join(item_codes, by = c("FAO_Item_Code_NFB" = "item_code"))
+  filter(element %in% c("Domestic supply quantity", "Export Quantity", "Feed", "Import Quantity", "Production", "Stock Variation"))
+# %>% # filter for relevant element
+# left_join(item_codes, by = c("FAO_Item_Code_NFB" = "item_code"))
 
 ## provides China average that we want to delete
 dim(fbs)
@@ -96,7 +101,7 @@ fbs <- fbs %>%
 dim(fbs)
 
 # food balance sheet contains some derived oil products, these result in double counting because they are already counted in the primary product
-discards <- read_csv(here("prep/02_feed/data/FAOSTAT_FBS_Items_discard_5-9-2022.csv")) %>% # made by hand
+discards <- read_csv(here("prep/02_feed/data/FAOSTAT_FBS_Items_discard_30-9-2024.csv")) %>% # made by hand
   filter(cut=="yes") %>%
   pull(`Item Code`)
 
@@ -111,12 +116,12 @@ table(fbs$item)
 
 # make sure that all relevant product codes match up
 setdiff(feed_products$FAO_Item_Code_NFB, fbs$FAO_Item_Code_NFB) #
-missing <- setdiff(fbs$FAO_Item_Code_NFB, feed_products$FAO_Item_Code_NFB) # make sure nothing here
+missing <- setdiff(fbs$FAO_Item_Code_NFB, feed_products$FAO_Item_Code_NFB)
 missing2 <- filter(fbs, FAO_Item_Code_NFB %in% missing) %>% 
   dplyr::select(FAO_Item_Code_NFB, item) %>%
   unique() %>% 
   data.frame()
-missing2
+missing2 # this is fine, because we don't include these feed items in our diet scenarios
 
 # convert products to GAEZ crop and combine
 fbs <- fbs %>%
@@ -124,13 +129,14 @@ fbs <- fbs %>%
   left_join(feed_products, by = "FAO_Item_Code_NFB") %>%
   group_by(consuming_area_code, consuming_country, GAEZ_category, element) %>%
   summarize(value = sum(value, na.rm=TRUE)) %>%
-  ungroup()
+  ungroup() 
 
 # some cleaning
 local_prod <- fbs %>%
   spread(element, value) %>%
   rename(supply = `Domestic supply quantity`, imports=`Import Quantity`, exports=`Export Quantity`, production=Production) %>%
   replace(is.na(.), 0) %>%
+ # filter(production > 1000) %>%
   mutate(local_crop_prod_tonnes = production - exports) %>%            #local crop production for use within country 
   mutate(supply2 = production+imports-exports) %>%     # a version of supply without stock variation variable
   mutate(local_crop_prod_tonnes = ifelse(local_crop_prod_tonnes < 0, 0, local_crop_prod_tonnes)) %>%
@@ -142,8 +148,6 @@ local_prod <- fbs %>%
 
 summary(local_prod)
 filter(local_prod, consuming_country == "Sudan" & GAEZ_category == "Maize")
-filter(local_prod, consuming_country == "Afghanistan" & GAEZ_category == "Sorghum")
-filter(local_prod, consuming_country == "Ethiopia" & GAEZ_category == "Barley")
 filter(local_prod, consuming_country == "Myanmar")
 
 ```
@@ -175,21 +179,21 @@ summary(local_prod_iso)
 ```
 
 
-Join GAEZ crop production data with fbs data.  If there is no local production according to GAEZ,
+Join GAEZ crop production data with fbs data.  If there is less than 1000 tonnes of local production according to GAEZ,
 local production will be zero and external production will be one.  And, if both local_crop_prod_per and external_crop_prod_per are 0, assuming that external_crop_prod_per == 1.
 
 ```{r}
 
 local_prod_gf <- left_join(local_prod_iso, crop_production_df, by=c("iso3c_producing", "GAEZ_category")) %>%
-  mutate(local_crop_prod_per = ifelse(tonnes_producing_crop == 0, 0, local_crop_prod_per)) %>%
-  mutate(external_crop_prod_per = ifelse(tonnes_producing_crop == 0, 1, external_crop_prod_per)) %>%
+  mutate(local_crop_prod_per = ifelse(tonnes_producing_crop < 1000, 0, local_crop_prod_per)) %>%
+  mutate(external_crop_prod_per = ifelse(tonnes_producing_crop < 1000, 1, external_crop_prod_per)) %>%
   mutate(external_crop_prod_per = ifelse(local_crop_prod_per ==0 & external_crop_prod_per==0, 1, external_crop_prod_per)) %>%
   dplyr::select(iso3c_consuming, GAEZ_category, local_crop_prod_per, external_crop_prod_per)
+
 
 summary(local_prod_gf)
 filter(local_prod_gf, iso3c_consuming=="SDN")
 filter(local_prod_gf, iso3c_consuming=="IRQ") %>% data.frame()
-filter(local_prod_gf, iso3c_consuming == "AFG" & GAEZ_category == "Sorghum")
 filter(local_prod_gf, iso3c_consuming == "ETH" & GAEZ_category == "Rapeseed")
 filter(local_prod_gf, iso3c_consuming == "MMR")
 
@@ -211,24 +215,16 @@ FAO codes:
 mapspam_feed_products <- read_csv(here("prep/02_feed/data/MapSPAM_to_FAO_v2.csv")) %>%
   rename(FAONAMES_mapspam = FAONAMES) # read in old mapspam categories
 
-feed_products_full <- read_csv(here("prep/01_crops_prep/data/GAEZ_names.csv")) %>%
-  left_join(mapspam_feed_products, by = c("item_code" = "FAO_item_code"))
+feed_products_full <- read_csv(here("prep/02_feed/data/GAEZ_names_FEED.csv")) %>%
+  left_join(mapspam_feed_products, by = c("item_code" = "FAO_item_code")) %>% 
+  filter(!is.na(GAEZ_category))
 
 
 feed_products <- feed_products_full %>% # match to GAEZ categories
-  mutate(FAO_item_code_NFB = ifelse(GAEZ_category == "Cotton", 2559, FAO_item_code_NFB)) %>% 
     filter(is.na(non_food)) %>%
-  filter(!(FAONAMES %in% c("Mustard_seed", "Lupins", "Vetches"))) %>% # filter out duplicates
   dplyr::select(GAEZ_category, FAO_Item_Code = item_code) %>%
   dplyr::filter(!is.na(FAO_Item_Code)) %>%
-  unique() %>%
-  add_row(GAEZ_category = "Cassava",
-          FAO_Item_Code = 128) %>% # because cassava leaves are reported differently in the trade matrix, we will assume that all cassava is dried in the country that they are produced and exported from
-  add_row(GAEZ_category = "Cotton", 
-          FAO_Item_Code = 329) %>% # because raw seed cotton is not in the trade matrix, we will assume that all cotton seeds are extracted in the country that they are produced and exported from
-  add_row(GAEZ_category = "Oilpalmfruit",
-          FAO_Item_Code = 256) # because raw oil palm fruit is not in the trade matrix, we will assume that all palm kernels are extracted in the country that they are produced and exported from.. 
-
+  unique() 
 
 ```
 
@@ -240,7 +236,7 @@ import_data <- read_csv(file.path(fao_dir, "FAO_detailed_trade/d2023/Trade_Detai
 
 # cut "Unspecified Area" for exporting countries.  This has the effect of spreading the imports among the countries with existing data
 imports <- import_data %>%
-  filter(Year == focus_year) %>%
+  filter(Year == 2020) %>%
   filter(!(`Partner Countries` %in% c("Unspecified Area"))) %>%
     filter(!(`Partner Countries` %in% c("China"))) %>%                 # combination of all china regions
   dplyr::filter(Element == "Import Quantity") %>%
@@ -250,26 +246,36 @@ imports <- import_data %>%
                 producing_country = `Partner Countries`,
                 FAO_Item_Code = `Item Code`, Element, Value, Item)
 
+test_imps <- imports %>% filter(consuming_country == "Norway", str_detect(Item, "Wheat|wheat"))
+# sum(test_imps$Value)
+# [1] 293578.5
+
+test <- imports %>% distinct(Item)
+## ok so the trade matrix only has
+# Wheat
+# Bran of wheat
+# Wheat and meslin flour
+# Buckwheat
+# Germ of wheat
+# Flour of buckwheat
+# and the fbs only has "Wheat and products" so that is what we'll have to work with. 
 
 # make sure that all relevant product codes match up
 extra_products <- setdiff(feed_products$FAO_Item_Code, imports$FAO_Item_Code) 
 extra_products_description <- feed_products_full %>%
   dplyr::filter(item_code %in% extra_products)
 unique(extra_products_description$product_description_FAOSTAT)
-# in the master list, but not in the trade data
+# in the master list, but not in the trade data.. i guess there is nothing we can do about this unfortunately. 
 
-## ok might need to adjust cotton seed, cassava, and oilpalmfruit
 
 extra_imports <- setdiff(imports$FAO_Item_Code, feed_products_full$item_code)
 
-# These are in the trade data, but not our master list, this is mostly non-crop products:
+# These are in the trade data, but not our master list, these are all products that are not considered feed items in our scenarios, so this is ok. 
 
 test <- import_data %>%
   dplyr::select(Item, `Item Code`) %>%
   filter(`Item Code` %in% extra_imports) %>%
   unique() %>% data.frame()
-
-intersect(imports$FAO_Item_Code, feed_products$FAO_Item_Code) # shared food codes 
 
 # convert products to MAPSPAM categories 
 imports <- imports %>%
@@ -329,17 +335,17 @@ imports <- imports %>%
    dplyr::select(iso3c_consuming, iso3c_producing, GAEZ_category, imports_tonnes = Value) %>%   
   filter(iso3c_producing != iso3c_consuming) # just to be sure
 
-filter(imports, iso3c_consuming=="MYS" & GAEZ_category=="Oilpalmfruit")
+filter(imports, iso3c_consuming=="NOR" & GAEZ_category=="Wheat")
 
 ```
 
-If there is no production for a country/crop according to MAPSPAM, then there will be no exports for that country/crop.
+If there is <1000 tonnes of production for a country/crop according to GAEZ, then there will be no exports for that country/crop.
 
 ```{r}
 
 imports <- left_join(imports, crop_production_df, by=c("iso3c_producing", "GAEZ_category")) %>%
   mutate(tonnes_producing_crop = ifelse(is.na(tonnes_producing_crop), 0, tonnes_producing_crop)) %>%
-  mutate(correction = ifelse(tonnes_producing_crop==0, 0, 1)) %>%
+  mutate(correction = ifelse(tonnes_producing_crop < 1000, 0, 1)) %>%
   mutate(imports_tonnes = imports_tonnes*correction) %>%
   dplyr::select(iso3c_consuming, iso3c_producing, GAEZ_category, imports_tonnes)
 
@@ -395,11 +401,8 @@ imports_prop <- imports %>%
   mutate(imports_per = ifelse((imports_tonnes + imports_all_tonnes) == 0, 0, imports_tonnes/imports_all_tonnes)) %>%
   dplyr::select(-imports_tonnes, -imports_all_tonnes)
 
-filter(imports_prop, iso3c_consuming=="SDN")
-filter(imports_prop, iso3c_consuming=="IRQ")
-filter(imports_prop, iso3c_consuming == "AFG" & GAEZ_category == "Sunflower")
-filter(imports_prop, iso3c_consuming == "ETH" & GAEZ_category == "Barley")
-filter(imports_prop, iso3c_consuming == "FJI" & GAEZ_category == "Pulses")
+
+filter(imports_prop, iso3c_consuming == "LVA" & GAEZ_category == "Pulses")
 
 ```
 
@@ -422,7 +425,8 @@ imports_new_data <- filter(local_prod_rgn_crop_list, major_group_prod %in% missi
   dplyr::select(iso3c_consuming, GAEZ_category)
 
 imports_new_data_expand <- left_join(imports_new_data, crop_production_gf) %>%
-  dplyr::filter(iso3c_consuming != iso3c_producing)
+  dplyr::filter(iso3c_consuming != iso3c_producing) %>%
+  dplyr::select(-tonnes_producing_crop)
 
 imports_prop_gf <- rbind(imports_prop, imports_new_data_expand)
 
@@ -447,7 +451,7 @@ mast_rgns_crops <- crop_production_gf %>%
 missing_rgn_crops <- data.frame(rgn_crops_missing = setdiff(mast_rgns_crops$rgn_crops, mstr_imports$rgn_crop_imports)) %>%
   separate(rgn_crops_missing, c("iso3c_consuming", "GAEZ_category"))
 
-imports_new_data_expand <- left_join(missing_rgn_crops, crop_production_gf) 
+imports_new_data_expand <- left_join(missing_rgn_crops, crop_production_gf %>% dplyr::select(-tonnes_producing_crop)) 
 
 imports_prop_gf <- rbind(imports_prop_gf, imports_new_data_expand)
 
@@ -496,7 +500,8 @@ mismatch_rgn_crops <- mismatch %>%
   separate(rgn_crops, c("iso3c_consuming", "GAEZ_category"))
 
 imports_new_data_expand <- left_join(mismatch_rgn_crops, crop_production_gf) %>%
-  filter(iso3c_consuming != iso3c_producing)
+  filter(iso3c_consuming != iso3c_producing) %>%
+  dplyr::select(-tonnes_producing_crop)
 
 ## remove old values from data
 imports_prop_gf <- imports_prop_gf %>%
@@ -539,12 +544,12 @@ data.frame(filter(import_export_gf, iso3c_consuming== "USA")) %>%
 
 tmp <- filter(import_export_gf, iso3c_consuming== "USA") %>%
   filter(GAEZ_category=="Cotton")
-sum(tmp$prop_of_supply)  # Mapspam was 0.004... GAEZ is 0.003834579... perfect
-
+sum(tmp$prop_of_supply)  
 ```
 
 
 Add in the within country proportion
+
 ```{r}
 
 # the producing and consuming country are the same in this case:
@@ -555,11 +560,9 @@ local_prod <- local_prod_gf %>%
 
 filter(local_prod, iso3c_consuming=="BLZ") %>%data.frame
 
-trade_data <- rbind(import_export_gf, local_prod)
+trade_data <- rbind(import_export_gf, local_prod) %>% 
+  filter(GAEZ_category %in% c(unique(imports$GAEZ_category)))
 
-tmp <- filter(trade_data, iso3c_consuming == "USA", GAEZ_category == "Cotton") %>% arrange(-prop_of_supply)
-sum(tmp$prop_of_supply)
-arrange(tmp, -prop_of_supply)
 filter(trade_data, iso3c_consuming == "FJI" & iso3c_producing == "FJI") %>% data.frame()
 filter(trade_data, iso3c_consuming == "ARM" & iso3c_producing == "ARM") %>% data.frame()
 filter(trade_data, iso3c_consuming == "CHN" & iso3c_producing == "CHN") %>% data.frame()
@@ -571,7 +574,7 @@ filter(trade_data, iso3c_consuming == "CHN" & iso3c_producing == "CHN") %>% data
 
 ```{r}
 # These were gapfilled earlier and should be empty.
-regions <- read_csv(here("data/spatial/output/food_rgns.csv"))
+regions <- read_csv(here("data/spatial/output/region_ids.csv"))
 setdiff(regions$iso3c, trade_data$iso3c_consuming)
 setdiff(trade_data$iso3c_consuming, regions$iso3c)
 
@@ -589,7 +592,6 @@ check <- trade_data %>%
   mutate(unique=paste(iso3c_consuming, iso3c_producing, GAEZ_category))
 
 sum(table(check$unique)>1) # should be zero...if not, figure out why
-#table(check$unique)[table(check$unique)>1]
 
 # Check that sums within a country crop sum to 1
 check <- trade_data %>%
@@ -597,18 +599,17 @@ check <- trade_data %>%
   summarize(total = round(sum(prop_of_supply), 2))
 
 
-data.frame(dplyr::filter(check, total!=1)) # that's fine, all 0.99...
+data.frame(dplyr::filter(check, total!=1)) # good 0
 
-write_csv(trade_data, here("prep/02_feed/data/FAO_GAEZcrop_trade_data.csv"))
+write_csv(trade_data, here("prep/02_feed/data/FAO_GAEZcrop_trade_data_10-02-2024.csv"))
 
-test <- read.csv(here("prep/02_feed/data/archive/FAO_MAPSPAMcrop_trade_data.csv")) %>%
-  filter(iso3c_consuming == "MYS")
-
-test2 <- read.csv(here("prep/02_feed/data/FAO_GAEZcrop_trade_data.csv")) 
+test2 <- read.csv(here("prep/02_feed/data/FAO_GAEZcrop_trade_data_10-02-2024.csv")) 
 
 ## most everything looks the same... 
 
-test2 <- read.csv(here("prep/02_feed/output/norway_trade.csv")) 
+test <- test2 %>% 
+  filter(iso3c_consuming == "NOR" | iso3c_producing == "NOR")
+
 
 ```
 
