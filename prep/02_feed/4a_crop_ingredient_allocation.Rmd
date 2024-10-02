@@ -32,13 +32,7 @@ Trade proportion data:
 
 ```{r}
 
-trade_data <- read_csv(here("prep/02_feed/data/FAO_GAEZcrop_trade_data.csv")) 
-
-
-nor_trade <- trade_data %>% 
-  filter(iso3c_consuming == "NOR" | iso3c_producing == "NOR") %>%
-  filter(GAEZ_category %in% c("Rapeseed", "Soybean"))
-
+trade_data <- read_csv(here("prep/02_feed/data/FAO_GAEZcrop_trade_data_10-02-2024.csv")) 
 
 ```
 
@@ -86,7 +80,7 @@ ingredient_production_location <- left_join(trade_data, consumption_spam_gaez, b
   mutate(producing_ingredient_consumed_tonnes = consuming_ingredient_consumed_tonnes * prop_of_supply)
 
 
-write.csv(ingredient_production_location, here("prep/02_feed/data/demand/ingredient_demand_production_locations.csv"), row.names = FALSE)
+write.csv(ingredient_production_location, here("prep/02_feed/data/demand/ingredient_demand_production_locations_10-02-2024.csv"), row.names = FALSE)
 ```
 
 
@@ -110,7 +104,7 @@ ggplot(data = tmp %>%
          filter(diet == "fish-dominant"), aes(x = consumed_ingredient_tonnes, y = reorder_within(iso3c_producing, consumed_ingredient_tonnes, GAEZ_category))) + 
   geom_bar(stat = "identity") + 
   facet_grid(fcr_type~source_ingredient, scales = "free") + 
-  labs(x = "Tonnes of raw ingredient produced", y = "Country") + 
+  labs(x = "Tonnes of ingredient produced", y = "Country") + 
   theme_bw() + 
   theme(axis.text.x = element_text(angle = 30, vjust = 0.5)) 
 
@@ -131,7 +125,6 @@ ingredient_production <- ingredient_production_location %>%
   summarise(producing_ingredient_consumed_tonnes = sum(producing_ingredient_consumed_tonnes, na.rm = TRUE)) %>%
   ungroup()
  
-## Taken from sustainable aquafeeds teams
 allocation_factors <- read_xlsx(here("data/tidy_data/allocation/crop_ingredient_allocation_factors.xlsx")) %>% 
   dplyr::select(item, ingredient, FAO_code, map_spam_code, gaez_code, ge_allocation_factor, mass_allocation_factor, econ_allocation_factor) %>%
   distinct()
@@ -139,7 +132,7 @@ allocation_factors <- read_xlsx(here("data/tidy_data/allocation/crop_ingredient_
 
 # join the ingredient demand by diet to the producer data so for each ingredient there will be a raw material demand per source, fcr type, and diet scenario. Create new raw_material demand column by multiplying total ingredient demand by the conversion factor (i.e. the ingredient extraction rate from the raw material in the first place)
 
-crop_raw_material_demand <- ingredient_production %>%
+crop_raw_material_demand <- ingredient_production_location %>%
   left_join(allocation_factors, by = c("source_ingredient" = "ingredient", "FAO_code")) %>% 
   mutate(total_crop_demand_ge = producing_ingredient_consumed_tonnes*ge_allocation_factor,
          total_crop_demand_ms = producing_ingredient_consumed_tonnes*mass_allocation_factor,
@@ -153,7 +146,7 @@ crop_raw_material_demand <- ingredient_production %>%
 
 
 
-write.csv(crop_raw_material_demand, here("prep/02_feed/data/demand/ingredient_crop_demand_production_conversions.csv"), row.names = FALSE)
+write.csv(crop_raw_material_demand, here("prep/02_feed/data/demand/ingredient_crop_demand_production_conversions_10-02-2024.csv"), row.names = FALSE)
 
 
 
@@ -172,13 +165,26 @@ crop_production_global <- crop_production_df %>%
   group_by(GAEZ_category) %>%
   summarize(tonnes_global = sum(tonnes_producing_crop, na.rm=TRUE))
 
+
+crop_production_global_props <- crop_production_df %>%
+  left_join(crop_production_global) %>%
+  mutate(prop_global = tonnes_producing_crop/tonnes_global)
 ```
 
-Divide tonnes of consumption for each country/food system by total production to get the proportion of production produced for each food system:
+Divide tonnes of consumption for each country/food system by total production to get the proportion of production produced for each food system. For any countries and raw materials where we allocate more raw material production than actual production, we will re-allocate the excess production proportional to global production patterns. 
+
+For example, we allocate ~194k tonnes of rapeseed to Chile production, but Chile only produces ~160k tonnes of rapeseed crop. Given this, we will re-allocate the 194-160 = 34k tonnes of rapeseed production proportionally to global production (~24% of 34k to CAN, ~20% of 34k to CHN, ~13% of 34k to IND, etc. See `crop_production_global_props` df)
+
 
 ```{r}
-feed_source <- read.csv(here("prep/02_feed/data/demand/ingredient_crop_demand_production_conversions.csv")) %>%
+feed_source <- read.csv(here("prep/02_feed/data/demand/ingredient_crop_demand_production_conversions_10-02-2024.csv")) %>%
   left_join(feed_cats, by = c("source_ingredient" = "ingredient", "FAOSTAT_name", "FAO_code")) %>%
+  dplyr::select(-raw_material) %>%
+  dplyr::rename("SPAM_super" = "map_spam_code",
+                "GAEZ_category" = "gaez_code")
+
+feed_source <- crop_raw_material_demand %>% 
+    left_join(feed_cats, by = c("source_ingredient" = "ingredient", "FAOSTAT_name", "FAO_code")) %>%
   dplyr::select(-raw_material) %>%
   dplyr::rename("SPAM_super" = "map_spam_code",
                 "GAEZ_category" = "gaez_code")
@@ -187,12 +193,46 @@ feed_source <- read.csv(here("prep/02_feed/data/demand/ingredient_crop_demand_pr
 
 proportion <- left_join(feed_source, crop_production_df, by=c("iso3c_producing", "GAEZ_category")) %>%
   mutate(tonnes_producing_crop = ifelse(is.na(tonnes_producing_crop), 0, tonnes_producing_crop)) %>%
+  mutate(excess_ms = total_crop_demand_ms - tonnes_producing_crop,
+         excess_ge = total_crop_demand_ge - tonnes_producing_crop,
+         excess_econ = total_crop_demand_econ - tonnes_producing_crop) %>%
+  mutate(excess_ms = ifelse(excess_ms < 0, 0, excess_ms),
+         excess_ge = ifelse(excess_ge < 0, 0, excess_ge),
+         excess_econ = ifelse(excess_econ < 0, 0, excess_econ))
+
+excess_allocations <- proportion %>%
+  group_by(diet, fcr_type, source_ingredient, FAOSTAT_name, FAO_code, GAEZ_category, SPAM_super) %>%
+  summarise(excess_ms = sum(excess_ms),
+            excess_ge = sum(excess_ge), 
+            excess_econ = sum(excess_econ)) %>%
+  ungroup() %>%
+ # filter(excess_ms > 0 | excess_ge > 0 | excess_econ > 0) %>%
+  right_join(crop_production_global_props) %>%
+  mutate(excess_allocation_ms = excess_ms*prop_global,
+         excess_allocation_ge = excess_ge*prop_global,
+         excess_allocation_econ = excess_econ*prop_global) %>% 
+  filter(!is.na(diet)) %>%
+  dplyr::select(diet, fcr_type, iso3c_producing, source_ingredient, FAOSTAT_name, FAO_code, GAEZ_category, SPAM_super,  excess_allocation_ms, excess_allocation_ge, excess_allocation_econ) ## ok now we have the excess production re-allocated based on global production patterns. Now we need to rejoin and add to the original allocation data. 
+
+proportion_fin = proportion %>% 
+  mutate(total_crop_demand_ms = ifelse(excess_ms > 0, tonnes_producing_crop, total_crop_demand_ms),
+         total_crop_demand_ge = ifelse(excess_ge > 0, tonnes_producing_crop, total_crop_demand_ge),
+         total_crop_demand_econ = ifelse(excess_econ > 0, tonnes_producing_crop, total_crop_demand_econ)) %>%
+  dplyr::select(-excess_ms, -excess_ge, -excess_econ) %>%
+  left_join(excess_allocations) %>%
+  mutate(total_crop_demand_ms = total_crop_demand_ms + excess_allocation_ms,
+         total_crop_demand_ge = total_crop_demand_ge + excess_allocation_ge,
+         total_crop_demand_econ = total_crop_demand_econ + excess_allocation_econ) %>%
+  dplyr::select(-excess_allocation_econ, -excess_allocation_ge, -excess_allocation_ms) %>%
   mutate(prop_produced_for_system_ms = ifelse(total_crop_demand_ms == 0, 0, total_crop_demand_ms/tonnes_producing_crop),
          prop_produced_for_system_ge = ifelse(total_crop_demand_ge == 0, 0, total_crop_demand_ge/tonnes_producing_crop), 
          prop_produced_for_system_econ = ifelse(total_crop_demand_econ == 0, 0, total_crop_demand_econ/tonnes_producing_crop))
 
 
-write_csv(proportion, here("prep/02_feed/output/proportion_feed_per_country_system_diet.csv"))
+
+write_csv(proportion_fin, here("prep/02_feed/output/proportion_feed_per_country_system_diet_10-02-2024.csv"))
+
+
 
 ```
 
@@ -205,7 +245,7 @@ Rasterize this information to get rasters describing the amount of tonnages for 
 
 ```{r}
 
-total_prop <- read.csv(here("prep/02_feed/output/proportion_feed_per_country_system_diet.csv")) %>%
+total_prop <- read.csv(here("prep/02_feed/output/proportion_feed_per_country_system_diet_10-02-2024.csv")) %>%
   dplyr::select(SPAM_super = SPAM_super, GAEZ_category, diet, fcr_type, ingredient = source_ingredient, iso3c_producing, total_prop_ms = prop_produced_for_system_ms, total_prop_ge = prop_produced_for_system_ge,
                 total_prop_econ = prop_produced_for_system_econ) %>%
   pivot_longer(cols = c("total_prop_ms", "total_prop_ge", "total_prop_econ"), names_to = "allocation_type", values_to = "total_prop") %>%
@@ -231,7 +271,7 @@ fao_yields <- readRDS(here("data/tidy_data/production-data/crops_production_tidy
 
 
 ## organize region data
-rgns <- read_csv(file.path(food_systems_data_dir, "food_rgns_xy.csv"))
+rgns <- read_csv(file.path(rdsi_raw_data_dir, "food-systems-project/food_rgns_xy.csv"))
 
 ####################
 ## start loop here
@@ -250,7 +290,7 @@ todo <- total_prop %>%
 # 
 
 for(i in 1:dim(todo)[1]){
-# i=1
+# i=91
 crop_gaez <- todo$GAEZ_category[i]
 product_type <- todo$ingredient[i]
 diet_type = todo$diet[i]

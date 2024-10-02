@@ -172,8 +172,8 @@
 27,"ooil","ooil","other oil crops","olives ++",2586,266,"oilcrops","Oil of Castor Beans",NA
 27,"ooil","ooil","other oil crops","olives ++",2573,268,"oilcrops","Oil of Sunflower Seed",NA
 27,"ooil","ooil","other oil crops","olives ++",2573,269,"oilcrops","Cake of Sunflower Seed",NA
-27,"ooil","ooil","other oil crops","olives ++",2574,271,"oilcrops","Oil of Rapeseed or Canola oil",NA
-27,"ooil","ooil","other oil crops","olives ++",2574,272,"oilcrops","Cake of Rapeseed",NA
+27,"rape","rape","rapeseed","rapeseed",2574,271,"oilcrops","Oil of Rapeseed or Canola oil",NA
+27,"rape","rape","rapeseed","rapeseed",2574,272,"oilcrops","Cake of Rapeseed",NA
 27,"ooil","ooil","other oil crops","olives ++",2580,273,"oilcrops","Olive Residues",NA
 27,"ooil","ooil","other oil crops","olives ++",2580,274,"oilcrops","Oil of Olive Residues",NA
 27,"ooil","ooil","other oil crops","olives ++",2570,275,"oilcrops","Tung Nuts",NA

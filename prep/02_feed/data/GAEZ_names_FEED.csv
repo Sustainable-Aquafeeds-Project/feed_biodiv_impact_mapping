@@ -1,0 +1,33 @@
+GAEZ_category,FAONAMES,item_code
+Wheat,Wheat,15
+Wheat,"Gluten, wheat",24
+Maize,Maize,56
+Maize,"Feed and meal, gluten",846
+Maize,"Gluten, maize",63
+Maize,Maize Germ Oil,60
+Pulses,Beans_dry,176
+Pulses,Broad_beans_dry,181
+Pulses,Peas_dry,187
+Pulses,Chick_peas,191
+Pulses,Cow_peas_dry,195
+Pulses,Pigeon_peas,197
+Pulses,Lentils,201
+Pulses,Bambara_beans,203
+Pulses,Pulses_nes,211
+Pulses,"Flour, pulses",212
+Soybean,Soybeans,236
+Soybean,Soybeans cake,238
+Soybean,Soybeans oil,237
+Rapeseed,Oil of Rapeseed or Canola oil,271
+Rapeseed,Cake of Rapeseed,272
+Rapeseed,Rapeseed,270
+CropsNES,Coconuts,249
+CropsNES,Coconut oil,252
+CropsNES,"Coconuts, dessicated",250
+CropsNES,Copra,251
+CropsNES,Cake copra,253
+CropsNES,Linseed,333
+CropsNES,Oil of Linseed,334
+CropsNES,Cake of Linseed,335
+Sunflower,Sunflower_seed,267
+Sunflower,Cake of Sunflower Seed,269

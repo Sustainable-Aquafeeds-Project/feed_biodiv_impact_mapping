@@ -608,5 +608,7 @@ test2 <- read.csv(here("prep/02_feed/data/FAO_GAEZcrop_trade_data.csv"))
 
 ## most everything looks the same... 
 
+test2 <- read.csv(here("prep/02_feed/output/norway_trade.csv")) 
+
 ```
 
