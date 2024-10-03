@@ -94,7 +94,8 @@ spp_info_df %>%
 # 4 Terrestrial mammal  5501
 
 ## get disturbance raster categories which we will run through
-crop_ingredient_cats <- read.csv(here("prep/02_feed/output/proportion_feed_per_country_system_diet.csv")) %>%
+crop_ingredient_cats <- read.csv(here("prep/02_feed/output/proportion_feed_per_country_system_diet_10-02-2024.csv")) %>%
+  filter(fcr_type != "efficient") %>% # remove fcr scenarios because we no longer include those in the analysis!
   dplyr::select(diet, fcr_type, source_ingredient, GAEZ_category) %>%
   distinct() %>%
   mutate(diet_fcr = paste(diet, fcr_type, sep = "/")) %>%

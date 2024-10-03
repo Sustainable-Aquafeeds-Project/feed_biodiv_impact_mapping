@@ -69,11 +69,6 @@ missing_iucn_spp <- all_iucn_spp %>%
   distinct(taxonid) %>%
   pull() # grab the taxon id so we can loop through the csvs
 
-test <- ag_suitability %>%
-  filter(species %in% missing_spp)
-
-test2 <- all_iucn_spp %>%
-  filter(scientific_name %in% missing_spp) 
 
 missing_spp_habs <- data.frame(taxonid = NA, total_hab_area = NA)
 
@@ -168,7 +163,7 @@ test <- impact_df_tidy %>%
   left_join(spp_habs_df) %>% 
   mutate(prop_impacted = impact_total/total_hab_area)
 
-## highest total proportional impact is Liolaemus gravenhorstii, commonly known as Gravenhorst's tree iguana. ~1.7% of its habitat is impacted under plant-dominant, regular, economic. 
+## highest total proportional impact is Liolaemus gravenhorstii, commonly known as Gravenhorst's tree iguana. ~1.1% of its habitat is impacted under plant-dominant, regular, economic. 
 ```
 
 

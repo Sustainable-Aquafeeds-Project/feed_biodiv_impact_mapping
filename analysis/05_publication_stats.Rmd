@@ -75,8 +75,8 @@ terrestrial_impacts <- terrestrial_overlap %>%
   mutate(type = "terrestrial")
 
 
-322308.2 + 123897.6 # total plant dominant
-304212.8+174105.1 # total fish dominant
+429026.4 + 123897.6 # total plant dominant
+304212.8+210951.6 # total fish dominant
 # so fish dominant has more total impacts what about averages per cell? 
 
 
@@ -440,7 +440,8 @@ summary_df_spp_out <- summary_df_spp %>%
   filter(prop_impact >= quant_95) %>%
   group_by(diet, fcr, allocation, taxon) %>%
   mutate(spp_outliers = n_distinct(sciname)) %>%
-  ungroup() 
+  ungroup()  %>%
+  mutate(prop = spp_outliers/spp_count_assessed)
 
 # Moreover, of the terrestrial mammal species assessed (n=5502), 8.1% are above the 95th percentile proportion of total habitat impacted with the plant-dominant scenario, the highest percentage of species falling in this category among taxa and scenarios.
 summary_df_spp_out %>% filter(diet == "Plant-dominant", taxon == "Terrestrial mammals") %>% pull(spp_outliers) %>% unique()

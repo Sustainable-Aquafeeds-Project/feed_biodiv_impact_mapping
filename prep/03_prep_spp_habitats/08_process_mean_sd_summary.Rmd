@@ -41,7 +41,7 @@ select <- dplyr::select
 setwd(dirname(rstudioapi::getSourceEditorContext()$path)) # set working directory to where this script is located
 this_dir <- getwd()
 
-aoh_dir <- file.path(rdsi_raw_data_dir, "AOH_lumbierres/reprojected_csvs/")
+aoh_dir <- file.path(rdsi_raw_data_dir, "AOH_eyres/reprojected_mol_csv_fin/")
 
 base_rast <- rast(res=0.5)
 ext(base_rast) <- c(-180, 180, -90, 90)
@@ -63,7 +63,7 @@ Below we create maps of species level proportion of habitat and extinction risk 
 ```{r}
 
 diet_types <- c("fish-dominant", "plant-dominant")
-fcr_types <- c("regular", "efficient")
+fcr_types <- c("regular") # we no longer include the efficient fcr scenario 
 allocation_types <- c("economic", "mass", "ge")
 
 
@@ -91,7 +91,7 @@ for(diet in diet_types){
       all_impact_df <- data.frame(cell_id = NA, prop_mean = NA, prop_sd = NA, prop_nspp = NA, prop_ext_risk = NA)
 
       for(i in 1:14){ # 14 because there are 14 difference indices in the list
-              # i = 2
+              # i = 1
 
 
         i_dfs <- lapply(all_files_list, function(x) x[[i]])
@@ -105,7 +105,6 @@ for(diet in diet_types){
   ungroup() %>%
   mutate(prop_impact = impact_km2/100,
          ext_risk = 1 - ((100 - impact_km2)/100)^0.25) %>%
-   filter(cell_id == 786772)
   group_by(cell_id) %>%
   summarise(prop_mean = mean(prop_impact,na.rm=TRUE),
             prop_sd = sd(prop_impact, na.rm = TRUE),
@@ -169,14 +168,14 @@ for(diet in diet_types){
 
 ## Aggregate marine impacts 
 
- - Take mean prop impacted, sd prop impacted, mean extinction risk, and nspp impacted across taxon and ingredient for terrestrial species
+ - Take mean prop impacted, sd prop impacted, mean extinction risk, and nspp impacted across taxon and ingredient for marine species
  
  - First we need to disaggregate the way we've saved this spatial information. Here we save an individual file for each taxon and ingredient combination for each chunk (500k cells). This will allow us to easier access the data. This wasn't necessary for the terrestrial impacts because terrestrial species are much more concentrated, and thus, the terrestrial maps are a lot smaller in size. 
-  - NOTE: To run all scenarios, this will take quite a while. ~8 hours
+  - NOTE: To run all scenarios, this will take quite a while. ~4 hours
 
 ```{r}
 diet_types <- c("fish-dominant", "plant-dominant")
-fcr_types <- c("regular", "efficient")
+fcr_types <- c("regular") # we only include regular scenario now
 allocation_types <- c("economic", "ge", "mass")
 
 for(diet in diet_types){
@@ -242,11 +241,11 @@ any(file.exists(list.files(file.path(biodiv_dir, "int/marine_aggregation/sub_chu
 
 Next we need to read in the files we saved, by chunk (500k cells), summarise per cell the mean prop impacted, sd prop impacted, mean extinction risk, and nspp impacted, then rbind together into one big cell_id, prop_mean, prop_sd, extinction risk, and nspp dataframe
 
- - NOTE: If you want to run all scenarios, this will probably take ~12 hours...
+ - NOTE: If you want to run all scenarios, this will probably take ~3 hours...
 
 ```{r}
 diet_types <- c("fish-dominant", "plant-dominant")
-fcr_types <- c("efficient", "regular")
+fcr_types <- c("regular")
 allocation_types <- c("mass", "ge", "economic")
 
 
@@ -337,11 +336,8 @@ Now we need to stack and sum the rasters saved in the previous chunks to get mar
 ```{r}
 # establish scenarios
 diet_types <- c("fish-dominant", "plant-dominant")
-diet_types <- c("fish-dominant")
-fcr_types <- c("regular", "efficient")
-fcr_types <- c("efficient")
+fcr_types <- c("regular")
 allocation_types <- c("economic", "mass", "ge")
-allocation_types <- c("mass", "ge")
 calc_types <- c("mean_prop", "sd_prop", "nspp", "mean_ext_risk")
 
 for(diet in diet_types){
@@ -445,7 +441,7 @@ stopCluster(cl)
 ```{r}
 
 diet_types <- c("fish-dominant", "plant-dominant")
-fcr_types <- c("regular", "efficient")
+fcr_types <- c("regular")
 allocation_types <- c("economic", "mass", "ge")
 taxa_types <- c("Reptiles", "Amphibians", "Terrestrial mammal", "Bird")
 
@@ -820,7 +816,7 @@ qsave(delta_df, glue(file.path(impact_maps_dir, "csvs/impact_maps_by_taxon_acros
 ```{r}
 
 diet_types <- c("fish-dominant", "plant-dominant")
-fcr_types <- c("regular", "efficient")
+fcr_types <- c("regular")
 allocation_types <- c("economic", "mass", "ge")
 raw_materials <- c("Maize", "Pulses", "Soybean", "Wheat", "CropsNES", "Rapeseed", "Sunflower")
 
@@ -1061,18 +1057,19 @@ stopCluster(cl)
 
 ```
 
+Combine and save marine and terrestrial impacts together
 
 Rasterize and save the file into the output folder since terra won't work in parallel as above.
 
- -takes ~30 mins all scenarios
+ -takes ~10 mins all scenarios
 
 ```{r}
 # establish scenarios
-diet_types <- c("fish-dominant", "plant-dominant")
-fcr_types <- c("regular", "efficient")
+diet_types <- c("plant-dominant", "fish-dominant")
+fcr_types <- c("regular")
 allocation_types <- c("ge", "mass", "economic")
 calc_types <- c("mean_prop", "sd_prop", "nspp", "mean_ext_risk", "sd_ext_risk") # deleted sd ext risk.. was causing problems
-raw_materials <- c("forage fish", "trimmings fish")
+raw_materials <- c("forage fish", "trimmings fish", "Maize", "Pulses", "Soybean", "Wheat", "CropsNES", "Rapeseed", "Sunflower")
 
 for(diet in diet_types){
 for(raw_material in raw_materials){
@@ -1084,7 +1081,7 @@ for(raw_material in raw_materials){
         # fcr = "regular"
         # allocation = "economic"
         # calc_type <- "mean_prop"
-        # raw_material <- "trimmings fish"
+        # raw_material <- "CropsNES"
       
       all_files <- c(
         list.files(glue(file.path(biodiv_dir, "int/terrestrial_aggregation/impact_maps_across_taxon_by_material/{diet}/{fcr}")), pattern = glue("{allocation}_{raw_material}_{calc_type}.qs"), full.names = TRUE), 
@@ -1116,13 +1113,13 @@ Save as .qs and delta as well
 
 allocations <- c("ge", "mass", "economic")
 calc_types <- c("nspp", "mean_prop", "sd_prop", "mean_ext_risk")
-raw_materials <- c("forage fish", "trimmings fish")
+raw_materials <- c("forage fish", "trimmings fish", "Maize", "Pulses", "Soybean", "Wheat", "CropsNES", "Rapeseed", "Sunflower")
 
 for(allocation_type in allocations){
     for(raw_material in raw_materials){
 
 # allocation_type = "ge"
-#  raw_material = "trimmings fish"
+#  raw_material = "CropsNES"
 
 global_maps_list <- list.files(file.path(impact_maps_dir, "impact_maps_across_taxon_by_material"), pattern = glue("{allocation_type}_{raw_material}"), recursive = TRUE, full.names = TRUE)
 
@@ -1139,7 +1136,7 @@ all_df <- terra::as.data.frame(stack_rast, xy = TRUE) %>%
 
 for(i in unique(all_df$calc_type)){
 
-  # i = "nspp"
+  # i = "mean_ext_risk"
 
   loop_df <- all_df %>%
     filter(calc_type == i) %>%

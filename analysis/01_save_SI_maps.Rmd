@@ -126,30 +126,6 @@ saveRDS(hab_areas, here("analysis/int/all_spp_hab_areas.rds"))
 all_overlap <- all_overlap %>%
   dplyr::select(-total_hab_area)
 
-
-spp_impacted <- all_overlap %>%
-  group_by(spp_type, diet, allocation, fcr_type) %>%
-  summarise(spp_count_impacted = n_distinct(sciname)) %>%
-  ungroup()
-
-
-aquamaps_spp <- readRDS(file.path(rdsi_dir, "biodiversity_impacts/int/spp_vuln_depth_info.rds")) %>%
-  distinct(spp_type = taxon, sciname = species)
-  
-eyres_spp <- readRDS(here("prep/03_prep_spp_habitats/data/iucn/eyres_iucn_spp.rds")) %>%
-  dplyr::select(spp_type, sciname = scientific_name) %>%
-  mutate(sciname = tolower(sciname)) %>%
-  mutate(spp_type = case_when(
-    spp_type == "mammals" ~ "Terrestrial mammal",
-    spp_type == "amphibians" ~ "Amphibians", 
-    spp_type == "reptiles" ~ "Reptiles", 
-    spp_type == "birds" ~ "Bird"
-  ))
-
-spp_assessed <- rbind(aquamaps_spp, eyres_spp) %>%
-  group_by(spp_type) %>%
-  summarise(spp_count_assessed = n_distinct(sciname)) %>%
-  ungroup()
 ```
 
 Maps!
@@ -171,7 +147,7 @@ types_df <- expand.grid(allocation_types, calc_types) %>%
   unique()
 
 diets <- c("fish-dominant", "plant-dominant")
-fcrs <- c("regular", "efficient")
+fcrs <- c("regular") # we only do regular now
 
 num_cores <- 12
 cl <- makeCluster(num_cores)
@@ -181,7 +157,7 @@ registerDoParallel(cl)
 foreach(type = types_df,
         .packages = c('stringr', 'qs', 'tidyverse', 'tools', 'strex', 'glue', 'cowplot', 'here')) %dopar% {
   
-  # type = "economic_sd_prop"
+  # type = "economic_mean_prop"
   
  filepath <- glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_ingredient/{type}.qs"))
 
@@ -234,7 +210,7 @@ quant_val = round(quantile_value, 5)
           legend.margin = margin(r = 10)) + # add a margin to legend text so it isn't cut off when saving 
   labs(fill = fill_name,
        title = glue("{diet_type}, {fcr}"),
-       caption = glue("99.9th quantile range: {quant_val} - {max_val}")) + 
+       caption = glue("99th quantile range (red areas): {quant_val} - {max_val}")) + 
      guides(color = "none")
         
       plot_list[[length(plot_list) + 1]] <- loop_plot
@@ -304,7 +280,7 @@ Global maps across ingredients per taxon
 ```{r}
 
 diets <- c("fish-dominant", "plant-dominant")
-fcrs <- c("regular", "efficient")
+fcrs <- c("regular") # only include regular now
 allocations <- c("economic", "ge", "mass")
 taxon <- unique(all_overlap$spp_type)
 calc_types <- c("mean_prop", "mean_ext_risk", "sd_prop", "nspp")
@@ -374,7 +350,7 @@ quant_val = round(quantile_value, 5)
           legend.margin = margin(r = 10)) + # add a margin to legend text so it isn't cut off when saving 
   labs(fill = fill_name,
        title = glue("{diet_type}, {fcr}"), 
-        caption = glue("99.9th quantile range: {quant_val} - {max_val}")) + 
+        caption = glue("99th quantile range (red areas): {quant_val} - {max_val}")) + 
      guides(color = "none") 
         
       plot_list[[length(plot_list) + 1]] <- loop_plot
@@ -482,7 +458,7 @@ if(str_detect(type, "mean")){
     for(fcr in fcrs){
 
       # diet_type = "plant-dominant"
-      # fcr = "efficient"
+      # fcr = "regular"
       
   loop_loop_df <- loop_df %>%
     filter(diet == diet_type, 
@@ -515,7 +491,7 @@ quant_val = round(quantile_value, 5)
           legend.margin = margin(r = 10)) + # add a margin to legend text so it isn't cut off when saving 
   labs(fill = fill_name,
        title = glue("{diet_type}, {fcr}"),
-       caption = glue("99.9th quantile range: {quant_val} - {max_val}")) + 
+       caption = glue("99th quantile range: {quant_val} - {max_val}")) + 
      guides(color = "none")
         
       plot_list[[length(plot_list) + 1]] <- loop_plot
@@ -590,7 +566,7 @@ Across taxa and materials
 
 allocation_types <- c("mass", "economic", "ge")  
 diets <- c("fish-dominant", "plant-dominant")
-fcrs <- c("regular", "efficient")
+fcrs <- c("regular")
 
 num_cores <- 3
 cl <- makeCluster(num_cores)
@@ -671,7 +647,7 @@ By taxa across materials
 
 ```{r}
 diets <- c("fish-dominant", "plant-dominant")
-fcrs <- c("regular", "efficient")
+fcrs <- c("regular")
 allocations <- c("economic", "ge", "mass")
 taxon <- unique(all_overlap$spp_type)
 
