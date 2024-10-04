@@ -412,7 +412,7 @@ legend_pattern <-  get_legend(ggplot() + geom_col_pattern(plot_df_new,
 
 p <- ggdraw() + draw_plot(iucn_plot) + draw_plot(legend_iucn, x = 0.1, y = 0.005, width = 0.5, height = 0.15) + draw_plot(legend_pattern, x = 0.6, y = 0.005, width = 0.5, height = 0.118)
 
-ggsave(here("analysis/MS_plots/fig4_iucn_plot_no_props.png"), units = "mm", width = 180, height = 180)
+ggsave(here("analysis/SI_plots/SI_iucn_plot_no_props.png"), units = "mm", width = 180, height = 180)
 
 ## ok, now we will add the proportions created above in post processing, using inkscape; https://inkscape.org/
 
@@ -501,7 +501,7 @@ legend_pattern <-  get_legend(ggplot() + geom_col_pattern(plot_df_new,
 
 p <- ggdraw() + draw_plot(iucn_plot) + draw_plot(legend_iucn, x = 0.1, y = 0.005, width = 0.5, height = 0.15) + draw_plot(legend_pattern, x = 0.6, y = 0.005, width = 0.5, height = 0.118)
 
-ggsave(here("analysis/SI_plots/SIfig_iucn_plot_zeros.png"), units = "mm", width = 180, height = 180)
+ggsave(here("analysis/SI_plots/SI_iucn_plot_zeros.png"), units = "mm", width = 180, height = 180)
 
 
 ```
@@ -512,13 +512,13 @@ test <- plot_df %>% group_by(diet, category) %>% summarise(nspp = sum(n_spp)) %>
 test2 <- plot_df %>% group_by(diet, category, taxon_plot) %>% summarise(nspp = sum(n_spp)) %>% ungroup() %>% filter(diet == "plant-dominant") %>% filter(category %in% c("NE", "DD"))
 
 sum(test2$nspp) # 17763
-17763/54622 # 0.3251986
+17640/54628 # 0.3229113
 
 test2 %>%
   filter(!(taxon_plot %in% c("Amphibians", "Birds", "Terrestrial mammals", "Reptiles"))) %>%
   pull(nspp) %>%
   sum()
-14718/17763 # 0.8285763
+14488/17763 # 0.815628
 
 test3 <- plot_df  %>%
   group_by(taxon_plot, diet, impact_category) %>%

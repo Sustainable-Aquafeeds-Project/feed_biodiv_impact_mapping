@@ -89,8 +89,8 @@ iucn_pal <- c("NE" = "#808080",
 ```
 
 Explore the cell with the highest impacts:
- - in Norway, plant-dominant 22% average habitat area impacted
- - in Norway, fish-dominant 11% average habitat area impacted
+ - in Norway, plant-dominant 11% average habitat area impacted
+ - in Norway, fish-dominant 9% average habitat area impacted
  
 ```{r}
 # read in file with country ids associated to cells, so that we can know which country impacts are in
@@ -112,13 +112,11 @@ max_scen <- all_df %>%
   ungroup()
 
 ## here are the max impacts in a cell for each scenario
-# A tibble: 4 × 3
-#   diet           fcr_type  max_val
-#   <chr>          <chr>       <dbl>
-# 1 fish-dominant  efficient  0.0958
-# 2 fish-dominant  regular    0.106 
-# 3 plant-dominant efficient  0.201 
-# 4 plant-dominant regular    0.224 
+# # A tibble: 2 × 3
+#   diet           fcr_type max_val
+#   <chr>          <chr>      <dbl>
+# 1 fish-dominant  regular   0.106 
+# 2 plant-dominant regular   0.0925
 
 ## filter dataset for cells with >0.09 to determine where these cells are
 max_cell <- all_df %>%
@@ -140,7 +138,7 @@ maximum_location <- all_df %>%
 # All max values in each scenario are in the same cell, on land, in Norway: cell_id = 786772
 # side note - the maximum ocean cells are also in Norway
 # another side note all the cells with impacts >0.09 are in Norway. 
-# another side note; Norway has highest impacts all the way til 0.05, then rgn_id = 209 shows up with an ocean cell having an impact of 0.05; this is China; next highest on land is 0.049 in Chile
+# another side note; Norway has highest impacts all the way til 0.03307191, then rgn_id = 224 shows up with an land cell having an impact of 0.03307191; this is Finland
 
 ## how many spp impacted in that cell? 
  filepath <- glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_ingredient/economic_nspp.qs"))
@@ -173,11 +171,11 @@ What species are impacted in largest impact cells:
  - I've done this separately for marine and terrestrial, and chunked into each scenario, just incase they get too large and unwieldy.
  - additionally, I've only filtered for these countries, to cut down on the size of the data: "NOR", "CAN", "ARG", "CHL", "AUS"
  
- - Only really needs to be run once
+ - ONLY NEEDS TO BE RUN ONE TIME 
  
 ```{r}
 
-large_impact_cells <- readRDS(here("analysis/int/large_impact_cells.rds")) # ok... might need to filter for cells in specific countries... e.g., NOR, CHL, BRA, UK, CAN to cut down on computational load needed to save this information if this doesnt work, then will need to save country by country.. or only >99 impacts
+large_impact_cells <- readRDS(here("analysis/int/large_impact_cells.rds")) 
 
 ## lets only do this for regular and economic scenarios
 diet_types <- c("fish-dominant", "plant-dominant")
@@ -225,7 +223,7 @@ max_cell_impacts_fin <- max_cell_impacts %>%
          allocation = allocation, 
          fcr = fcr)
 
-qsave(max_cell_impacts_fin, glue(here("analysis/int/chunked/large_cell_impacts_terrestrial_{diet}_{fcr}_{allocation}.qs"))) # save as qs file to save space
+qsave(max_cell_impacts_fin, glue(here("analysis/int/large_cell_impacts_terrestrial_{diet}_{fcr}_{allocation}.qs"))) # save as qs file to save space
 
 
     }
@@ -239,7 +237,7 @@ qsave(max_cell_impacts_fin, glue(here("analysis/int/chunked/large_cell_impacts_t
 Need to do the same thing for marine impacts. I am chunking this just in case the data gets too large and unwieldy. 
 
 ```{r}
-diet_types <- c("fish-dominant", "plant-dominant")
+diet_types <- c("plant-dominant")
 fcr_types <- c("regular")
 allocation_types <- c("economic")
 
@@ -248,9 +246,9 @@ for(diet in diet_types){
   for(fcr in fcr_types){
     for(allocation in allocation_types){
       
-      diet = "fish-dominant"
-      fcr = "regular"
-      allocation = "economic"
+      # diet = "fish-dominant"
+      # fcr = "regular"
+      # allocation = "economic"
       
 max_impact_df <- data.frame(species_full = NA, cell_id = NA, cropland_suitability = NA, spp_type = NA, filepath = NA,
                             species_id = NA, harvest = NA, hab_area = NA, impact_km2 = NA, source_file = NA,
@@ -271,7 +269,7 @@ for(chunk_id in 1:13){
          allocation = allocation, 
          fcr = fcr)
 
-        qsave(impacts_chunk, glue(here("analysis/int/large_cell_impacts_marine_{diet}_{fcr}_{allocation}_chunk_{chunk_id}.qs")))
+        qsave(impacts_chunk, glue(here("analysis/int/chunked/large_cell_impacts_marine_{diet}_{fcr}_{allocation}_chunk_{chunk_id}.qs")))
 
 
       }
@@ -280,7 +278,7 @@ for(chunk_id in 1:13){
   }
 } 
 
-## seems that the chunking was unnecessary
+## seems that the chunking may have been unnecessary
 
 
 fd_impacts_list <- list.files(here("analysis/int/chunked/"), full.names = TRUE, pattern = "large_cell_impacts_marine_fish-dominant")
@@ -360,9 +358,9 @@ max_impact_iso3c_marine <- max_impact_df_marine_pd %>%
 unique(max_impact_iso3c_marine$raw_material) # [1] "Forage fish"    "Trimmings fish"
 
 unique(max_impact_iso3c_terr$iso3c) # [1] "CAN" "NOR" "AUS" "ARG" "CHL" ok cool 
-unique(max_impact_iso3c_marine$iso3c) # [1] "NOR" "AUS" "CHL" "ARG" "CAN" I wonder if it would be worth it to get all big impacts for marine since there arent as many? 
+unique(max_impact_iso3c_marine$iso3c) # [1] "NOR" "AUS" "CHL" "ARG" "CAN" 
 
-q95 <- 0.00005381789 # taken from the publication mapping script
+q95 <- 0.00006466858 # taken from the publication mapping script
 
 ```
 
@@ -436,7 +434,7 @@ iucn <- summary %>%
   filter(cell_id %in% unique(summary_fin$cell_id)) %>%
   filter(!(category %in% c("NE", "DD", "LC")))
 
-perc_threatened_impacts <- round((sum(iucn$impact_km2)/sum(summary_iucn$impact_km2))*100,1) # 6.7% of impacts shown are on threatened species? 
+perc_threatened_impacts <- round((sum(iucn$impact_km2)/sum(summary_iucn$impact_km2))*100,1) # 6.6% of impacts shown are on threatened species? 
 
 
 limits <- summary_fin %>%
@@ -642,19 +640,34 @@ ggsave(here("analysis/MS_plots/fig5_base_map.png"), plot = map_plot, dpi = 300, 
 
 test <- iucn_plot_df %>% 
   filter(max_iucn_rank == 1)
-210/389 # 0.539845at of cells are not threatened
+193/346 # 0.5578035 of cells are not threatened
 test <- iucn_plot_df %>% 
   filter(max_iucn_rank == 2, prop_at_risk_impacted == 1)
-8/389
+8/346
 
 summary_distinct <- distinct(summary, cell_id, avg_impact)
 
-sum(summary_distinct$avg_impact) # 2.790663
+sum(summary_distinct$avg_impact) # 1.720966
 
-sum(summary_distinct$avg_impact)/9.62481139705 # 0.2899447 - this hotspot represents nearly 30% of all aquafeed impacts in Chile's land area and EEZ. 
+chl_marine <- max_impact_iso3c_marine %>%
+  filter(iso3c == "CHL", diet == "plant-dominant")
+sum(chl_marine$impact_km2) # 548.1677
 
-389*100 # 38900 km2; Chile land and eez area is 2743128 km2 (wikipedia)
-# 38900/2743128
+chl_terr <- max_impact_iso3c_terr %>%
+  filter(iso3c == "CHL", diet == "plant-dominant")
+sum(chl_terr$impact_km2) # 5225.716
+
+max_impact <- max_impact_iso3c_terr %>%
+  filter(iso3c == "CHL") %>% # lets check out Chile
+  rbind(max_impact_iso3c_marine %>% filter(iso3c == "CHL")) %>%
+  filter(y > -4250000) %>%
+  filter(y < -3900000) %>%
+  filter(x< -6000000) 
+
+sum(max_impact$impact_km2)/(sum(chl_terr$impact_km2) + sum(chl_marine$impact_km2)) # 0.4014775 - this hotspot represents 40% of all aquafeed impacts in Chile's land area and EEZ. 
+
+346*100 # 34600 km2; Chile land and eez area is 2743128 km2 (wikipedia)
+# 34600/2743128
 
 
 raw_mat_totals <- raw_mat_summary %>%
@@ -662,58 +675,25 @@ raw_mat_totals <- raw_mat_summary %>%
   summarise(n_cells = n()) %>%
   ungroup()
 
-174/389 # 0.4473008 of the cells are dominated by rapeseed impacts
-
-rapeseed_imps <-  summary %>%
-  group_by(x, y, cell_id) %>%
-  filter(prop_raw_material_impact == max(prop_raw_material_impact)) %>%
-  filter(raw_material == "Rapeseed")
-
-length(unique(rapeseed_imps$cell_id)) # 174
-sum(rapeseed_imps$impact_km2)/sum(summary$impact_km2) # 0.4422649 rapeseed represents 44% of impacts total
-sum(rapeseed_imps$avg_impact)/sum(summary$avg_impact) # 0.1609909
-
+145/346 # 0.4473008 of the cells are dominated by rapeseed impacts
 
 test <- iucn_plot_df %>% 
   filter(max_iucn_rank == 2) %>%
   left_join(raw_mat_summary) %>%
   filter(dom_raw_material == "Forage fish")
 
-mean(test$prop_at_risk_impacted, na.rm = TRUE) # 0.07497449 forage fish - of the forage fish cells, only ~7.5% of species in the cells are at-risk
+mean(test$prop_at_risk_impacted, na.rm = TRUE) # 0.06974141 forage fish - of the forage fish cells, only ~6.9% of species in the cells are at-risk
 
 test <- iucn_plot_df %>% 
-  filter(max_iucn_rank == 2) %>%
-  left_join(raw_mat_summary) %>%
-  group_by(dom_raw_material) %>%
-  summarise(prop_mean = mean(prop_at_risk_impacted,na.rm = TRUE)) %>%
-  ungroup()
+  filter(max_iucn_rank == 2) 
 
-
-# # A tibble: 5 × 2
-#   dom_raw_material prop_mean
-#   <chr>                <dbl>
-# 1 Cropsnes            0.104 
-# 2 Forage fish         0.0750
-# 3 Pulses              0.529 
-# 4 Rapeseed            0.250 
-# 5 Wheat               0.169
 
 test <- iucn_plot_df %>% 
   filter(max_iucn_rank == 2) %>%
   left_join(raw_mat_summary) %>%
   group_by(dom_raw_material) %>%
   summarise(n()) %>%
-  mutate(prop = `n()`/179)
-
-# # A tibble: 5 × 3
-#   dom_raw_material `n()`   prop
-#   <chr>            <int>  <dbl>
-# 1 Cropsnes            33 0.184 
-# 2 Forage fish         76 0.425 
-# 3 Pulses               2 0.0112
-# 4 Rapeseed            61 0.341 
-# 5 Wheat                7 0.0391
-
+  mutate(prop = `n()`/153)
 
 ```
 
@@ -775,10 +755,6 @@ nor_summary_fin <- max_impact_nor %>%
   ))
 
 
-
-# perc_threatened_impacts <- round((sum(nor_iucn$impact_km2)/sum(nor_summary_iucn$impact_km2))*100,1) # 1.8%
-
-
 nor_limits <- nor_summary_fin %>%
   dplyr::select(x, y, prop_impact_mean) %>%
   rast(., crs = moll_template)
@@ -804,7 +780,7 @@ ggplot() +
         text=element_text(family="Arial"),
               #  legend.text = element_text(angle = 90, hjust = 1),  # Tilt legend labels
 panel.border = element_rect(colour = "grey69", fill=NA, size=3, linetype = "longdash")) +
-  scale_fill_manual(values = pal_mats, labels = c("Forage\nfish", "Other\ncrops", "Pulses", "Rapeseed", "Wheat")) + 
+  scale_fill_manual(values = pal_mats, labels = c("Forage\nfish", "Other\ncrops", "Pulses", "Wheat")) + 
     labs(fill = "Highest impact raw material", 
          x = "", y = "",
                   tag = bquote(bold("B"))) +
@@ -951,28 +927,28 @@ map_plot <- ggplot() +
    )
 
 
-scale_arrow_plot <- ggplot() +
-     geom_sf(data = country_sf, fill = NA, colour = NA) +
-   theme_void() +
-   ggspatial::annotation_north_arrow(
-      location = "br",
-      which_north = "false",
-      style = ggspatial::north_arrow_nautical(
-         fill = c("grey40", "white"),
-         line_col = "grey20",
-         text_family = "sans"
-      )
-   )  +
-  ggspatial::annotation_scale(
-      location = "bl",
-      bar_cols = c("grey60", "white"),
-      text_family = "sans",
-      width_hint = 0.5,  # Adjust the width of the scale bar
-      pad_y = unit("0.7", "cm")
-   ) 
-
-
-ggsave(here("analysis/SI_plots/NOR_scale.png"), plot = scale_arrow_plot, dpi = 300, bg = "white", height = 16, width = 16, units = "cm")
+# scale_arrow_plot <- ggplot() +
+#      geom_sf(data = country_sf, fill = NA, colour = NA) +
+#    theme_void() +
+#    ggspatial::annotation_north_arrow(
+#       location = "br",
+#       which_north = "false",
+#       style = ggspatial::north_arrow_nautical(
+#          fill = c("grey40", "white"),
+#          line_col = "grey20",
+#          text_family = "sans"
+#       )
+#    )  +
+#   ggspatial::annotation_scale(
+#       location = "bl",
+#       bar_cols = c("grey60", "white"),
+#       text_family = "sans",
+#       width_hint = 0.5,  # Adjust the width of the scale bar
+#       pad_y = unit("0.7", "cm")
+#    ) 
+# 
+# 
+# ggsave(here("analysis/SI_plots/NOR_scale.png"), plot = scale_arrow_plot, dpi = 300, bg = "white", height = 16, width = 16, units = "cm")
 
 ggsave(here("analysis/SI_plots/NOR_basemap.png"), plot = map_plot, dpi = 300, bg = "white", height = 16, width = 16, units = "cm")
 

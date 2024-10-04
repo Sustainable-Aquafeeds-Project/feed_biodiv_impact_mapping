@@ -17,7 +17,7 @@
 "abietinaria filicula","Cnidaria","NE",16
 "abietinaria pulchra","Cnidaria","NE",17
 "abietinella operculata","Cnidaria","NE",18
-"ablabys taenianotus","Finfish","NE",19
+"ablabys taenianotus","Finfish","LC",19
 "ablennes hians","Finfish","LC",20
 "ablepharus bivittatus","Reptiles","LC",21
 "ablepharus budaki","Reptiles","LC",22
@@ -52,7 +52,7 @@
 "abrocoma shistacea","Terrestrial mammals","LC",51
 "abrocoma uspallata","Terrestrial mammals","DD",52
 "abrocoma vaccarum","Terrestrial mammals","DD",53
-"abronia anzuetoi","Reptiles","VU",54
+"abronia anzuetoi","Reptiles","CR",54
 "abronia aurita","Reptiles","EN",55
 "abronia bogerti","Reptiles","DD",56
 "abronia campbelli","Reptiles","CR",57
@@ -200,7 +200,7 @@
 "acanthocardia spinosa","Molluscs","NE",199
 "acanthocardia tuberculata","Molluscs","NE",200
 "acanthocarpus alexandri","Arthropods","NE",201
-"acanthocepola abbreviata","Finfish","NE",202
+"acanthocepola abbreviata","Finfish","LC",202
 "acanthocepola krusensternii","Finfish","NE",203
 "acanthocepola limbata","Finfish","NE",204
 "acanthocercus adramitanus","Reptiles","LC",205
@@ -260,7 +260,7 @@
 "acanthodactylus robustus","Reptiles","LC",259
 "acanthodactylus savignyi","Reptiles","NT",260
 "acanthodactylus schmidti","Reptiles","LC",261
-"acanthodactylus schreiberi","Reptiles","EN",262
+"acanthodactylus schreiberi","Reptiles","LC",262
 "acanthodactylus scutellatus","Reptiles","LC",263
 "acanthodactylus senegalensis","Reptiles","LC",264
 "acanthodactylus spinicauda","Reptiles","CR",265
@@ -433,8 +433,8 @@
 "acentrogobius caninus","Finfish","LC",432
 "acentrogobius cyanomos","Finfish","LC",433
 "acentrogobius janthinopterus","Finfish","LC",434
-"acentrogobius moloanus","Finfish","NE",435
-"acentrogobius multifasciatus","Finfish","NE",436
+"acentrogobius moloanus","Finfish","LC",435
+"acentrogobius multifasciatus","Finfish","LC",436
 "acentrogobius nebulosus","Finfish","NE",437
 "acentrogobius suluensis","Finfish","NE",438
 "acentrogobius viridipunctatus","Finfish","LC",439
@@ -464,7 +464,7 @@
 "achalinus ater","Reptiles","LC",463
 "achalinus formosanus","Reptiles","LC",464
 "achalinus hainanus","Reptiles","VU",465
-"achalinus jinggangensis","Reptiles","CR",466
+"achalinus jinggangensis","Reptiles","LC",466
 "achalinus meiguensis","Reptiles","LC",467
 "achalinus niger","Reptiles","LC",468
 "achalinus rufescens","Reptiles","LC",469
@@ -631,7 +631,7 @@
 "acropora abrotanoides","Corals","LC",630
 "acropora aculeus","Corals","VU",631
 "acropora acuminata","Corals","VU",632
-"acropora akajimensis","Cnidaria","NE",633
+"acropora akajimensis","Cnidaria","DD",633
 "acropora anthocercis","Corals","VU",634
 "acropora appressa","Corals","NT",635
 "acropora arabensis","Corals","NT",636
@@ -1054,13 +1054,13 @@
 "aetideus giesbrechti","Arthropods","NE",1053
 "aetobatus flagellum","Elasmobranchs","EN",1054
 "aetobatus narinari","Elasmobranchs","EN",1055
-"aetobatus ocellatus","Elasmobranchs","VU",1056
+"aetobatus ocellatus","Elasmobranchs","EN",1056
 "aetomylaeus bovinus","Elasmobranchs","CR",1057
 "aetomylaeus caeruleofasciatus","Elasmobranchs","LC",1058
 "aetomylaeus maculatus","Elasmobranchs","EN",1059
 "aetomylaeus milvus","Elasmobranchs","EN",1060
 "aetomylaeus nichofii","Elasmobranchs","VU",1061
-"aetomylaeus vespertilio","Elasmobranchs","EN",1062
+"aetomylaeus vespertilio","Elasmobranchs","CR",1062
 "afghanodon mustersi","Amphibians","NE",1063
 "aforia goniodes","Molluscs","NE",1064
 "aforia magnifica","Molluscs","NE",1065
@@ -1516,12 +1516,12 @@
 "alexandromys mujanensis","Terrestrial mammals","DD",1515
 "alexandromys oeconomus","Terrestrial mammals","LC",1516
 "alexandromys sachalinensis","Terrestrial mammals","LC",1517
-"alexteroon hypsiphonus","Amphibians","LC",1518
-"alexteroon jynx","Amphibians","CR",1519
-"alexteroon obstetricans","Amphibians","LC",1520
+"alexteroon hypsiphonus","Amphibians","NE",1518
+"alexteroon jynx","Amphibians","NE",1519
+"alexteroon obstetricans","Amphibians","NE",1520
 "algyroides fitzingeri","Reptiles","LC",1521
 "algyroides marchi","Reptiles","EN",1522
-"algyroides moreoticus","Reptiles","NT",1523
+"algyroides moreoticus","Reptiles","LC",1523
 "algyroides nigropunctatus","Reptiles","LC",1524
 "alia carinata","Molluscs","NE",1525
 "aliaporcellana pygmaea","Arthropods","NE",1526
@@ -1552,8 +1552,8 @@
 "allactaga tetradactyla","Terrestrial mammals","DD",1551
 "allactodipus bobrinskii","Terrestrial mammals","LC",1552
 "allantactis parasitica","Cnidaria","NE",1553
-"allenbatrachus grunniens","Finfish","NE",1554
-"allenbatrachus reticulatus","Finfish","NE",1555
+"allenbatrachus grunniens","Finfish","LC",1554
+"allenbatrachus reticulatus","Finfish","LC",1555
 "allenia fusca","Birds","LC",1556
 "allenopithecus nigroviridis","Terrestrial mammals","LC",1557
 "alligator mississippiensis","Reptiles","LC",1558
@@ -1938,7 +1938,7 @@
 "ambassis gymnocephalus","Finfish","LC",1937
 "ambassis interrupta","Finfish","LC",1938
 "ambassis jacksoniensis","Finfish","NE",1939
-"ambassis kopsii","Finfish","NE",1940
+"ambassis kopsii","Finfish","LC",1940
 "ambassis miops","Finfish","LC",1941
 "ambassis nalua","Finfish","LC",1942
 "ambassis natalensis","Finfish","LC",1943
@@ -2119,7 +2119,7 @@
 "amietia chapini","Amphibians","LC",2118
 "amietia delalandii","Amphibians","LC",2119
 "amietia desaegeri","Amphibians","LC",2120
-"amietia dracomontana","Amphibians","LC",2121
+"amietia dracomontana","Amphibians","NE",2121
 "amietia fuscigula","Amphibians","LC",2122
 "amietia hymenopus","Amphibians","NT",2123
 "amietia inyangae","Amphibians","EN",2124
@@ -2134,7 +2134,7 @@
 "amietia wittei","Amphibians","LC",2133
 "amigdoscalpellum elegans","Arthropods","NE",2134
 "amigdoscalpellum vitreum","Arthropods","NE",2135
-"amioides polyacanthus","Finfish","NE",2136
+"amioides polyacanthus","Finfish","LC",2136
 "amissidens hainesi","Finfish","NE",2137
 "ammodillus imbellis","Terrestrial mammals","DD",2138
 "ammodorcas clarkei","Terrestrial mammals","VU",2139
@@ -2183,19 +2183,19 @@
 "ammotretis lituratus","Finfish","DD",2182
 "ammotretis rostratus","Finfish","DD",2183
 "amniataba caudavittata","Finfish","NE",2184
-"amnirana albolabris","Amphibians","LC",2185
-"amnirana amnicola","Amphibians","LC",2186
-"amnirana asperrima","Amphibians","VU",2187
-"amnirana darlingi","Amphibians","LC",2188
-"amnirana fonensis","Amphibians","DD",2189
-"amnirana galamensis","Amphibians","LC",2190
-"amnirana lemairei","Amphibians","LC",2191
-"amnirana lepus","Amphibians","LC",2192
-"amnirana longipes","Amphibians","LC",2193
-"amnirana occidentalis","Amphibians","LC",2194
-"amnirana parkeriana","Amphibians","DD",2195
+"amnirana albolabris","Amphibians","NE",2185
+"amnirana amnicola","Amphibians","NE",2186
+"amnirana asperrima","Amphibians","NE",2187
+"amnirana darlingi","Amphibians","NE",2188
+"amnirana fonensis","Amphibians","NE",2189
+"amnirana galamensis","Amphibians","NE",2190
+"amnirana lemairei","Amphibians","NE",2191
+"amnirana lepus","Amphibians","NE",2192
+"amnirana longipes","Amphibians","NE",2193
+"amnirana occidentalis","Amphibians","NE",2194
+"amnirana parkeriana","Amphibians","NE",2195
 "amolops albispinus","Amphibians","VU",2196
-"amolops aniqiaoensis","Amphibians","VU",2197
+"amolops aniqiaoensis","Amphibians","NT",2197
 "amolops archotaphus","Amphibians","DD",2198
 "amolops assamensis","Amphibians","VU",2199
 "amolops bellulus","Amphibians","NT",2200
@@ -2468,7 +2468,7 @@
 "amphisbaena trachura","Reptiles","LC",2467
 "amphisbaena tragorrhectes","Reptiles","LC",2468
 "amphisbaena uroxena","Reptiles","EN",2469
-"amphisbaena vanzolini","Reptiles","LC",2470
+"amphisbaena vanzolini","Reptiles","NE",2470
 "amphisbaena vermicularis","Reptiles","LC",2471
 "amphisbaena xera","Reptiles","NT",2472
 "amphispiza bilineata","Birds","LC",2473
@@ -2807,9 +2807,9 @@
 "anguipecten pacificus","Molluscs","NE",2806
 "anguipecten picturatus","Molluscs","NE",2807
 "anguipecten superbus","Molluscs","NE",2808
-"anguis cephallonica","Reptiles","NT",2809
+"anguis cephallonica","Reptiles","LC",2809
 "anguis fragilis","Reptiles","LC",2810
-"anguis incomptus","Reptiles","DD",2811
+"anguis incomptus","Reptiles","NE",2811
 "angulus agilis","Molluscs","NE",2812
 "angulus merus","Molluscs","NE",2813
 "angulus texanus","Molluscs","NE",2814
@@ -3302,7 +3302,7 @@
 "anomalepis aspinosus","Reptiles","DD",3301
 "anomalepis colombia","Reptiles","DD",3302
 "anomalepis flavapices","Reptiles","DD",3303
-"anomalepis mexicanus","Reptiles","DD",3304
+"anomalepis mexicanus","Reptiles","NE",3304
 "anomalocardia brasiliana","Molluscs","NE",3305
 "anomalocardia cuneimeris","Molluscs","NE",3306
 "anomalocardia squamosa","Molluscs","NE",3307
@@ -3427,7 +3427,7 @@
 "ansonia albomaculata","Amphibians","LC",3426
 "ansonia echinata","Amphibians","VU",3427
 "ansonia endauensis","Amphibians","NT",3428
-"ansonia fuliginea","Amphibians","LC",3429
+"ansonia fuliginea","Amphibians","NT",3429
 "ansonia glandulosa","Amphibians","LC",3430
 "ansonia hanitschi","Amphibians","LC",3431
 "ansonia inthanon","Amphibians","LC",3432
@@ -3442,14 +3442,14 @@
 "ansonia minuta","Amphibians","LC",3441
 "ansonia muelleri","Amphibians","LC",3442
 "ansonia penangensis","Amphibians","LC",3443
-"ansonia platysoma","Amphibians","LC",3444
+"ansonia platysoma","Amphibians","NT",3444
 "ansonia siamensis","Amphibians","EN",3445
 "ansonia smeagol","Amphibians","VU",3446
 "ansonia spinulifer","Amphibians","LC",3447
 "ansonia teneritas","Amphibians","EN",3448
 "ansonia thinthinae","Amphibians","EN",3449
-"ansonia tiomanica","Amphibians","LC",3450
-"ansonia torrentis","Amphibians","LC",3451
+"ansonia tiomanica","Amphibians","NT",3450
+"ansonia torrentis","Amphibians","NT",3451
 "ansonia vidua","Amphibians","CR",3452
 "antaioserpens albiceps","Reptiles","LC",3453
 "antaioserpens warro","Reptiles","DD",3454
@@ -3917,7 +3917,7 @@
 "apocorophium lacustre","Arthropods","NE",3916
 "apocorophium louisianum","Arthropods","NE",3917
 "apocorophium simile","Arthropods","NE",3918
-"apocryptodon madurensis","Finfish","NE",3919
+"apocryptodon madurensis","Finfish","LC",3919
 "apodemus agrarius","Terrestrial mammals","LC",3920
 "apodemus alpicola","Terrestrial mammals","LC",3921
 "apodemus argenteus","Terrestrial mammals","LC",3922
@@ -3948,12 +3948,12 @@
 "apogon aurolineatus","Finfish","LC",3947
 "apogon binotatus","Finfish","LC",3948
 "apogon campbelli","Finfish","NE",3949
-"apogon caudicinctus","Finfish","NE",3950
-"apogon ceramensis","Finfish","NE",3951
+"apogon caudicinctus","Finfish","LC",3950
+"apogon ceramensis","Finfish","LC",3951
 "apogon coccineus","Finfish","LC",3952
 "apogon crassiceps","Finfish","LC",3953
 "apogon dammermani","Finfish","DD",3954
-"apogon dianthus","Finfish","NE",3955
+"apogon dianthus","Finfish","LC",3955
 "apogon doryssa","Finfish","LC",3956
 "apogon dovii","Finfish","LC",3957
 "apogon erythrinus","Finfish","LC",3958
@@ -3976,14 +3976,14 @@
 "apogon retrosella","Finfish","LC",3975
 "apogon robbyi","Finfish","LC",3976
 "apogon robinsi","Finfish","LC",3977
-"apogon seminigracaudus","Finfish","NE",3978
+"apogon seminigracaudus","Finfish","LC",3978
 "apogon semiornatus","Finfish","LC",3979
 "apogon susanae","Finfish","NE",3980
-"apogon talboti","Finfish","NE",3981
+"apogon talboti","Finfish","LC",3981
 "apogon townsendi","Finfish","LC",3982
 "apogon unicolor","Finfish","LC",3983
 "apogon unitaeniatus","Finfish","NE",3984
-"apogonichthyoides atripes","Finfish","NE",3985
+"apogonichthyoides atripes","Finfish","LC",3985
 "apogonichthyoides brevicaudatus","Finfish","LC",3986
 "apogonichthyoides cathetogramma","Finfish","LC",3987
 "apogonichthyoides chrysurus","Finfish","NE",3988
@@ -3993,12 +3993,12 @@
 "apogonichthyoides opercularis","Finfish","LC",3992
 "apogonichthyoides pharaonis","Finfish","LC",3993
 "apogonichthyoides pseudotaeniatus","Finfish","NE",3994
-"apogonichthyoides sialis","Finfish","NE",3995
+"apogonichthyoides sialis","Finfish","LC",3995
 "apogonichthyoides taeniatus","Finfish","LC",3996
 "apogonichthyoides timorensis","Finfish","LC",3997
-"apogonichthyoides umbratilis","Finfish","NE",3998
+"apogonichthyoides umbratilis","Finfish","LC",3998
 "apogonichthys ocellatus","Finfish","LC",3999
-"apogonichthys perdix","Finfish","NE",4000
+"apogonichthys perdix","Finfish","LC",4000
 "apogonops anomalus","Finfish","NE",4001
 "apohyale hirtipalma","Arthropods","NE",4002
 "apolemichthys arcuatus","Finfish","LC",4003
@@ -4244,7 +4244,7 @@
 "arcania undecimspinosa","Arthropods","NE",4243
 "archaeolacerta bedriagae","Reptiles","NT",4244
 "archaius tigris","Reptiles","EN",4245
-"archamia bleekeri","Finfish","NE",4246
+"archamia bleekeri","Finfish","LC",4246
 "archaster angulatus","Echinoderms","NE",4247
 "archaster typicus","Echinoderms","NE",4248
 "archboldia papuensis","Birds","LC",4249
@@ -4637,7 +4637,7 @@
 "arthroleptis kutogundua","Amphibians","CR",4636
 "arthroleptis lameerei","Amphibians","LC",4637
 "arthroleptis langeri","Amphibians","EN",4638
-"arthroleptis lonnbergi","Amphibians","DD",4639
+"arthroleptis lonnbergi","Amphibians","NE",4639
 "arthroleptis loveridgei","Amphibians","DD",4640
 "arthroleptis mossoensis","Amphibians","DD",4641
 "arthroleptis nguruensis","Amphibians","VU",4642
@@ -4828,7 +4828,7 @@
 "aspidoscelis inornata","Reptiles","LC",4827
 "aspidoscelis labialis","Reptiles","VU",4828
 "aspidoscelis laredoensis","Reptiles","LC",4829
-"aspidoscelis lineattissima","Reptiles","LC",4830
+"aspidoscelis lineattissima","Reptiles","NE",4830
 "aspidoscelis martyris","Reptiles","VU",4831
 "aspidoscelis maslini","Reptiles","LC",4832
 "aspidoscelis mexicana","Reptiles","LC",4833
@@ -4923,13 +4923,13 @@
 "asterorhombus filifer","Finfish","LC",4922
 "asterorhombus intermedius","Finfish","LC",4923
 "asteroschema sublaeve","Echinoderms","NE",4924
-"asterropteryx atripes","Finfish","NE",4925
+"asterropteryx atripes","Finfish","LC",4925
 "asterropteryx bipunctata","Finfish","LC",4926
 "asterropteryx ensifera","Finfish","LC",4927
 "asterropteryx ovata","Finfish","NE",4928
 "asterropteryx semipunctata","Finfish","LC",4929
 "asterropteryx spinosa","Finfish","LC",4930
-"asterropteryx striata","Finfish","NE",4931
+"asterropteryx striata","Finfish","LC",4931
 "asthenes anthoides","Birds","LC",4932
 "asthenes arequipae","Birds","LC",4933
 "asthenes ayacuchensis","Birds","LC",4934
@@ -5148,7 +5148,7 @@
 "atelopus cruciger","Amphibians","CR",5147
 "atelopus dimorphus","Amphibians","DD",5148
 "atelopus elegans","Amphibians","EN",5149
-"atelopus epikeisthos","Amphibians","EN",5150
+"atelopus epikeisthos","Amphibians","CR",5150
 "atelopus exiguus","Amphibians","EN",5151
 "atelopus famelicus","Amphibians","CR",5152
 "atelopus flavescens","Amphibians","LC",5153
@@ -5161,15 +5161,15 @@
 "atelopus limosus","Amphibians","CR",5160
 "atelopus loettersi","Amphibians","NT",5161
 "atelopus longibrachius","Amphibians","EN",5162
-"atelopus lozanoi","Amphibians","EN",5163
+"atelopus lozanoi","Amphibians","CR",5163
 "atelopus mandingues","Amphibians","DD",5164
-"atelopus marinkellei","Amphibians","EN",5165
+"atelopus marinkellei","Amphibians","CR",5165
 "atelopus mittermeieri","Amphibians","EN",5166
 "atelopus mucubajiensis","Amphibians","CR",5167
 "atelopus muisca","Amphibians","CR",5168
 "atelopus nahumae","Amphibians","EN",5169
 "atelopus nanay","Amphibians","CR",5170
-"atelopus nepiozomus","Amphibians","EN",5171
+"atelopus nepiozomus","Amphibians","CR",5171
 "atelopus nocturnus","Amphibians","CR",5172
 "atelopus oxapampae","Amphibians","EN",5173
 "atelopus palmatus","Amphibians","CR",5174
@@ -5217,7 +5217,7 @@
 "atherinella eriarcha","Finfish","LC",5216
 "atherinella nepenthe","Finfish","LC",5217
 "atherinomorus duodecimalis","Finfish","LC",5218
-"atherinomorus endrachtensis","Finfish","NE",5219
+"atherinomorus endrachtensis","Finfish","LC",5219
 "atherinomorus insularum","Finfish","NE",5220
 "atherinomorus lacunosus","Finfish","LC",5221
 "atherinomorus stipes","Finfish","LC",5222
@@ -5571,7 +5571,7 @@
 "austrochaperina basipalmata","Amphibians","LC",5570
 "austrochaperina blumi","Amphibians","LC",5571
 "austrochaperina brevipes","Amphibians","DD",5572
-"austrochaperina derongo","Amphibians","LC",5573
+"austrochaperina derongo","Amphibians","NE",5573
 "austrochaperina fryi","Amphibians","LC",5574
 "austrochaperina gracilipes","Amphibians","LC",5575
 "austrochaperina hooglandi","Amphibians","LC",5576
@@ -5586,7 +5586,7 @@
 "austrochaperina pluvialis","Amphibians","LC",5585
 "austrochaperina polysticta","Amphibians","DD",5586
 "austrochaperina punctata","Amphibians","DD",5587
-"austrochaperina rivularis","Amphibians","LC",5588
+"austrochaperina rivularis","Amphibians","NE",5588
 "austrochaperina robusta","Amphibians","LC",5589
 "austrochaperina rudolfarndti","Amphibians","DD",5590
 "austrochaperina septentrionalis","Amphibians","LC",5591
@@ -6025,12 +6025,12 @@
 "bathygobius curacao","Finfish","LC",6024
 "bathygobius cyclopterus","Finfish","LC",6025
 "bathygobius fuscus","Finfish","LC",6026
-"bathygobius hongkongensis","Finfish","NE",6027
+"bathygobius hongkongensis","Finfish","LC",6027
 "bathygobius laddi","Finfish","LC",6028
 "bathygobius lineatus","Finfish","VU",6029
 "bathygobius meggitti","Finfish","LC",6030
 "bathygobius mystacium","Finfish","LC",6031
-"bathygobius petrophilus","Finfish","NE",6032
+"bathygobius petrophilus","Finfish","LC",6032
 "bathygobius ramosus","Finfish","LC",6033
 "bathygobius soporator","Finfish","LC",6034
 "bathylaco nigricans","Finfish","LC",6035
@@ -6100,7 +6100,7 @@
 "bathypterois quadrifilis","Finfish","LC",6099
 "bathypterois viridensis","Finfish","LC",6100
 "bathypyura celata","Molluscs","NE",6101
-"bathyraja abyssicola","Elasmobranchs","DD",6102
+"bathyraja abyssicola","Elasmobranchs","LC",6102
 "bathyraja albomaculata","Elasmobranchs","VU",6103
 "bathyraja aleutica","Elasmobranchs","LC",6104
 "bathyraja brachyurops","Elasmobranchs","NT",6105
@@ -6187,8 +6187,8 @@
 "batrachoides gilberti","Finfish","LC",6186
 "batrachoides liberiensis","Finfish","LC",6187
 "batrachoides surinamensis","Finfish","LC",6188
-"batrachomoeus dubius","Finfish","NE",6189
-"batrachomoeus occidentalis","Finfish","NE",6190
+"batrachomoeus dubius","Finfish","LC",6189
+"batrachomoeus occidentalis","Finfish","LC",6190
 "batrachonotus fragosus","Arthropods","NE",6191
 "batrachoseps attenuatus","Amphibians","LC",6192
 "batrachoseps campi","Amphibians","NT",6193
@@ -6229,7 +6229,7 @@
 "batrachyla leptopus","Amphibians","LC",6228
 "batrachyla nibaldoi","Amphibians","LC",6229
 "batrachyla taeniata","Amphibians","LC",6230
-"batrichthys apiatus","Finfish","NE",6231
+"batrichthys apiatus","Finfish","LC",6231
 "bauerus dubiaquercus","Terrestrial mammals","NT",6232
 "bavayia geitaina","Reptiles","NT",6233
 "bavayia robusta","Reptiles","NT",6234
@@ -6475,7 +6475,7 @@
 "blennodesmus scapularis","Finfish","LC",6474
 "blennophis anguillaris","Finfish","LC",6475
 "blepsias bilobus","Finfish","NE",6476
-"blepsias cirrhosus","Finfish","NE",6477
+"blepsias cirrhosus","Finfish","LC",6477
 "blommersia angolafa","Amphibians","LC",6478
 "blommersia blommersae","Amphibians","LC",6479
 "blommersia dejongi","Amphibians","LC",6480
@@ -6516,7 +6516,7 @@
 "boana alemani","Amphibians","DD",6515
 "boana atlantica","Amphibians","LC",6516
 "boana balzani","Amphibians","LC",6517
-"boana beckeri","Amphibians","DD",6518
+"boana beckeri","Amphibians","NE",6518
 "boana bischoffi","Amphibians","LC",6519
 "boana boans","Amphibians","LC",6520
 "boana buriti","Amphibians","EN",6521
@@ -6741,7 +6741,7 @@
 "bolitoglossa decora","Amphibians","CR",6740
 "bolitoglossa diaphora","Amphibians","EN",6741
 "bolitoglossa digitigrada","Amphibians","DD",6742
-"bolitoglossa diminuta","Amphibians","LC",6743
+"bolitoglossa diminuta","Amphibians","NT",6743
 "bolitoglossa dofleini","Amphibians","NT",6744
 "bolitoglossa dunni","Amphibians","EN",6745
 "bolitoglossa engelhardti","Amphibians","EN",6746
@@ -6891,7 +6891,7 @@
 "boophis burgeri","Amphibians","DD",6890
 "boophis calcaratus","Amphibians","LC",6891
 "boophis doulioti","Amphibians","LC",6892
-"boophis elenae","Amphibians","NT",6893
+"boophis elenae","Amphibians","EN",6893
 "boophis englaenderi","Amphibians","VU",6894
 "boophis entingae","Amphibians","LC",6895
 "boophis erythrodactylus","Amphibians","LC",6896
@@ -7404,7 +7404,7 @@
 "bryaninops isis","Finfish","LC",7403
 "bryaninops loki","Finfish","LC",7404
 "bryaninops natans","Finfish","NT",7405
-"bryaninops nexus","Finfish","NE",7406
+"bryaninops nexus","Finfish","LC",7406
 "bryaninops ridens","Finfish","LC",7407
 "bryaninops tigris","Finfish","LC",7408
 "bryaninops yongei","Finfish","LC",7409
@@ -7483,7 +7483,7 @@
 "buergeria otai","Amphibians","LC",7482
 "buergeria oxycephala","Amphibians","VU",7483
 "buergeria robusta","Amphibians","LC",7484
-"bufo ailaoanus","Amphibians","EN",7485
+"bufo ailaoanus","Amphibians","NT",7485
 "bufo aspinius","Amphibians","EN",7486
 "bufo bankorensis","Amphibians","LC",7487
 "bufo bufo","Amphibians","LC",7488
@@ -7550,7 +7550,7 @@
 "bungarus flaviceps","Reptiles","LC",7549
 "bungarus lividus","Reptiles","LC",7550
 "bungarus magnimaculatus","Reptiles","LC",7551
-"bungarus multicinctus","Reptiles","LC",7552
+"bungarus multicinctus","Reptiles","VU",7552
 "bungarus niger","Reptiles","LC",7553
 "bungarus sindanus","Reptiles","LC",7554
 "bungarus slowinskii","Reptiles","VU",7555
@@ -7681,7 +7681,7 @@
 "cabillus macrophthalmus","Finfish","DD",7680
 "cabillus tongarevae","Finfish","LC",7681
 "cacajao ayresi","Terrestrial mammals","LC",7682
-"cacajao calvus","Terrestrial mammals","VU",7683
+"cacajao calvus","Terrestrial mammals","LC",7683
 "cacajao hosomi","Terrestrial mammals","VU",7684
 "cacajao melanocephalus","Terrestrial mammals","LC",7685
 "cacatua alba","Birds","EN",7686
@@ -7905,7 +7905,7 @@
 "calamaria thanhi","Reptiles","DD",7904
 "calamaria ulmeri","Reptiles","DD",7905
 "calamaria virgulata","Reptiles","LC",7906
-"calamaria yunnanensis","Reptiles","EN",7907
+"calamaria yunnanensis","Reptiles","DD",7907
 "calamodontophis paucidens","Reptiles","EN",7908
 "calamodontophis ronaldoi","Reptiles","EN",7909
 "calamonastes fasciolatus","Birds","LC",7910
@@ -8206,15 +8206,15 @@
 "callochiton septemvalvis","Molluscs","NE",8205
 "callogaza watsoni","Molluscs","NE",8206
 "callogobius bifasciatus","Finfish","LC",8207
-"callogobius centrolepis","Finfish","NE",8208
+"callogobius centrolepis","Finfish","LC",8208
 "callogobius clitellus","Finfish","LC",8209
 "callogobius depressus","Finfish","NE",8210
 "callogobius flavobrunneus","Finfish","LC",8211
 "callogobius hasseltii","Finfish","LC",8212
-"callogobius hastatus","Finfish","NE",8213
+"callogobius hastatus","Finfish","LC",8213
 "callogobius maculipinnis","Finfish","LC",8214
 "callogobius mucosus","Finfish","NE",8215
-"callogobius okinawae","Finfish","NE",8216
+"callogobius okinawae","Finfish","LC",8216
 "callogobius plumatus","Finfish","LC",8217
 "callogobius sclateri","Finfish","LC",8218
 "callogobius snelliusi","Finfish","NE",8219
@@ -8566,12 +8566,12 @@
 "candoia carinata","Reptiles","LC",8565
 "candoia paulsoni","Reptiles","LC",8566
 "canirallus oculeus","Birds","LC",8567
-"canis adustus","Terrestrial mammals","LC",8568
+"canis adustus","Terrestrial mammals","NE",8568
 "canis aureus","Terrestrial mammals","LC",8569
 "canis latrans","Terrestrial mammals","LC",8570
 "canis lupaster","Terrestrial mammals","LC",8571
 "canis lupus","Terrestrial mammals","LC",8572
-"canis mesomelas","Terrestrial mammals","LC",8573
+"canis mesomelas","Terrestrial mammals","NE",8573
 "canis rufus","Terrestrial mammals","CR",8574
 "canis simensis","Terrestrial mammals","EN",8575
 "canistrocarpus cervicornis","Marine plants","NE",8576
@@ -8731,7 +8731,7 @@
 "caracal aurata","Terrestrial mammals","VU",8730
 "caracal caracal","Terrestrial mammals","LC",8731
 "caracanthus maculatus","Finfish","LC",8732
-"caracanthus madagascariensis","Finfish","NE",8733
+"caracanthus madagascariensis","Finfish","LC",8733
 "caracanthus typicus","Finfish","NT",8734
 "caracanthus unipinna","Finfish","LC",8735
 "caracara cheriway","Birds","NE",8736
@@ -9222,35 +9222,35 @@
 "celatopesia concava","Arthropods","NE",9221
 "celebesica abbotti","Birds","LC",9222
 "celerina heffernani","Echinoderms","NE",9223
-"celestus adercus","Reptiles","DD",9224
-"celestus agasepsoides","Reptiles","EN",9225
-"celestus atitlanensis","Reptiles","DD",9226
-"celestus badius","Reptiles","LC",9227
+"celestus adercus","Reptiles","NE",9224
+"celestus agasepsoides","Reptiles","NE",9225
+"celestus atitlanensis","Reptiles","NE",9226
+"celestus badius","Reptiles","NE",9227
 "celestus barbouri","Reptiles","EN",9228
-"celestus bivittatus","Reptiles","EN",9229
-"celestus costatus","Reptiles","LC",9230
+"celestus bivittatus","Reptiles","NE",9229
+"celestus costatus","Reptiles","NE",9230
 "celestus crusculus","Reptiles","LC",9231
-"celestus curtissi","Reptiles","LC",9232
-"celestus cyanochloris","Reptiles","LC",9233
-"celestus darlingtoni","Reptiles","EN",9234
+"celestus curtissi","Reptiles","NE",9232
+"celestus cyanochloris","Reptiles","NE",9233
+"celestus darlingtoni","Reptiles","NE",9234
 "celestus duquesneyi","Reptiles","CR",9235
-"celestus enneagrammus","Reptiles","LC",9236
+"celestus enneagrammus","Reptiles","NE",9236
 "celestus fowleri","Reptiles","VU",9237
-"celestus haetianus","Reptiles","EN",9238
+"celestus haetianus","Reptiles","NE",9238
 "celestus hewardi","Reptiles","EN",9239
-"celestus hylaius","Reptiles","NT",9240
-"celestus ingridae","Reptiles","DD",9241
-"celestus legnotus","Reptiles","LC",9242
+"celestus hylaius","Reptiles","NE",9240
+"celestus ingridae","Reptiles","NE",9241
+"celestus legnotus","Reptiles","NE",9242
 "celestus macrotus","Reptiles","EN",9243
-"celestus maculatus","Reptiles","EN",9244
-"celestus marcanoi","Reptiles","LC",9245
+"celestus maculatus","Reptiles","NE",9244
+"celestus marcanoi","Reptiles","NE",9245
 "celestus molesworthi","Reptiles","EN",9246
-"celestus orobius","Reptiles","DD",9247
-"celestus rozellae","Reptiles","LC",9248
-"celestus scansorius","Reptiles","EN",9249
-"celestus sepsoides","Reptiles","LC",9250
-"celestus stenurus","Reptiles","LC",9251
-"celestus warreni","Reptiles","VU",9252
+"celestus orobius","Reptiles","NE",9247
+"celestus rozellae","Reptiles","NE",9248
+"celestus scansorius","Reptiles","NE",9249
+"celestus sepsoides","Reptiles","NE",9250
+"celestus stenurus","Reptiles","NE",9251
+"celestus warreni","Reptiles","NE",9252
 "celeus castaneus","Birds","LC",9253
 "celeus elegans","Birds","LC",9254
 "celeus flavescens","Birds","LC",9255
@@ -9352,7 +9352,7 @@
 "centrophorus uyato","Elasmobranchs","CR",9351
 "centrophorus zeehaani","Elasmobranchs","NE",9352
 "centrophryne spinulosa","Finfish","LC",9353
-"centropogon australis","Finfish","NE",9354
+"centropogon australis","Finfish","LC",9354
 "centropomus armatus","Finfish","LC",9355
 "centropomus ensiferus","Finfish","LC",9356
 "centropomus medius","Finfish","LC",9357
@@ -9491,7 +9491,7 @@
 "cephaloscyllium ventriosum","Elasmobranchs","LC",9490
 "cephalothrix rufifrons","Molluscs","NE",9491
 "cephalurus cephalus","Elasmobranchs","LC",9492
-"cepola australis","Finfish","NE",9493
+"cepola australis","Finfish","LC",9493
 "cepola haastii","Finfish","NE",9494
 "cepola macrophthalma","Finfish","LC",9495
 "cepola pauciradiata","Finfish","DD",9496
@@ -9561,7 +9561,7 @@
 "cerberilla incola","Molluscs","NE",9560
 "cerberus microlepis","Reptiles","DD",9561
 "cercamia cladara","Finfish","NE",9562
-"cercamia eremia","Finfish","NE",9563
+"cercamia eremia","Finfish","LC",9563
 "cercartetus caudatus","Terrestrial mammals","LC",9564
 "cercartetus concinnus","Terrestrial mammals","LC",9565
 "cercartetus lepidus","Terrestrial mammals","LC",9566
@@ -9772,7 +9772,7 @@
 "chaceon quinquedens","Arthropods","NE",9771
 "chacodelphys formosa","Terrestrial mammals","NT",9772
 "chacophrys pierottii","Amphibians","LC",9773
-"chaenocephalus aceratus","Finfish","NE",9774
+"chaenocephalus aceratus","Finfish","VU",9774
 "chaenodraco wilsoni","Finfish","NE",9775
 "chaenogaleus macrostoma","Elasmobranchs","VU",9776
 "chaenogobius gulosus","Finfish","NE",9777
@@ -9958,7 +9958,7 @@
 "chaetura vauxi","Birds","LC",9957
 "chalarodon madagascariensis","Reptiles","LC",9958
 "chalcides armitagei","Reptiles","NT",9959
-"chalcides bedriagai","Reptiles","NT",9960
+"chalcides bedriagai","Reptiles","LC",9960
 "chalcides bottegi","Reptiles","LC",9961
 "chalcides boulengeri","Reptiles","LC",9962
 "chalcides chalcides","Reptiles","LC",9963
@@ -9982,8 +9982,8 @@
 "chalcides pulchellus","Reptiles","LC",9981
 "chalcides ragazzii","Reptiles","LC",9982
 "chalcides sepsoides","Reptiles","LC",9983
-"chalcides sexlineatus","Reptiles","LC",9984
-"chalcides simonyi","Reptiles","EN",9985
+"chalcides sexlineatus","Reptiles","EN",9984
+"chalcides simonyi","Reptiles","DD",9985
 "chalcides sphenopsiformis","Reptiles","LC",9986
 "chalcides striatus","Reptiles","LC",9987
 "chalcides thierryi","Reptiles","LC",9988
@@ -10157,7 +10157,7 @@
 "chasmodes bosquianus","Finfish","LC",10156
 "chasmodes saburrae","Finfish","LC",10157
 "chatogekko amazonicus","Reptiles","LC",10158
-"chatrabus melanurus","Finfish","NE",10159
+"chatrabus melanurus","Finfish","LC",10159
 "chauliodoniscus armadilloides","Arthropods","NE",10160
 "chauliodus barbatus","Finfish","LC",10161
 "chauliodus danae","Finfish","LC",10162
@@ -10202,10 +10202,10 @@
 "cheilodactylus vestitus","Finfish","NE",10201
 "cheilodactylus vittatus","Finfish","NE",10202
 "cheilodactylus zonatus","Finfish","NE",10203
-"cheilodipterus alleni","Finfish","NE",10204
+"cheilodipterus alleni","Finfish","LC",10204
 "cheilodipterus arabicus","Finfish","NE",10205
 "cheilodipterus artus","Finfish","LC",10206
-"cheilodipterus intermedius","Finfish","NE",10207
+"cheilodipterus intermedius","Finfish","LC",10207
 "cheilodipterus isostigmus","Finfish","LC",10208
 "cheilodipterus lachneri","Finfish","NE",10209
 "cheilodipterus macrodon","Finfish","NE",10210
@@ -10217,7 +10217,7 @@
 "cheilopogon abei","Finfish","NE",10216
 "cheilopogon altipennis","Finfish","NE",10217
 "cheilopogon arcticeps","Finfish","NE",10218
-"cheilopogon atrisignis","Finfish","NE",10219
+"cheilopogon atrisignis","Finfish","LC",10219
 "cheilopogon cyanopterus","Finfish","LC",10220
 "cheilopogon doederleinii","Finfish","NE",10221
 "cheilopogon dorsomacula","Finfish","LC",10222
@@ -10238,7 +10238,7 @@
 "cheilopogon suttoni","Finfish","NE",10237
 "cheilopogon unicolor","Finfish","NE",10238
 "cheilopogon xenopterus","Finfish","LC",10239
-"cheiloprion labiatus","Finfish","NE",10240
+"cheiloprion labiatus","Finfish","VU",10240
 "cheilotrema saturnum","Finfish","DD",10241
 "cheimerius nufar","Finfish","DD",10242
 "cheiraster blakei","Echinoderms","NE",10243
@@ -10485,7 +10485,7 @@
 "chirolophis decoratus","Finfish","NE",10484
 "chirolophis nugator","Finfish","NE",10485
 "chirolophis snyderi","Finfish","DD",10486
-"chiromantis inexpectatus","Amphibians","LC",10487
+"chiromantis inexpectatus","Amphibians","NE",10487
 "chiromantis kelleri","Amphibians","LC",10488
 "chiromantis petersii","Amphibians","LC",10489
 "chiromantis rufescens","Amphibians","LC",10490
@@ -10843,7 +10843,7 @@
 "choromytilus meridionalis","Molluscs","NE",10842
 "choromytilus palliopunctatus","Molluscs","NE",10843
 "chriodorus atherinoides","Finfish","LC",10844
-"chriolepis semisquamata","Finfish","NE",10845
+"chriolepis semisquamata","Finfish","DD",10845
 "chriolepis vespa","Finfish","LC",10846
 "chriolepis zebra","Finfish","LC",10847
 "chrionema chlorotaenia","Finfish","NE",10848
@@ -10919,7 +10919,7 @@
 "chromis woodsi","Finfish","NE",10918
 "chromis xanthochira","Finfish","LC",10919
 "chromis xanthura","Finfish","LC",10920
-"chromis yamakawai","Finfish","NE",10921
+"chromis yamakawai","Finfish","LC",10921
 "chromodoris africana","Molluscs","NE",10922
 "chromodoris albopunctata","Molluscs","NE",10923
 "chromodoris alternata","Molluscs","NE",10924
@@ -11246,10 +11246,10 @@
 "cirrhimuraena playfairii","Finfish","LC",11245
 "cirrhipathes spiralis","Cnidaria","NE",11246
 "cirrhitichthys aprinus","Finfish","LC",11247
-"cirrhitichthys aureus","Finfish","NE",11248
-"cirrhitichthys calliurus","Finfish","NE",11249
+"cirrhitichthys aureus","Finfish","LC",11248
+"cirrhitichthys calliurus","Finfish","LC",11249
 "cirrhitichthys falco","Finfish","LC",11250
-"cirrhitichthys guichenoti","Finfish","NE",11251
+"cirrhitichthys guichenoti","Finfish","LC",11251
 "cirrhitichthys oxycephalus","Finfish","LC",11252
 "cirrhitops fasciatus","Finfish","LC",11253
 "cirrhitops hubbardi","Finfish","LC",11254
@@ -12045,7 +12045,7 @@
 "colius colius","Birds","LC",12044
 "colius leucocephalus","Birds","LC",12045
 "colius striatus","Birds","LC",12046
-"colletteichthys dussumieri","Finfish","NE",12047
+"colletteichthys dussumieri","Finfish","LC",12047
 "collichthys lucidus","Finfish","LC",12048
 "collisella digitalis","Molluscs","NE",12049
 "collocalia esculenta","Birds","LC",12050
@@ -12092,7 +12092,7 @@
 "colomastix tridentata","Arthropods","NE",12091
 "colomesus psittacus","Finfish","LC",12092
 "colonia colonus","Birds","LC",12093
-"coloptychon rhombifer","Reptiles","DD",12094
+"coloptychon rhombifer","Reptiles","NE",12094
 "colorhamphus parvirostris","Birds","LC",12095
 "colossendeis angusta","Arthropods","NE",12096
 "colossendeis arcuata","Arthropods","NE",12097
@@ -12635,24 +12635,24 @@
 "cophoscincopus simulans","Reptiles","LC",12634
 "cophotis ceylanica","Reptiles","EN",12635
 "cophotis dumbara","Reptiles","CR",12636
-"cophyla alticola","Amphibians","EN",12637
-"cophyla barbouri","Amphibians","LC",12638
+"cophyla alticola","Amphibians","NE",12637
+"cophyla barbouri","Amphibians","NE",12638
 "cophyla berara","Amphibians","EN",12639
-"cophyla grandis","Amphibians","LC",12640
-"cophyla karenae","Amphibians","CR",12641
+"cophyla grandis","Amphibians","NE",12640
+"cophyla karenae","Amphibians","NE",12641
 "cophyla maharipeo","Amphibians","CR",12642
-"cophyla mavomavo","Amphibians","EN",12643
-"cophyla milloti","Amphibians","EN",12644
+"cophyla mavomavo","Amphibians","NE",12643
+"cophyla milloti","Amphibians","NE",12644
 "cophyla noromalalae","Amphibians","EN",12645
 "cophyla occultans","Amphibians","VU",12646
-"cophyla olgae","Amphibians","EN",12647
+"cophyla olgae","Amphibians","NE",12647
 "cophyla phyllodactyla","Amphibians","LC",12648
-"cophyla pollicaris","Amphibians","LC",12649
+"cophyla pollicaris","Amphibians","NE",12649
 "cophyla puellarum","Amphibians","CR",12650
-"cophyla rava","Amphibians","EN",12651
-"cophyla tetra","Amphibians","EN",12652
-"cophyla tsaratananaensis","Amphibians","EN",12653
-"cophyla tuberifera","Amphibians","LC",12654
+"cophyla rava","Amphibians","NE",12651
+"cophyla tetra","Amphibians","NE",12652
+"cophyla tsaratananaensis","Amphibians","NE",12653
+"cophyla tuberifera","Amphibians","NE",12654
 "copidaster lymani","Echinoderms","NE",12655
 "copilia mirabilis","Arthropods","NE",12656
 "copilia quadrata","Arthropods","NE",12657
@@ -13410,7 +13410,7 @@
 "crispatotrochus rubescens","Cnidaria","NE",13409
 "crispatotrochus rugosus","Cnidaria","NE",13410
 "crispatotrochus septumdentatus","Cnidaria","NE",13411
-"cristatogobius lophius","Finfish","NE",13412
+"cristatogobius lophius","Finfish","LC",13412
 "cristiceps argyropleura","Finfish","LC",13413
 "cristiceps aurantiacus","Finfish","LC",13414
 "cristiceps australis","Finfish","LC",13415
@@ -13510,7 +13510,7 @@
 "crocidura glassi","Terrestrial mammals","NT",13509
 "crocidura gmelini","Terrestrial mammals","LC",13510
 "crocidura goliath","Terrestrial mammals","LC",13511
-"crocidura grandiceps","Terrestrial mammals","NT",13512
+"crocidura grandiceps","Terrestrial mammals","LC",13512
 "crocidura grandis","Terrestrial mammals","DD",13513
 "crocidura grassei","Terrestrial mammals","LC",13514
 "crocidura grayi","Terrestrial mammals","LC",13515
@@ -13615,7 +13615,7 @@
 "crocidura smithii","Terrestrial mammals","LC",13614
 "crocidura sokolovi","Terrestrial mammals","DD",13615
 "crocidura somalica","Terrestrial mammals","LC",13616
-"crocidura stenocephala","Terrestrial mammals","EN",13617
+"crocidura stenocephala","Terrestrial mammals","VU",13617
 "crocidura suaveolens","Terrestrial mammals","LC",13618
 "crocidura susiana","Terrestrial mammals","DD",13619
 "crocidura tanakae","Terrestrial mammals","LC",13620
@@ -13850,7 +13850,7 @@
 "cryptoblepharus yulensis","Reptiles","LC",13849
 "cryptoblepharus zoticus","Reptiles","LC",13850
 "cryptobranchus alleganiensis","Amphibians","VU",13851
-"cryptocentroides insignis","Finfish","NE",13852
+"cryptocentroides insignis","Finfish","LC",13852
 "cryptocentrus albidorsus","Finfish","LC",13853
 "cryptocentrus caeruleomaculatus","Finfish","LC",13854
 "cryptocentrus caeruleopunctatus","Finfish","LC",13855
@@ -13862,11 +13862,11 @@
 "cryptocentrus leucostictus","Finfish","LC",13861
 "cryptocentrus lutheri","Finfish","LC",13862
 "cryptocentrus maudae","Finfish","LC",13863
-"cryptocentrus nigrocellatus","Finfish","NE",13864
+"cryptocentrus nigrocellatus","Finfish","LC",13864
 "cryptocentrus octofasciatus","Finfish","NE",13865
-"cryptocentrus sericus","Finfish","NE",13866
+"cryptocentrus sericus","Finfish","LC",13866
 "cryptocentrus strigilliceps","Finfish","LC",13867
-"cryptocentrus tentaculatus","Finfish","NE",13868
+"cryptocentrus tentaculatus","Finfish","LC",13868
 "cryptochirus coralliodytes","Arthropods","NE",13869
 "cryptochiton stelleri","Molluscs","NE",13870
 "cryptochloris zyli","Terrestrial mammals","EN",13871
@@ -14029,7 +14029,7 @@
 "ctenogobiops crocineus","Finfish","LC",14028
 "ctenogobiops feroculus","Finfish","LC",14029
 "ctenogobiops maculosus","Finfish","LC",14030
-"ctenogobiops mitodes","Finfish","NE",14031
+"ctenogobiops mitodes","Finfish","LC",14031
 "ctenogobiops pomastictus","Finfish","LC",14032
 "ctenogobiops tangaroai","Finfish","LC",14033
 "ctenogobius boleosoma","Finfish","LC",14034
@@ -14156,7 +14156,7 @@
 "ctenosaura quinquecarinata","Reptiles","DD",14155
 "ctenosaura similis","Reptiles","LC",14156
 "ctenosciaena gracilicirrhus","Finfish","LC",14157
-"ctenotrypauchen chinensis","Finfish","NE",14158
+"ctenotrypauchen chinensis","Finfish","LC",14158
 "ctenotus agrestis","Reptiles","LC",14159
 "ctenotus alacer","Reptiles","LC",14160
 "ctenotus alleni","Reptiles","NT",14161
@@ -14491,7 +14491,7 @@
 "cyclemys oldhamii","Reptiles","EN",14490
 "cyclemys pulchristriata","Reptiles","EN",14491
 "cyclichthys hardenbergi","Finfish","NE",14492
-"cyclichthys orbicularis","Finfish","NE",14493
+"cyclichthys orbicularis","Finfish","LC",14493
 "cyclichthys spilostylus","Finfish","NE",14494
 "cyclina sinensis","Molluscs","NE",14495
 "cyclinella tenuis","Molluscs","NE",14496
@@ -14687,7 +14687,7 @@
 "cymatogaster aggregata","Finfish","LC",14686
 "cymatoica orientalis","Molluscs","NE",14687
 "cymbacephalus beauforti","Finfish","LC",14688
-"cymbacephalus bosschei","Finfish","NE",14689
+"cymbacephalus bosschei","Finfish","LC",14689
 "cymbacephalus nematophthalmus","Finfish","NE",14690
 "cymbacephalus staigeri","Finfish","NE",14691
 "cymbastela concentrica","Sponges","NE",14692
@@ -15426,7 +15426,7 @@
 "davidaster rubiginosus","Echinoderms","NE",15425
 "davidijordania poecilimon","Finfish","NE",15426
 "davila plana","Molluscs","NE",15427
-"deania calcea","Elasmobranchs","NT",15428
+"deania calcea","Elasmobranchs","NE",15428
 "deania hystricosa","Elasmobranchs","NE",15429
 "deania profundorum","Elasmobranchs","NT",15430
 "deania quadrispinosa","Elasmobranchs","VU",15431
@@ -16318,7 +16318,7 @@
 "diminovula punctata","Molluscs","NE",16317
 "dimya argentea","Molluscs","NE",16318
 "dimya tigrina","Molluscs","NE",16319
-"dinarolacerta mosorensis","Reptiles","VU",16320
+"dinarolacerta mosorensis","Reptiles","NT",16320
 "dinaromys bogdanovi","Terrestrial mammals","VU",16321
 "dinematichthys iluocoeteoides","Finfish","LC",16322
 "dinemellia dinemelli","Birds","LC",16323
@@ -16335,8 +16335,8 @@
 "diodon eydouxii","Finfish","LC",16334
 "diodon holocanthus","Finfish","LC",16335
 "diodon hystrix","Finfish","LC",16336
-"diodon liturosus","Finfish","NE",16337
-"diodon nicthemerus","Finfish","NE",16338
+"diodon liturosus","Finfish","LC",16337
+"diodon nicthemerus","Finfish","LC",16338
 "diodora aguayoi","Molluscs","NE",16339
 "diodora arcuata","Molluscs","NE",16340
 "diodora aspera","Molluscs","NE",16341
@@ -16478,14 +16478,14 @@
 "diplodus sargus","Finfish","LC",16477
 "diplodus vulgaris","Finfish","LC",16478
 "diplogale hosei","Terrestrial mammals","VU",16479
-"diploglossus bilobatus","Reptiles","LC",16480
+"diploglossus bilobatus","Reptiles","NE",16480
 "diploglossus delasagra","Reptiles","LC",16481
 "diploglossus fasciatus","Reptiles","LC",16482
 "diploglossus garridoi","Reptiles","NT",16483
 "diploglossus lessonae","Reptiles","LC",16484
 "diploglossus millepunctatus","Reptiles","LC",16485
 "diploglossus monotropis","Reptiles","LC",16486
-"diploglossus montisilvestris","Reptiles","DD",16487
+"diploglossus montisilvestris","Reptiles","NE",16487
 "diploglossus montisserrati","Reptiles","CR",16488
 "diploglossus nigropunctatus","Reptiles","LC",16489
 "diploglossus pleii","Reptiles","LC",16490
@@ -16638,7 +16638,7 @@
 "dipturus laevis","Elasmobranchs","LC",16637
 "dipturus leptocauda","Elasmobranchs","NE",16638
 "dipturus melanospilus","Elasmobranchs","DD",16639
-"dipturus nidarosiensis","Elasmobranchs","NT",16640
+"dipturus nidarosiensis","Elasmobranchs","EN",16640
 "dipturus olseni","Elasmobranchs","LC",16641
 "dipturus oregoni","Elasmobranchs","LC",16642
 "dipturus pullopunctatus","Elasmobranchs","LC",16643
@@ -16661,7 +16661,7 @@
 "dischidodactylus colonnelloi","Amphibians","NT",16660
 "dischidodactylus duidensis","Amphibians","NT",16661
 "dischistodus chrysopoecilus","Finfish","LC",16662
-"dischistodus fasciatus","Finfish","NE",16663
+"dischistodus fasciatus","Finfish","LC",16663
 "dischistodus melanotus","Finfish","LC",16664
 "dischistodus perspicillatus","Finfish","LC",16665
 "dischistodus prosopotaenia","Finfish","LC",16666
@@ -16932,7 +16932,7 @@
 "dremomys rufigenis","Terrestrial mammals","LC",16931
 "drepane africana","Finfish","LC",16932
 "drepane longimana","Finfish","NE",16933
-"drepane punctata","Finfish","NE",16934
+"drepane punctata","Finfish","LC",16934
 "drepanis coccinea","Birds","VU",16935
 "drepanoides anomalus","Reptiles","LC",16936
 "drepanoptila holosericea","Birds","NT",16937
@@ -16951,7 +16951,7 @@
 "drombus globiceps","Finfish","LC",16950
 "drombus halei","Finfish","LC",16951
 "drombus key","Finfish","LC",16952
-"drombus ocyurus","Finfish","NE",16953
+"drombus ocyurus","Finfish","LC",16953
 "drombus triangularis","Finfish","LC",16954
 "dromedopycnon acanthus","Arthropods","NE",16955
 "dromia erythropus","Arthropods","NE",16956
@@ -17222,7 +17222,7 @@
 "echimys chrysurus","Terrestrial mammals","LC",17221
 "echimys saturnus","Terrestrial mammals","DD",17222
 "echimys vieirai","Terrestrial mammals","DD",17223
-"echinanthera amoena","Reptiles","LC",17224
+"echinanthera amoena","Reptiles","NE",17224
 "echinanthera cephalomaculata","Reptiles","CR",17225
 "echinanthera cephalostriata","Reptiles","LC",17226
 "echinanthera cyanopleura","Reptiles","LC",17227
@@ -17551,16 +17551,16 @@
 "elanus caeruleus","Birds","LC",17550
 "elanus scriptus","Birds","NT",17551
 "elaphe anomala","Reptiles","LC",17552
-"elaphe bimaculata","Reptiles","LC",17553
+"elaphe bimaculata","Reptiles","NT",17553
 "elaphe cantoris","Reptiles","LC",17554
 "elaphe carinata","Reptiles","LC",17555
 "elaphe climacophora","Reptiles","LC",17556
-"elaphe davidi","Reptiles","DD",17557
+"elaphe davidi","Reptiles","LC",17557
 "elaphe dione","Reptiles","LC",17558
 "elaphe hodgsonii","Reptiles","LC",17559
 "elaphe moellendorffi","Reptiles","VU",17560
 "elaphe quadrivirgata","Reptiles","LC",17561
-"elaphe quatuorlineata","Reptiles","NT",17562
+"elaphe quatuorlineata","Reptiles","LC",17562
 "elaphe sauromates","Reptiles","LC",17563
 "elaphe schrenckii","Reptiles","LC",17564
 "elaphe taeniura","Reptiles","VU",17565
@@ -18158,7 +18158,7 @@
 "enneapterygius rubicauda","Finfish","LC",18157
 "enneapterygius rufopileus","Finfish","LC",18158
 "enneapterygius signicauda","Finfish","LC",18159
-"enneapterygius similis","Finfish","LC",18160
+"enneapterygius similis","Finfish","NE",18160
 "enneapterygius triserialis","Finfish","LC",18161
 "enneapterygius tutuilae","Finfish","LC",18162
 "enneapterygius unimaculatus","Finfish","LC",18163
@@ -18554,7 +18554,7 @@
 "epthianura tricolor","Birds","LC",18553
 "equetus lanceolatus","Finfish","LC",18554
 "equetus punctatus","Finfish","LC",18555
-"equulites elongatus","Finfish","NE",18556
+"equulites elongatus","Finfish","LC",18556
 "equulites leuciscus","Finfish","LC",18557
 "equulites lineolatus","Finfish","NE",18558
 "equulites moretoniensis","Finfish","NE",18559
@@ -18918,7 +18918,7 @@
 "eubalichthys mosaicus","Finfish","LC",18917
 "eubalichthys quadrispinis","Finfish","LC",18918
 "eubela limacina","Molluscs","NE",18919
-"eubleekeria jonesi","Finfish","NE",18920
+"eubleekeria jonesi","Finfish","LC",18920
 "eubleekeria splendens","Finfish","LC",18921
 "eublepharis angramainyu","Reptiles","DD",18922
 "eublepharis fuscus","Reptiles","LC",18923
@@ -19142,7 +19142,7 @@
 "eumicrotremus barbatus","Finfish","DD",19141
 "eumicrotremus derjugini","Finfish","NE",19142
 "eumicrotremus gyrinops","Finfish","NE",19143
-"eumicrotremus orbis","Finfish","NE",19144
+"eumicrotremus orbis","Finfish","LC",19144
 "eumicrotremus pacificus","Finfish","NE",19145
 "eumicrotremus phrynoides","Finfish","NE",19146
 "eumicrotremus spinosus","Finfish","NE",19147
@@ -19605,11 +19605,11 @@
 "eviota fasciola","Finfish","LC",19604
 "eviota guttata","Finfish","LC",19605
 "eviota herrei","Finfish","DD",19606
-"eviota hoesei","Finfish","NE",19607
+"eviota hoesei","Finfish","LC",19607
 "eviota indica","Finfish","NT",19608
 "eviota infulata","Finfish","LC",19609
 "eviota jewettae","Finfish","LC",19610
-"eviota karaspila","Finfish","NE",19611
+"eviota karaspila","Finfish","LC",19611
 "eviota korechika","Finfish","LC",19612
 "eviota lachdeberei","Finfish","LC",19613
 "eviota latifasciata","Finfish","LC",19614
@@ -19627,20 +19627,20 @@
 "eviota prasites","Finfish","LC",19626
 "eviota punctulata","Finfish","LC",19627
 "eviota queenslandica","Finfish","LC",19628
-"eviota randalli","Finfish","NE",19629
+"eviota randalli","Finfish","LC",19629
 "eviota saipanensis","Finfish","LC",19630
 "eviota sebreei","Finfish","LC",19631
 "eviota shimadai","Finfish","LC",19632
 "eviota sigillata","Finfish","LC",19633
 "eviota smaragdus","Finfish","LC",19634
 "eviota sparsa","Finfish","LC",19635
-"eviota spilota","Finfish","NE",19636
+"eviota spilota","Finfish","LC",19636
 "eviota storthynx","Finfish","LC",19637
-"eviota teresae","Finfish","NE",19638
+"eviota teresae","Finfish","LC",19638
 "eviota winterbottomi","Finfish","LC",19639
 "eviota zebrina","Finfish","LC",19640
 "eviota zonura","Finfish","LC",19641
-"evistias acutirostris","Finfish","NE",19642
+"evistias acutirostris","Finfish","LC",19642
 "evorthodus lyricus","Finfish","LC",19643
 "evoxymetopon taeniatus","Finfish","LC",19644
 "evynnis cardinalis","Finfish","EN",19645
@@ -19689,7 +19689,7 @@
 "exosphaeroma productatelson","Arthropods","NE",19688
 "exostoma ianthinum","Molluscs","NE",19689
 "expanathura collaris","Arthropods","NE",19690
-"exyrias akihito","Finfish","NE",19691
+"exyrias akihito","Finfish","LC",19691
 "exyrias belissimus","Finfish","LC",19692
 "exyrias puntang","Finfish","LC",19693
 "facciolella equatorialis","Finfish","LC",19694
@@ -19807,7 +19807,7 @@
 "favonigobius exquisitus","Finfish","LC",19806
 "favonigobius gymnauchen","Finfish","LC",19807
 "favonigobius lateralis","Finfish","LC",19808
-"favonigobius melanobranchus","Finfish","NT",19809
+"favonigobius melanobranchus","Finfish","LC",19809
 "favonigobius reichei","Finfish","LC",19810
 "favorinus auritulus","Molluscs","NE",19811
 "favorinus japonicus","Molluscs","NE",19812
@@ -19865,7 +19865,7 @@
 "feylinia polylepis","Reptiles","LC",19864
 "fibramia amboinensis","Finfish","NE",19865
 "fibramia lateralis","Finfish","NE",19866
-"fibramia thermalis","Finfish","NE",19867
+"fibramia thermalis","Finfish","LC",19867
 "fibularia cribellum","Echinoderms","NE",19868
 "fibularia ovulum","Echinoderms","NE",19869
 "ficedula albicilla","Birds","LC",19870
@@ -20002,7 +20002,7 @@
 "fluvicola pica","Birds","LC",20001
 "foa albimaculosa","Finfish","NE",20002
 "foa fo","Finfish","LC",20003
-"foa hyalina","Finfish","NE",20004
+"foa hyalina","Finfish","LC",20004
 "foa nivosa","Finfish","NE",20005
 "fodiator acutus","Finfish","LC",20006
 "fodiator rostratus","Finfish","LC",20007
@@ -20071,10 +20071,10 @@
 "fowlea yunnanensis","Reptiles","LC",20070
 "fowleria aurita","Finfish","LC",20071
 "fowleria flammea","Finfish","LC",20072
-"fowleria isostigma","Finfish","NE",20073
-"fowleria marmorata","Finfish","NE",20074
+"fowleria isostigma","Finfish","LC",20073
+"fowleria marmorata","Finfish","LC",20074
 "fowleria punctulata","Finfish","NE",20075
-"fowleria vaiulae","Finfish","NE",20076
+"fowleria vaiulae","Finfish","LC",20076
 "fowleria variegata","Finfish","LC",20077
 "fowlerichthys avalonis","Finfish","LC",20078
 "fowlerichthys ocellatus","Finfish","LC",20079
@@ -20248,7 +20248,7 @@
 "furnarius torridus","Birds","LC",20247
 "furtipodia petrosa","Arthropods","NE",20248
 "fusigobius duospilus","Finfish","LC",20249
-"fusigobius gracilis","Finfish","NE",20250
+"fusigobius gracilis","Finfish","LC",20250
 "fusigobius humeralis","Finfish","LC",20251
 "fusigobius inframaculatus","Finfish","LC",20252
 "fusigobius longispinus","Finfish","LC",20253
@@ -20458,12 +20458,12 @@
 "galloperdix lunulata","Birds","LC",20457
 "galloperdix spadicea","Birds","LC",20458
 "gallotia atlantica","Reptiles","LC",20459
-"gallotia bravoana","Reptiles","CR",20460
+"gallotia bravoana","Reptiles","EN",20460
 "gallotia caesaris","Reptiles","LC",20461
 "gallotia galloti","Reptiles","LC",20462
-"gallotia intermedia","Reptiles","CR",20463
-"gallotia simonyi","Reptiles","CR",20464
-"gallotia stehlini","Reptiles","LC",20465
+"gallotia intermedia","Reptiles","EN",20463
+"gallotia simonyi","Reptiles","VU",20464
+"gallotia stehlini","Reptiles","CR",20465
 "gallus gallus","Birds","LC",20466
 "gallus lafayettii","Birds","LC",20467
 "gallus sonneratii","Birds","LC",20468
@@ -20637,7 +20637,7 @@
 "gazella spekei","Terrestrial mammals","EN",20636
 "gazella subgutturosa","Terrestrial mammals","VU",20637
 "gazza achlamys","Finfish","LC",20638
-"gazza dentex","Finfish","NE",20639
+"gazza dentex","Finfish","LC",20639
 "gazza minuta","Finfish","LC",20640
 "geagras redimitus","Reptiles","DD",20641
 "gebiacantha lagonensis","Arthropods","NE",20642
@@ -21111,13 +21111,13 @@
 "gerres filamentosus","Finfish","LC",21110
 "gerres limbatus","Finfish","LC",21111
 "gerres longirostris","Finfish","LC",21112
-"gerres macracanthus","Finfish","NE",21113
+"gerres macracanthus","Finfish","LC",21113
 "gerres methueni","Finfish","NE",21114
 "gerres nigri","Finfish","LC",21115
 "gerres oblongus","Finfish","LC",21116
 "gerres oyena","Finfish","LC",21117
 "gerres setifer","Finfish","NE",21118
-"gerres shima","Finfish","NE",21119
+"gerres shima","Finfish","LC",21119
 "gerres simillimus","Finfish","LC",21120
 "gerres subfasciatus","Finfish","LC",21121
 "gerrhonotus infernalis","Reptiles","LC",21122
@@ -21223,7 +21223,7 @@
 "girella simplicidens","Finfish","LC",21222
 "girella tephraeops","Finfish","NE",21223
 "girella tricuspidata","Finfish","NE",21224
-"girella zebra","Finfish","NE",21225
+"girella zebra","Finfish","LC",21225
 "gitanopsis squamosa","Arthropods","NE",21226
 "giuris margaritacea","Finfish","NE",21227
 "gladiogobius ensifer","Finfish","LC",21228
@@ -21516,17 +21516,17 @@
 "gobionotothen marionensis","Finfish","NE",21515
 "gobiopsis angustifrons","Finfish","NE",21516
 "gobiopsis aporia","Finfish","NE",21517
-"gobiopsis arenaria","Finfish","NE",21518
-"gobiopsis bravoi","Finfish","NE",21519
+"gobiopsis arenaria","Finfish","LC",21518
+"gobiopsis bravoi","Finfish","LC",21519
 "gobiopsis exigua","Finfish","LC",21520
 "gobiopsis macrostoma","Finfish","NE",21521
-"gobiopsis malekulae","Finfish","NE",21522
+"gobiopsis malekulae","Finfish","LC",21522
 "gobiopsis quinquecincta","Finfish","LC",21523
 "gobiosoma bosc","Finfish","LC",21524
 "gobiosoma chiquita","Finfish","LC",21525
 "gobiosoma ginsburgi","Finfish","LC",21526
 "gobiosoma paradoxum","Finfish","LC",21527
-"gobiosoma seminudum","Finfish","NE",21528
+"gobiosoma seminudum","Finfish","LC",21528
 "gobius auratus","Finfish","LC",21529
 "gobius bontii","Finfish","NE",21530
 "gobius cobitis","Finfish","NE",21531
@@ -21821,7 +21821,7 @@
 "grallina cyanoleuca","Birds","LC",21820
 "graminicola bengalensis","Birds","NT",21821
 "graminicola striatus","Birds","NT",21822
-"gramma brasiliensis","Finfish","NE",21823
+"gramma brasiliensis","Finfish","LC",21823
 "gramma linki","Finfish","LC",21824
 "gramma loreto","Finfish","LC",21825
 "gramma melacara","Finfish","LC",21826
@@ -21992,10 +21992,10 @@
 "gymnangium sinuosum","Cnidaria","NE",21991
 "gymnangium speciosum","Cnidaria","NE",21992
 "gymnanthenea globigera","Echinoderms","NE",21993
-"gymnapistes marmoratus","Finfish","NE",21994
+"gymnapistes marmoratus","Finfish","LC",21994
 "gymnapogon africanus","Finfish","NE",21995
 "gymnapogon annona","Finfish","NE",21996
-"gymnapogon philippinus","Finfish","NE",21997
+"gymnapogon philippinus","Finfish","LC",21997
 "gymnapogon urospilotus","Finfish","LC",21998
 "gymnechinus epistichus","Echinoderms","NE",21999
 "gymneleotris seminuda","Finfish","NE",22000
@@ -22024,11 +22024,11 @@
 "gymnocranius audleyi","Finfish","LC",22023
 "gymnocranius elongatus","Finfish","LC",22024
 "gymnocranius euanus","Finfish","LC",22025
-"gymnocranius frenatus","Finfish","NE",22026
+"gymnocranius frenatus","Finfish","LC",22026
 "gymnocranius grandoculis","Finfish","LC",22027
 "gymnocranius griseus","Finfish","LC",22028
 "gymnocranius microdon","Finfish","LC",22029
-"gymnocranius satoi","Finfish","NE",22030
+"gymnocranius satoi","Finfish","LC",22030
 "gymnocrex plumbeiventris","Birds","LC",22031
 "gymnocrex rosenbergii","Birds","VU",22032
 "gymnocrex talaudensis","Birds","EN",22033
@@ -22483,7 +22483,7 @@
 "halophila ovalis","Marine plants","LC",22482
 "halophila spinulosa","Marine plants","LC",22483
 "halophila stipulacea","Marine plants","LC",22484
-"halophryne diemensis","Finfish","NE",22485
+"halophryne diemensis","Finfish","LC",22485
 "halopsis ocellata","Cnidaria","NE",22486
 "halopteris alternata","Cnidaria","NE",22487
 "halopteris carinata","Cnidaria","NE",22488
@@ -22673,7 +22673,7 @@
 "hebius khasiensis","Reptiles","LC",22672
 "hebius lacrima","Reptiles","DD",22673
 "hebius leucomystax","Reptiles","LC",22674
-"hebius metusia","Reptiles","EN",22675
+"hebius metusia","Reptiles","LC",22675
 "hebius miyajimae","Reptiles","VU",22676
 "hebius modestus","Reptiles","LC",22677
 "hebius monticola","Reptiles","LC",22678
@@ -22826,7 +22826,7 @@
 "helioseris cucullata","Cnidaria","CR",22825
 "heliothryx auritus","Birds","LC",22826
 "heliothryx barroti","Birds","LC",22827
-"hellenolacerta graeca","Reptiles","NT",22828
+"hellenolacerta graeca","Reptiles","LC",22828
 "hellmayrea gularis","Birds","LC",22829
 "helminthophis flavoterminatus","Reptiles","LC",22830
 "helminthophis frontalis","Reptiles","DD",22831
@@ -22914,7 +22914,7 @@
 "hemidactylus granchii","Reptiles","DD",22913
 "hemidactylus graniticolus","Reptiles","LC",22914
 "hemidactylus granti","Reptiles","NT",22915
-"hemidactylus greefii","Reptiles","NT",22916
+"hemidactylus greefii","Reptiles","NE",22916
 "hemidactylus gujaratensis","Reptiles","VU",22917
 "hemidactylus hemchandrai","Reptiles","LC",22918
 "hemidactylus homoeolepis","Reptiles","LC",22919
@@ -23015,7 +23015,7 @@
 "hemigymnus melapterus","Finfish","LC",23014
 "hemilamprops pellucidus","Arthropods","NE",23015
 "hemilepidotus gilberti","Finfish","NE",23016
-"hemilepidotus hemilepidotus","Finfish","NE",23017
+"hemilepidotus hemilepidotus","Finfish","LC",23017
 "hemilepidotus jordani","Finfish","NE",23018
 "hemilepidotus papilio","Finfish","LC",23019
 "hemilepidotus spinosus","Finfish","NE",23020
@@ -23060,7 +23060,7 @@
 "hemiphyllodactylus yunnanensis","Reptiles","LC",23059
 "hemiphyllodactylus zugi","Reptiles","DD",23060
 "hemipolygona mcgintyi","Molluscs","NE",23061
-"hemipristis elongata","Elasmobranchs","VU",23062
+"hemipristis elongata","Elasmobranchs","EN",23062
 "hemiprocne comata","Birds","LC",23063
 "hemiprocne coronata","Birds","LC",23064
 "hemiprocne longipennis","Birds","LC",23065
@@ -23197,21 +23197,21 @@
 "herpailurus yagouaroundi","Terrestrial mammals","LC",23196
 "herpele multiplicata","Amphibians","DD",23197
 "herpele squalostoma","Amphibians","LC",23198
-"herpestes auropunctatus","Terrestrial mammals","LC",23199
-"herpestes brachyurus","Terrestrial mammals","NT",23200
-"herpestes edwardsii","Terrestrial mammals","LC",23201
+"herpestes auropunctatus","Terrestrial mammals","NE",23199
+"herpestes brachyurus","Terrestrial mammals","NE",23200
+"herpestes edwardsii","Terrestrial mammals","NE",23201
 "herpestes flavescens","Terrestrial mammals","LC",23202
-"herpestes fuscus","Terrestrial mammals","LC",23203
+"herpestes fuscus","Terrestrial mammals","NE",23203
 "herpestes ichneumon","Terrestrial mammals","LC",23204
-"herpestes javanicus","Terrestrial mammals","LC",23205
-"herpestes naso","Terrestrial mammals","LC",23206
+"herpestes javanicus","Terrestrial mammals","NE",23205
+"herpestes naso","Terrestrial mammals","NE",23206
 "herpestes ochraceus","Terrestrial mammals","LC",23207
 "herpestes pulverulentus","Terrestrial mammals","LC",23208
 "herpestes sanguineus","Terrestrial mammals","LC",23209
-"herpestes semitorquatus","Terrestrial mammals","NT",23210
-"herpestes smithii","Terrestrial mammals","LC",23211
-"herpestes urva","Terrestrial mammals","LC",23212
-"herpestes vitticollis","Terrestrial mammals","LC",23213
+"herpestes semitorquatus","Terrestrial mammals","NE",23210
+"herpestes smithii","Terrestrial mammals","NE",23211
+"herpestes urva","Terrestrial mammals","NE",23212
+"herpestes vitticollis","Terrestrial mammals","NE",23213
 "herpetopoma atratum","Molluscs","NE",23214
 "herpetoreas pealii","Reptiles","DD",23215
 "herpetoreas platyceps","Reptiles","LC",23216
@@ -23414,7 +23414,7 @@
 "hexagrammos decagrammus","Finfish","LC",23413
 "hexagrammos lagocephalus","Finfish","LC",23414
 "hexagrammos octogrammus","Finfish","NE",23415
-"hexagrammos otakii","Finfish","NE",23416
+"hexagrammos otakii","Finfish","LC",23416
 "hexagrammos stelleri","Finfish","NE",23417
 "hexanchus griseus","Elasmobranchs","NT",23418
 "hexanchus nakamurai","Elasmobranchs","NT",23419
@@ -23442,7 +23442,7 @@
 "hierococcyx sparverioides","Birds","LC",23441
 "hierococcyx vagans","Birds","NT",23442
 "hierococcyx varius","Birds","LC",23443
-"hierophis cypriensis","Reptiles","EN",23444
+"hierophis cypriensis","Reptiles","NT",23444
 "hierophis gemonensis","Reptiles","LC",23445
 "hierophis viridiflavus","Reptiles","LC",23446
 "higginsia massalis","Sponges","NE",23447
@@ -23466,7 +23466,7 @@
 "himantolophus sagamius","Finfish","LC",23465
 "himantornis haematopus","Birds","LC",23466
 "himantozoum sinuosum","Molluscs","NE",23467
-"himantura leoparda","Elasmobranchs","VU",23468
+"himantura leoparda","Elasmobranchs","EN",23468
 "himantura schmardae","Elasmobranchs","NE",23469
 "himantura uarnak","Elasmobranchs","EN",23470
 "himantura undulata","Elasmobranchs","EN",23471
@@ -23852,10 +23852,10 @@
 "hoplocercus spinosus","Reptiles","LC",23851
 "hoplodactylus duvaucelii","Reptiles","NT",23852
 "hoplodoris nodulosa","Molluscs","NE",23853
-"hoplolatilus cuniculus","Finfish","NE",23854
-"hoplolatilus fronticinctus","Finfish","NE",23855
-"hoplolatilus marcosi","Finfish","NE",23856
-"hoplolatilus starcki","Finfish","NE",23857
+"hoplolatilus cuniculus","Finfish","LC",23854
+"hoplolatilus fronticinctus","Finfish","LC",23855
+"hoplolatilus marcosi","Finfish","LC",23856
+"hoplolatilus starcki","Finfish","LC",23857
 "hoplomys gymnurus","Terrestrial mammals","LC",23858
 "hoplopagrus guentherii","Finfish","LC",23859
 "hoplophryne rogersi","Amphibians","EN",23860
@@ -24422,7 +24422,7 @@
 "hyperoglyphe antarctica","Finfish","NE",24421
 "hyperoglyphe japonica","Finfish","NE",24422
 "hyperoglyphe perciformis","Finfish","LC",24423
-"hyperolius acuticeps","Amphibians","LC",24424
+"hyperolius acuticeps","Amphibians","NE",24424
 "hyperolius acutirostris","Amphibians","LC",24425
 "hyperolius ademetzi","Amphibians","EN",24426
 "hyperolius adspersus","Amphibians","LC",24427
@@ -24529,7 +24529,7 @@
 "hyperolius rhizophilus","Amphibians","DD",24528
 "hyperolius rhodesianus","Amphibians","LC",24529
 "hyperolius riggenbachi","Amphibians","LC",24530
-"hyperolius robustus","Amphibians","DD",24531
+"hyperolius robustus","Amphibians","NE",24531
 "hyperolius rubrovermiculatus","Amphibians","EN",24532
 "hyperolius ruvuensis","Amphibians","CR",24533
 "hyperolius rwandae","Amphibians","LC",24534
@@ -24588,11 +24588,11 @@
 "hypnelus ruficollis","Birds","LC",24587
 "hypnogorgia pendula","Cnidaria","NE",24588
 "hypnos monopterygius","Elasmobranchs","LC",24589
-"hypoatherina barnesi","Finfish","NE",24590
+"hypoatherina barnesi","Finfish","LC",24590
 "hypoatherina harringtonensis","Finfish","LC",24591
-"hypoatherina ovalaua","Finfish","NE",24592
-"hypoatherina temminckii","Finfish","NE",24593
-"hypoatherina tropicalis","Finfish","NE",24594
+"hypoatherina ovalaua","Finfish","LC",24592
+"hypoatherina temminckii","Finfish","LC",24593
+"hypoatherina tropicalis","Finfish","LC",24594
 "hypoatherina valenciennei","Finfish","NE",24595
 "hypocnemis cantator","Birds","LC",24596
 "hypocnemis flavescens","Birds","LC",24597
@@ -24612,7 +24612,7 @@
 "hypodistoma deerratum","Molluscs","NE",24611
 "hypodistoma mirabile","Molluscs","NE",24612
 "hypoedaleus guttatus","Birds","LC",24613
-"hypogaleus hyugaensis","Elasmobranchs","LC",24614
+"hypogaleus hyugaensis","Elasmobranchs","DD",24614
 "hypogeomys antimena","Terrestrial mammals","CR",24615
 "hypogeophis brevis","Amphibians","EN",24616
 "hypogeophis rostratus","Amphibians","LC",24617
@@ -24813,14 +24813,14 @@
 "ibacus novemdentatus","Arthropods","LC",24812
 "ibacus peronii","Arthropods","LC",24813
 "ibacus pubescens","Arthropods","DD",24814
-"iberolacerta aranica","Reptiles","EN",24815
+"iberolacerta aranica","Reptiles","NT",24815
 "iberolacerta aurelioi","Reptiles","EN",24816
 "iberolacerta bonnali","Reptiles","NT",24817
-"iberolacerta cyreni","Reptiles","EN",24818
+"iberolacerta cyreni","Reptiles","LC",24818
 "iberolacerta galani","Reptiles","NT",24819
-"iberolacerta horvathi","Reptiles","NT",24820
-"iberolacerta martinezricai","Reptiles","CR",24821
-"iberolacerta monticola","Reptiles","VU",24822
+"iberolacerta horvathi","Reptiles","LC",24820
+"iberolacerta martinezricai","Reptiles","EN",24821
+"iberolacerta monticola","Reptiles","LC",24822
 "ibidorhyncha struthersii","Birds","LC",24823
 "ibla cumingi","Arthropods","NE",24824
 "ibycter americanus","Birds","LC",24825
@@ -25164,7 +25164,7 @@
 "iniistius twistii","Finfish","LC",25163
 "inimicus caledonicus","Finfish","LC",25164
 "inimicus cuvieri","Finfish","NE",25165
-"inimicus didactylus","Finfish","NE",25166
+"inimicus didactylus","Finfish","LC",25166
 "inimicus filamentosus","Finfish","LC",25167
 "inimicus japonicus","Finfish","NE",25168
 "inimicus sinensis","Finfish","LC",25169
@@ -25455,16 +25455,16 @@
 "jaydia argyrogaster","Finfish","LC",25454
 "jaydia carinatus","Finfish","NE",25455
 "jaydia catalai","Finfish","NE",25456
-"jaydia ellioti","Finfish","NE",25457
+"jaydia ellioti","Finfish","LC",25457
 "jaydia hungi","Finfish","NE",25458
 "jaydia lineata","Finfish","LC",25459
 "jaydia melanopus","Finfish","NE",25460
-"jaydia novaeguineae","Finfish","NE",25461
-"jaydia poeciloptera","Finfish","NE",25462
+"jaydia novaeguineae","Finfish","LC",25461
+"jaydia poeciloptera","Finfish","LC",25462
 "jaydia queketti","Finfish","NE",25463
-"jaydia smithi","Finfish","NE",25464
-"jaydia striata","Finfish","NE",25465
-"jaydia striatodes","Finfish","NE",25466
+"jaydia smithi","Finfish","LC",25464
+"jaydia striata","Finfish","LC",25465
+"jaydia striatodes","Finfish","LC",25466
 "jaydia truncata","Finfish","NE",25467
 "jellyella tuberculata","Molluscs","NE",25468
 "jenkinsia lamprotaenia","Finfish","LC",25469
@@ -25539,7 +25539,7 @@
 "kali kerberti","Finfish","LC",25538
 "kali macrodon","Finfish","LC",25539
 "kali macrura","Finfish","LC",25540
-"kalophrynus baluensis","Amphibians","LC",25541
+"kalophrynus baluensis","Amphibians","NT",25541
 "kalophrynus barioensis","Amphibians","DD",25542
 "kalophrynus bunguranus","Amphibians","DD",25543
 "kalophrynus calciphilus","Amphibians","LC",25544
@@ -25549,7 +25549,7 @@
 "kalophrynus honbaensis","Amphibians","VU",25548
 "kalophrynus intermedius","Amphibians","LC",25549
 "kalophrynus minusculus","Amphibians","LC",25550
-"kalophrynus nubicola","Amphibians","LC",25551
+"kalophrynus nubicola","Amphibians","NT",25551
 "kalophrynus orangensis","Amphibians","LC",25552
 "kalophrynus palmatissimus","Amphibians","EN",25553
 "kalophrynus punctatus","Amphibians","LC",25554
@@ -25579,8 +25579,8 @@
 "kaperangus microlepis","Finfish","NE",25578
 "kappaphycus alvarezii","Marine plants","NE",25579
 "karalepis stewarti","Finfish","LC",25580
-"karalla daura","Finfish","NE",25581
-"karalla dussumieri","Finfish","NE",25582
+"karalla daura","Finfish","LC",25581
+"karalla dussumieri","Finfish","LC",25582
 "karsenia koreana","Amphibians","LC",25583
 "karsten totoyensis","Finfish","NE",25584
 "karusasaurus jordani","Reptiles","LC",25585
@@ -25593,7 +25593,7 @@
 "kassina jozani","Amphibians","EN",25592
 "kassina kuvangensis","Amphibians","LC",25593
 "kassina lamottei","Amphibians","LC",25594
-"kassina maculata","Amphibians","LC",25595
+"kassina maculata","Amphibians","NE",25595
 "kassina maculifer","Amphibians","LC",25596
 "kassina maculosa","Amphibians","LC",25597
 "kassina mertensi","Amphibians","LC",25598
@@ -25624,7 +25624,7 @@
 "kelletia kelletii","Molluscs","NE",25623
 "kellia porculus","Molluscs","NE",25624
 "kellia suborbicularis","Molluscs","NE",25625
-"kelloggella cardinalis","Finfish","NE",25626
+"kelloggella cardinalis","Finfish","LC",25626
 "kempella mikado","Arthropods","NE",25627
 "kempiella flavovirescens","Birds","LC",25628
 "kempiella griseoceps","Birds","LC",25629
@@ -25830,7 +25830,7 @@
 "lacerta bilineata","Reptiles","LC",25829
 "lacerta media","Reptiles","LC",25830
 "lacerta pamphylica","Reptiles","LC",25831
-"lacerta schreiberi","Reptiles","NT",25832
+"lacerta schreiberi","Reptiles","LC",25832
 "lacerta strigata","Reptiles","LC",25833
 "lacerta trilineata","Reptiles","LC",25834
 "lacerta viridis","Reptiles","LC",25835
@@ -25853,9 +25853,9 @@
 "lactophrys bicaudalis","Finfish","LC",25852
 "lactophrys trigonus","Finfish","LC",25853
 "lactophrys triqueter","Finfish","LC",25854
-"lactoria cornuta","Finfish","NE",25855
-"lactoria diaphana","Finfish","NE",25856
-"lactoria fornasini","Finfish","NE",25857
+"lactoria cornuta","Finfish","LC",25855
+"lactoria diaphana","Finfish","LC",25856
+"lactoria fornasini","Finfish","LC",25857
 "lacuna crassior","Molluscs","NE",25858
 "lacuna pallidula","Molluscs","NE",25859
 "lacuna vincta","Molluscs","NE",25860
@@ -26367,10 +26367,10 @@
 "lebbeus polaris","Arthropods","NE",26366
 "lebetus guilleti","Finfish","LC",26367
 "lebetus scorpioides","Finfish","LC",26368
-"lechriodus aganoposis","Amphibians","LC",26369
-"lechriodus fletcheri","Amphibians","LC",26370
-"lechriodus melanopyga","Amphibians","LC",26371
-"lechriodus platyceps","Amphibians","LC",26372
+"lechriodus aganoposis","Amphibians","NE",26369
+"lechriodus fletcheri","Amphibians","NE",26370
+"lechriodus melanopyga","Amphibians","NE",26371
+"lechriodus platyceps","Amphibians","NE",26372
 "ledella solidula","Molluscs","NE",26373
 "legatus leucophaius","Birds","LC",26374
 "leggadina forresti","Terrestrial mammals","LC",26375
@@ -26803,12 +26803,12 @@
 "leptobrachella aerea","Amphibians","LC",26802
 "leptobrachella alpina","Amphibians","NT",26803
 "leptobrachella applebyi","Amphibians","EN",26804
-"leptobrachella arayai","Amphibians","LC",26805
+"leptobrachella arayai","Amphibians","NT",26805
 "leptobrachella baluensis","Amphibians","LC",26806
 "leptobrachella bidoupensis","Amphibians","CR",26807
 "leptobrachella bijie","Amphibians","DD",26808
 "leptobrachella botsfordi","Amphibians","CR",26809
-"leptobrachella brevicrus","Amphibians","LC",26810
+"leptobrachella brevicrus","Amphibians","NT",26810
 "leptobrachella crocea","Amphibians","DD",26811
 "leptobrachella dringi","Amphibians","LC",26812
 "leptobrachella firthi","Amphibians","EN",26813
@@ -26818,13 +26818,13 @@
 "leptobrachella hamidi","Amphibians","LC",26817
 "leptobrachella heteropus","Amphibians","LC",26818
 "leptobrachella isos","Amphibians","VU",26819
-"leptobrachella itiokai","Amphibians","LC",26820
+"leptobrachella itiokai","Amphibians","NT",26820
 "leptobrachella juliandringi","Amphibians","LC",26821
 "leptobrachella kajangensis","Amphibians","LC",26822
 "leptobrachella kecil","Amphibians","CR",26823
 "leptobrachella maoershanensis","Amphibians","NT",26824
 "leptobrachella marmorata","Amphibians","EN",26825
-"leptobrachella maura","Amphibians","LC",26826
+"leptobrachella maura","Amphibians","NT",26826
 "leptobrachella melanoleuca","Amphibians","LC",26827
 "leptobrachella melica","Amphibians","EN",26828
 "leptobrachella minima","Amphibians","LC",26829
@@ -26837,7 +26837,7 @@
 "leptobrachella picta","Amphibians","LC",26836
 "leptobrachella platycephala","Amphibians","DD",26837
 "leptobrachella pluvialis","Amphibians","EN",26838
-"leptobrachella purpura","Amphibians","DD",26839
+"leptobrachella purpura","Amphibians","NE",26839
 "leptobrachella purpuraventra","Amphibians","DD",26840
 "leptobrachella sabahmontana","Amphibians","EN",26841
 "leptobrachella serasanae","Amphibians","NT",26842
@@ -26855,7 +26855,7 @@
 "leptobrachium boringii","Amphibians","EN",26854
 "leptobrachium buchardi","Amphibians","EN",26855
 "leptobrachium chapaense","Amphibians","LC",26856
-"leptobrachium gunungense","Amphibians","LC",26857
+"leptobrachium gunungense","Amphibians","NT",26857
 "leptobrachium hainanense","Amphibians","VU",26858
 "leptobrachium hasseltii","Amphibians","LC",26859
 "leptobrachium hendricksoni","Amphibians","LC",26860
@@ -27435,7 +27435,7 @@
 "lethrinus erythracanthus","Finfish","LC",27434
 "lethrinus erythropterus","Finfish","LC",27435
 "lethrinus genivittatus","Finfish","LC",27436
-"lethrinus haematopterus","Finfish","NE",27437
+"lethrinus haematopterus","Finfish","DD",27437
 "lethrinus harak","Finfish","LC",27438
 "lethrinus laticaudis","Finfish","LC",27439
 "lethrinus lentjan","Finfish","LC",27440
@@ -27690,7 +27690,7 @@
 "limnonectes grunniens","Amphibians","LC",27689
 "limnonectes gyldenstolpei","Amphibians","LC",27690
 "limnonectes hascheanus","Amphibians","LC",27691
-"limnonectes heinrichi","Amphibians","VU",27692
+"limnonectes heinrichi","Amphibians","NE",27692
 "limnonectes ibanorum","Amphibians","LC",27693
 "limnonectes ingeri","Amphibians","LC",27694
 "limnonectes isanensis","Amphibians","VU",27695
@@ -27792,7 +27792,7 @@
 "lioconcha ornata","Molluscs","NE",27791
 "liocranchia reinhardti","Molluscs","LC",27792
 "liocranium pleurostigma","Finfish","NE",27793
-"liocranium praepositum","Finfish","NE",27794
+"liocranium praepositum","Finfish","LC",27794
 "liocuna caeca","Arthropods","NE",27795
 "liocyma fluctuosa","Molluscs","NE",27796
 "liodytes alleni","Reptiles","LC",27797
@@ -28495,7 +28495,7 @@
 "liuixalus ocellatus","Amphibians","VU",28494
 "liuixalus romeri","Amphibians","EN",28495
 "liuixalus shiwandashan","Amphibians","DD",28496
-"liurana alpina","Amphibians","VU",28497
+"liurana alpina","Amphibians","NT",28497
 "liurana medogensis","Amphibians","LC",28498
 "liurana vallecula","Amphibians","DD",28499
 "liurana xizangensis","Amphibians","VU",28500
@@ -28658,14 +28658,14 @@
 "lophoceros nasutus","Birds","LC",28657
 "lophoceros pallidirostris","Birds","LC",28658
 "lophoceros semifasciatus","Birds","LC",28659
-"lophodiodon calori","Finfish","NE",28660
+"lophodiodon calori","Finfish","LC",28660
 "lophodolos acanthognathus","Finfish","LC",28661
 "lophodolos indicus","Finfish","LC",28662
 "lophogaster longirostris","Arthropods","NE",28663
 "lophogaster typicus","Arthropods","NE",28664
 "lophognathus gilberti","Reptiles","LC",28665
-"lophognathus longirostris","Reptiles","LC",28666
-"lophognathus temporalis","Reptiles","LC",28667
+"lophognathus longirostris","Reptiles","NE",28666
+"lophognathus temporalis","Reptiles","NE",28667
 "lophogobius bleekeri","Finfish","NE",28668
 "lophogobius cyprinoides","Finfish","LC",28669
 "lophoictinia isura","Birds","LC",28670
@@ -28847,8 +28847,8 @@
 "lubbockia aculeata","Arthropods","NE",28846
 "lubbockia squillimana","Arthropods","NE",28847
 "lubbockichthys multisquamatus","Finfish","LC",28848
-"lubricogobius exiguus","Finfish","NE",28849
-"lubricogobius ornatus","Finfish","NE",28850
+"lubricogobius exiguus","Finfish","LC",28849
+"lubricogobius ornatus","Finfish","LC",28850
 "lubuya ivensii","Reptiles","LC",28851
 "lucania parva","Finfish","LC",28852
 "lucapina adspersa","Molluscs","NE",28853
@@ -29136,7 +29136,7 @@
 "lycodon flavozonatus","Reptiles","LC",29135
 "lycodon futsingensis","Reptiles","LC",29136
 "lycodon gammiei","Reptiles","NT",29137
-"lycodon gongshan","Reptiles","DD",29138
+"lycodon gongshan","Reptiles","LC",29138
 "lycodon gracilis","Reptiles","DD",29139
 "lycodon hypsirhinoides","Reptiles","LC",29140
 "lycodon jara","Reptiles","LC",29141
@@ -29146,7 +29146,7 @@
 "lycodon meridionale","Reptiles","LC",29145
 "lycodon muelleri","Reptiles","LC",29146
 "lycodon multifasciatus","Reptiles","LC",29147
-"lycodon multizonatus","Reptiles","DD",29148
+"lycodon multizonatus","Reptiles","LC",29148
 "lycodon nympha","Reptiles","LC",29149
 "lycodon ophiophagus","Reptiles","LC",29150
 "lycodon orientalis","Reptiles","LC",29151
@@ -29328,7 +29328,7 @@
 "lyncornis macrotis","Birds","LC",29327
 "lyncornis temminckii","Birds","LC",29328
 "lynx canadensis","Terrestrial mammals","LC",29329
-"lynx pardinus","Terrestrial mammals","EN",29330
+"lynx pardinus","Terrestrial mammals","VU",29330
 "lynx rufus","Terrestrial mammals","LC",29331
 "lyonsia arcaeformis","Molluscs","NE",29332
 "lyonsia arenosa","Molluscs","NE",29333
@@ -29521,7 +29521,7 @@
 "macropharyngodon cyanoguttatus","Finfish","LC",29520
 "macropharyngodon geoffroy","Finfish","LC",29521
 "macropharyngodon kuiteri","Finfish","LC",29522
-"macropharyngodon marisrubri","Finfish","NE",29523
+"macropharyngodon marisrubri","Finfish","LC",29523
 "macropharyngodon meleagris","Finfish","LC",29524
 "macropharyngodon negrosensis","Finfish","LC",29525
 "macropharyngodon ornatus","Finfish","LC",29526
@@ -29689,8 +29689,8 @@
 "makaira nigricans","Finfish","VU",29688
 "makalata didelphoides","Terrestrial mammals","LC",29689
 "makalata macrura","Terrestrial mammals","LC",29690
-"malacanthus brevirostris","Finfish","NE",29691
-"malacanthus latovittatus","Finfish","NE",29692
+"malacanthus brevirostris","Finfish","LC",29691
+"malacanthus latovittatus","Finfish","LC",29692
 "malacanthus plumieri","Finfish","LC",29693
 "malacocephalus laevis","Finfish","LC",29694
 "malacocephalus occidentalis","Finfish","LC",29695
@@ -30254,7 +30254,7 @@
 "megascops barbarus","Birds","LC",30253
 "megascops choliba","Birds","LC",30254
 "megascops clarkii","Birds","LC",30255
-"megascops colombianus","Birds","NT",30256
+"megascops colombianus","Birds","NE",30256
 "megascops cooperi","Birds","LC",30257
 "megascops gilesi","Birds","VU",30258
 "megascops guatemalae","Birds","LC",30259
@@ -30301,7 +30301,7 @@
 "megophrys chuannanensis","Amphibians","NT",30300
 "megophrys damrei","Amphibians","CR",30301
 "megophrys daweimontis","Amphibians","LC",30302
-"megophrys dringi","Amphibians","LC",30303
+"megophrys dringi","Amphibians","NE",30303
 "megophrys edwardinae","Amphibians","LC",30304
 "megophrys feae","Amphibians","LC",30305
 "megophrys feii","Amphibians","NT",30306
@@ -30746,8 +30746,8 @@
 "meristogenys penrissenensis","Amphibians","EN",30745
 "meristogenys phaeomerus","Amphibians","LC",30746
 "meristogenys poecilus","Amphibians","LC",30747
-"meristogenys stenocephalus","Amphibians","LC",30748
-"meristogenys stigmachilus","Amphibians","LC",30749
+"meristogenys stenocephalus","Amphibians","NT",30748
+"meristogenys stigmachilus","Amphibians","NT",30749
 "meristogenys whiteheadi","Amphibians","LC",30750
 "merlangius merlangus","Finfish","LC",30751
 "merlia normani","Sponges","NE",30752
@@ -31536,7 +31536,7 @@
 "millardia kathleenae","Terrestrial mammals","LC",31535
 "millardia kondana","Terrestrial mammals","EN",31536
 "millardia meltada","Terrestrial mammals","LC",31537
-"millepora alcicornis","Cnidaria","VU",31538
+"millepora alcicornis","Cnidaria","EN",31538
 "millepora complanata","Cnidaria","CR",31539
 "millepora exaesa","Cnidaria","LC",31540
 "millepora intricata","Cnidaria","LC",31541
@@ -32529,12 +32529,12 @@
 "mussurana bicolor","Reptiles","LC",32528
 "mussurana montana","Reptiles","LC",32529
 "mussurana quimi","Reptiles","LC",32530
-"mustela africana","Terrestrial mammals","LC",32531
+"mustela africana","Terrestrial mammals","NE",32531
 "mustela altaica","Terrestrial mammals","NT",32532
 "mustela erminea","Terrestrial mammals","LC",32533
 "mustela eversmanii","Terrestrial mammals","LC",32534
-"mustela felipei","Terrestrial mammals","VU",32535
-"mustela frenata","Terrestrial mammals","LC",32536
+"mustela felipei","Terrestrial mammals","NE",32535
+"mustela frenata","Terrestrial mammals","NE",32536
 "mustela itatsi","Terrestrial mammals","NT",32537
 "mustela kathiah","Terrestrial mammals","LC",32538
 "mustela lutreolina","Terrestrial mammals","LC",32539
@@ -32607,7 +32607,7 @@
 "mycerobas melanozanthos","Birds","LC",32606
 "mycetophyllia aliciae","Cnidaria","LC",32607
 "mycetophyllia ferox","Cnidaria","CR",32608
-"mycetophyllia lamarckiana","Cnidaria","LC",32609
+"mycetophyllia lamarckiana","Cnidaria","NT",32609
 "mycetophyllia reesi","Cnidaria","LC",32610
 "mycteroperca acutirostris","Finfish","LC",32611
 "mycteroperca fusca","Finfish","VU",32612
@@ -32639,8 +32639,8 @@
 "mydaus marchei","Terrestrial mammals","LC",32638
 "myersiella microps","Amphibians","LC",32639
 "myersina filifer","Finfish","LC",32640
-"myersina macrostoma","Finfish","NE",32641
-"myersina nigrivirgata","Finfish","NE",32642
+"myersina macrostoma","Finfish","LC",32641
+"myersina nigrivirgata","Finfish","LC",32642
 "myersiohyla aromatica","Amphibians","VU",32643
 "myersiohyla inparquesi","Amphibians","NT",32644
 "myersiohyla liliae","Amphibians","EN",32645
@@ -32946,8 +32946,8 @@
 "myoxocephalus octodecemspinosus","Finfish","NE",32945
 "myoxocephalus polyacanthocephalus","Finfish","NE",32946
 "myoxocephalus quadricornis","Finfish","LC",32947
-"myoxocephalus scorpioides","Finfish","NE",32948
-"myoxocephalus scorpius","Finfish","NE",32949
+"myoxocephalus scorpioides","Finfish","LC",32948
+"myoxocephalus scorpius","Finfish","LC",32949
 "myoxocephalus stelleri","Finfish","NE",32950
 "myra curtimana","Arthropods","NE",32951
 "myra eudactyla","Arthropods","NE",32952
@@ -33298,7 +33298,7 @@
 "nanorana aenea","Amphibians","LC",33297
 "nanorana annandalii","Amphibians","LC",33298
 "nanorana blanfordii","Amphibians","LC",33299
-"nanorana bourreti","Amphibians","LC",33300
+"nanorana bourreti","Amphibians","NE",33300
 "nanorana conaensis","Amphibians","DD",33301
 "nanorana ercepeae","Amphibians","LC",33302
 "nanorana liebigii","Amphibians","LC",33303
@@ -33532,7 +33532,7 @@
 "nautichthys pribilovius","Finfish","NE",33531
 "nautichthys robustus","Finfish","NE",33532
 "nautilocaris saintlaurentae","Arthropods","NE",33533
-"nautilus macromphalus","Cephalopods","NE",33534
+"nautilus macromphalus","Cephalopods","DD",33534
 "nautilus pompilius","Cephalopods","NE",33535
 "navanax aenigmaticus","Molluscs","NE",33536
 "neacomys dubosti","Terrestrial mammals","LC",33537
@@ -33549,12 +33549,12 @@
 "nealotus tripes","Finfish","LC",33548
 "neamblysomus gunningi","Terrestrial mammals","EN",33549
 "neamblysomus julianae","Terrestrial mammals","CR",33550
-"neamia articycla","Finfish","NE",33551
-"neamia octospina","Finfish","NE",33552
+"neamia articycla","Finfish","LC",33551
+"neamia octospina","Finfish","LC",33552
 "nearchaster aciculosus","Echinoderms","NE",33553
 "nearchaster variabilis","Echinoderms","NE",33554
 "neastacilla marionensis","Arthropods","NE",33555
-"neatypus obliquus","Finfish","NE",33556
+"neatypus obliquus","Finfish","LC",33556
 "neaxius acanthus","Arthropods","NE",33557
 "nebrius ferrugineus","Elasmobranchs","VU",33558
 "nebulifera robusta","Reptiles","LC",33559
@@ -33571,10 +33571,10 @@
 "necrosyrtes monachus","Birds","CR",33570
 "nectamia bandanensis","Finfish","LC",33571
 "nectamia fusca","Finfish","LC",33572
-"nectamia luxuria","Finfish","NE",33573
+"nectamia luxuria","Finfish","LC",33573
 "nectamia savayensis","Finfish","LC",33574
-"nectamia similis","Finfish","NE",33575
-"nectamia viria","Finfish","NE",33576
+"nectamia similis","Finfish","LC",33575
+"nectamia viria","Finfish","LC",33576
 "nectamia zebrinus","Finfish","LC",33577
 "nectarinia bocagii","Birds","LC",33578
 "nectarinia famosa","Birds","LC",33579
@@ -33847,7 +33847,7 @@
 "neoopisthopterus tropicus","Finfish","LC",33846
 "neopagetopsis ionah","Finfish","NE",33847
 "neopanope packardii","Arthropods","NE",33848
-"neopataecus waterhousii","Finfish","NE",33849
+"neopataecus waterhousii","Finfish","LC",33849
 "neopelma aurifrons","Birds","NT",33850
 "neopelma chrysocephalum","Birds","LC",33851
 "neopelma chrysolophum","Birds","LC",33852
@@ -34160,10 +34160,10 @@
 "nettenchelys pygmaea","Finfish","LC",34159
 "netuma bilineata","Finfish","NE",34160
 "netuma proxima","Finfish","NE",34161
-"netuma thalassina","Finfish","NE",34162
+"netuma thalassina","Finfish","LC",34162
 "neurergus crocatus","Amphibians","VU",34163
 "neurergus kaiseri","Amphibians","VU",34164
-"neurergus microspilotus","Amphibians","CR",34165
+"neurergus microspilotus","Amphibians","NE",34165
 "neurergus strauchii","Amphibians","LC",34166
 "neurotrichus gibbsii","Terrestrial mammals","LC",34167
 "neusticomys ferreirai","Terrestrial mammals","DD",34168
@@ -34569,7 +34569,7 @@
 "nubeoscincus stellaris","Reptiles","DD",34568
 "nucella lapillus","Molluscs","NE",34569
 "nuchequula blochii","Finfish","NE",34570
-"nuchequula gerreoides","Finfish","NE",34571
+"nuchequula gerreoides","Finfish","LC",34571
 "nuchequula glenysae","Finfish","NE",34572
 "nuchequula nuchalis","Finfish","NE",34573
 "nucia speciosa","Arthropods","NE",34574
@@ -35001,7 +35001,7 @@
 "odontanthias katayamai","Finfish","LC",35000
 "odontanthias rhodopeplus","Finfish","NE",35001
 "odontanthias unimaculatus","Finfish","NE",35002
-"odontaspis ferox","Elasmobranchs","VU",35003
+"odontaspis ferox","Elasmobranchs","EN",35003
 "odontaspis noronhai","Elasmobranchs","LC",35004
 "odontaster benhami","Echinoderms","NE",35005
 "odontaster meridionalis","Echinoderms","NE",35006
@@ -35724,7 +35724,7 @@
 "ophioblennius steindachneri","Finfish","LC",35723
 "ophioblennius trinitatis","Finfish","LC",35724
 "ophiocamax vitrea","Echinoderms","NE",35725
-"ophiocara porocephala","Finfish","LC",35726
+"ophiocara porocephala","Finfish","NE",35726
 "ophiocentrus novaezelandiae","Echinoderms","NE",35727
 "ophiocentrus putnami","Echinoderms","NE",35728
 "ophiochaeta hirsuta","Echinoderms","NE",35729
@@ -35989,14 +35989,14 @@
 "opisthotropis lateralis","Reptiles","LC",35988
 "opisthotropis latouchii","Reptiles","LC",35989
 "opisthotropis maculosa","Reptiles","DD",35990
-"opisthotropis maxwelli","Reptiles","DD",35991
+"opisthotropis maxwelli","Reptiles","LC",35991
 "opisthotropis rugosa","Reptiles","LC",35992
 "opisthotropis spenceri","Reptiles","DD",35993
 "opisthotropis tamdaoensis","Reptiles","DD",35994
 "opisthotropis typica","Reptiles","LC",35995
 "opistognathus aurifrons","Finfish","LC",35996
-"opistognathus castelnaui","Finfish","NE",35997
-"opistognathus darwiniensis","Finfish","NE",35998
+"opistognathus castelnaui","Finfish","LC",35997
+"opistognathus darwiniensis","Finfish","LC",35998
 "opistognathus dendriticus","Finfish","NE",35999
 "opistognathus fossoris","Finfish","LC",36000
 "opistognathus latitabundus","Finfish","NE",36001
@@ -36006,13 +36006,13 @@
 "opistognathus muscatensis","Finfish","LC",36005
 "opistognathus nigromarginatus","Finfish","LC",36006
 "opistognathus papuensis","Finfish","NE",36007
-"opistognathus randalli","Finfish","NE",36008
+"opistognathus randalli","Finfish","LC",36008
 "opistognathus rosenbergii","Finfish","NE",36009
 "opistognathus seminudus","Finfish","NE",36010
 "opistognathus solorensis","Finfish","LC",36011
 "opistognathus variabilis","Finfish","LC",36012
 "opistognathus whitehursti","Finfish","LC",36013
-"oplegnathus fasciatus","Finfish","NE",36014
+"oplegnathus fasciatus","Finfish","LC",36014
 "oplegnathus insignis","Finfish","DD",36015
 "oplegnathus punctatus","Finfish","NE",36016
 "oplegnathus robinsoni","Finfish","NE",36017
@@ -36021,8 +36021,8 @@
 "oplophorus novaezeelandiae","Arthropods","NE",36020
 "oplophorus spinosus","Arthropods","NE",36021
 "oplophorus typus","Arthropods","NE",36022
-"oplopomops diacanthus","Finfish","NE",36023
-"oplopomus caninoides","Finfish","NE",36024
+"oplopomops diacanthus","Finfish","LC",36023
+"oplopomus caninoides","Finfish","LC",36024
 "oplopomus oplopomus","Finfish","LC",36025
 "oplurus cuvieri","Reptiles","LC",36026
 "oplurus cyclurus","Reptiles","LC",36027
@@ -36078,7 +36078,7 @@
 "oreobates barituensis","Amphibians","NT",36077
 "oreobates berdemenos","Amphibians","VU",36078
 "oreobates choristolemma","Amphibians","VU",36079
-"oreobates crepitans","Amphibians","DD",36080
+"oreobates crepitans","Amphibians","NE",36080
 "oreobates cruralis","Amphibians","LC",36081
 "oreobates discoidalis","Amphibians","DD",36082
 "oreobates gemcare","Amphibians","LC",36083
@@ -36201,7 +36201,7 @@
 "oreophrynella huberi","Amphibians","VU",36200
 "oreophrynella macconnelli","Amphibians","VU",36201
 "oreophrynella nigra","Amphibians","VU",36202
-"oreophrynella quelchii","Amphibians","VU",36203
+"oreophrynella quelchii","Amphibians","EN",36203
 "oreophrynella seegobini","Amphibians","VU",36204
 "oreophrynella vasquezi","Amphibians","VU",36205
 "oreophrynella weiassipuensis","Amphibians","VU",36206
@@ -36382,7 +36382,7 @@
 "osteocephalus cabrerai","Amphibians","LC",36381
 "osteocephalus castaneicola","Amphibians","LC",36382
 "osteocephalus deridens","Amphibians","LC",36383
-"osteocephalus elkejungingerae","Amphibians","LC",36384
+"osteocephalus elkejungingerae","Amphibians","NE",36384
 "osteocephalus fuscifacies","Amphibians","LC",36385
 "osteocephalus heyeri","Amphibians","LC",36386
 "osteocephalus leoniae","Amphibians","LC",36387
@@ -36414,12 +36414,12 @@
 "ostichthys trachypoma","Finfish","LC",36413
 "ostorhinchus angustatus","Finfish","LC",36414
 "ostorhinchus apogonoides","Finfish","LC",36415
-"ostorhinchus aroubiensis","Finfish","NE",36416
+"ostorhinchus aroubiensis","Finfish","DD",36416
 "ostorhinchus aureus","Finfish","LC",36417
-"ostorhinchus bryx","Finfish","NE",36418
+"ostorhinchus bryx","Finfish","LC",36418
 "ostorhinchus capricornis","Finfish","NE",36419
-"ostorhinchus cavitensis","Finfish","NE",36420
-"ostorhinchus cheni","Finfish","NE",36421
+"ostorhinchus cavitensis","Finfish","LC",36420
+"ostorhinchus cheni","Finfish","LC",36421
 "ostorhinchus chrysopomus","Finfish","LC",36422
 "ostorhinchus chrysotaenia","Finfish","LC",36423
 "ostorhinchus compressus","Finfish","NE",36424
@@ -36431,24 +36431,24 @@
 "ostorhinchus fasciatus","Finfish","LC",36430
 "ostorhinchus flavus","Finfish","LC",36431
 "ostorhinchus fleurieu","Finfish","NE",36432
-"ostorhinchus franssedai","Finfish","NE",36433
-"ostorhinchus fukuii","Finfish","NE",36434
-"ostorhinchus gularis","Finfish","NE",36435
+"ostorhinchus franssedai","Finfish","LC",36433
+"ostorhinchus fukuii","Finfish","LC",36434
+"ostorhinchus gularis","Finfish","LC",36435
 "ostorhinchus hartzfeldii","Finfish","LC",36436
 "ostorhinchus hoevenii","Finfish","LC",36437
 "ostorhinchus holotaenia","Finfish","LC",36438
-"ostorhinchus jenkinsi","Finfish","NE",36439
+"ostorhinchus jenkinsi","Finfish","LC",36439
 "ostorhinchus kiensis","Finfish","LC",36440
 "ostorhinchus limenus","Finfish","NE",36441
 "ostorhinchus luteus","Finfish","NE",36442
 "ostorhinchus margaritophorus","Finfish","NE",36443
 "ostorhinchus moluccensis","Finfish","LC",36444
 "ostorhinchus monospilus","Finfish","LC",36445
-"ostorhinchus multilineatus","Finfish","NE",36446
+"ostorhinchus multilineatus","Finfish","LC",36446
 "ostorhinchus nanus","Finfish","LC",36447
 "ostorhinchus neotes","Finfish","NE",36448
 "ostorhinchus nigripes","Finfish","NE",36449
-"ostorhinchus nigrocincta","Finfish","NE",36450
+"ostorhinchus nigrocincta","Finfish","LC",36450
 "ostorhinchus nigrofasciatus","Finfish","LC",36451
 "ostorhinchus norfolcensis","Finfish","NE",36452
 "ostorhinchus notatus","Finfish","NE",36453
@@ -36456,24 +36456,24 @@
 "ostorhinchus ocellicaudus","Finfish","LC",36455
 "ostorhinchus pallidofasciatus","Finfish","NE",36456
 "ostorhinchus parvulus","Finfish","LC",36457
-"ostorhinchus pleuron","Finfish","NE",36458
+"ostorhinchus pleuron","Finfish","LC",36458
 "ostorhinchus properuptus","Finfish","LC",36459
 "ostorhinchus rubrimacula","Finfish","NE",36460
 "ostorhinchus rueppellii","Finfish","NE",36461
 "ostorhinchus sealei","Finfish","NE",36462
 "ostorhinchus selas","Finfish","LC",36463
 "ostorhinchus semilineatus","Finfish","NE",36464
-"ostorhinchus septemstriatus","Finfish","NE",36465
+"ostorhinchus septemstriatus","Finfish","LC",36465
 "ostorhinchus spilurus","Finfish","NE",36466
 "ostorhinchus taeniophorus","Finfish","NE",36467
 "ostorhinchus victoriae","Finfish","LC",36468
 "ostorhinchus wassinki","Finfish","NE",36469
 "ostracion cubicus","Finfish","NE",36470
 "ostracion cyanurus","Finfish","NE",36471
-"ostracion meleagris","Finfish","NE",36472
-"ostracion rhinorhynchos","Finfish","NE",36473
+"ostracion meleagris","Finfish","LC",36472
+"ostracion rhinorhynchos","Finfish","LC",36473
 "ostracion solorensis","Finfish","NE",36474
-"ostracion whitleyi","Finfish","NE",36475
+"ostracion whitleyi","Finfish","LC",36475
 "ostracoberyx dorygenys","Finfish","LC",36476
 "ostracoberyx paxtoni","Finfish","LC",36477
 "ostrea angasi","Molluscs","NE",36478
@@ -36692,8 +36692,8 @@
 "oxyuranus microlepidotus","Reptiles","LC",36691
 "oxyuranus scutellatus","Reptiles","LC",36692
 "oxyuranus temporalis","Reptiles","LC",36693
-"oxyurichthys auchenolepis","Finfish","NE",36694
-"oxyurichthys cornutus","Finfish","NE",36695
+"oxyurichthys auchenolepis","Finfish","LC",36694
+"oxyurichthys cornutus","Finfish","LC",36695
 "oxyurichthys lonchotus","Finfish","LC",36696
 "oxyurichthys microlepis","Finfish","LC",36697
 "oxyurichthys ophthalmonema","Finfish","LC",36698
@@ -37636,7 +37636,7 @@
 "paraploactis kagoshimensis","Finfish","NE",37635
 "paraploactis pulvinus","Finfish","NE",37636
 "paraploactis trachyderma","Finfish","NE",37637
-"paraplotosus albilabris","Finfish","NE",37638
+"paraplotosus albilabris","Finfish","LC",37638
 "paraplotosus butleri","Finfish","NE",37639
 "paraplotosus muelleri","Finfish","NE",37640
 "parapocryptes serperaster","Finfish","LC",37641
@@ -37646,7 +37646,7 @@
 "parapontophilus junceus","Arthropods","NE",37645
 "parapontophilus longirostris","Arthropods","NE",37646
 "parapriacanthus elongatus","Finfish","NE",37647
-"parapriacanthus ransonneti","Finfish","NE",37648
+"parapriacanthus ransonneti","Finfish","LC",37648
 "parapristipoma octolineatum","Finfish","LC",37649
 "parapristipoma trilineatum","Finfish","NE",37650
 "parapronoe crustulum","Arthropods","NE",37651
@@ -37780,7 +37780,7 @@
 "pareas iwasakii","Reptiles","NT",37779
 "pareas margaritophorus","Reptiles","LC",37780
 "pareas monticola","Reptiles","LC",37781
-"pareas nigriceps","Reptiles","DD",37782
+"pareas nigriceps","Reptiles","LC",37782
 "pareas nuchalis","Reptiles","LC",37783
 "pareas stanleyi","Reptiles","DD",37784
 "pareledone charcoti","Cephalopods","LC",37785
@@ -38016,7 +38016,7 @@
 "passerina versicolor","Birds","LC",38015
 "pastinachus sephen","Elasmobranchs","NT",38016
 "pastor roseus","Birds","LC",38017
-"pataecus fronto","Finfish","NE",38018
+"pataecus fronto","Finfish","LC",38018
 "patagioenas albilinea","Birds","LC",38019
 "patagioenas albipennis","Birds","LC",38020
 "patagioenas araucana","Birds","LC",38021
@@ -38057,7 +38057,7 @@
 "pateobatis bleekeri","Elasmobranchs","EN",38056
 "pateobatis fai","Elasmobranchs","VU",38057
 "pateobatis hortlei","Elasmobranchs","NT",38058
-"pateobatis jenkinsii","Elasmobranchs","VU",38059
+"pateobatis jenkinsii","Elasmobranchs","EN",38059
 "patinella radiata","Molluscs","NE",38060
 "patinopecten caurinus","Molluscs","NE",38061
 "patiria chilensis","Echinoderms","NE",38062
@@ -38194,7 +38194,7 @@
 "pelomys minor","Terrestrial mammals","LC",38193
 "pelonaia corrugata","Molluscs","NE",38194
 "pelophryne albotaeniata","Amphibians","VU",38195
-"pelophryne api","Amphibians","LC",38196
+"pelophryne api","Amphibians","NT",38196
 "pelophryne brevipes","Amphibians","LC",38197
 "pelophryne guentheri","Amphibians","LC",38198
 "pelophryne lighti","Amphibians","LC",38199
@@ -38261,7 +38261,7 @@
 "pempheris multiradiata","Finfish","NE",38260
 "pempheris ornata","Finfish","NE",38261
 "pempheris otaitensis","Finfish","NE",38262
-"pempheris oualensis","Finfish","NE",38263
+"pempheris oualensis","Finfish","LC",38263
 "pempheris schomburgkii","Finfish","LC",38264
 "pempheris schwenkii","Finfish","NE",38265
 "pempheris tominagai","Finfish","NE",38266
@@ -38456,7 +38456,7 @@
 "periophthalmus argentilineatus","Finfish","LC",38455
 "periophthalmus barbarus","Finfish","LC",38456
 "periophthalmus chrysospilos","Finfish","LC",38457
-"periophthalmus gracilis","Finfish","NE",38458
+"periophthalmus gracilis","Finfish","LC",38458
 "periophthalmus kalolo","Finfish","LC",38459
 "periophthalmus minutus","Finfish","LC",38460
 "periophthalmus modestus","Finfish","NE",38461
@@ -38482,7 +38482,7 @@
 "peristedion gracile","Finfish","LC",38481
 "peristedion greyae","Finfish","LC",38482
 "peristedion imberbe","Finfish","LC",38483
-"peristedion liorhynchus","Finfish","NE",38484
+"peristedion liorhynchus","Finfish","LC",38484
 "peristedion longispatha","Finfish","LC",38485
 "peristedion miniatum","Finfish","LC",38486
 "peristedion nierstraszi","Finfish","NE",38487
@@ -39091,7 +39091,7 @@
 "philautus tytthus","Amphibians","DD",39090
 "philautus umbra","Amphibians","LC",39091
 "philautus vermiculatus","Amphibians","LC",39092
-"philautus vittiger","Amphibians","NT",39093
+"philautus vittiger","Amphibians","NE",39093
 "philautus worcesteri","Amphibians","LC",39094
 "philemon albitorques","Birds","LC",39095
 "philemon argenticeps","Birds","LC",39096
@@ -39224,10 +39224,10 @@
 "phlogophilus hemileucurus","Birds","LC",39223
 "phlyctiderma semiaspera","Molluscs","NE",39224
 "phlyctiderma soror","Molluscs","NE",39225
-"phlyctimantis boulengeri","Amphibians","LC",39226
-"phlyctimantis keithae","Amphibians","EN",39227
-"phlyctimantis leonardi","Amphibians","LC",39228
-"phlyctimantis verrucosus","Amphibians","LC",39229
+"phlyctimantis boulengeri","Amphibians","NE",39226
+"phlyctimantis keithae","Amphibians","NE",39227
+"phlyctimantis leonardi","Amphibians","NE",39228
+"phlyctimantis verrucosus","Amphibians","NE",39229
 "phoboscincus bocourti","Reptiles","CR",39230
 "phoboscincus garnieri","Reptiles","LC",39231
 "phoca largha","Marine mammals","LC",39232
@@ -39278,7 +39278,7 @@
 "pholidapus dybowskii","Finfish","NE",39277
 "pholidaster squamatus","Echinoderms","NE",39278
 "pholidichthys anguis","Finfish","NE",39279
-"pholidichthys leucotaenia","Finfish","NE",39280
+"pholidichthys leucotaenia","Finfish","LC",39280
 "pholidobolus affinis","Reptiles","NT",39281
 "pholidobolus dicrus","Reptiles","DD",39282
 "pholidobolus hillisi","Reptiles","LC",39283
@@ -39354,8 +39354,8 @@
 "photonectes parvimanus","Finfish","LC",39353
 "photonectes phyllopogon","Finfish","LC",39354
 "photonectes waitti","Finfish","LC",39355
-"photopectoralis aureus","Finfish","NE",39356
-"photopectoralis bindus","Finfish","NE",39357
+"photopectoralis aureus","Finfish","LC",39356
+"photopectoralis bindus","Finfish","LC",39357
 "photostomias atrox","Finfish","LC",39358
 "photostomias goodyeari","Finfish","LC",39359
 "photostomias guernei","Finfish","LC",39360
@@ -40018,7 +40018,7 @@
 "picumnus cirratus","Birds","LC",40017
 "picumnus dorbignyanus","Birds","LC",40018
 "picumnus exilis","Birds","LC",40019
-"picumnus fulvescens","Birds","NT",40020
+"picumnus fulvescens","Birds","NE",40020
 "picumnus fuscus","Birds","LC",40021
 "picumnus granadensis","Birds","LC",40022
 "picumnus innominatus","Birds","LC",40023
@@ -40362,7 +40362,7 @@
 "plagiocardium papillosum","Molluscs","NE",40361
 "plagiocardium pseudolatum","Molluscs","NE",40362
 "plagiocardium setosum","Molluscs","NE",40363
-"plagiodontia aedium","Terrestrial mammals","EN",40364
+"plagiodontia aedium","Terrestrial mammals","LC",40364
 "plagiogeneion macrolepis","Finfish","DD",40365
 "plagiogeneion rubiginosum","Finfish","LC",40366
 "plagioglypta pertracheata","Molluscs","NE",40367
@@ -40412,10 +40412,10 @@
 "platalea ajaja","Birds","LC",40411
 "platalea flavipes","Birds","LC",40412
 "platalina genovensium","Terrestrial mammals","NT",40413
-"platax batavianus","Finfish","NE",40414
+"platax batavianus","Finfish","LC",40414
 "platax boersii","Finfish","NE",40415
 "platax orbicularis","Finfish","LC",40416
-"platax pinnatus","Finfish","NE",40417
+"platax pinnatus","Finfish","LC",40417
 "platax teira","Finfish","LC",40418
 "platepistoma balssii","Arthropods","NE",40419
 "platichthys flesus","Finfish","LC",40420
@@ -40433,7 +40433,7 @@
 "platycephalus bassensis","Finfish","NE",40432
 "platycephalus caeruleopunctatus","Finfish","NE",40433
 "platycephalus conatus","Finfish","NE",40434
-"platycephalus endrachtensis","Finfish","NE",40435
+"platycephalus endrachtensis","Finfish","LC",40435
 "platycephalus fuscus","Finfish","NE",40436
 "platycephalus grandispinis","Finfish","NE",40437
 "platycephalus indicus","Finfish","DD",40438
@@ -40613,18 +40613,18 @@
 "plecotus wardi","Terrestrial mammals","LC",40612
 "plectobranchus evides","Finfish","NE",40613
 "plectodon granulatus","Molluscs","NE",40614
-"plectorhinchus albovittatus","Finfish","NE",40615
+"plectorhinchus albovittatus","Finfish","LC",40615
 "plectorhinchus caeruleonothus","Finfish","LC",40616
-"plectorhinchus chaetodonoides","Finfish","NE",40617
-"plectorhinchus chrysotaenia","Finfish","NE",40618
+"plectorhinchus chaetodonoides","Finfish","LC",40617
+"plectorhinchus chrysotaenia","Finfish","LC",40618
 "plectorhinchus chubbi","Finfish","DD",40619
 "plectorhinchus cinctus","Finfish","LC",40620
 "plectorhinchus diagrammus","Finfish","NE",40621
-"plectorhinchus flavomaculatus","Finfish","NE",40622
+"plectorhinchus flavomaculatus","Finfish","LC",40622
 "plectorhinchus gaterinus","Finfish","LC",40623
 "plectorhinchus gibbosus","Finfish","LC",40624
-"plectorhinchus lessonii","Finfish","NE",40625
-"plectorhinchus lineatus","Finfish","NE",40626
+"plectorhinchus lessonii","Finfish","LC",40625
+"plectorhinchus lineatus","Finfish","LC",40626
 "plectorhinchus macrolepis","Finfish","LC",40627
 "plectorhinchus mediterraneus","Finfish","DD",40628
 "plectorhinchus obscurus","Finfish","NE",40629
@@ -40653,7 +40653,7 @@
 "plectrogenium nanum","Finfish","LC",40652
 "plectroglyphidodon dickii","Finfish","NT",40653
 "plectroglyphidodon flaviventris","Finfish","NE",40654
-"plectroglyphidodon imparipennis","Finfish","NE",40655
+"plectroglyphidodon imparipennis","Finfish","LC",40655
 "plectroglyphidodon johnstonianus","Finfish","LC",40656
 "plectroglyphidodon lacrymatus","Finfish","LC",40657
 "plectroglyphidodon leucozonus","Finfish","LC",40658
@@ -40943,7 +40943,7 @@
 "pleurosicya bilobata","Finfish","LC",40942
 "pleurosicya boldinghi","Finfish","LC",40943
 "pleurosicya coerulea","Finfish","LC",40944
-"pleurosicya elongata","Finfish","NE",40945
+"pleurosicya elongata","Finfish","LC",40945
 "pleurosicya fringilla","Finfish","LC",40946
 "pleurosicya labiata","Finfish","LC",40947
 "pleurosicya mossambica","Finfish","LC",40948
@@ -41057,9 +41057,9 @@
 "ploceus xanthops","Birds","LC",41056
 "ploceus xanthopterus","Birds","LC",41057
 "plotocnide borealis","Cnidaria","NE",41058
-"plotosus canius","Finfish","NE",41059
+"plotosus canius","Finfish","LC",41059
 "plotosus japonicus","Finfish","NE",41060
-"plotosus lineatus","Finfish","NE",41061
+"plotosus lineatus","Finfish","LC",41061
 "plotosus nkunga","Finfish","NE",41062
 "plumarella pourtalesii","Cnidaria","NE",41063
 "plumularia attenuata","Cnidaria","NE",41064
@@ -41090,20 +41090,20 @@
 "podabacia crustacea","Cnidaria","LC",41089
 "podabacia motuporensis","Cnidaria","NT",41090
 "podarcis bocagei","Reptiles","LC",41091
-"podarcis carbonelli","Reptiles","EN",41092
-"podarcis cretensis","Reptiles","EN",41093
+"podarcis carbonelli","Reptiles","VU",41092
+"podarcis cretensis","Reptiles","LC",41093
 "podarcis erhardii","Reptiles","LC",41094
 "podarcis filfolensis","Reptiles","LC",41095
-"podarcis gaigeae","Reptiles","VU",41096
+"podarcis gaigeae","Reptiles","LC",41096
 "podarcis hispanicus","Reptiles","LC",41097
 "podarcis levendis","Reptiles","VU",41098
-"podarcis lilfordi","Reptiles","EN",41099
+"podarcis lilfordi","Reptiles","NT",41099
 "podarcis melisellensis","Reptiles","LC",41100
-"podarcis milensis","Reptiles","VU",41101
+"podarcis milensis","Reptiles","LC",41101
 "podarcis muralis","Reptiles","LC",41102
 "podarcis peloponnesiacus","Reptiles","LC",41103
-"podarcis pityusensis","Reptiles","NT",41104
-"podarcis raffonei","Reptiles","CR",41105
+"podarcis pityusensis","Reptiles","EN",41104
+"podarcis raffonei","Reptiles","EN",41105
 "podarcis siculus","Reptiles","LC",41106
 "podarcis tauricus","Reptiles","LC",41107
 "podarcis tiliguerta","Reptiles","LC",41108
@@ -41377,7 +41377,7 @@
 "polydactylus opercularis","Finfish","LC",41376
 "polydactylus plebeius","Finfish","NE",41377
 "polydactylus quadrifilis","Finfish","LC",41378
-"polydactylus sexfilis","Finfish","NE",41379
+"polydactylus sexfilis","Finfish","LC",41379
 "polydactylus sextarius","Finfish","NE",41380
 "polydactylus virginicus","Finfish","LC",41381
 "polydectus cupulifer","Arthropods","NE",41382
@@ -41506,9 +41506,9 @@
 "pomacanthus sexstriatus","Finfish","LC",41505
 "pomacanthus xanthometopon","Finfish","LC",41506
 "pomacanthus zonipectus","Finfish","LC",41507
-"pomacentrus adelus","Finfish","NE",41508
+"pomacentrus adelus","Finfish","LC",41508
 "pomacentrus albicaudatus","Finfish","LC",41509
-"pomacentrus alexanderae","Finfish","NE",41510
+"pomacentrus alexanderae","Finfish","LC",41510
 "pomacentrus amboinensis","Finfish","LC",41511
 "pomacentrus aquilus","Finfish","NE",41512
 "pomacentrus aurifrons","Finfish","NE",41513
@@ -41517,20 +41517,20 @@
 "pomacentrus azuremaculatus","Finfish","LC",41516
 "pomacentrus baenschi","Finfish","NE",41517
 "pomacentrus bankanensis","Finfish","LC",41518
-"pomacentrus brachialis","Finfish","NE",41519
-"pomacentrus burroughi","Finfish","NE",41520
+"pomacentrus brachialis","Finfish","LC",41519
+"pomacentrus burroughi","Finfish","LC",41520
 "pomacentrus caeruleus","Finfish","LC",41521
 "pomacentrus callainus","Finfish","LC",41522
 "pomacentrus chrysurus","Finfish","LC",41523
 "pomacentrus coelestis","Finfish","LC",41524
-"pomacentrus cuneatus","Finfish","NE",41525
+"pomacentrus cuneatus","Finfish","LC",41525
 "pomacentrus grammorhynchus","Finfish","LC",41526
 "pomacentrus imitator","Finfish","LC",41527
 "pomacentrus indicus","Finfish","LC",41528
 "pomacentrus lepidogenys","Finfish","NT",41529
 "pomacentrus leptus","Finfish","NE",41530
 "pomacentrus limosus","Finfish","NE",41531
-"pomacentrus littoralis","Finfish","NE",41532
+"pomacentrus littoralis","Finfish","LC",41532
 "pomacentrus melanochir","Finfish","LC",41533
 "pomacentrus milleri","Finfish","LC",41534
 "pomacentrus moluccensis","Finfish","LC",41535
@@ -41545,7 +41545,7 @@
 "pomacentrus simsiang","Finfish","LC",41544
 "pomacentrus smithi","Finfish","LC",41545
 "pomacentrus spilotoceps","Finfish","NE",41546
-"pomacentrus stigma","Finfish","NE",41547
+"pomacentrus stigma","Finfish","LC",41547
 "pomacentrus sulfureus","Finfish","LC",41548
 "pomacentrus taeniometopon","Finfish","LC",41549
 "pomacentrus trichrourus","Finfish","LC",41550
@@ -41673,7 +41673,7 @@
 "porcula salvania","Terrestrial mammals","EN",41672
 "poricella mucronata","Molluscs","NE",41673
 "porichthys analis","Finfish","LC",41674
-"porichthys bathoiketes","Finfish","NE",41675
+"porichthys bathoiketes","Finfish","LC",41675
 "porichthys ephippiatus","Finfish","LC",41676
 "porichthys greenei","Finfish","LC",41677
 "porichthys margaritatus","Finfish","LC",41678
@@ -41681,7 +41681,7 @@
 "porichthys notatus","Finfish","LC",41680
 "porichthys pauciradiatus","Finfish","LC",41681
 "porichthys plectrodon","Finfish","LC",41682
-"porichthys porosissimus","Finfish","NE",41683
+"porichthys porosissimus","Finfish","LC",41683
 "porites annae","Corals","NT",41684
 "porites astreoides","Corals","LC",41685
 "porites australiensis","Corals","LC",41686
@@ -41846,7 +41846,7 @@
 "presbytis sabana","Terrestrial mammals","EN",41845
 "presbytis siamensis","Terrestrial mammals","NT",41846
 "presbytis siberu","Terrestrial mammals","EN",41847
-"presbytis sumatranus","Terrestrial mammals","EN",41848
+"presbytis sumatranus","Terrestrial mammals","NE",41848
 "presbytis thomasi","Terrestrial mammals","VU",41849
 "priacanthus alalaua","Finfish","LC",41850
 "priacanthus arenatus","Finfish","LC",41851
@@ -41901,20 +41901,20 @@
 "priolepis cincta","Finfish","LC",41900
 "priolepis compita","Finfish","LC",41901
 "priolepis dawsoni","Finfish","LC",41902
-"priolepis fallacincta","Finfish","NE",41903
+"priolepis fallacincta","Finfish","LC",41903
 "priolepis hipoliti","Finfish","LC",41904
 "priolepis inhaca","Finfish","LC",41905
 "priolepis kappa","Finfish","LC",41906
 "priolepis latifascima","Finfish","NE",41907
 "priolepis nocturna","Finfish","LC",41908
-"priolepis nuchifasciata","Finfish","NE",41909
-"priolepis pallidicincta","Finfish","NE",41910
-"priolepis profunda","Finfish","NE",41911
+"priolepis nuchifasciata","Finfish","LC",41909
+"priolepis pallidicincta","Finfish","LC",41910
+"priolepis profunda","Finfish","LC",41911
 "priolepis psygmophilia","Finfish","NE",41912
 "priolepis semidoliata","Finfish","LC",41913
 "priolepis squamogena","Finfish","NE",41914
 "priolepis triops","Finfish","NE",41915
-"priolepis vexilla","Finfish","NE",41916
+"priolepis vexilla","Finfish","LC",41916
 "prionace glauca","Elasmobranchs","NT",41917
 "prionailurus rubiginosus","Terrestrial mammals","NT",41918
 "prionaster elegans","Echinoderms","NE",41919
@@ -41963,7 +41963,7 @@
 "prionotus longispinosus","Finfish","LC",41962
 "prionotus martis","Finfish","LC",41963
 "prionotus miles","Finfish","LC",41964
-"prionotus nudigula","Finfish","NE",41965
+"prionotus nudigula","Finfish","LC",41965
 "prionotus ophryas","Finfish","LC",41966
 "prionotus paralatus","Finfish","LC",41967
 "prionotus punctatus","Finfish","LC",41968
@@ -41987,9 +41987,9 @@
 "pristiapogon exostigma","Finfish","LC",41986
 "pristiapogon fraenatus","Finfish","LC",41987
 "pristiapogon kallopterus","Finfish","LC",41988
-"pristiapogon taeniopterus","Finfish","NE",41989
+"pristiapogon taeniopterus","Finfish","LC",41989
 "pristicon rhodopterus","Finfish","LC",41990
-"pristicon rufus","Finfish","NE",41991
+"pristicon rufus","Finfish","LC",41991
 "pristicon trimaculatus","Finfish","LC",41992
 "pristidactylus achalensis","Reptiles","NT",41993
 "pristidactylus alvaroi","Reptiles","EN",41994
@@ -42124,7 +42124,7 @@
 "pristimantis deinops","Amphibians","CR",42123
 "pristimantis delicatus","Amphibians","EN",42124
 "pristimantis delius","Amphibians","LC",42125
-"pristimantis dendrobatoides","Amphibians","LC",42126
+"pristimantis dendrobatoides","Amphibians","DD",42126
 "pristimantis devillei","Amphibians","EN",42127
 "pristimantis deyi","Amphibians","LC",42128
 "pristimantis diadematus","Amphibians","LC",42129
@@ -42481,7 +42481,7 @@
 "pristis pectinata","Elasmobranchs","CR",42480
 "pristis pristis","Elasmobranchs","CR",42481
 "pristis zijsron","Elasmobranchs","CR",42482
-"pristotis obtusirostris","Finfish","NE",42483
+"pristotis obtusirostris","Finfish","LC",42483
 "pristurus abdelkuri","Reptiles","LC",42484
 "pristurus adrarensis","Reptiles","DD",42485
 "pristurus carteri","Reptiles","LC",42486
@@ -42942,10 +42942,10 @@
 "pseudalutarius nasicornis","Finfish","LC",42941
 "pseudamia amblyuroptera","Finfish","LC",42942
 "pseudamia gelatinosa","Finfish","LC",42943
-"pseudamia hayashii","Finfish","NE",42944
+"pseudamia hayashii","Finfish","LC",42944
 "pseudamia nigra","Finfish","NE",42945
 "pseudamia zonata","Finfish","LC",42946
-"pseudamiops gracilicauda","Finfish","NE",42947
+"pseudamiops gracilicauda","Finfish","LC",42947
 "pseudamiops pellucidus","Finfish","NE",42948
 "pseudamussium challengeri","Molluscs","NE",42949
 "pseudamussium clavatum","Molluscs","NE",42950
@@ -43102,7 +43102,7 @@
 "pseudocerastes persicus","Reptiles","LC",43101
 "pseudocerastes urarachnoides","Reptiles","NT",43102
 "pseudoceratina purpurea","Sponges","NE",43103
-"pseudochaenichthys georgianus","Finfish","NE",43104
+"pseudochaenichthys georgianus","Finfish","EN",43104
 "pseudocheilinops ataenia","Finfish","LC",43105
 "pseudocheilinus evanidus","Finfish","LC",43106
 "pseudocheilinus hexataenia","Finfish","LC",43107
@@ -43517,7 +43517,7 @@
 "pseudotomodon trigonatus","Reptiles","NE",43516
 "pseudotrapelus chlodnickii","Reptiles","LC",43517
 "pseudotrapelus sinaitus","Reptiles","LC",43518
-"pseudotriacanthus strigilifer","Finfish","NE",43519
+"pseudotriacanthus strigilifer","Finfish","LC",43519
 "pseudotriakis microdon","Elasmobranchs","LC",43520
 "pseudotriccus pelzelni","Birds","LC",43521
 "pseudotriccus ruficeps","Birds","LC",43522
@@ -43738,7 +43738,7 @@
 "pterocaesio lativittata","Finfish","LC",43737
 "pterocaesio marri","Finfish","LC",43738
 "pterocaesio pisang","Finfish","LC",43739
-"pterocaesio randalli","Finfish","NE",43740
+"pterocaesio randalli","Finfish","LC",43740
 "pterocaesio tessellata","Finfish","LC",43741
 "pterocaesio tile","Finfish","LC",43742
 "pterocaesio trilineata","Finfish","LC",43743
@@ -44087,10 +44087,10 @@
 "ptychohyla dendrophasma","Amphibians","CR",44086
 "ptychohyla euthysanota","Amphibians","LC",44087
 "ptychohyla hypomykter","Amphibians","VU",44088
-"ptychohyla legleri","Amphibians","EN",44089
+"ptychohyla legleri","Amphibians","NE",44089
 "ptychohyla leonhardschultzei","Amphibians","LC",44090
 "ptychohyla macrotympanum","Amphibians","VU",44091
-"ptychohyla salvadorensis","Amphibians","NT",44092
+"ptychohyla salvadorensis","Amphibians","NE",44092
 "ptychohyla zophodes","Amphibians","VU",44093
 "ptychophis flavovirgatus","Reptiles","LC",44094
 "ptyctolaemus collicristatus","Reptiles","LC",44095
@@ -44747,7 +44747,7 @@
 "rattus timorensis","Terrestrial mammals","DD",44746
 "rattus tiomanicus","Terrestrial mammals","LC",44747
 "rattus tunneyi","Terrestrial mammals","LC",44748
-"rattus vandeuseni","Terrestrial mammals","EN",44749
+"rattus vandeuseni","Terrestrial mammals","NT",44749
 "rattus verecundus","Terrestrial mammals","LC",44750
 "rattus villosissimus","Terrestrial mammals","LC",44751
 "rattus xanthurus","Terrestrial mammals","NT",44752
@@ -44846,7 +44846,7 @@
 "rexea solandri","Finfish","NE",44845
 "rexichthys johnpaxtoni","Finfish","NE",44846
 "rhabdadenia biflora","Marine plants","NE",44847
-"rhabdamia gracilis","Finfish","NE",44848
+"rhabdamia gracilis","Finfish","LC",44848
 "rhabdastrella globostellata","Sponges","NE",44849
 "rhabderemia sorokinae","Sponges","NE",44850
 "rhabdoblennius nitidus","Finfish","LC",44851
@@ -44910,7 +44910,7 @@
 "rhacophorus annamensis","Amphibians","LC",44909
 "rhacophorus baluensis","Amphibians","LC",44910
 "rhacophorus barisani","Amphibians","LC",44911
-"rhacophorus belalongensis","Amphibians","LC",44912
+"rhacophorus belalongensis","Amphibians","NE",44912
 "rhacophorus bengkuluensis","Amphibians","VU",44913
 "rhacophorus bifasciatus","Amphibians","LC",44914
 "rhacophorus bimaculatus","Amphibians","NE",44915
@@ -44952,7 +44952,7 @@
 "rhacophorus translineatus","Amphibians","NT",44951
 "rhacophorus tuberculatus","Amphibians","DD",44952
 "rhacophorus turpes","Amphibians","DD",44953
-"rhacophorus vampyrus","Amphibians","EN",44954
+"rhacophorus vampyrus","Amphibians","NE",44954
 "rhacophorus verrucopus","Amphibians","NT",44955
 "rhadinaea bogertorum","Reptiles","DD",44956
 "rhadinaea calligaster","Reptiles","LC",44957
@@ -44972,7 +44972,7 @@
 "rhadinaea pulveriventris","Reptiles","DD",44971
 "rhadinaea quinquelineata","Reptiles","DD",44972
 "rhadinaea sargenti","Reptiles","LC",44973
-"rhadinaea stadelmani","Reptiles","EN",44974
+"rhadinaea stadelmani","Reptiles","NE",44974
 "rhadinaea taeniata","Reptiles","LC",44975
 "rhadinaea vermiculaticeps","Reptiles","NT",44976
 "rhadinella anachoreta","Reptiles","LC",44977
@@ -45137,7 +45137,7 @@
 "rhinella veraguensis","Amphibians","LC",45136
 "rhinella veredas","Amphibians","LC",45137
 "rhinella yanachaga","Amphibians","EN",45138
-"rhinella yunga","Amphibians","EN",45139
+"rhinella yunga","Amphibians","NE",45139
 "rhineura floridana","Reptiles","LC",45140
 "rhinobatos albomaculatus","Elasmobranchs","CR",45141
 "rhinobatos irvinei","Elasmobranchs","CR",45142
@@ -45788,7 +45788,7 @@
 "saara asmussi","Reptiles","LC",45787
 "saara hardwickii","Reptiles","VU",45788
 "saara loricata","Reptiles","LC",45789
-"sabahphrynus maculatus","Amphibians","LC",45790
+"sabahphrynus maculatus","Amphibians","EN",45790
 "sabia conica","Molluscs","NE",45791
 "sabinea hystrix","Arthropods","NE",45792
 "sabinea septemcarinata","Arthropods","NE",45793
@@ -45838,17 +45838,17 @@
 "sagittarius serpentarius","Birds","EN",45837
 "sagmariasus verreauxi","Arthropods","LC",45838
 "saguinus bicolor","Terrestrial mammals","CR",45839
-"saguinus geoffroyi","Terrestrial mammals","NT",45840
-"saguinus imperator","Terrestrial mammals","LC",45841
-"saguinus inustus","Terrestrial mammals","LC",45842
-"saguinus labiatus","Terrestrial mammals","LC",45843
-"saguinus leucopus","Terrestrial mammals","VU",45844
+"saguinus geoffroyi","Terrestrial mammals","NE",45840
+"saguinus imperator","Terrestrial mammals","NE",45841
+"saguinus inustus","Terrestrial mammals","NE",45842
+"saguinus labiatus","Terrestrial mammals","NE",45843
+"saguinus leucopus","Terrestrial mammals","NE",45844
 "saguinus martinsi","Terrestrial mammals","NT",45845
-"saguinus melanoleucus","Terrestrial mammals","LC",45846
+"saguinus melanoleucus","Terrestrial mammals","NE",45846
 "saguinus midas","Terrestrial mammals","LC",45847
 "saguinus mystax","Terrestrial mammals","LC",45848
 "saguinus niger","Terrestrial mammals","VU",45849
-"saguinus oedipus","Terrestrial mammals","CR",45850
+"saguinus oedipus","Terrestrial mammals","NE",45850
 "saguinus ursulus","Terrestrial mammals","VU",45851
 "saiga tatarica","Terrestrial mammals","NT",45852
 "saimiri boliviensis","Terrestrial mammals","LC",45853
@@ -46093,13 +46093,13 @@
 "sargocentron iota","Finfish","LC",46092
 "sargocentron ittodai","Finfish","LC",46093
 "sargocentron lepros","Finfish","LC",46094
-"sargocentron macrosquamis","Finfish","NE",46095
+"sargocentron macrosquamis","Finfish","LC",46095
 "sargocentron melanospilos","Finfish","LC",46096
 "sargocentron microstoma","Finfish","LC",46097
 "sargocentron praslin","Finfish","LC",46098
 "sargocentron punctatissimum","Finfish","LC",46099
 "sargocentron rubrum","Finfish","LC",46100
-"sargocentron seychellense","Finfish","NE",46101
+"sargocentron seychellense","Finfish","LC",46101
 "sargocentron spiniferum","Finfish","LC",46102
 "sargocentron spinosissimum","Finfish","LC",46103
 "sargocentron suborbitale","Finfish","NE",46104
@@ -46786,7 +46786,7 @@
 "scomberomorus brasiliensis","Finfish","LC",46785
 "scomberomorus cavalla","Finfish","LC",46786
 "scomberomorus commerson","Finfish","NT",46787
-"scomberomorus concolor","Finfish","VU",46788
+"scomberomorus concolor","Finfish","NT",46788
 "scomberomorus guttatus","Finfish","DD",46789
 "scomberomorus koreanus","Finfish","LC",46790
 "scomberomorus lineolatus","Finfish","LC",46791
@@ -46891,7 +46891,7 @@
 "scorpaenodes varipinnis","Finfish","LC",46890
 "scorpaenodes xyris","Finfish","LC",46891
 "scorpaenopsis barbata","Finfish","LC",46892
-"scorpaenopsis cirrosa","Finfish","NE",46893
+"scorpaenopsis cirrosa","Finfish","LC",46893
 "scorpaenopsis cotticeps","Finfish","LC",46894
 "scorpaenopsis diabolus","Finfish","LC",46895
 "scorpaenopsis eschmeyeri","Finfish","LC",46896
@@ -47276,13 +47276,13 @@
 "sepia mestus","Cephalopods","LC",47275
 "sepia novaehollandiae","Cephalopods","LC",47276
 "sepia officinalis","Cephalopods","LC",47277
-"sepia omani","Cephalopods","LC",47278
+"sepia omani","Cephalopods","NE",47278
 "sepia opipara","Cephalopods","LC",47279
-"sepia orbignyana","Cephalopods","DD",47280
+"sepia orbignyana","Cephalopods","NE",47280
 "sepia papillata","Cephalopods","DD",47281
 "sepia papuensis","Cephalopods","LC",47282
 "sepia pharaonis","Cephalopods","DD",47283
-"sepia prashadi","Cephalopods","LC",47284
+"sepia prashadi","Cephalopods","NE",47284
 "sepia recurvirostra","Cephalopods","DD",47285
 "sepia rhoda","Cephalopods","LC",47286
 "sepia robsoni","Cephalopods","DD",47287
@@ -47355,7 +47355,7 @@
 "seriaster regularis","Echinoderms","NE",47354
 "seriatopora aculeata","Corals","VU",47355
 "seriatopora caliendrum","Corals","NT",47356
-"seriatopora guttatus","Cnidaria","LC",47357
+"seriatopora guttatus","Cnidaria","NE",47357
 "seriatopora hystrix","Corals","LC",47358
 "seriatopora stellata","Corals","NT",47359
 "sericornis beccarii","Birds","LC",47360
@@ -47550,7 +47550,7 @@
 "sibon miskitus","Reptiles","NT",47549
 "sibon nebulatus","Reptiles","LC",47550
 "sibon perissostichon","Reptiles","DD",47551
-"sibon sanniolus","Reptiles","LC",47552
+"sibon sanniolus","Reptiles","NE",47552
 "sibynophis bistrigatus","Reptiles","DD",47553
 "sibynophis bivittatus","Reptiles","LC",47554
 "sibynophis chinensis","Reptiles","LC",47555
@@ -47760,16 +47760,16 @@
 "sio nordenskjoldii","Finfish","LC",47759
 "siokunichthys herrei","Finfish","DD",47760
 "siokunichthys nigrolineatus","Finfish","DD",47761
-"siphamia argentea","Finfish","NE",47762
+"siphamia argentea","Finfish","LC",47762
 "siphamia cephalotes","Finfish","NE",47763
-"siphamia corallicola","Finfish","NE",47764
+"siphamia corallicola","Finfish","LC",47764
 "siphamia cuneiceps","Finfish","NE",47765
-"siphamia elongata","Finfish","NE",47766
-"siphamia jebbi","Finfish","NE",47767
-"siphamia majimai","Finfish","NE",47768
+"siphamia elongata","Finfish","LC",47766
+"siphamia jebbi","Finfish","LC",47767
+"siphamia majimai","Finfish","LC",47768
 "siphamia mossambica","Finfish","NE",47769
 "siphamia roseigaster","Finfish","NE",47770
-"siphamia spinicola","Finfish","NE",47771
+"siphamia spinicola","Finfish","LC",47771
 "siphamia tubifer","Finfish","LC",47772
 "siphamia tubulata","Finfish","NE",47773
 "siphlophis ayauma","Reptiles","LC",47774
@@ -48233,7 +48233,7 @@
 "spermophilus erythrogenys","Terrestrial mammals","LC",48232
 "spermophilus fulvus","Terrestrial mammals","LC",48233
 "spermophilus major","Terrestrial mammals","LC",48234
-"spermophilus musicus","Terrestrial mammals","NT",48235
+"spermophilus musicus","Terrestrial mammals","LC",48235
 "spermophilus pallidicauda","Terrestrial mammals","LC",48236
 "spermophilus pygmaeus","Terrestrial mammals","LC",48237
 "spermophilus ralli","Terrestrial mammals","LC",48238
@@ -48338,7 +48338,7 @@
 "sphaerodactylus roosevelti","Reptiles","NT",48337
 "sphaerodactylus rosaurae","Reptiles","LC",48338
 "sphaerodactylus ruibali","Reptiles","EN",48339
-"sphaerodactylus samanensis","Reptiles","CR",48340
+"sphaerodactylus samanensis","Reptiles","NT",48340
 "sphaerodactylus savagei","Reptiles","NT",48341
 "sphaerodactylus scaber","Reptiles","LC",48342
 "sphaerodactylus scapularis","Reptiles","EN",48343
@@ -48509,24 +48509,24 @@
 "sphoeroides spengleri","Finfish","LC",48508
 "sphoeroides testudineus","Finfish","LC",48509
 "sphoeroides tyleri","Finfish","LC",48510
-"sphyraena acutipinnis","Finfish","NE",48511
+"sphyraena acutipinnis","Finfish","LC",48511
 "sphyraena afra","Finfish","LC",48512
 "sphyraena argentea","Finfish","LC",48513
 "sphyraena barracuda","Finfish","LC",48514
 "sphyraena borealis","Finfish","LC",48515
 "sphyraena chrysotaenia","Finfish","NE",48516
 "sphyraena ensis","Finfish","LC",48517
-"sphyraena flavicauda","Finfish","NE",48518
-"sphyraena forsteri","Finfish","NE",48519
+"sphyraena flavicauda","Finfish","LC",48518
+"sphyraena forsteri","Finfish","LC",48519
 "sphyraena guachancho","Finfish","LC",48520
 "sphyraena helleri","Finfish","NE",48521
 "sphyraena idiastes","Finfish","LC",48522
-"sphyraena jello","Finfish","NE",48523
+"sphyraena jello","Finfish","LC",48523
 "sphyraena novaehollandiae","Finfish","NE",48524
 "sphyraena picudilla","Finfish","NE",48525
-"sphyraena pinguis","Finfish","NE",48526
-"sphyraena putnamae","Finfish","NE",48527
-"sphyraena qenie","Finfish","NE",48528
+"sphyraena pinguis","Finfish","LC",48526
+"sphyraena putnamae","Finfish","LC",48527
+"sphyraena qenie","Finfish","LC",48528
 "sphyraena sphyraena","Finfish","LC",48529
 "sphyraena viridensis","Finfish","LC",48530
 "sphyraena waitii","Finfish","NE",48531
@@ -48939,7 +48939,7 @@
 "stegastes obreptus","Finfish","NE",48938
 "stegastes partitus","Finfish","LC",48939
 "stegastes planifrons","Finfish","LC",48940
-"stegastes punctatus","Finfish","NE",48941
+"stegastes punctatus","Finfish","LC",48941
 "stegastes rectifraenum","Finfish","LC",48942
 "stegastes variabilis","Finfish","LC",48943
 "stegella lobata","Cnidaria","NE",48944
@@ -49192,7 +49192,7 @@
 "stichaster australis","Echinoderms","NE",49191
 "stichaster striatus","Echinoderms","NE",49192
 "stichodactyla tapetum","Cnidaria","NE",49193
-"stichophanes ningshaanensis","Reptiles","DD",49194
+"stichophanes ningshaanensis","Reptiles","NT",49194
 "stichopus chloronotus","Echinoderms","LC",49195
 "stichopus ellipes","Echinoderms","DD",49196
 "stichopus herrmanni","Echinoderms","VU",49197
@@ -49328,7 +49328,7 @@
 "strigocuscus celebensis","Terrestrial mammals","NT",49327
 "strigocuscus pelengensis","Terrestrial mammals","LC",49328
 "strigopagurus boreonotus","Arthropods","NE",49329
-"strigops habroptila","Birds","CR",49330
+"strigops habroptila","Birds","NE",49330
 "striodentalium rhabdotum","Molluscs","NE",49331
 "striodentalium thetidis","Molluscs","NE",49332
 "striostrea margaritacea","Molluscs","LC",49333
@@ -49569,7 +49569,7 @@
 "sudis atrox","Finfish","LC",49568
 "sudis hyalina","Finfish","DD",49569
 "sueviota aprica","Finfish","NE",49570
-"sueviota atrinasa","Finfish","NE",49571
+"sueviota atrinasa","Finfish","LC",49571
 "sueviota lachneri","Finfish","LC",49572
 "sueviota larsonae","Finfish","NE",49573
 "suezichthys arquatus","Finfish","LC",49574
@@ -49612,7 +49612,7 @@
 "suncus malayanus","Terrestrial mammals","LC",49611
 "suncus megalura","Terrestrial mammals","LC",49612
 "suncus mertensi","Terrestrial mammals","EN",49613
-"suncus montanus","Terrestrial mammals","VU",49614
+"suncus montanus","Terrestrial mammals","LC",49614
 "suncus murinus","Terrestrial mammals","LC",49615
 "suncus remyi","Terrestrial mammals","LC",49616
 "suncus stoliczkanus","Terrestrial mammals","LC",49617
@@ -50010,7 +50010,7 @@
 "synchiropus rameus","Finfish","NE",50009
 "synchiropus splendidus","Finfish","LC",50010
 "synchiropus stellatus","Finfish","LC",50011
-"synchirus gilli","Finfish","NE",50012
+"synchirus gilli","Finfish","LC",50012
 "syndactyla dimidiata","Birds","LC",50013
 "syndactyla guttulata","Birds","LC",50014
 "syndactyla roraimae","Birds","LC",50015
@@ -50155,27 +50155,27 @@
 "tadarida ventralis","Terrestrial mammals","DD",50154
 "tadorna cana","Birds","LC",50155
 "tadorna ferruginea","Birds","LC",50156
-"taeniamia biguttata","Finfish","NE",50157
+"taeniamia biguttata","Finfish","LC",50157
 "taeniamia buruensis","Finfish","LC",50158
 "taeniamia fucata","Finfish","LC",50159
 "taeniamia leai","Finfish","LC",50160
 "taeniamia lineolata","Finfish","NE",50161
 "taeniamia macroptera","Finfish","LC",50162
-"taeniamia melasma","Finfish","NE",50163
+"taeniamia melasma","Finfish","LC",50163
 "taeniamia mozambiquensis","Finfish","NE",50164
 "taeniamia zosterophora","Finfish","LC",50165
 "taenianotus triacanthus","Finfish","LC",50166
 "taenioides anguillaris","Finfish","LC",50167
 "taenioides cirratus","Finfish","DD",50168
-"taeniophallus affinis","Reptiles","LC",50169
-"taeniophallus bilineatus","Reptiles","LC",50170
+"taeniophallus affinis","Reptiles","NE",50169
+"taeniophallus bilineatus","Reptiles","NE",50170
 "taeniophallus brevirostris","Reptiles","LC",50171
 "taeniophallus nebularis","Reptiles","CR",50172
 "taeniophallus nicagus","Reptiles","LC",50173
-"taeniophallus occipitalis","Reptiles","LC",50174
-"taeniophallus persimilis","Reptiles","LC",50175
-"taeniophallus poecilopogon","Reptiles","LC",50176
-"taeniophallus quadriocellatus","Reptiles","LC",50177
+"taeniophallus occipitalis","Reptiles","NE",50174
+"taeniophallus persimilis","Reptiles","NE",50175
+"taeniophallus poecilopogon","Reptiles","NE",50176
+"taeniophallus quadriocellatus","Reptiles","NE",50177
 "taeniopsetta ocellata","Finfish","LC",50178
 "taeniopsetta radula","Finfish","LC",50179
 "taeniopygia bichenovii","Birds","LC",50180
@@ -50768,7 +50768,7 @@
 "tepuihyla aecii","Amphibians","NT",50767
 "tepuihyla edelcae","Amphibians","LC",50768
 "tepuihyla exophthalma","Amphibians","LC",50769
-"tepuihyla luteolabris","Amphibians","VU",50770
+"tepuihyla luteolabris","Amphibians","NT",50770
 "tepuihyla obscura","Amphibians","EN",50771
 "tepuihyla rodriguezi","Amphibians","NT",50772
 "tepuihyla shushupe","Amphibians","LC",50773
@@ -50872,7 +50872,7 @@
 "tesseracme quadrapicalis","Molluscs","NE",50871
 "tesseracme tetrapleura","Molluscs","NE",50872
 "testudinalia testudinalis","Molluscs","NE",50873
-"testudo hermanni","Reptiles","NT",50874
+"testudo hermanni","Reptiles","VU",50874
 "testudo marginata","Reptiles","LC",50875
 "tethocyathus cylindraceus","Cnidaria","NE",50876
 "tethocyathus endesa","Cnidaria","NE",50877
@@ -51210,7 +51210,7 @@
 "theristicus caerulescens","Birds","LC",51209
 "theristicus caudatus","Birds","LC",51210
 "theristicus melanopis","Birds","LC",51211
-"thermophis baileyi","Reptiles","NT",51212
+"thermophis baileyi","Reptiles","EN",51212
 "thermophis zhaoermii","Reptiles","EN",51213
 "theropithecus gelada","Terrestrial mammals","LC",51214
 "thersistrombus thersites","Molluscs","NE",51215
@@ -51279,7 +51279,7 @@
 "thomasomys silvestris","Terrestrial mammals","LC",51278
 "thomasomys taczanowskii","Terrestrial mammals","LC",51279
 "thomasomys ucucha","Terrestrial mammals","VU",51280
-"thomasomys vestitus","Terrestrial mammals","LC",51281
+"thomasomys vestitus","Terrestrial mammals","NT",51281
 "thomasomys vulcani","Terrestrial mammals","LC",51282
 "thomomys bottae","Terrestrial mammals","LC",51283
 "thomomys bulbivorus","Terrestrial mammals","LC",51284
@@ -51500,7 +51500,7 @@
 "tiliqua rugosa","Reptiles","LC",51499
 "tiliqua scincoides","Reptiles","LC",51500
 "tilmatura dupontii","Birds","LC",51501
-"tilodon sexfasciatus","Finfish","NE",51502
+"tilodon sexfasciatus","Finfish","LC",51502
 "timalia pileata","Birds","LC",51503
 "timeliopsis fulvigula","Birds","LC",51504
 "timeliopsis griseigula","Birds","LC",51505
@@ -51508,7 +51508,7 @@
 "timoclea grus","Molluscs","NE",51507
 "timoclea marica","Molluscs","NE",51508
 "timoclea pygmaea","Molluscs","NE",51509
-"timon lepidus","Reptiles","NT",51510
+"timon lepidus","Reptiles","LC",51510
 "timon pater","Reptiles","LC",51511
 "timon princeps","Reptiles","LC",51512
 "timon tangitanus","Reptiles","LC",51513
@@ -51616,7 +51616,7 @@
 "tomopagurus cokeri","Arthropods","NE",51615
 "tomopagurus wassi","Arthropods","NE",51616
 "tomopterna cryptotis","Amphibians","LC",51617
-"tomopterna damarensis","Amphibians","DD",51618
+"tomopterna damarensis","Amphibians","NE",51618
 "tomopterna delalandii","Amphibians","LC",51619
 "tomopterna elegans","Amphibians","LC",51620
 "tomopterna gallmanni","Amphibians","LC",51621
@@ -52041,7 +52041,7 @@
 "trevathana dentata","Arthropods","NE",52040
 "triacanthodes anomalus","Finfish","NE",52041
 "triacanthodes ethiops","Finfish","NE",52042
-"triacanthus biaculeatus","Finfish","NE",52043
+"triacanthus biaculeatus","Finfish","LC",52043
 "triacanthus nieuhofii","Finfish","NE",52044
 "triactis producta","Cnidaria","NE",52045
 "triaenodon obesus","Elasmobranchs","VU",52046
@@ -52251,12 +52251,12 @@
 "trimma woutsi","Finfish","LC",52250
 "trimma xanthochrum","Finfish","DD",52251
 "trimma yanoi","Finfish","LC",52252
-"trimmatom eviotops","Finfish","NE",52253
-"trimmatom macropodus","Finfish","NE",52254
+"trimmatom eviotops","Finfish","LC",52253
+"trimmatom macropodus","Finfish","LC",52254
 "trimmatom nanus","Finfish","LC",52255
 "trimmatom pharus","Finfish","LC",52256
-"trimmatom sagma","Finfish","NE",52257
-"trimmatom zapotes","Finfish","NE",52258
+"trimmatom sagma","Finfish","LC",52257
+"trimmatom zapotes","Finfish","LC",52258
 "trimorphodon biscutatus","Reptiles","LC",52259
 "trimorphodon lambda","Reptiles","LC",52260
 "trimorphodon lyrophanes","Reptiles","LC",52261
@@ -52343,7 +52343,7 @@
 "tripneustes gratilla","Echinoderms","NE",52342
 "tripneustes ventricosus","Echinoderms","NE",52343
 "tripodichthys angustifrons","Finfish","NE",52344
-"tripodichthys blochii","Finfish","NE",52345
+"tripodichthys blochii","Finfish","LC",52345
 "tripodichthys oxycephalus","Finfish","NE",52346
 "triprion petasatus","Amphibians","LC",52347
 "triprion spatulatus","Amphibians","LC",52348
@@ -52378,7 +52378,7 @@
 "trivirostra corrugata","Molluscs","NE",52377
 "trivirostra oryza","Molluscs","NE",52378
 "trivirostra shawi","Molluscs","NE",52379
-"trixiphichthys weberi","Finfish","NE",52380
+"trixiphichthys weberi","Finfish","LC",52380
 "trizocarcinus tacitus","Arthropods","NE",52381
 "trizocheles spinosus","Arthropods","NE",52382
 "trochaclis antarctica","Molluscs","NE",52383
@@ -52470,12 +52470,12 @@
 "tropicoperdix tonkinensis","Birds","LC",52469
 "tropidechis carinatus","Reptiles","LC",52470
 "tropidoclonion lineatum","Reptiles","LC",52471
-"tropidodipsas annulifera","Reptiles","LC",52472
+"tropidodipsas annulifera","Reptiles","NE",52472
 "tropidodipsas fasciata","Reptiles","LC",52473
 "tropidodipsas fischeri","Reptiles","LC",52474
 "tropidodipsas philippii","Reptiles","LC",52475
 "tropidodipsas repleta","Reptiles","DD",52476
-"tropidodipsas sartorii","Reptiles","LC",52477
+"tropidodipsas sartorii","Reptiles","NE",52477
 "tropidodipsas zweifeli","Reptiles","DD",52478
 "tropidodryas serra","Reptiles","LC",52479
 "tropidodryas striaticeps","Reptiles","LC",52480
@@ -52900,7 +52900,7 @@
 "tylototriton hainanensis","Amphibians","EN",52899
 "tylototriton kweichowensis","Amphibians","VU",52900
 "tylototriton liuyangensis","Amphibians","EN",52901
-"tylototriton lizhengchangi","Amphibians","CR",52902
+"tylototriton lizhengchangi","Amphibians","NE",52902
 "tylototriton notialis","Amphibians","VU",52903
 "tylototriton podichthys","Amphibians","LC",52904
 "tylototriton pseudoverrucosus","Amphibians","EN",52905
@@ -53182,7 +53182,7 @@
 "uranoscopus oligolepis","Finfish","LC",53181
 "uranoscopus polli","Finfish","LC",53182
 "uranoscopus scaber","Finfish","LC",53183
-"uranoscopus sulphureus","Finfish","NE",53184
+"uranoscopus sulphureus","Finfish","LC",53184
 "uranoscopus tosae","Finfish","NE",53185
 "uraspis helvola","Finfish","LC",53186
 "uraspis secunda","Finfish","LC",53187
@@ -53241,8 +53241,8 @@
 "uroderma magnirostrum","Terrestrial mammals","LC",53240
 "urodynamis taitensis","Birds","LC",53241
 "uroglaux dimorpha","Birds","LC",53242
-"urogymnus asperrimus","Elasmobranchs","VU",53243
-"urogymnus granulatus","Elasmobranchs","VU",53244
+"urogymnus asperrimus","Elasmobranchs","EN",53243
+"urogymnus granulatus","Elasmobranchs","EN",53244
 "urolais epichlorus","Birds","LC",53245
 "urolophus bucculentus","Elasmobranchs","VU",53246
 "urolophus cruciatus","Elasmobranchs","LC",53247
@@ -53778,7 +53778,7 @@
 "vini ultramarina","Birds","CR",53777
 "vipera ammodytes","Reptiles","LC",53778
 "vipera anatolica","Reptiles","CR",53779
-"vipera aspis","Reptiles","LC",53780
+"vipera aspis","Reptiles","VU",53780
 "vipera barani","Reptiles","NT",53781
 "vipera berus","Reptiles","LC",53782
 "vipera darevskii","Reptiles","CR",53783
@@ -53794,7 +53794,7 @@
 "vipera orlovi","Reptiles","CR",53793
 "vipera pontica","Reptiles","EN",53794
 "vipera renardi","Reptiles","NT",53795
-"vipera seoanei","Reptiles","LC",53796
+"vipera seoanei","Reptiles","NT",53796
 "vipera transcaucasiana","Reptiles","NT",53797
 "vipera ursinii","Reptiles","VU",53798
 "vir philippinensis","Arthropods","NE",53799
@@ -54009,7 +54009,7 @@
 "xenichthys agassizii","Finfish","VU",54008
 "xenichthys xanti","Finfish","LC",54009
 "xenicus gilviventris","Birds","EN",54010
-"xenisthmus africanus","Finfish","NE",54011
+"xenisthmus africanus","Finfish","LC",54011
 "xenisthmus eirospilus","Finfish","LC",54012
 "xenisthmus polyzonatus","Finfish","LC",54013
 "xenobrama microlepis","Finfish","NE",54014
@@ -54020,7 +54020,7 @@
 "xenocalamus sabiensis","Reptiles","LC",54019
 "xenocalamus transvaalensis","Reptiles","LC",54020
 "xenocephalus egregius","Finfish","LC",54021
-"xenocephalus elongatus","Finfish","NE",54022
+"xenocephalus elongatus","Finfish","LC",54022
 "xenochrophis bellulus","Reptiles","DD",54023
 "xenochrophis cerasogaster","Reptiles","VU",54024
 "xenochrophis maculatus","Reptiles","LC",54025
@@ -54184,7 +54184,7 @@
 "xiphias gladius","Finfish","EN",54183
 "xiphidiopicus percussus","Birds","LC",54184
 "xiphister atropurpureus","Finfish","NE",54185
-"xiphister mucosus","Finfish","NE",54186
+"xiphister mucosus","Finfish","LC",54186
 "xiphocheilus typus","Finfish","LC",54187
 "xiphocolaptes albicollis","Birds","LC",54188
 "xiphocolaptes falcirostris","Birds","VU",54189
@@ -54292,7 +54292,7 @@
 "zalophus californianus","Marine mammals","LC",54291
 "zalophus wollebaeki","Marine mammals","EN",54292
 "zamenis hohenackeri","Reptiles","LC",54293
-"zamenis lineatus","Reptiles","DD",54294
+"zamenis lineatus","Reptiles","LC",54294
 "zamenis longissimus","Reptiles","LC",54295
 "zamenis persica","Reptiles","DD",54296
 "zamenis scalaris","Reptiles","LC",54297
