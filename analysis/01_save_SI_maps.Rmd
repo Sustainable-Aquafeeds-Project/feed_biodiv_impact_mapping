@@ -491,7 +491,7 @@ quant_val = round(quantile_value, 5)
           legend.margin = margin(r = 10)) + # add a margin to legend text so it isn't cut off when saving 
   labs(fill = fill_name,
        title = glue("{diet_type}, {fcr}"),
-       caption = glue("99th quantile range: {quant_val} - {max_val}")) + 
+       caption = glue("99th quantile range (red areas): {quant_val} - {max_val}")) + 
      guides(color = "none")
         
       plot_list[[length(plot_list) + 1]] <- loop_plot
@@ -824,7 +824,7 @@ For each diet scenario (just filter for regular, as the number of species impact
 
 allocation_types <- c("mass", "economic", "ge")  
 diets <- c("fish-dominant", "plant-dominant")
-fcrs <- c("regular", "efficient")
+fcrs <- c("regular")
 
 richness_files <- list.files(here("data/spatial/output"), pattern = "richness", full.names = TRUE) 
 

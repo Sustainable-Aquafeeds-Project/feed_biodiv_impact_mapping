@@ -292,16 +292,12 @@ plot1 <- ggplot(summary_df_spp %>% filter(prop_impact > 0), aes(x = prop_impact)
   geom_point(data = summary_df_spp, aes(x = mean_prop, y = taxon, group = diet),
              position = position_dodge(width = -0.9),
              shape = 21, color = "black", fill = "orange", size = 4) +
-  # geom_point(data = summary_df_spp, aes(x = mean_prop, y = taxon, group = diet, fill = terr_marine),
-  #            position = position_dodge(width = -0.9),
-  #            shape = 21, color = "black", size = 4) +
      geom_boxplot(aes(y = taxon, fill = diet), outlier.fill = NA, outlier.color = NA, position = position_dodge(width = -0.9), alpha = 0, colour = "orange") +
    geom_boxplot(aes(y = taxon, fill = diet), outlier.fill = NA, outlier.color = NA, position = position_dodge(width = -0.9), alpha = 0, fatten = NULL) +
   theme_ohara() +
       labs(x = "Proportion of global habitat area impacted", fill = 'Diet', color = 'Diet') +
   scale_x_continuous(expand = c(0,0), limits = c(0, quant_95)) +
   scale_color_manual(values = diet_cols, breaks = names(diet_cols), guide = guide_legend(reverse = FALSE)) +
-   # scale_fill_manual(values = c("Marine" = "lightblue", "Terrestrial" = "darkgreen")) +  # Customize fill colors for terr_marine
   theme(panel.background = element_blank(),
             axis.title.y = element_blank(),
             axis.text.x = element_text(size = 16, angle = 45, hjust = 1),
@@ -323,7 +319,7 @@ plot2 <- ggplot(summary_df_spp %>% filter(prop_impact > quant_95), aes(x = prop_
   geom_vline(xintercept = quant_95, color = "black") +
   theme_ohara() +
       labs(x = "", y = "") +
-  scale_x_continuous(expand = c(0,0), limits = c(quant_95, 0.018), breaks = c(quant_95, seq(0.003, 0.018, by = 0.006)), labels = c("0.000055", "0.003", "0.009", "0.015")) +
+  scale_x_continuous(expand = c(0,0), limits = c(quant_95, 0.018), breaks = c(quant_95, seq(0.003, 0.012, by = 0.003)), labels = c("0.000058", "0.003", "0.006", "0.009", "0.012")) +
   scale_color_manual(values = diet_cols, breaks = names(diet_cols), guide = guide_legend(reverse = FALSE)) +
   theme(panel.background = element_blank(),
             axis.title.y = element_blank(),
@@ -334,7 +330,7 @@ plot2 <- ggplot(summary_df_spp %>% filter(prop_impact > quant_95), aes(x = prop_
         legend.position = "none", 
         text = element_text(family = "arial")) +
       geom_text(data = spp_assessed_reg, aes(label = spp_count_assessed, y = taxon),
-                x = 0.012, hjust = 0, color = 'black',
+                x = 0.011, hjust = 0, color = 'black',
                 family = 'arial',
                 size = 6) 
 
@@ -436,8 +432,7 @@ plot2 <- ggplot(summary_df_spp %>% filter(prop_impact > quant_95), aes(x = prop_
   geom_vline(xintercept = quant_95, color = "black") +
   theme_ohara() +
       labs(x = "", y = "") +
-  scale_x_continuous(expand = c(0,0), limits = c(quant_95, 0.018), breaks = c(quant_95, seq(0.003, 0.018, by = 0.006)), labels = c("0.000055", "0.003", "0.009", "0.015")) +
- # scale_x_continuous(expand = c(0,0), limits = c(quant_95, 0.012)) +
+  scale_x_continuous(expand = c(0,0), limits = c(quant_95, 0.018), breaks = c(quant_95, seq(0.003, 0.012, by = 0.003)), labels = c("0.000041", "0.003", "0.006", "0.009", "0.012")) +
   scale_color_manual(values = diet_cols, breaks = names(diet_cols), guide = guide_legend(reverse = FALSE)) +
   theme(panel.background = element_blank(),
             axis.title.y = element_blank(),
@@ -604,7 +599,7 @@ SI Figure 2:
 
 ```{r}
 allocations <- c("economic")
-fcr_types <- c("regular", "efficient")
+fcr_types <- c("regular")
 diet_types <- c("plant-dominant", "fish-dominant")
 spp_types <- all_overlap %>% 
   filter(spp_type != "polychaetes") %>% 

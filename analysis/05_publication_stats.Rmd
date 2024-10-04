@@ -772,6 +772,8 @@ ggplot(summary_df_stats, aes(x = prop_attributed, y = total_diet_contribution, c
   geom_abline() +
   scale_color_manual(values = pal_mats)
 
+ggsave(here("analysis/SI_plots/SI_fig_efficiency.png"), width = 178.9, height =100.92 , units = "mm", bg = "white")
+
 
 ## lets look at average impacts contributions
 
