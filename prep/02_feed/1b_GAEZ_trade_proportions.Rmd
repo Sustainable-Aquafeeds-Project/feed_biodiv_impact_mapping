@@ -211,10 +211,6 @@ FAO provides a trade matrix showing tonnes of each crop imported into each count
 FAO codes:
 ```{r}
 
-
-mapspam_feed_products <- read_csv(here("prep/02_feed/data/MapSPAM_to_FAO_v2.csv")) %>%
-  rename(FAONAMES_mapspam = FAONAMES) # read in old mapspam categories
-
 feed_products_full <- read_csv(here("prep/02_feed/data/GAEZ_names_FEED.csv")) %>%
   left_join(mapspam_feed_products, by = c("item_code" = "FAO_item_code")) %>% 
   filter(!is.na(GAEZ_category))

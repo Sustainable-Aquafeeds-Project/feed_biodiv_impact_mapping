@@ -102,6 +102,69 @@ write_rds(eyres_ids, here("prep/03_prep_spp_habitats/data/iucn/eyres_iucn_spp.rd
 ```
 
 
+Data check after reprojection in `02_map_terrestrial_to_moll.R`
+
+```{r}
+new <- read.csv("/mnt/rdsi/raw_data/AOH_eyres/reprojected_mol_csv/Seasonality.RESIDENT-88149202.csv")
+
+new1 <- new %>% 
+    left_join(moll_template_xy) %>%
+  dplyr::select(x, y, presence) %>%
+  rast(., type = "xyz", crs = moll_template)
+plot(new1)
+
+      
+old <- raster("/mnt/rdsi/raw_data/AOH_eyres/mammals/Seasonality.RESIDENT-88149202.tif") 
+# %>% 
+# projectRaster(., moll_template, method = "ngb")
+
+# there are 0s in the files... is using nearest neighbor screwing with some of the smaller files? I'm not really sure... the big files seem ok. And taking out all of the 0s take forever. 
+
+# %>%
+# classify(., cbind(-Inf, 0, NA), right=FALSE) # clamp, ifel, and classify in terra and raster all take a really long time...
+# clamp(., lower=0.000001, useValues=FALSE)
+# old[old == 0] <- NA
+
+plot(old)  
+
+# ok so big files seem to be ok... lets look at small files
+
+
+new <- read.csv("/mnt/rdsi/raw_data/AOH_eyres/reprojected_mol_csv/Seasonality.RESIDENT-77347251.csv")
+
+new1 <- new %>% 
+    left_join(moll_template_xy) %>%
+  dplyr::select(x, y, presence) %>%
+  st_as_sf(., coords = c("x", "y"), crs = crs(moll_template))
+
+mapview(new1)
+
+      
+old <- rast("/mnt/rdsi/raw_data/AOH_eyres/amphibians/Seasonality.RESIDENT-77347251.tif")     
+# old      
+plot(old)  
+
+old1 <- old %>%
+        aggregate(fact = 10, fun = "mean", na.rm = TRUE) %>%  
+        project(., moll_template, method = "near") %>%
+  as.data.frame(., xy = TRUE) %>%
+  rename(presence = 3) %>%
+  filter(presence != 0) %>%
+  mutate(presence = 1 ) %>%
+  left_join(moll_template_xy) %>%
+  dplyr::select(x, y, presence) %>%
+  rast(., type = "xyz")
+
+plot(old1)
+
+# Let's rerun everything under 300 bytes with the aggregate method just to be sure. I don't think it will really make a difference. A few cells here and there. It is definitely working... just not as exact as I would like. 
+
+```
+
+
+ARCHIVE: 
+
+
 ## Download the Lumbierres data 
  - NOTE: you don't need to do this unless you plan to use the Lumbierres data. The Eyres data is more up-to-date and comprehensive.
 
@@ -180,66 +243,4 @@ plot(test_size)
 
 
 ```
-
-
-
-Data check after reprojection in `02_map_terrestrial_to_moll.R`
-
-```{r}
-new <- read.csv("/mnt/rdsi/raw_data/AOH_eyres/reprojected_mol_csv/Seasonality.RESIDENT-88149202.csv")
-
-new1 <- new %>% 
-    left_join(moll_template_xy) %>%
-  dplyr::select(x, y, presence) %>%
-  rast(., type = "xyz", crs = moll_template)
-plot(new1)
-
-      
-old <- raster("/mnt/rdsi/raw_data/AOH_eyres/mammals/Seasonality.RESIDENT-88149202.tif") 
-# %>% 
-# projectRaster(., moll_template, method = "ngb")
-
-# there are 0s in the files... is using nearest neighbor screwing with some of the smaller files? I'm not really sure... the big files seem ok. And taking out all of the 0s take forever. 
-
-# %>%
-# classify(., cbind(-Inf, 0, NA), right=FALSE) # clamp, ifel, and classify in terra and raster all take a really long time...
-# clamp(., lower=0.000001, useValues=FALSE)
-# old[old == 0] <- NA
-
-plot(old)  
-
-# ok so big files seem to be ok... lets look at small files
-
-
-new <- read.csv("/mnt/rdsi/raw_data/AOH_eyres/reprojected_mol_csv/Seasonality.RESIDENT-77347251.csv")
-
-new1 <- new %>% 
-    left_join(moll_template_xy) %>%
-  dplyr::select(x, y, presence) %>%
-  st_as_sf(., coords = c("x", "y"), crs = crs(moll_template))
-
-mapview(new1)
-
-      
-old <- rast("/mnt/rdsi/raw_data/AOH_eyres/amphibians/Seasonality.RESIDENT-77347251.tif")     
-# old      
-plot(old)  
-
-old1 <- old %>%
-        aggregate(fact = 10, fun = "mean", na.rm = TRUE) %>%  
-        project(., moll_template, method = "near") %>%
-  as.data.frame(., xy = TRUE) %>%
-  rename(presence = 3) %>%
-  filter(presence != 0) %>%
-  mutate(presence = 1 ) %>%
-  left_join(moll_template_xy) %>%
-  dplyr::select(x, y, presence) %>%
-  rast(., type = "xyz")
-
-plot(old1)
-
-# Let's rerun everything under 300 bytes with the aggregate method just to be sure. I don't think it will really make a difference. A few cells here and there. It is definitely working... just not as exact as I would like. 
-
-```
-
 

@@ -133,7 +133,7 @@ Lets map how each scenario agrees (or not) with one another on high vs low impac
 # read in each scenario, filter for >95th quantile, set all cells to 1; filter for <25th quantile, set all cells to 1. Stack all and count what cells match up 
 
 allocation_types <- c("economic", "mass", "ge")
-fcr_types <- c("regular", "efficient")
+fcr_types <- c("regular")
 diet_types <- c("plant-dominant", "fish-dominant")
 
 
@@ -202,13 +202,12 @@ dev.off()
 ```{r}
 test <- 1 - rast(file.path(biodiv_dir, "output/impact_maps_across_taxon_ingredient/plant-dominant/regular/economic_mean_prop.tif"))
 test[test == 0] <- NA
-global(test, "mean", na.rm = TRUE) # 0.00001099836
+global(test, "mean", na.rm = TRUE) # 0.9999617
 plot(raster(test))
 s <- raster::select(raster(test))
 plot(s)
 where.max(test)
 
-test_rescale <- test/0.02474564
 
 ```
 

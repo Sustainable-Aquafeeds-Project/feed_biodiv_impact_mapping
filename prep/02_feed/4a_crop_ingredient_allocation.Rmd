@@ -37,7 +37,7 @@ trade_data <- read_csv(here("prep/02_feed/data/FAO_GAEZcrop_trade_data_10-02-202
 ```
 
 
-Total demand by animals per country in MAPSPAM crops
+Total demand by animals per country in GAEZ crops
 
 ```{r}
 
@@ -50,7 +50,7 @@ consumption <- read_csv(here("prep/02_feed/data/demand/total_aquaculture_ingredi
 
 ## need to match `consumption` ingredients to equivalent crop.. need look up table 
 
-feed_cats <- read_xlsx(here("data/tidy_data/plant_ingredient_codes.xlsx")) %>% ## this table was created manually. It matches our ingredient names from Aas et al. 2022 to GAEZ raw material crop names. Must also update product_to_fao_spam.csv. Taken from our IMAS Sustainable Aquafeed Project - Mapping directory on OneDrive, specifically the "allocation_new" folder. 
+feed_cats <- read_xlsx(here("data/tidy_data/plant_ingredient_codes.xlsx")) %>% ## this table was created manually. It matches our ingredient names from Aas et al. 2022 to GAEZ raw material crop names. Taken from our IMAS Sustainable Aquafeed Project - Mapping directory on OneDrive, specifically the "allocation_new" folder. 
   dplyr::select(-reference)
   
 
@@ -155,7 +155,7 @@ write.csv(crop_raw_material_demand, here("prep/02_feed/data/demand/ingredient_cr
 
 # STEP 3 Calculate proportion of production for animal system for each country
 
-Crop production according to MAPSPAM data adjusted to 2021 production. These data include all growing systems (intensive, irrigated, etc.) and are in units of metric tonnes.
+Crop production according to GAEZ data adjusted to 2021 production. These data include all growing systems (intensive, irrigated, etc.) and are in units of metric tonnes.
 
 ```{r}
 
@@ -265,7 +265,7 @@ fao_yields <- readRDS(here("data/tidy_data/production-data/crops_production_tidy
          area_code < 5000,
          iso3c %in% total_prop$iso3c_producing) %>%  # filter for 2021 and yield data
   mutate(yield_tonnes_ha = value/10000) %>% # convert hg to tonnes
-  left_join(gaez_fao, by = c("item_code" = "FAO_code")) %>% # get mapspam codes
+  left_join(gaez_fao, by = c("item_code" = "FAO_code")) %>% # get gaez codes
   filter(!is.na(gaez_code))
 
 
