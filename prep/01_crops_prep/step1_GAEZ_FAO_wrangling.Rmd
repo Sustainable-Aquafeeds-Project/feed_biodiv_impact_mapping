@@ -11,11 +11,7 @@ Wrangle GAEZ crop category dataset.
 
 # Data sources
 
- - FAOSTAT crop production: https://www.fao.org/faostat/en/#data/QCL
-
- - GAEZ: https://gaez.fao.org/
- 
- - Halpern et al. 2022: https://www.nature.com/articles/s41893-022-00965-x
+**Reference**: 
 
 
 # Setup

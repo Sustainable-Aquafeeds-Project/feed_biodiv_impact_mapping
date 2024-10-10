@@ -5,6 +5,8 @@ editor_options:
   chunk_output_type: console
 ---
 
+# Summary
+
 This script should be updated if any of the following files have been updated:
 * FAO Detailed Trade Matrix
 * FAO Food Balance Sheets
@@ -15,6 +17,25 @@ This summarizes FAO trade data by GAEZ crop category (vs. FAO crop category) to 
 Output: feed_consumption/data/FAO_GAEZcrop_trade_data.csv"
 
 Here, we apply a filter that for any country that produces <1000 tonnes of a raw material, we assume that if they are trading it, this is low likelihood of being domestically produced. This is the assumption that to be attractive and competitive as an exporter globally, you need economies of scale. 
+
+## Data sources: 
+
+**Reference**: Grogan, D., Frolking, S., Wisser, D. et al. Global gridded crop harvested area, production, yield, and monthly physical area data circa 2015. Sci Data 9, 15 (2022). https://doi.org/10.1038/s41597-021-01115-2
+
+**Downloaded**: 07/14/2023
+
+**Description**: "Here we provide an update to global gridded annual and monthly crop datasets. This new dataset uses the crop categories established by the Global Agro-Ecological Zones (GAEZ) Version 3 model, which is based on the Food and Agricultural Organization of the United Nations (FAO) crop production data. We used publicly available data from the FAOSTAT database as well as GAEZ Version 4 global gridded dataset to generate circa 2015 annual crop harvested area, production, and yields by crop production system (irrigated and rainfed) for 26 crops and crop categories globally at 5-minute resolution. We additionally used available data on crop rotations, cropping intensity, and planting and harvest dates to generate monthly gridded cropland data for physical areas for the 26 crops by production system. These data are in standard georeferenced gridded format, and can be used by any global hydrology, land surface, or other earth system model that requires gridded annual or monthly crop data inputs."
+
+**Download Link**: https://gaez.fao.org/pages/data-access-download
+
+**Reference**: FAOSTAT (2023) Food Balances (2010-). Available at: http://www.fao.org/faostat/en/#data/FBS (Accessed: 16 March 2023).
+
+**Downloaded**: 03/16/2023
+
+
+**Reference**: FAOSTAT (2023) Detailed Trade Matrix. FAO. Available at: http://www.fao.org/faostat/en/#data/TM (Accessed: 16 March 2023).
+
+**Downloaded**: 03/16/2023
 
 ```{r}
 

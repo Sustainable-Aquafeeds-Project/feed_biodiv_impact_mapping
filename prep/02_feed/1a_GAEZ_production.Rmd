@@ -9,8 +9,20 @@ editor_options:
 
 # Data sources
 
- - GAEZ: https://www.nature.com/articles/s41597-021-01115-2
- - Halpern et al. 2022: https://knb.ecoinformatics.org/view/doi%3A10.5063%2FF1FN14NK
+**Reference**: Grogan, D., Frolking, S., Wisser, D. et al. Global gridded crop harvested area, production, yield, and monthly physical area data circa 2015. Sci Data 9, 15 (2022). https://doi.org/10.1038/s41597-021-01115-2
+
+**Downloaded**: 07/14/2023
+
+**Description**: "Here we provide an update to global gridded annual and monthly crop datasets. This new dataset uses the crop categories established by the Global Agro-Ecological Zones (GAEZ) Version 3 model, which is based on the Food and Agricultural Organization of the United Nations (FAO) crop production data. We used publicly available data from the FAOSTAT database as well as GAEZ Version 4 global gridded dataset to generate circa 2015 annual crop harvested area, production, and yields by crop production system (irrigated and rainfed) for 26 crops and crop categories globally at 5-minute resolution. We additionally used available data on crop rotations, cropping intensity, and planting and harvest dates to generate monthly gridded cropland data for physical areas for the 26 crops by production system. These data are in standard georeferenced gridded format, and can be used by any global hydrology, land surface, or other earth system model that requires gridded annual or monthly crop data inputs."
+
+**Download Link**: https://gaez.fao.org/pages/data-access-download
+
+
+**Reference**: FAOSTAT (2023) ‘Crops and livestock products’. Available at: https://www.fao.org/faostat/en/#data/QCL (Accessed: 14 March 2023).
+
+**Downloaded**: 03/14/2023
+
+**Description**: FAOSTAT crop production statistics 
 
 # Methods
 
