@@ -5,6 +5,8 @@ editor_options:
   chunk_output_type: console
 ---
 
+## Summary 
+
 Goal: Resample all crop and fish based feed rasters to 100km2 cells
 
 Note: I am saving all of these rasters on our RDSI server. I was encountering problems with trying to save so many files on github.
@@ -29,6 +31,8 @@ moll_crs <- crs(moll_template)
 biodiv_dir <- file.path(rdsi_dir, "biodiversity_impacts")
 
 ```
+
+## Methods 
 
 We will present data at at ~10km resolution in the WGS84 Mollweide coordinate reference system, an equal area projection that retains considerable accuracy in area at polar latitudes.
 
@@ -203,13 +207,4 @@ test_df %>% arrange(-sum)
 
 ```
 
-```{r}
-test_fd_eff <- rast(here("prep/02_feed/output/fish-dominant/efficient/forage fish_fish meal_economic_pelagic_catch_A.tif"))
-
-test_fd_reg <- rast(here("prep/02_feed/output/fish-dominant/regular/forage fish_fish meal_economic_pelagic_catch_A.tif"))
-
- diff <- (test_fd_reg - test_fd_eff)/test_fd_reg
- 
- plot(diff) # cool
-```
 

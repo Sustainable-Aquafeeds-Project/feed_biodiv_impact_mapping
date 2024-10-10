@@ -27,6 +27,14 @@ source(here("src/directories.R"))
 
 ```
 
+## Data Sources:
+
+ - GAEZ, FAO crop production, and FAO trade data from scripts before
+ 
+**Reference**: Cottrell, R.S. et al. (2024) ‘Raw material origins matter as much as feed composition for the environmental footprint of aquaculture feeds’, Manuscript in review [Preprint].
+
+**Description**: We use the raw material allocation methods created from this paper. 
+
 # Methods
 
 ## STEP 1: determine amount of crop produced in each country for each food system.

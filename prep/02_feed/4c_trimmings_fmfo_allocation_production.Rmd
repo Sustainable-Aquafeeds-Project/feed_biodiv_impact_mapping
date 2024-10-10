@@ -13,6 +13,25 @@ GOAL: Get proportion of fish oil and fish meal live weight equivalents that is c
 
 Outputs: a raster and dataset for each fish oil and fish meal, under each diet scenario, describing the harvest of each FMFO live weight equivalents (tonnes) from trimmings that are consumed in each country by salmon aquaculture systems.
 
+## Data Sources
+
+**Reference**: Cottrell, R.S. et al. (2024) ‘Raw material origins matter as much as feed composition for the environmental footprint of aquaculture feeds’, Manuscript in review [Preprint].
+
+**Description**: We use the raw material allocation methods created from this paper. 
+
+**Reference**: Gaulier, G. and Zignago, S. (2010) BACI: International Trade Database at the Product-Level. The 1994-2007 Version. Working Papers 2010–23. CEPII. Available at: http://www.cepii.fr/CEPII/fr/publications/wp/abstract.asp?NoDoc=2726.
+
+**Description**: Bilateral trade flows of fish meal and oil. 
+
+**Reference**: Watson, R.A. (2017) ‘A database of global marine commercial, small-scale, illegal and unreported fisheries catch 1950–2014’, Scientific Data, 4(1), p. 170039. Available at: https://doi.org/10.1038/sdata.2017.39.
+
+**Description**: Global fish catch dataset
+
+**Reference**: BioMar Group Integrated Sustainability Report (2023). BioMar Group, p. 56. Available at: https://www.biomar.com/our-promise/sustainability-report.
+
+
+ - See extended data tables from the publication for all species specific allocation rates used.
+
 ```{r}
 # load relevant packages, etc.
 

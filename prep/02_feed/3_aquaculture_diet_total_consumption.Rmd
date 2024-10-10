@@ -7,11 +7,32 @@ editor_options:
   chunk_output_type: console
 ---
 
+## Summary 
+
 Use following data to calculate tonnes of each feedstuff item consumed by each aquaculture system in each country:
 
 * Tonnes of production: From FAOSTAT
 * Diet composition: From Aas et al. 2022 and Cottrell et al. 2024 in review
 * feed conversion ratio: From Tacon & Metian 2008; 2015
+
+
+## Data Sources
+
+**Reference**: FAO (2023) ‘Fishery and Aquaculture Statistics. Global Fish Trade - All partners aggregated 1976-2021’. FishStatJ.
+
+**Downloaded**: 11/03/2022
+
+**Reference**: FAOSTAT (2023) ‘Crops and livestock products’. Available at: https://www.fao.org/faostat/en/#data/QCL (Accessed: 14 March 2023).
+
+**Downloaded**: 03/14/2023
+
+**Reference**: Aas, T.S., Åsgård, T. and Ytrestøyl, T. (2022) ‘Utilization of feed resources in the production of Atlantic salmon (Salmo salar) in Norway: An update for 2020’, Aquaculture Reports, 26, p. 101316. Available at: https://doi.org/10.1016/j.aqrep.2022.101316.
+
+**Reference**: Tacon, A.G.J. and Metian, M. (2015) ‘Feed Matters: Satisfying the Feed Demand of Aquaculture’, Reviews in Fisheries Science & Aquaculture, 23(1), pp. 1–10. Available at: https://doi.org/10.1080/23308249.2014.987209.
+
+**Reference**: Tacon, A.G.J. and Metian, M. (2008) ‘Global overview on the use of fish meal and fish oil in industrially compounded aquafeeds: Trends and future prospects’, Aquaculture, 285(1–4), pp. 146–158. Available at: https://doi.org/10.1016/j.aquaculture.2008.08.015.
+
+
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)

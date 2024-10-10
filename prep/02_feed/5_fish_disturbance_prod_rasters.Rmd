@@ -7,9 +7,21 @@ editor_options:
 
 # Summary
 
-Using the marine footprint approach outlined in Cashion et al https://onlinelibrary.wiley.com/doi/full/10.1111/faf.12222 based off of the primary production required for catch in a given cell.
+Using the marine footprint approach outlined in Cashion et al https://doi.org/10.1007/s11367-016-1092-y. based off of the primary production required for catch in a given cell.
 
 We need to calculate this separately for fishmeal and oil.
+
+## Data Sources
+
+**Reference**: Cashion, T. et al. (2016) ‘Review and advancement of the marine biotic resource use metric in seafood LCAs: a case study of Norwegian salmon feed’, The International Journal of Life Cycle Assessment, 21(8), pp. 1106–1120. Available at: https://doi.org/10.1007/s11367-016-1092-y.
+
+**Reference**: Cottrell, R.S. et al. (2024) ‘Raw material origins matter as much as feed composition for the environmental footprint of aquaculture feeds’, Manuscript in review [Preprint].
+
+**Reference**: Monthly net primary productivity data sourced from the Orgeon State Ocean Productivity dataset for Standard VGPM rfom MODIS R2022 for a decade (2013-2022).
+
+**Reference**: Watson, R.A. (2017) ‘A database of global marine commercial, small-scale, illegal and unreported fisheries catch 1950–2014’, Scientific Data, 4(1), p. 170039. Available at: https://doi.org/10.1038/sdata.2017.39.
+
+**Description**: Global fish catch dataset
   
 ```{r, setup}
 

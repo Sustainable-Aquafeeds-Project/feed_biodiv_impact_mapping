@@ -955,7 +955,7 @@ ggsave(here("analysis/SI_plots/NOR_basemap.png"), plot = map_plot, dpi = 300, bg
 
 ```
 
-ARCHIVE:
+ARCHIVE BUT COULD BE USEFUL TO MAP OTHER COUNTRIES HOTSPOTS:
 
 ```{r}
 # now do canada

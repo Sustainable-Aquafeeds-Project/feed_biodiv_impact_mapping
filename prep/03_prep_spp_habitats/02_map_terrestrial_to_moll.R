@@ -1,4 +1,4 @@
-##### Map terrestrial species to Mollweide from 1km by 1km
+##### Reproject terrestrial species AOH maps to Mollweide from 1km by 1km
 
 # # Summary
 # 
@@ -63,7 +63,7 @@ for (dir in directories) {
   file_list[[dir]] <- files
 }
 
-# Flatten the list if needed
+# Flatten the list
 all_files <- unlist(file_list)
 
 map_terrestrial_to_moll <- function(s) {
@@ -99,20 +99,7 @@ map_terrestrial_to_moll <- function(s) {
     if(nrow(spp_csv) == 0){
       
       
-    # test <-  rast(spp_file) %>%
-    #     aggregate(fact = 10, fun = "mean", na.rm = TRUE) %>%  
-    #     project(moll_template, method = "near") %>% 
-    #     as.data.frame(., xy = TRUE) %>%
-    #     rename(presence = 3) %>%
-    #     filter(presence >0) %>%
-    #     mutate(presence = 1) %>%
-    #     inner_join(moll_template_xy) %>%
-    #     dplyr::select(-x, -y) %>%
-    #   left_join(moll_template_xy) %>%
-    #   dplyr::select(x, y, presence) %>%
-    #   rast(., type = "xyz", crs = moll_template)
-      
-      ## switched to using raster package because it was much faster than terra for aggregating this
+      ## switched to using raster package because it was much faster than terra for aggregating this for some reason
     rast(spp_file) %>%
         aggregate(fact = 10, fun = "mean", na.rm = TRUE) %>%  
         raster() %>%

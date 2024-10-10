@@ -5,6 +5,10 @@ editor_options:
   chunk_output_type: console
 ---
 
+## Summary
+
+Here we download AOH maps from Eyres et al and Lumbierres et al (reference below).
+
 ## Data sources 
 
 * Eyres et al. 2023: preprint: https://www.researchgate.net/publication/376637364_LIFE_A_metric_for_quantitively_mapping_the_impact_of_land-cover_change_on_global_extinctions Files shared through email communication with Alison Eyres (ae491@cam.ac.uk) and Michael Winston Dales (mwd24@cam.ac.uk) at Cambridge University: https://www.cl.cam.ac.uk/research/eeg/4c/data/aoh/

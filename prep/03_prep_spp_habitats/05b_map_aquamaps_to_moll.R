@@ -1,4 +1,4 @@
-##### Map AquaMaps species to Mollweide from HCAF
+##### Reproject AquaMaps species habitat maps to Mollweide from HCAF
 
 # # Summary
 # 
@@ -7,8 +7,8 @@
 # # Methods
 # 
 # For each species, bind the AquaMaps HCAF cell presence values with a lookup dataframe of LOICZID to Mollweide cell ID.  Save out a vector of just the new Mollweide ID cell values, per species (rather than per AquaMaps species ID).
-# Unless you are on a server with a lot of memory (we have 16 cores and 64 gb memory), you will likely experience interruptions and core failures. Because of this you must be vigilant in seeing if things have actually run or not.
-# This takes ~7 hours with no interruptions.
+# Unless you are on a server with a lot of memory (we have 32 cores and 128 gb memory), you will likely experience interruptions and core failures. Because of this you must be vigilant in seeing if things have actually run or not.
+# This takes ~4 hours with no interruptions.
 
 ### SETUP
 library(tidyverse)
@@ -135,6 +135,6 @@ map_am_hcaf_to_moll <- function(s) {
   }
 }
 
-tmp <- parallel::mclapply(spp_vec, map_am_hcaf_to_moll, mc.cores = 4)
+tmp <- parallel::mclapply(spp_vec, map_am_hcaf_to_moll, mc.cores = 8)
 
 

@@ -9,7 +9,7 @@ editor_options:
 
 ## Summary 
 
-In this script we assign and gapfill vulnerability values for each species and pressure combination. Each species is vulnerable to either bycatch, biomass removal, or both, depending upon the ingredient which is being fished. 
+In this script we assign and gapfill vulnerability values for each species and pressure combination. Each species is vulnerable to either bycatch, biomass removal, or both, depending upon the ingredient which is being fished. These methods are adapted from O'Hara et al., 2024. 
 
  - Read in vulnerability data from [Butt et al. 2022](https://esajournals.onlinelibrary.wiley.com/doi/10.1002/ecs2.3919) and match to Aquamaps species. 
   - ~57% of the Aquamaps species do not have vulnerability scores. We will need to gapfill these. We will gapfill using the same method that the source data used (by genus, family, order, class, etc.)
@@ -20,7 +20,9 @@ In this script we assign and gapfill vulnerability values for each species and p
 Butt et al. 2022: A trait-based framework for assessing the vulnerability of marine species to human impacts
   - https://doi.org/10.1002/ecs2.3919 
   
-Aquamaps 
+O’Hara, C. et al. (2024) ‘Cumulative human impacts on global marine fauna highlight risk to biological and functional diversity’, PLOS ONE, 19(9), p. e0309788. Available at: https://doi.org/10.1371/journal.pone.0309788.
+  
+Kaschner, K. et al. (2019) ‘AquaMaps: Predicted range maps for aquatic species’. Available at: https://www.aquamaps.org (Accessed: 11 July 2023).
 
 ## Setup 
 

@@ -35,6 +35,7 @@ aoh_dir <- file.path(rdsi_raw_data_dir, "AOH_eyres/reprojected_mol_csv_fin/")
 biodiv_dir <- file.path(rdsi_dir, "biodiversity_impacts")
 ```
 
+## Methods 
 
 First, save habitat ares for each species. Additionally, find the habitat areas for any species that are missing (3617 of them, because they have no exposure, and thus, no impact)
 
@@ -74,7 +75,7 @@ missing_spp_habs <- data.frame(taxonid = NA, total_hab_area = NA)
 
 for(spp_id in missing_iucn_spp){
   
-  # spp_id = 58058 # ok so, the missing ones all seem to have realllllly small habitats, and that's why they don't show. We will just save those as having 100km2 of habitat as this is the minumum amount a species could have with our resolution... And assume no habitat area impact.
+  # spp_id = 58058 # ok so, the missing ones all seem to have realllllly small habitats, and that's why they don't show. We will just save those as having 100km2 of habitat as this is the minimum amount a species could have with our resolution... And assume no habitat area impact.
   
   spp_rast <- read.csv(glue(file.path(aoh_dir, "{spp_id}.csv")))
   
@@ -140,8 +141,6 @@ impact_df_tidy <- impact_df %>%
   left_join(spp_habs_df_fin, by = "sciname") %>%
   mutate(impact_total = ifelse(is.na(impact_total), 0, impact_total))
 
-test <- data.frame(sciname = setdiff(all_spp_list$sciname, impact_df_tidy$sciname)) %>%
-  left_join(all_spp_list)
 
 species_list <- c(unique(impact_df_tidy$sciname))
 

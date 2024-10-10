@@ -7,7 +7,7 @@
 #   - Allocation type; mass, energetic, or economic
 #   - Diet type; feed formulation; plant-dominant or fish-dominant
 #   - crop type; pulses, soybeans, wheat, etc. 
-#   - fcr type; regular and efficient
+#   - fcr type; regular (we no longer calculate an "efficient" scenario)
  
 
 # - Overlap re-projected and AOH species suitable habitat maps with the appropriate disturbance rasters. This will provide a km2 estimate of the amount of suitable habitat that is EXPOSED to harvest of aquafeed ingredients.  
