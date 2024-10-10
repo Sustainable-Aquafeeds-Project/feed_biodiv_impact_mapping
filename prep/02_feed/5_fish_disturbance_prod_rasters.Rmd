@@ -5,7 +5,7 @@ editor_options:
   chunk_output_type: console
 ---
 
-# Overall approach
+# Summary
 
 Using the marine footprint approach outlined in Cashion et al https://onlinelibrary.wiley.com/doi/full/10.1111/faf.12222 based off of the primary production required for catch in a given cell.
 
@@ -47,8 +47,9 @@ values(eq_area_rast) <- 1:ncell(eq_area_rast)
 
 ```
 
+# Methods 
 
-MARINE FOOTPRINT
+CALCULATE MARINE FOOTPRINT
 
 
 Create a cell area xyz file for 0.5 res wgs84 raster

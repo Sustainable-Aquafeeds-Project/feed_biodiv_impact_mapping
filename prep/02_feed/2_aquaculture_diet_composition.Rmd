@@ -5,6 +5,7 @@ editor_options:
   chunk_output_type: console
 ---
 
+# Summary 
 Wrangling and aggregating aquaculture diet composition data.
 
 ```{r}
@@ -20,13 +21,18 @@ regions <- read_csv(here("data/spatial/output/food_rgns.csv")) %>%
 
 ```
 
-Salmon: diet from Aas source, global values used for regions
+# Data Source 
 
-### salmon
+**Reference**: Aas, T.S., Åsgård, T. and Ytrestøyl, T. (2022) ‘Utilization of feed resources in the production of Atlantic salmon (Salmo salar) in Norway: An update for 2020’, Aquaculture Reports, 26, p. 101316. Available at: https://doi.org/10.1016/j.aqrep.2022.101316.
+
+
+# Methods
+
+Read in diet composition data, derived from Aas et al., 2022
 
 ```{r}
 
-salmon_plant <- read_xlsx(here("prep/02_feed/diet_composition_wrangling/salmon_aquaculture_diet_composition.xlsx"), sheet = "2020") %>%
+salmon_plant <- read_xlsx(here("prep/02_feed/data/diet_composition/salmon_aquaculture_diet_composition.xlsx"), sheet = "2020") %>%
   mutate(raw_name = ifelse(raw_name == "camelina oil", "rapeseed and camelina oil", raw_name),
          raw_name = ifelse(raw_name == "rapeseed oil", "rapeseed and camelina oil", raw_name)) %>%
   group_by(species, production_system, raw_name_edit) %>%
@@ -37,7 +43,7 @@ salmon_plant <- read_xlsx(here("prep/02_feed/diet_composition_wrangling/salmon_a
   select(iso3c, raw_name = raw_name_edit, prop_diet, production_system, species) %>%
   mutate(diet = "plant-dominant")
 
-salmon_fish <-  read_xlsx(here("prep/02_feed/diet_composition_wrangling/salmon_aquaculture_diet_composition.xlsx"), sheet = "fish-dominant") %>%
+salmon_fish <-  read_xlsx(here("prep/02_feed/data/diet_composition/salmon_aquaculture_diet_composition.xlsx"), sheet = "fish-dominant") %>%
   mutate(raw_name = ifelse(raw_name == "camelina oil", "rapeseed and camelina oil", raw_name),
          raw_name = ifelse(raw_name == "rapeseed oil", "rapeseed and camelina oil", raw_name)) %>%
   group_by(species, production_system, raw_name_edit) %>%

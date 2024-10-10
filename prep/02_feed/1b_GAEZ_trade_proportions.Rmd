@@ -16,9 +16,9 @@ This summarizes FAO trade data by GAEZ crop category (vs. FAO crop category) to 
 
 Output: feed_consumption/data/FAO_GAEZcrop_trade_data.csv"
 
-Here, we apply a filter that for any country that produces <1000 tonnes of a raw material, we assume that if they are trading it, this is low likelihood of being domestically produced. This is the assumption that to be attractive and competitive as an exporter globally, you need economies of scale. 
+We apply a filter that for any country that produces <1000 tonnes of a raw material, we assume that if they are trading it, this is low likelihood of being domestically produced. This is the assumption that to be attractive and competitive as an exporter globally, you need economies of scale. 
 
-## Data sources: 
+# Data sources: 
 
 **Reference**: Grogan, D., Frolking, S., Wisser, D. et al. Global gridded crop harvested area, production, yield, and monthly physical area data circa 2015. Sci Data 9, 15 (2022). https://doi.org/10.1038/s41597-021-01115-2
 
@@ -50,9 +50,11 @@ source(here("src/directories.R"))
 
 ```
 
+# Methods
+
 Get tonnes production from GAEZ data adjusted to 2021 production.  These data include all growing systems (intensive, irrigated, etc.) and are in units of metric tonnes. This is used to adjust some of the trade values and for gapfilling when trade data are not available. 
 
-`GAEZcrop_production.csv` created in 1.1.
+`GAEZcrop_production.csv` created script in 1a.
 
 ```{r}
 
@@ -71,7 +73,7 @@ crop_production_gf <- crop_production_gf %>%
 
 ```
 
-# Production vs. import
+## Production vs. import
 
 Consolidate data to determine the proportional amount of local production and total imports for each crop and country.
 
@@ -201,7 +203,7 @@ summary(local_prod_iso)
 
 
 Join GAEZ crop production data with fbs data.  If there is less than 1000 tonnes of local production according to GAEZ,
-local production will be zero and external production will be one.  And, if both local_crop_prod_per and external_crop_prod_per are 0, assuming that external_crop_prod_per == 1.
+local production will be zero and external production will be one.  And, if both local_crop_prod_per and external_crop_prod_per are 0, assuming that external_crop_prod_per == 1. This means that if a country produces <1000 of a particular crop, we assume that all of it's local consumption is imported from elsewhere. 
 
 ```{r}
 
@@ -226,7 +228,7 @@ summary(tmp)
 ```
 
 
-# Import data
+##  Import data
 FAO provides a trade matrix showing tonnes of each crop imported into each country.
 
 FAO codes:
@@ -620,13 +622,7 @@ data.frame(dplyr::filter(check, total!=1)) # good 0
 
 write_csv(trade_data, here("prep/02_feed/data/FAO_GAEZcrop_trade_data_10-02-2024.csv"))
 
-test2 <- read.csv(here("prep/02_feed/data/FAO_GAEZcrop_trade_data_10-02-2024.csv")) 
-
-## most everything looks the same... 
-
-test <- test2 %>% 
-  filter(iso3c_consuming == "NOR" | iso3c_producing == "NOR")
-
+test <- read.csv(here("prep/02_feed/data/FAO_GAEZcrop_trade_data_10-02-2024.csv")) 
 
 ```
 

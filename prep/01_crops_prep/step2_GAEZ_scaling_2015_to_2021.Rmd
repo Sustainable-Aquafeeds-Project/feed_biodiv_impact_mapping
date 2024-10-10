@@ -9,7 +9,9 @@ editor_options:
 
 Rescale GAEZ data to year 2021.
 
-# Data information
+# Data sources
+
+ - Same as previous script
 
 We do this using FAOSTAT crop production data trends between year 2015 and 2021. Using 3 year mean. I.e. 2014, 2015, 2016 for early years (this is what GAEZ actually represents when they say "2015"); 2019, 2020, 2021 for later years (to deal with shocks to system, like 2020 covid shock and 2021 recovery).
 
@@ -74,6 +76,9 @@ missing_rgns # Nothing unusual, all small islands.
 ```
 
 # Calculate scaling from 2010 to 2021 for all crops and countries using 3 year means.
+
+ - using 3 year means will focus production years around 2015 and 2020.
+ 
 ```{r}
 scaling_coef <- 
   scaling_coef_tidy_gaez %>% 
@@ -109,10 +114,10 @@ sum(try$early) #78030351 - ok that's perfect.
 ```
 
 # Save
+
 ```{r}
 vroom_write(inf_values, here("prep/01_crops_prep/data/inf_values.csv"))
 write_csv(scaling_coef, here("prep/01_crops_prep/data/scaling_coef.csv"))
 
 ```
 
--------------------------------------------------------------------------------

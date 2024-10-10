@@ -5,6 +5,8 @@ editor_options:
   chunk_output_type: console
 ---
 
+# Summary 
+
 GOAL: Get proportion of each GAEZ crop that is consumed by salmon aquaculture in each country. Allocate to raw weight materials using mass, economic, and energetic allocation rates.
 
 Outputs: a raster for each crop describing the amount of each crop produced (tonnes) and area based disturbance (km2 equivalents) used by salmon aquaculture systems for each scenario.
@@ -25,8 +27,9 @@ source(here("src/directories.R"))
 
 ```
 
+# Methods
 
-# STEP 1: determine amount of crop produced in each country for each food system.
+## STEP 1: determine amount of crop produced in each country for each food system.
 
 Trade proportion data:
 
@@ -153,7 +156,7 @@ write.csv(crop_raw_material_demand, here("prep/02_feed/data/demand/ingredient_cr
 ```
 
 
-# STEP 3 Calculate proportion of production for animal system for each country
+## STEP 3 Calculate proportion of production for animal system for each country
 
 Crop production according to GAEZ data adjusted to 2021 production. These data include all growing systems (intensive, irrigated, etc.) and are in units of metric tonnes.
 
@@ -236,7 +239,7 @@ write_csv(proportion_fin, here("prep/02_feed/output/proportion_feed_per_country_
 
 ```
 
-# Step 3
+## Step 4
 
 Rasterize this information to get rasters describing the amount of tonnages for each crop in each cell global that goes to salmon aquaculture feed ingredients, additionally, divide by crop yield estimates from the FAO to get estimates of crop area (km2 disturbance) in each cell that end up as salmon aquaculture feed ingredients. 
 
@@ -359,7 +362,7 @@ writeRaster(area_crop_feed_raster, filename= sprintf(here("prep/02_feed/output/%
 
 ```
 
-Data check 
+## Data check 
 
 ```{r}
 

@@ -7,6 +7,8 @@ editor_options:
   chunk_output_type: console
 ---
 
+# Summary 
+
 GOAL: Get proportion of fish oil and fish meal live weight equivalents that is consumed by salmon aquaculture in each country per species that come from fish trimmings. Allocate to live weight fish using mass, economic, and energetic allocation rates. 
 
 Outputs: a raster and dataset for each fish oil and fish meal, under each diet scenario, describing the harvest of each FMFO live weight equivalents (tonnes) from trimmings that are consumed in each country by salmon aquaculture systems.
@@ -51,7 +53,7 @@ watson_rgn <- watson_raw %>%
 ```
 
 
-## Methods 
+# Methods 
 
  1. Start with demand per country 
     - EX: NOR requires X tonnes of FO
@@ -163,6 +165,8 @@ sum(country_demand$ingredient_demand)
 
 # perfect
 ```
+
+### step 4
 
 Group by exporter country to get total amount of FO or FM ingredients from trimmings they export under each diet demand scenario
     - EX: USA exports 60 tonnes to NOR, 40 tonnes to CHL, then they export 100 tonnes of FO from trimmings total for salmon feed. 
@@ -654,7 +658,7 @@ for(diet_type in diets){
 
 ```
 
-Data check 
+## Data check 
 
 ```{r}
 trim_files <- list.files(here("prep/02_feed/output/fish-dominant/regular"), pattern = "fish oil|fish meal|trimmings", full.names = TRUE)

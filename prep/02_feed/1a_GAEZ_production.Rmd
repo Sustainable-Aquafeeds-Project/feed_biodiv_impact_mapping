@@ -7,6 +7,12 @@ editor_options:
 
 # Summary
 
+This should be run if there are changes to the GAEZ production data.
+
+Here we calculate total crop production using the GAEZ data adjusted to mean of 2019-2021 production. These data include all growing systems (intensive, irrigated, etc.) and are in units of metric tonnes.
+
+This is used in subsequent script to estimate the proportion of each crop going to each animal system (for this paper, only Atlantic salmon) feed in each country.
+
 # Data sources
 
 **Reference**: Grogan, D., Frolking, S., Wisser, D. et al. Global gridded crop harvested area, production, yield, and monthly physical area data circa 2015. Sci Data 9, 15 (2022). https://doi.org/10.1038/s41597-021-01115-2
@@ -27,11 +33,6 @@ editor_options:
 # Methods
 
 ## Determine total crop grown in each region
-This should be run if there are changes to the GAEZ production data.
-
-Calculates total crop production using the GAEZ data adjusted to mean of 2019-2021 production. These data include all growing systems (intensive, irrigated, etc.) and are in units of metric tonnes.
-
-This is used in subsequent script to estimate the proportion of each crop going to animal (salmon) feed in each country.
 
 ```{r}
 feed_folder <- file.path(here("prep/02_feed"))
@@ -44,11 +45,9 @@ library(terra)
 
 source("src/directories.R")
 
-focus_year = 2021
-
 ```
 
-Extract by region the crop production from the raster maps.
+## Extract by region the crop production from the raster maps.
 
 ```{r}
 
@@ -75,7 +74,7 @@ crop_production_df <- data.frame(crop_production) %>%
 
 ```
 
-Check and save: should be about equal to 2021 FAO production
+## Check and save: should be about equal to 2021 FAO production
 
 ```{r}
 
@@ -105,7 +104,7 @@ fao <- read_csv(here("prep/01_crops_prep/data/FAOSTAT_crop_production_2015_2021.
 compare <- check %>% left_join(fao, by="GAEZ_category") %>%
   mutate(prop = our_tonnes/total)
 compare
-sum(compare$our_tonnes, na.rm=TRUE)/sum(compare$total, na.rm = TRUE) # oilpalmfruit, millet, and stimulants are a little problematic (stimulants is the worst ~50%...)
+sum(compare$our_tonnes, na.rm=TRUE)/sum(compare$total, na.rm = TRUE) # oilpalmfruit, millet, and stimulants are a little problematic (stimulants is the worst ~50%...). However, we don't use the truly horrible ones for this feed analysis.
 
 write_csv(crop_production_df, here("prep/02_feed/data/GAEZcrop_production.csv"))
 

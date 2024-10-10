@@ -11,8 +11,8 @@ editor_options:
 2. Produce maps scaled to mean of 2019, 2020, 2021 for each crop category 
 3. Calculate how much of the crop's production is allocated to each cell.
 
-# Data information
-Crop Allocation Source: GAEZ 2015 [Accessed: 07/12/2023]
+# Data source
+ - Same as previous scripts
 
 
 We will be rescaling the Production_*_Total rasters (downloaed from GAEZ website and stored on Sustainable Aquafeeds Project server) to represent 2021 FAO tonnage estimates. These represent the 2015 total production (it is actually the average of 2014, 2015, and 2016) in tonnes per each crop in each cell. Units are 1000 tonnes per 5-arcminute grid cell.

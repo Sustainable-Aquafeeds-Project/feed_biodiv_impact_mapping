@@ -11,7 +11,20 @@ Wrangle GAEZ crop category dataset.
 
 # Data sources
 
-**Reference**: 
+**Reference**: Grogan, D., Frolking, S., Wisser, D. et al. Global gridded crop harvested area, production, yield, and monthly physical area data circa 2015. Sci Data 9, 15 (2022). https://doi.org/10.1038/s41597-021-01115-2
+
+**Downloaded**: 07/14/2023
+
+**Description**: "Here we provide an update to global gridded annual and monthly crop datasets. This new dataset uses the crop categories established by the Global Agro-Ecological Zones (GAEZ) Version 3 model, which is based on the Food and Agricultural Organization of the United Nations (FAO) crop production data. We used publicly available data from the FAOSTAT database as well as GAEZ Version 4 global gridded dataset to generate circa 2015 annual crop harvested area, production, and yields by crop production system (irrigated and rainfed) for 26 crops and crop categories globally at 5-minute resolution. We additionally used available data on crop rotations, cropping intensity, and planting and harvest dates to generate monthly gridded cropland data for physical areas for the 26 crops by production system. These data are in standard georeferenced gridded format, and can be used by any global hydrology, land surface, or other earth system model that requires gridded annual or monthly crop data inputs."
+
+**Download Link**: https://gaez.fao.org/pages/data-access-download
+
+
+**Reference**: FAOSTAT (2023) ‘Crops and livestock products’. Available at: https://www.fao.org/faostat/en/#data/QCL (Accessed: 14 March 2023).
+
+**Downloaded**: 03/14/2023
+
+**Description**: FAOSTAT crop production statistics 
 
 
 # Setup
@@ -50,7 +63,7 @@ GAEZ_crops$FAONAMES <- gsub(" ", "", GAEZ_crops$FAONAMES, fixed = TRUE)
 ```
 
 
-# Splitting data 
+## Splitting data 
 
 ```{r}
 GAEZ_names <- GAEZ_crops %>%
@@ -58,21 +71,21 @@ GAEZ_names <- GAEZ_crops %>%
   mutate(item_code = as.numeric(item_code))
 ```
 
-# Check for duplicates
+## Check for duplicates
 
 ```{r}
 GAEZ_names$item_code[duplicated(GAEZ_names$item_code)] #none.. good! 
 
 ```
 
-# Save
+## Save
 
 ```{r}
 write_csv(GAEZ_names, here("prep/01_crops_prep/data/GAEZ_names.csv"))
 
 ```
 
-# Make FAO crop dataset, with values for 2015 (GAEZ year) and 2021 (latest FAO reporting year)
+## Make FAO crop dataset, with values for 2015 (GAEZ year) and 2021 (latest FAO reporting year)
 
 ```{r}
 fao_crop_prod_raw <- readRDS(here("data/tidy_data/production-data/crops_production_tidy.rds"))
@@ -85,7 +98,7 @@ fao_crop_prod_2015_2021 <- fao_crop_prod_raw %>%
 write.csv(fao_crop_prod_2015_2021, here("prep/01_crops_prep/data/FAOSTAT_crop_production_2015_2021.csv"), row.names = FALSE)
 ```
 
-# Check what crops are in each category.
+## Check what crops are in each category.
 
 ```{r}
 dsdf <- 

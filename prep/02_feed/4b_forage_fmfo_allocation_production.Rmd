@@ -7,7 +7,7 @@ editor_options:
   chunk_output_type: console
 ---
 
-## Summary
+# Summary
 
 GOAL: Get proportion of fish oil and fish meal live weight equivalents that is consumed by salmon aquaculture in each country per species. Allocate to live weight fish using mass, economic, and energetic allocation rates.
 
@@ -29,6 +29,7 @@ source(here("src/directories.R"))
 
 ```
 
+# Methods 
 
  Using BACI trade database as our trade data
   - derived from COMTRADE
@@ -187,6 +188,8 @@ length(unique(demand_trade$partner_iso3c)) # 113 countries
 
 sum(demand_trade$tonnes_ingredient_demand_traded, na.rm = TRUE) # 3565490/2 # looks good
 ```
+
+### Step 4
 
 Group by exporter country to get total amount of FO or FM ingredients they export under each diet demand scenario
     - EX: USA exports 60 tonnes to NOR, 40 tonnes to CHL, then they export 100 tonnes of FO total for salmon feed.
@@ -594,7 +597,7 @@ for(diet_type in diets){
 
 ```
 
-Data check 
+## Data check 
 
 ```{r}
 forage_files <- list.files(here("prep/02_feed/output/plant-dominant/regular/"), pattern = "bycatch_P|catch_P", full.names = TRUE)
