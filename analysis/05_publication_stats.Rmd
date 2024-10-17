@@ -85,12 +85,83 @@ all_impacts <- rbind(ocean_impacts, terrestrial_impacts)
 
 ```
 
+## Results paragraph 1 
 
-Get some stats about differences between formulations and average impacts.
 
-"the mean proportion of habitat impacted falls below 0.005% across aquafeed formulations for 95% of cells."
+"  We find that the majority of species assessed are impacted to some degree by raw material production for the fish-dominant or plant-dominant feeds (n=42,471, 77.7% vs n=42,939, 78.6% respectively). "
 
-"the highest average impact occurs in a terrestrial cell in Norway, where the feed production activities for the plant-dominant scenario displaces 22% of the habitat area on average for impacted species"
+```{r}
+taxon_names <- all_overlap %>%
+  distinct(spp_type, taxon)
+
+spp_impacted <- all_overlap %>%
+  filter(impact_total > 0) %>%
+  group_by(taxon, diet, allocation, fcr_type) %>%
+  summarise(spp_count_impacted = n_distinct(sciname)) %>%
+  ungroup()
+
+spp_impacted_economic <- spp_impacted %>% 
+  filter(allocation == "economic", 
+         fcr_type == "regular") %>%
+  group_by(diet) %>%
+  summarise(total_spp_impacted = sum(spp_count_impacted))
+
+##  We find that the majority of species we assess are impacted to some degree by raw material production for the fish-dominant or plant-dominant feeds (n=42,473, 77.7% vs n=42,939, 78.6% respectively). 
+
+aquamaps_spp <- readRDS(file.path(rdsi_dir, "biodiversity_impacts/int/spp_vuln_depth_info.rds")) %>%
+  distinct(spp_type = taxon, sciname = species) %>%
+  filter(spp_type != "polychaetes")
+
+eyres_spp <- readRDS(here("prep/03_prep_spp_habitats/data/iucn/eyres_iucn_spp.rds")) %>%
+  dplyr::select(spp_type, sciname = scientific_name) %>%
+  mutate(sciname = tolower(sciname)) %>%
+  mutate(spp_type = case_when(
+    spp_type == "mammals" ~ "Terrestrial mammal",
+    spp_type == "amphibians" ~ "Amphibians", 
+    spp_type == "reptiles" ~ "Reptiles", 
+    spp_type == "birds" ~ "Bird"
+  ))
+
+spp_assessed <- rbind(aquamaps_spp, eyres_spp) %>%
+  left_join(taxon_names) %>%
+  group_by(taxon) %>%
+  summarise(spp_count_assessed = n_distinct(sciname)) %>%
+  ungroup() %>%
+  filter(!is.na(taxon))
+
+spp_assessed_impacted <- spp_impacted %>%
+  left_join(spp_assessed)
+
+summary_info <- spp_assessed_impacted %>%
+  group_by(diet, allocation, fcr_type) %>%
+  summarise(total_assessed = sum(spp_count_assessed, na.rm = TRUE),
+            total_impacted = sum(spp_count_impacted, na.rm = TRUE)) %>%
+  ungroup() %>%
+  mutate(prop_impacted = total_impacted/total_assessed)
+
+
+marine_vs_terr <- spp_assessed_impacted %>%
+  filter(diet == "plant-dominant", allocation == "economic", fcr_type == "regular") %>%
+  mutate(type = ifelse(taxon %in% c("Amphibians", "Birds", "Terrestrial mammals", "Reptiles"), "terrestrial", "marine")) %>%
+  group_by(type) %>%
+    summarise(total_assessed = sum(spp_count_assessed, na.rm = TRUE),
+            total_impacted = sum(spp_count_impacted, na.rm = TRUE)) %>%
+  ungroup() %>%
+  mutate(prop_impacted = total_impacted/total_assessed)
+
+#  A tibble: 2 × 4
+#   type        total_assessed total_impacted prop_impacted
+#   <chr>                <int>          <int>         <dbl>
+# 1 marine               22985          20538         0.894
+# 2 terrestrial          31643          22401         0.708
+
+spp_assessed %>% filter(taxon %in% c("Amphibians", "Reptiles", "Terrestrial mammals", "Birds")) %>% pull(spp_count_assessed) %>% sum() # 31643 assessed terrestial spp
+
+```
+
+"the mean proportion of species’ habitat impacted falls below 0.006% for 95% of cells "
+
+"For instance, the highest impact occurs in a terrestrial cell in Norway, where the feed production activities (primarily wheat) for the plant-dominant scenario displace 11% of the habitat area on average for impacted species (e.g., Boreal owl, Moose)."
 
 ```{r}
 ## read in plant-dominant, economic, regular
@@ -169,88 +240,13 @@ ocean_impacts <- all_df %>%
 
 ```
 
-## Results paragraph 1 
-
-How many species assessed and impacted? 
-
-" We find that the majority of species we assess are impacted to some degree by raw material production for the fish-dominant or plant-dominant feeds (n=42,473, 77.7% vs n=42,939, 78.6% respectively). "
-
-```{r}
-taxon_names <- all_overlap %>%
-  distinct(spp_type, taxon)
-
-spp_impacted <- all_overlap %>%
-  filter(impact_total > 0) %>%
-  group_by(taxon, diet, allocation, fcr_type) %>%
-  summarise(spp_count_impacted = n_distinct(sciname)) %>%
-  ungroup()
-
-spp_impacted_economic <- spp_impacted %>% 
-  filter(allocation == "economic", 
-         fcr_type == "regular") %>%
-  group_by(diet) %>%
-  summarise(total_spp_impacted = sum(spp_count_impacted))
-
-##  We find that the majority of species we assess are impacted to some degree by raw material production for the fish-dominant or plant-dominant feeds (n=42,473, 77.7% vs n=42,939, 78.6% respectively). 
-
-aquamaps_spp <- readRDS(file.path(rdsi_dir, "biodiversity_impacts/int/spp_vuln_depth_info.rds")) %>%
-  distinct(spp_type = taxon, sciname = species) %>%
-  filter(spp_type != "polychaetes")
-
-eyres_spp <- readRDS(here("prep/03_prep_spp_habitats/data/iucn/eyres_iucn_spp.rds")) %>%
-  dplyr::select(spp_type, sciname = scientific_name) %>%
-  mutate(sciname = tolower(sciname)) %>%
-  mutate(spp_type = case_when(
-    spp_type == "mammals" ~ "Terrestrial mammal",
-    spp_type == "amphibians" ~ "Amphibians", 
-    spp_type == "reptiles" ~ "Reptiles", 
-    spp_type == "birds" ~ "Bird"
-  ))
-
-spp_assessed <- rbind(aquamaps_spp, eyres_spp) %>%
-  left_join(taxon_names) %>%
-  group_by(taxon) %>%
-  summarise(spp_count_assessed = n_distinct(sciname)) %>%
-  ungroup() %>%
-  filter(!is.na(taxon))
-
-spp_assessed_impacted <- spp_impacted %>%
-  left_join(spp_assessed)
-
-summary_info <- spp_assessed_impacted %>%
-  group_by(diet, allocation, fcr_type) %>%
-  summarise(total_assessed = sum(spp_count_assessed, na.rm = TRUE),
-            total_impacted = sum(spp_count_impacted, na.rm = TRUE)) %>%
-  ungroup() %>%
-  mutate(prop_impacted = total_impacted/total_assessed)
-
-
-marine_vs_terr <- spp_assessed_impacted %>%
-  filter(diet == "plant-dominant", allocation == "economic", fcr_type == "regular") %>%
-  mutate(type = ifelse(taxon %in% c("Amphibians", "Birds", "Terrestrial mammals", "Reptiles"), "terrestrial", "marine")) %>%
-  group_by(type) %>%
-    summarise(total_assessed = sum(spp_count_assessed, na.rm = TRUE),
-            total_impacted = sum(spp_count_impacted, na.rm = TRUE)) %>%
-  ungroup() %>%
-  mutate(prop_impacted = total_impacted/total_assessed)
-
-#  A tibble: 2 × 4
-#   type        total_assessed total_impacted prop_impacted
-#   <chr>                <int>          <int>         <dbl>
-# 1 marine               22985          20538         0.894
-# 2 terrestrial          31643          22401         0.708
-
-spp_assessed %>% filter(taxon %in% c("Amphibians", "Reptiles", "Terrestrial mammals", "Birds")) %>% pull(spp_count_assessed) %>% sum() # 31643 assessed terrestial spp
-
-```
-
 ## Results paragraph 2 
 
 Comparing diets and impacts on land and ocean
 
 "Intuitively, the fish-dominant diet exhibits larger impacts across all ocean pixels, most notably in high forage fish harvest regions such as the North Atlantic, Humboldt region, and east China Sea (Figure 1b)."
 
-"The plant-dominant diet generally has larger land impacts, particularly in Argentina, Brazil, Chile, Poland and Canada (Figure 1b)."
+"Similarly, the plant-dominant diet generally has larger land impacts, particularly in Argentina, Brazil, Chile, Russia, and Canada (Fig. 1b)."
 
 
 ```{r}
@@ -336,7 +332,7 @@ all_df_ocean %>% filter(fcr_type == "regular")
 
 ## Results paragraph 3
 
-"Trade-offs among species between the scenarios become apparent when looking at impacts on individual species and aggregated by taxonomic groupings. The greatest average proportional global area of habitat impact at the taxa-mean are on terrestrial species under a plant-dominant scenario (Fig. 2). Furthermore, the greatest individual species global proportional impact is a reptile in the plant-dominant scenario (Liolaemus gravenhorstii, ~1.1% of its global habitat is impacted). Marine mammals have the greatest average proportional area of habitat impact under the fish-dominant scenario, however, the average impact for this taxon under the fish-dominant scenario is half that of terrestrial mammals under the plant-dominant scenario (0.00164% vs. 0.00312% respectively). Terrestrial species appear particularly sensitive to feed production activities -  terrestrial mammals, birds, and reptiles have a higher average proportional area of habitat impacted than even finfish under a fish-dominant scenario. This is despite over 50% of the fish-dominant feed being derived from marine materials. With this in mind, and wild-sourced fishmeal and oil already minimised by necessity, a priority for future feed development is to minimise the biodiversity impacts of feed sourcing on land."
+"Trade-offs among species between the scenarios become apparent when looking at impacts on individual species and aggregated by taxonomic groupings. The greatest average proportional global area of habitat impact at the taxa-mean are on terrestrial species under a plant-dominant scenario (Fig. 2). Furthermore, the greatest individual species global proportional impact is a reptile in the plant-dominant scenario (Liolaemus gravenhorstii, ~1.1% of its global habitat is impacted). Marine mammals have the greatest average proportional area of habitat impact under the fish-dominant scenario, however, the average impact for this taxa under the fish-dominant scenario is half that of terrestrial mammals under the plant-dominant scenario (0.00164% vs. 0.00312% respectively). Terrestrial species appear particularly sensitive to feed production activities -  terrestrial mammals, birds, and reptiles have a higher average proportional area of habitat impacted than even finfish under a fish-dominant scenario. This is despite over 50% of the fish-dominant feed being derived from marine materials. With this in mind, and wild-sourced fishmeal and oil already minimised by necessity, a priority for future feed development is to minimise the biodiversity impacts of feed sourcing on land."
 
 ```{r}
 taxon_names <- all_overlap %>%
@@ -448,7 +444,7 @@ summary_df_spp_out %>% filter(diet == "Plant-dominant", taxon == "Terrestrial ma
 
 ## Results paragraph 4 
 
-"Greater average impacts to terrestrial species can be explained by a number of factors. One explanation is that the average habitat size of impacted terrestrial species is 12.5 times smaller than marine, yielding greater proportional impact for every square kilometre appropriated. Further, from available data, terrestrial species appear more sensitive to crop production than marine species to fishing activities. For most marine species in our analysis, heavily fished areas can still represent marginal habitat (88% of marine species), whereas agricultural production renders habitat completely unsuitable for 81% of the terrestrial species we assess (compared with fishing activities rendering habitat completely unsuitable for only 2% of marine species)."
+"Greater average impacts to terrestrial species can be explained by a number of factors. One is that the average habitat size of impacted terrestrial species is 12.5 times smaller than marine, yielding greater proportional impact for every square kilometre appropriated. Further, from available data, terrestrial species appear more sensitive to crop production than marine species to fishing activities. For 88% of marine species assessed, heavily fished areas can still represent marginal habitat, whereas agricultural production renders habitat completely unsuitable for 81% of the terrestrial species we assess (fishing activities render habitat completely unsuitable for only 2% of marine species)."
 
 
 ```{r}
@@ -533,7 +529,7 @@ length(marine_vuln_spp$species) # 20682 marine species are sensitive to harvest
 
 ## Results paragraph 5 
 
-It is true that forage fish harvest accounts for the largest absolute impact area in the fish-dominant scenario, and soybean production accounts for the largest absolute area impacted in the plant-dominant scenario. However, when observing the proportion of total global species habitat area impacted, we find that soybean predominates in both scenarios (Figure 3, Figure 1). This is due to a high inclusion rate across both scenarios and the smaller habitat areas of terrestrial species as discussed above.  Nearly all of the impact on marine species comes from forage fish-derived fishmeal and oil. We allocate very little marine disturbance to the fishmeal and oil from trimmings as we assume that it is the edible portions of fish valued for human consumption, rather than the subsequent processing waste, that is the main driver of fishing activities and their associated environmental impact (see methods for estimating embodied raw materials). Within marine species, we find that macrophytes and less mobile benthic invertebrates (i.e., echinoderms, cnidaria, sponges, molluscs, arthropods) with smaller habitat areas are the most impacted from forage fish harvest. These benthic or benthic-adjacent species are often caught as bycatch from gears like trawling and traps due to their water column positions (~10% of catch in our assessment comes from these destructive gears). Similarly, amphibians have the smallest global average and total habitat areas for terrestrial taxa and are the most heavily impacted, largely from soybean, wheat, and pulse production (Figure 3).
+Our assessment enables impact comparisons across raw materials and taxa for different feed formulations, and reveals that different dependence on marine and terrestrial materials does not predictably shift the burden of impacts. For example, forage fish harvest accounts for the largest absolute impact area in the fish-dominant scenario (300,536 km2), and soybean production accounts for the largest in the plant-dominant scenario (241,910 km2). However, when observing the proportion of total global taxa habitat area impacted, we find that soybean predominates in both scenarios (Fig. 3, Fig. 1). This is due to a high inclusion of soybean ingredients (% of formulation) in both feed scenarios, and smaller habitat areas of terrestrial taxa, as discussed above. As expected, nearly all of the impact on marine species comes from forage fish-derived FMFO. Our model allocates little marine disturbance to the FMFO from trimmings as our allocation approach assumes that it is the edible portions of fish valued for human consumption, rather than the subsequent processing waste, that is the main driver of fishing activities and their environmental impact (see Methods for the allocation approach used for biomass estimation). Within marine taxa, macrophytes and benthic invertebrates (i.e., echinoderms, sponges, molluscs, arthropods) appear most impacted from forage fish harvest. These benthic or benthic-adjacent species are often caught as bycatch in gears like bottom trawling due to their water column positions (~10% of catch in our assessment comes from destructive gears). By analysing the average impacts across taxa in each cell, we find that soybean and rapeseed have the most, and nearly equal average impacts globally (Supplementary Fig. 4). That is, while soybeans may contribute the most to the total and proportional global impact (~3.3x and ~2.3x more than rapeseed, respectively), rapeseed causes nearly equal habitat displacement locally in the average cell.
 
 ```{r}
 all_overlap_df %>% 
@@ -564,56 +560,67 @@ all_overlap_df %>%
 # 17 Rapeseed       Fish-dominant          0 
 # 18 Sunflower      Fish-dominant          0 
 
-spp_impacted <- all_overlap_df %>% 
-  filter(impact_total > 0,
-         raw_material == "Soybean") %>%
-  pull(sciname)
-  
-spp_total_hab %>% 
-  filter(sciname %in% spp_impacted) %>%
-  pull(total_hab_area) %>% 
-  sum()
 
-241910./10769675500 # 0.00002246214 Soybean plant
-149250./10769675500 # 0.00001385836 soybean fish
+spp_impacted_by_material <- all_overlap_df %>%
+  filter(impact_total > 0) %>%
+  group_by(raw_material, diet) %>%
+  summarise(spp_impacted = list(unique(sciname)))
 
-spp_impacted <- all_overlap_df %>% 
-  filter(impact_total > 0,
-         raw_material == "Forage fish") %>%
-  pull(sciname)
-  
-spp_total_hab %>% 
-  filter(sciname %in% spp_impacted) %>%
-  pull(total_hab_area) %>% 
-  sum()
-300536./135401073300 # 0.000002219598
+spp_total_hab_by_material <- spp_impacted_by_material %>%
+  rowwise() %>%
+  mutate(total_hab_area = sum(spp_total_hab %>%
+                                filter(sciname %in% spp_impacted) %>%
+                                pull(total_hab_area), na.rm = TRUE)) %>%
+  select(raw_material, diet, total_hab_area)
 
-0.000002219598 > 0.00001590976 # FALSE
-0.000002219598 > 0.000009819702 # FALSE
+# Step 1: Summarise total habitat area per raw material
+spp_total_hab_by_material <- spp_impacted_by_material %>%
+  rowwise() %>%
+  mutate(total_hab_area = sum(spp_total_hab %>%
+                                filter(sciname %in% spp_impacted) %>%
+                                pull(total_hab_area), na.rm = TRUE)) %>%
+  select(raw_material, diet, total_hab_area)
 
-## proportion impacted for spp which soybean impacts is greater than forage fish proportional impact 
+# Step 2: Summarise total impact_km2 per raw material
+total_impact_by_material <- all_overlap_df %>%
+  group_by(raw_material, diet) %>%
+  summarise(impact_km2 = sum(impact_total, na.rm = TRUE))
+
+# Step 3: Merge the two datasets
+impact_hab_combined <- total_impact_by_material %>%
+  left_join(spp_total_hab_by_material, by = c("raw_material", "diet"))
+
+# Step 4: Divide total impact by total habitat area per raw material
+impact_hab_combined <- impact_hab_combined %>%
+  mutate(impact_per_hab_area = impact_km2 / total_hab_area) %>%
+  arrange(-impact_per_hab_area)
+
+# A tibble: 18 × 5
+# Groups:   raw_material [9]
+#    raw_material   diet           impact_km2 total_hab_area impact_per_hab_area
+#    <chr>          <chr>               <dbl>          <dbl>               <dbl>
+#  1 Soybean        Plant-dominant    241910.    10769675500        0.0000225   
+#  2 Soybean        Fish-dominant     149250.    10769675500        0.0000139   
+#  3 Rapeseed       Plant-dominant     73246.     7378281300        0.00000993  
+#  4 Wheat          Fish-dominant      52112.    10792393500        0.00000483  
+#  5 Pulses         Plant-dominant     45239.    11677240900        0.00000387  
+#  6 Wheat          Plant-dominant     40869.    10792393500        0.00000379  
+#  7 Forage fish    Fish-dominant     300536.   135401073300        0.00000222  
+#  8 Sunflower      Plant-dominant     18421.     9677818200        0.00000190  
+#  9 Forage fish    Plant-dominant    122400.   135401073300        0.000000904 
+# 10 Cropsnes       Plant-dominant      8934.    11709295400        0.000000763 
+# 11 Pulses         Fish-dominant       7267.    11677240900        0.000000622 
+# 12 Maize          Fish-dominant       2322.    11677143300        0.000000199 
+# 13 Maize          Plant-dominant       406.    11677143300        0.0000000348
+# 14 Trimmings fish Fish-dominant       3676.   126560378400        0.0000000290
+# 15 Trimmings fish Plant-dominant      1497.   126560378400        0.0000000118
+# 16 Cropsnes       Fish-dominant          0              NA       NA           
+# 17 Rapeseed       Fish-dominant          0              NA       NA           
+# 18 Sunflower      Fish-dominant          0              NA       NA   
+
+## proportion impacted for spp which soybean impacts is greater than all else
 
 # Within marine species, we find that macrophytes and less mobile benthic invertebrates (i.e., echinoderms, cnidaria, sponges, molluscs, arthropods) with smaller habitat areas are the most impacted from forage fish harvest.
-
-taxon_hab_area %>% arrange(total_hab_area)
-#    total_hab_area taxon              
-#             <dbl> <chr>              
-#  1      836560700 Corals             
-#  2      848077300 Marine plants      
-#  3     1199361100 Amphibians         
-#  4     1228453400 Sponges            
-#  5     2897073900 Echinoderms        
-#  6     3415478000 Reptiles           
-#  7     4361174700 Terrestrial mammals
-#  8     4522806100 Marine mammals     
-#  9     4896399700 Cephalopods        
-# 10     4958961200 Cnidaria           
-# 11     5709005100 Elasmobranchs      
-# 12    11355053100 Birds              
-# 13    17992684700 Molluscs           
-# 14    18483706800 Arthropods         
-# 15    92795008400 Finfish    
-
 
 # These benthic or benthic-adjacent species are often caught as bycatch from gears like trawling and traps due to their water column positions (~10% of catch in our assessment comes from these destructive gears).
 
@@ -685,7 +692,7 @@ terr_taxa_avg <- terrestrial_overlap %>%
 
 ## Results paragraph 6
 
-"These results highlight raw materials that have disproportionate environmental impacts compared to their use in feed. For example, soybeans represent 51% and 41% of the species area of total habitat impacted, but only 17% and 22% of the feed formulation under the fish-dominant and plant-dominant scenarios, respectively. For all the other materials, impacts are nearly equal or lower percentages than their contribution to feed formulation (Supplementary Fig. 5)."
+"These results highlight raw materials that have disproportionate environmental impacts compared to their use in feed. For example, soybeans represent 51% and 41% of the species area of total habitat impacted, but only 17% and 22% of the feed formulation under the fish-dominant and plant-dominant scenarios, respectively. For all the other materials, impacts are nearly equal or lower percentages than their contribution to feed formulation (Supplementary Fig. 6). This discrepancy is likely due to soybean harvest overlapping with highly biodiverse regions (e.g., Argentina, Brazil), and species which are particularly sensitive to cropland 23,31. By identifying high-impact raw materials, strategies can be developed for sustainable sourcing and long-term goals for novel ingredient inclusion (e.g., insect meal), including minimising the overall ecological footprint of feed production and preserving vulnerable species."
 
 
 Look at "efficiency" of raw materials; how does proportional contribution of impact differ from proportional contribution of feed formulation?
@@ -774,93 +781,55 @@ ggsave(here("analysis/SI_plots/SI_fig_efficiency.png"), width = 178.9, height =1
 
 ## lets look at average impacts contributions
 
-rgn_ids <- read.csv(here("data/spatial/output/region_ids.csv"))
-
 # read in average raw material impacts - country level... unfortunately will have to take a mean here 
-csv_files <- list.files(file.path(impact_maps_dir, "csvs/by_material_country_summary"), pattern = ".qs", full.names = TRUE)
+csv_files <- list.files(file.path(impact_maps_dir, "csvs/by_material_global_summary"), pattern = ".qs", full.names = TRUE)
 
 list_of_dfs <- lapply(csv_files, qread)
 
+
 combined_impact_df <- do.call(rbind, list_of_dfs) %>%
-  left_join(rgn_ids) %>%
   mutate(raw_material = str_to_sentence(raw_material), 
          allocation = str_to_sentence(allocation),
          diet = str_to_sentence(diet),
-         fcr = str_to_sentence(fcr)) %>%
-  mutate(raw_material = ifelse(raw_material == "Cropsnes", "CropsNES", raw_material)) 
+         fcr = str_to_sentence(fcr))  %>%
+ mutate(raw_material = ifelse(raw_material == "Cropsnes", "Other crops", raw_material))
 
 material_stats_1 <- combined_impact_df %>%
     filter(allocation == "Economic") %>%
-    group_by(diet, fcr, raw_material) %>%
-  summarise(
-            mean_prop_weighted = mean(mean_prop_weighted, na.rm = TRUE)) %>%
-  ungroup() %>%
-  group_by(diet, fcr) %>%
-  mutate(total_prop_mean = sum(mean_prop_weighted, na.rm = TRUE)) %>%
-  ungroup() %>%
-  mutate(prop_impacts = mean_prop_weighted/total_prop_mean) 
+  filter(fcr == "Regular") 
 
   
 summary_df_stats_diet <- material_stats_1 %>%
-  mutate(raw_material = ifelse(raw_material == "CropsNES", "Cropsnes", raw_material)) %>% 
+    group_by(diet) %>% 
+  mutate(total_impact = sum(mean_prop_weighted)) %>%
+  mutate(prop_attributed = mean_prop_weighted/total_impact) %>%
   left_join(diets_raw_mat) %>%
-  mutate(delta = prop_impacts - total_diet_contribution) %>%
+  mutate(delta = prop_attributed - total_diet_contribution) %>%
+  mutate(raw_material = ifelse(raw_material == "Cropsnes", "Other crops", raw_material)) %>%
   mutate(delta_abs = abs(delta))
+
+
+
+ggplot(summary_df_stats_diet, aes(x = prop_attributed, y = total_diet_contribution, color = raw_material)) +
+  geom_point(size = 3) +
+  facet_wrap(~ diet) +
+  labs(color = "",
+       x = "Average Impact Contribution",
+       y = "Diet Contribution") +
+  theme_bw() +
+  theme(legend.position = "bottom") +
+  geom_abline() +
+  scale_color_manual(values = pal_mats)
+
+
 ```
 
  
 ## Results paragraph 7
  - See case study script
 
-How much of impact does Norway account for? 
 
-"While impacts are spread across 228 countries, territories and exclusive economic zones (EEZs), the mean proportion of species’ habitat impacted falls below 0.006% for 95% of cells across both formulations."
-
-
-```{r}
-rgn_ids <- read.csv(here("data/spatial/output/region_ids.csv"))
-
-# now lets join all of those together into one dataframe and save 
-
-csv_files <- list.files(file.path(impact_maps_dir, "csvs/by_material_country_summary"), pattern = ".qs", full.names = TRUE)
-
-list_of_dfs <- lapply(csv_files, qread)
-
-combined_impact_df <- do.call(rbind, list_of_dfs) %>%
-  left_join(rgn_ids) %>%
-  mutate(raw_material = str_to_sentence(raw_material), 
-         allocation = str_to_sentence(allocation),
-         diet = str_to_sentence(diet),
-         fcr = str_to_sentence(fcr)) %>%
-  mutate(raw_material = ifelse(raw_material == "Cropsnes", "CropsNES", raw_material))
-
-
-summary_iso3c_impacts <- combined_impact_df %>%
-  group_by(iso3c, rgn_id, Country, allocation, diet, fcr) %>%
-  summarise(sum_mean_impact = sum(mean_prop_weighted, na.rm = TRUE)) %>%
-  ungroup() %>%
-  filter(allocation == "Economic", diet == "Plant-dominant", fcr == "Regular") %>%
-  group_by(allocation, diet, fcr) %>%
-  mutate(total_impact = sum(sum_mean_impact)) %>%
-  ungroup() %>%
-  mutate(prop_contribute = sum_mean_impact/total_impact) %>%
-  filter(!is.na(iso3c)) %>%
-  filter(iso3c != "XD")
-
-
-test <- summary_iso3c_impacts %>% 
-  filter(!iso3c %in% c("HSX", "ATA"))
-  
-test <- rgn_ids %>% 
-  filter(!iso3c %in% c("HSX", "ATA"))
-
-test2 <- rgn_ids %>%
-  filter(!iso3c %in% c(unique(summary_iso3c_impacts$iso3c)))
-  
-  
-```
-
-## Random stuff 
+## Random stuff not in MS 
 
 How much raw material does Norway produce and use in country for salmon aquafeeds? 
 

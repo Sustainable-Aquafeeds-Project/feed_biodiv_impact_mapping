@@ -592,7 +592,9 @@ ggsave(here(this_dir, "SI_plots/SI_fig_barchart_by_raw_mat.png"), width = 178.9,
 
 **Look at per country land/eez impacts**
  - grab by raw material rasters 
- 
+ - currently we are taking the average of an average... is there a way to fix this without great computational cost? I think taking a weighted average by number of impacted species is ok, thanks ChatGPT: 
+ 'Weighting by the number of species impacted helps mitigate any distortion from taking an average of an average. It ensures that cells with more species (and thus potentially higher impact) contribute more to the overall country-level impact.
+If the weights are used appropriately in the second step, this avoids the common issue of diluting the information when averaging an average. The weighted average ensures that the relative importance of each cell is preserved in the final country-level estimate."
  
 SI Figure 2: 
 > Supplementary Figure 2. Top 25 average proportion of habitat area impacted in cells within country and EEZ boundaries, by raw materials, ranked by country (iso3c code). 
@@ -777,18 +779,76 @@ country_stats_1 <- combined_impact_df %>%
   mutate(total_prop_mean = sum(sum_prop_mean, na.rm = TRUE)) %>%
   ungroup() %>%
   mutate(prop_impacts = sum_prop_mean/total_prop_mean)
+```
 
+
+Let's look at average cell impacts across materials, globally
+
+```{r}
+
+num_cores <- 9
+cl <- makeCluster(num_cores)
+registerDoParallel(cl)
+
+
+foreach(raw_mat = raw_materials,
+        .packages = c("qs", "terra", "tidyverse", "dplyr", "glue")) %dopar% {
+for(allocation_type in c("economic", "mass", "ge")){
+  for(fcr_type in fcr_types){
+    for(diet_type in diet_types){
+          
+# diet_type = "plant-dominant"
+# fcr_type = "regular"
+# allocation_type = "economic"
+# raw_mat = "Rapeseed"
+
+          if(length(list.files(file.path(glue(impact_maps_dir, "/impact_maps_across_taxon_by_material/{diet_type}/{fcr_type}")), pattern = glue("{allocation_type}_{raw_mat}_mean_prop.tif"), full.names = TRUE)) > 0 ){
+        
+            files <- c(list.files(file.path(glue(impact_maps_dir, "/impact_maps_across_taxon_by_material/{diet_type}/{fcr_type}")), pattern = glue("{allocation_type}_{raw_mat}_mean_prop.tif"), full.names = TRUE), list.files(file.path(glue(impact_maps_dir, "/impact_maps_across_taxon_by_material/{diet_type}/{fcr_type}")), pattern = glue("{allocation_type}_{raw_mat}_nspp.tif"), full.names = TRUE))
+            
+        
+        map_df <- rast(files) %>%
+          as.data.frame(., xy = TRUE) %>%
+          mutate(raw_material = raw_mat) %>%
+          group_by(raw_material) %>%
+          summarise(mean_prop_weighted = weighted.mean(mean_prop, nspp, na.rm = TRUE),
+                    mean_prop = mean(mean_prop, na.rm = TRUE),
+                    sum_prop = sum(mean_prop, na.rm = TRUE)) %>%
+          mutate(allocation = allocation_type, 
+                 diet = diet_type, 
+                 fcr = fcr_type, 
+                 raw_material = raw_mat) %>%
+          ungroup()
+        
+        
+        qsave(map_df, file.path(glue(impact_maps_dir, "/csvs/by_material_global_summary/mean_impacts_{allocation_type}_{diet_type}_{fcr_type}_{raw_mat}.qs")))
+        
+          }else{
+            next()
+          }
+        
+        }
+      }
+    }
+  }
+
+stopCluster(cl)
+
+# now lets join all of those together into one dataframe and save 
+
+csv_files <- list.files(file.path(impact_maps_dir, "csvs/by_material_global_summary"), pattern = ".qs", full.names = TRUE)
+
+list_of_dfs <- lapply(csv_files, qread) 
+
+combined_impact_df <- do.call(rbind, list_of_dfs) %>%
+  mutate(raw_material = str_to_sentence(raw_material), 
+         allocation = str_to_sentence(allocation),
+         diet = str_to_sentence(diet),
+         fcr = str_to_sentence(fcr))  %>%
+ mutate(raw_material = ifelse(raw_material == "Cropsnes", "Other crops", raw_material))
 
 material_stats_1 <- combined_impact_df %>%
     filter(allocation == "Economic") %>%
-    group_by(diet, fcr, raw_material) %>%
-  summarise(
-            mean_prop_weighted = mean(mean_prop_weighted, na.rm = TRUE)) %>%
-  ungroup() %>%
-  group_by(diet, fcr) %>%
-  mutate(total_prop_mean = sum(mean_prop_weighted, na.rm = TRUE)) %>%
-  ungroup() %>%
-  mutate(prop_impacts = mean_prop_weighted/total_prop_mean) %>%
   filter(fcr == "Regular")
 
 material_stats_1$raw_material <- with(material_stats_1, reorder(raw_material, mean_prop_weighted, FUN = function(x) sum(x)))
