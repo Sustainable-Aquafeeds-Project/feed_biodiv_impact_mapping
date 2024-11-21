@@ -12,14 +12,9 @@ This code produces figures 2 and 3, as well as some supplementary plots:
 Figure 2: 
 > Figure 2. Distribution of proportion of global habitat area impacted for species. Each point represents an individual species. Only impacted species are shown in the plot (i.e., species are exposed to and vulnerable to harvest pressure). To see distributions including species with zero impact, refer to Supplementary Fig. 3. Light blue points indicate mean across all species in marine taxon and dark green points indicate mean across species in terrestrial taxon. Orange points indicate mean across all species within the taxon and scenario and orange lines indicate the median. Boxes represent the interquartile range (IQR, quartile Q1 to Q3); whiskers indicate observations 1.5x IQR below (above) Q1 (Q3) the box. The panel on the right shows points >95th percentile, and total number of assessed species per taxon. 
 
-SI Figure 3:
-> Supplementary Figure 3. Distribution of the proportion of global habitat area impacted for each assessed species. Each point represents an individual species within the taxon. Orange points indicate mean across all species in taxon and orange lines indicate median. Boxes represent the interquartile range (IQR, quartile Q1 to Q3); whiskers indicate observations 1.5x IQR below (above) Q1 (Q3) the box. Panel on the right shows points >95th quantile, and total number of observations per taxon. 
 
 Figure 3: 
 > Proportion of each taxon’s global habitat area which is impacted by raw material for each aquafeed scenario. To see proportions including species with zero impact, refer to Supplementary Fig. 4. 
-
-SI Figure 4:
-> Supplementary Fig 4. Proportion of each taxon’s global habitat area impacted of all assessed species by raw material for each aquafeed scenario. 
 
 
 SI Figure 2: 
@@ -121,7 +116,7 @@ unique(all_overlap$ingredient)
 
 ```
 
-Some stats for paper:
+Some random stats for paper:
 
  - 54628 species assessed
  - 466 more spp impacted under plant-dominant
@@ -307,8 +302,6 @@ plot1 <- ggplot(summary_df_spp %>% filter(prop_impact > 0), aes(x = prop_impact)
         legend.position = "none", 
         text = element_text(family = "Arial"))
 
-ggsave(plot = plot1, here(this_dir, "MS_plots/test.png"), width = 16, height = 9, units = "in", bg = "white")
-
 
 # get legend
 
@@ -357,122 +350,10 @@ ggsave(plot = p, here(this_dir, "MS_plots/fig2_economic_boxplot_prop_orange.png"
 
 ```
  
-Now make the same plot, but keep 0 impact species, for SI:
-
-```{r}
-
-summary_df_spp <- all_overlap_df %>%
-  group_by(sciname, diet, fcr, allocation, taxon) %>%
-  summarise(impact_total = sum(impact_total, na.rm = TRUE)) %>%
-  ungroup() %>%
-  left_join(spp_assessed_plot_df) %>%
-  left_join(spp_total_hab %>% dplyr::select(-spp_type, -id)) %>%
-  mutate(prop_impact = impact_total/total_hab_area)  %>%
-  group_by(taxon, diet, fcr) %>%
-  mutate(mean_prop = mean(prop_impact,na.rm=TRUE),
-         median_prop = median(prop_impact,na.rm=TRUE)) %>%
-  ungroup()
-
-quant_95 <- quantile(summary_df_spp$prop_impact, 0.95)
-
-summary_df_spp_out <- summary_df_spp %>%
-  filter(prop_impact >= quant_95) %>%
-  group_by(diet, fcr, allocation, taxon) %>%
-  mutate(spp_outliers = n_distinct(sciname)) %>%
-  ungroup() 
-
-join_df <- summary_df_spp_out %>%
-  distinct(taxon, diet, fcr, allocation, spp_outliers)
-
-summary_df_spp_reg <- summary_df_spp %>%
-  filter(prop_impact > quant_95) %>%
-  left_join(join_df) %>%
-  mutate(spp_impacted = spp_count_assessed - spp_outliers) 
-
-spp_assessed_reg_outlier <- distinct(summary_df_spp_reg, taxon, spp_outliers, spp_impacted) %>%
-  group_by(taxon) %>%
-  slice(1) %>%
-  mutate(total_spp = format(spp_outliers + spp_impacted, big.mark = ",")) %>%
-    mutate(spp_impacted_str = glue("n = {spp_impacted}"),
-           spp_outliers_str = glue("n = {spp_outliers}"),
-           spp_count_assessed = glue("n = {total_spp}"))
-
-# Set the levels of the taxon variable in summary_df_test
-summary_df_spp$taxon <- with(summary_df_spp, reorder(taxon, prop_impact, FUN = function(x) mean(x)))
-
-diet_cols = c("Fish-dominant" = "#0D6EB5", "Plant-dominant" = "#7BD67F")
-
-## make boxplot of prop impacted
-
-plot1 <- ggplot(summary_df_spp, aes(x = prop_impact)) +
-  geom_point(aes(y = taxon, color = diet), alpha = 0.2, position = position_jitterdodge(dodge.width = -0.9)) + 
-  geom_vline(xintercept = 0, color = "black") +
-  geom_point(data = summary_df_spp, aes(x = mean_prop, y = taxon, group = diet),
-             position = position_dodge(width = -0.9),
-             shape = 21, color = "black", fill = "orange", size = 4) +
-     geom_boxplot(aes(y = taxon, fill = diet), outlier.fill = NA, outlier.color = NA, position = position_dodge(width = -0.9), alpha = 0, colour = "orange") +
-   geom_boxplot(aes(y = taxon, fill = diet), outlier.fill = NA, outlier.color = NA, position = position_dodge(width = -0.9), alpha = 0, fatten = NULL) +
-  theme_ohara() +
-      labs(x = "Proportion of global habitat area impacted", fill = 'Diet', color = 'Diet') +
-  scale_x_continuous(expand = c(0,0), limits = c(0, quant_95)) +
-  scale_color_manual(values = diet_cols, breaks = names(diet_cols), guide = guide_legend(reverse = FALSE)) +
-  theme(panel.background = element_blank(),
-            axis.title.y = element_blank(),
-            axis.text.x = element_text(size = 16, angle = 45, hjust = 1),
-         axis.text.y = element_text(size = 16),
-        strip.text = element_text(size = 16),
-        axis.title = element_text(size = 16),
-        legend.position = "none", 
-        text = element_text(family = "Arial"))
-
-# get legend
-
-plot2 <- ggplot(summary_df_spp %>% filter(prop_impact > quant_95), aes(x = prop_impact)) +
-  geom_point(aes(y = taxon, color = diet), alpha = 0.4, position = position_jitterdodge(dodge.width = -0.9)) + 
-  geom_vline(xintercept = quant_95, color = "black") +
-  theme_ohara() +
-      labs(x = "", y = "") +
-  scale_x_continuous(expand = c(0,0), limits = c(quant_95, 0.018), breaks = c(quant_95, seq(0.003, 0.012, by = 0.003)), labels = c("0.000041", "0.003", "0.006", "0.009", "0.012")) +
-  scale_color_manual(values = diet_cols, breaks = names(diet_cols), guide = guide_legend(reverse = FALSE)) +
-  theme(panel.background = element_blank(),
-            axis.title.y = element_blank(),
-            axis.text.x = element_text(size = 16, angle = 45, hjust = 1),
-         axis.text.y = element_blank(),
-        strip.text = element_text(size = 16),
-        axis.title = element_text(size = 16),
-        legend.position = "none", 
-        text = element_text(family = "arial")) +
-      geom_text(data = spp_assessed_reg_outlier, aes(label = spp_count_assessed, y = taxon),
-                x = 0.008, hjust = 0, color = 'black',
-                family = 'arial',
-                size = 6)
-
-plot1_legend <- get_legend(ggplot(summary_df_spp, aes(x = mean_prop)) +
-  geom_boxplot(aes(y = taxon, fill = diet, color = diet), 
-               width = 0.3, position = position_dodge(width = -0.7),
-               size = 0.3, outlier.size = 0.3) + 
-  theme_ohara() + 
-    theme(panel.background = element_blank(),
-            legend.text = element_text(size = 16),
-            legend.title = element_text(size = 16),
-            legend.key.size = unit(.20, 'cm'),
-            legend.background = element_blank()) + 
-    scale_fill_manual(values = diet_cols, breaks = names(diet_cols), guide = guide_legend(reverse = FALSE)) + 
-  scale_color_manual(values = diet_cols, breaks = names(diet_cols), guide = guide_legend(reverse = FALSE)) + 
-    labs(x = "Proportion of habitat area impacted", fill = 'Diet', color = 'Diet'))
-
-
-# draw plots together 
-p <- ggdraw() + draw_plot((plot1 + plot2 +  plot_layout(widths = c(3, 1)))) + draw_plot(plot1_legend,  x = .63, y = 0.15, height = .10, width = .15) 
-
-ggsave(here(this_dir, "SI_plots/SIfig_economic_boxplot_prop.png"), width = 16, height = 9, units = "in", bg = "white", plot = p, dpi = 300) # technically for nature food the max width is 180 mm, however, I'm saving like this and adjusting save in post production because doing it here messing things up...
-```
 
 **Figure 3: Proportion of taxa global habitat area impacted**
 > Figure 3. Proportion of each taxon’s global habitat area which is impacted by raw material for each aquafeed scenario. To see proportions including species with zero impact, refer to Supplementary Fig. 4. 
 
-SI Figure 4:
-> Supplementary Fig 4. Proportion of each taxon’s global habitat area impacted of all assessed species by raw material for each aquafeed scenario. 
 
 ```{r}
 
@@ -571,7 +452,7 @@ ggplot(summary_df_barcharts, aes(x = taxon, y = prop_impact, fill = raw_material
     scale_y_continuous(expand = c(0,0))
 
 
-ggsave(here(this_dir, "/SI_plots/SI_fig3_economic_barchart.png"), width = 178.9, height =100.92 , units = "mm", bg = "white")
+ggsave(here(this_dir, "/SI_plots/extra_plots/SI_fig_economic_barchart.png"), width = 178.9, height =100.92 , units = "mm", bg = "white")
 
 summary_df_barcharts$raw_material <- with(summary_df_barcharts, reorder(raw_material, prop_impact, FUN = function(x) mean(x)))
 
@@ -585,10 +466,179 @@ ggplot(summary_df_barcharts, aes(x = raw_material, y = prop_impact, fill = taxon
   coord_flip()  + 
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Adjust the 'angle' value as needed
 
-ggsave(here(this_dir, "SI_plots/SI_fig_barchart_by_raw_mat.png"), width = 178.9, height =100.92 , units = "mm", bg = "white")
+ggsave(here(this_dir, "SI_plots/extra_plots/SI_fig_barchart_by_raw_mat.png"), width = 178.9, height =100.92 , units = "mm", bg = "white")
 
 ```
 
+
+**SI Figure 2: Global average proportion of habitat area impacted in cells by raw material and diet**
+
+```{r}
+
+raw_materials <- c("Soybean", "Wheat", "Sunflower", "CropsNES", "Rapeseed", "Maize", "forage fish", "trimmings fish", "Pulses")
+
+
+num_cores <- 9
+cl <- makeCluster(num_cores)
+registerDoParallel(cl)
+
+
+foreach(raw_mat = raw_materials,
+        .packages = c("qs", "terra", "tidyverse", "dplyr", "glue")) %dopar% {
+for(allocation_type in c("economic", "mass", "ge")){
+  for(fcr_type in fcr_types){
+    for(diet_type in diet_types){
+          
+# diet_type = "plant-dominant"
+# fcr_type = "regular"
+# allocation_type = "economic"
+# raw_mat = "Rapeseed"
+
+          if(length(list.files(file.path(glue(impact_maps_dir, "/impact_maps_across_taxon_by_material/{diet_type}/{fcr_type}")), pattern = glue("{allocation_type}_{raw_mat}_mean_prop.tif"), full.names = TRUE)) > 0 ){
+        
+            files <- c(list.files(file.path(glue(impact_maps_dir, "/impact_maps_across_taxon_by_material/{diet_type}/{fcr_type}")), pattern = glue("{allocation_type}_{raw_mat}_mean_prop.tif"), full.names = TRUE), list.files(file.path(glue(impact_maps_dir, "/impact_maps_across_taxon_by_material/{diet_type}/{fcr_type}")), pattern = glue("{allocation_type}_{raw_mat}_nspp.tif"), full.names = TRUE))
+            
+        
+        map_df <- rast(files) %>%
+          as.data.frame(., xy = TRUE) %>%
+          mutate(raw_material = raw_mat) %>%
+          group_by(raw_material) %>%
+          summarise(mean_prop_weighted = weighted.mean(mean_prop, nspp, na.rm = TRUE),
+                    mean_prop = mean(mean_prop, na.rm = TRUE),
+                    sum_prop = sum(mean_prop, na.rm = TRUE)) %>%
+          mutate(allocation = allocation_type, 
+                 diet = diet_type, 
+                 fcr = fcr_type, 
+                 raw_material = raw_mat) %>%
+          ungroup()
+        
+        
+        qsave(map_df, file.path(glue(impact_maps_dir, "/csvs/by_material_global_summary/mean_impacts_{allocation_type}_{diet_type}_{fcr_type}_{raw_mat}.qs")))
+        
+          }else{
+            next()
+          }
+        
+        }
+      }
+    }
+  }
+
+stopCluster(cl)
+
+# now lets join all of those together into one dataframe and save 
+
+csv_files <- list.files(file.path(impact_maps_dir, "csvs/by_material_global_summary"), pattern = ".qs", full.names = TRUE)
+
+list_of_dfs <- lapply(csv_files, qread) 
+
+combined_impact_df <- do.call(rbind, list_of_dfs) %>%
+  mutate(raw_material = str_to_sentence(raw_material), 
+         allocation = str_to_sentence(allocation),
+         diet = str_to_sentence(diet),
+         fcr = str_to_sentence(fcr))  %>%
+ mutate(raw_material = ifelse(raw_material == "Cropsnes", "Other crops", raw_material))
+
+material_stats_1 <- combined_impact_df %>%
+    filter(allocation == "Economic") %>%
+  filter(fcr == "Regular")
+
+material_stats_1$raw_material <- with(material_stats_1, reorder(raw_material, mean_prop_weighted, FUN = function(x) sum(x)))
+
+ggplot(material_stats_1, aes(x = raw_material, y = mean_prop_weighted, fill = raw_material)) +
+    geom_bar(stat = "identity") +
+  facet_wrap(~diet) +
+  theme_minimal() + 
+  scale_fill_manual(values = pal_mats) + 
+  coord_flip()  + 
+  theme(panel.background = element_blank(),
+            axis.title.y = element_blank(),
+            axis.text.x = element_text(size = 7, angle = 45, hjust = 1),
+         axis.text.y = element_text(size = 7),
+        strip.text = element_text(size = 7),
+        axis.title = element_text(size = 7),
+        legend.text = element_text(size = 7),
+        text = element_text(family = "arial"),
+        legend.position = "none") + 
+    scale_y_continuous(expand = c(0,0)) + 
+    labs(x = "Raw material", y = "Average proportion of habitat area impacted", fill = NULL)
+
+
+ggsave(here(this_dir, "SI_plots/SI_Fig_2_average_raw_mat_impact.png"), bg = "white", width = 178.9, height = 100.92 , units = "mm")
+
+```
+
+**SI Figure 3: Comparison of raw material contribution to diet formulation vs. total impacts**
+
+```{r}
+codes <- read.csv(here("prep/02_feed/data/ingredient_spam_fao_codes.csv")) %>%
+  dplyr::select(raw_name = source_ingredient, raw_material = raw.material)
+
+diets_raw_mat <- read.csv(here("prep/02_feed/data/aquaculture_diet_composition.csv")) %>%
+  distinct(raw_name, prop_diet, diet) %>%
+  left_join(codes) %>%
+  mutate(raw_material = case_when(
+    str_detect(raw_name, "cut offs") ~ "Trimmings fish", 
+    str_detect(raw_name, "pea flour|guar|pea pro|faba") ~ "Pulses",
+    str_detect(raw_name, "forage fish") ~ "Forage fish",
+    str_detect(raw_name, "coconut|linseed") ~ "Cropsnes",
+    TRUE ~ str_to_title(raw_material)
+    
+  )) %>%
+  group_by(raw_material, diet) %>%
+  summarise(total_diet_contribution = sum(prop_diet, na.rm = TRUE)) %>%
+  ungroup() %>%
+  filter(!is.na(raw_material)) %>%
+  mutate(diet = str_to_sentence(diet))
+
+summary_df_barcharts <- all_overlap_df %>%
+  group_by(diet, fcr, raw_material, allocation, taxon) %>%
+  summarise(impact_total = sum(impact_total, na.rm = TRUE)) %>%
+  ungroup() %>%
+  left_join(taxon_hab_area) %>%
+  mutate(prop_impact = impact_total/total_hab_area)
+
+summary_df_stats <- summary_df_barcharts %>%
+   group_by(diet, fcr, raw_material, allocation) %>%
+  summarise(prop_total_impact = sum(prop_impact),
+            total_km2 = sum(impact_total, na.rm = TRUE)) %>%
+  ungroup() %>%
+  group_by(diet, fcr, allocation) %>% 
+  mutate(total_impact = sum(prop_total_impact)) %>%
+  mutate(prop_attributed = prop_total_impact/total_impact) %>%
+  left_join(diets_raw_mat) %>%
+  mutate(delta = prop_attributed - total_diet_contribution) %>%
+  mutate(raw_material = ifelse(raw_material == "Cropsnes", "Other crops", raw_material))
+  
+
+## test out a plot 
+pal_mats <- c("Soybean" = "#328C41",
+              "Trimmings fish" = "#8FBAED",
+              "Sunflower" = "#4277A9",
+              "Wheat" = "#FFE96D",
+              "Rapeseed" = "#AC9900",
+              "Pulses" = "#79E0DA",
+              "Forage fish" = "#3DB1AB",
+              "Maize" = "#0A6B66",
+              "Other crops" = "#BC94C6")
+
+ggplot(summary_df_stats, aes(x = prop_attributed, y = total_diet_contribution, color = raw_material)) +
+  geom_point(size = 3) +
+  facet_wrap(~ diet) +
+  labs(color = "",
+       x = "Impact Contribution",
+       y = "Diet Contribution") +
+  theme_bw() +
+  theme(legend.position = "bottom") +
+  geom_abline() +
+  scale_color_manual(values = pal_mats)
+
+ggsave(here("analysis/SI_plots/SI_Fig_3_efficiency.png"), width = 178.9, height =100.92 , units = "mm", bg = "white")
+
+```
+
+
+EXTRA PLOTS: 
 
 **Look at per country land/eez impacts**
  - grab by raw material rasters 
@@ -596,8 +646,6 @@ ggsave(here(this_dir, "SI_plots/SI_fig_barchart_by_raw_mat.png"), width = 178.9,
  'Weighting by the number of species impacted helps mitigate any distortion from taking an average of an average. It ensures that cells with more species (and thus potentially higher impact) contribute more to the overall country-level impact.
 If the weights are used appropriately in the second step, this avoids the common issue of diluting the information when averaging an average. The weighted average ensures that the relative importance of each cell is preserved in the final country-level estimate."
  
-SI Figure 2: 
-> Supplementary Figure 2. Top 25 average proportion of habitat area impacted in cells within country and EEZ boundaries, by raw materials, ranked by country (iso3c code). 
 
 ```{r}
 allocations <- c("economic")
@@ -768,7 +816,7 @@ ggdraw() +
     theme(plot.margin = margin(0, 3, 0, 0, "cm")) + # Adjust the right margin as needed
     draw_plot(legend_plot,  x = 1.02, y = 0.5, height = .10, width = .15)
 
-ggsave(here(this_dir, "SI_plots/economic_country_props.png"), bg = "white", width = 178.9, height =100.92 , units = "mm")
+ggsave(here(this_dir, "SI_plots/extra_plots/economic_country_props.png"), bg = "white", width = 178.9, height =100.92 , units = "mm")
 
 country_stats_1 <- combined_impact_df %>%
   filter(allocation == "Economic") %>%
@@ -782,99 +830,6 @@ country_stats_1 <- combined_impact_df %>%
 ```
 
 
-Let's look at average cell impacts across materials, globally
-
-```{r}
-
-num_cores <- 9
-cl <- makeCluster(num_cores)
-registerDoParallel(cl)
-
-
-foreach(raw_mat = raw_materials,
-        .packages = c("qs", "terra", "tidyverse", "dplyr", "glue")) %dopar% {
-for(allocation_type in c("economic", "mass", "ge")){
-  for(fcr_type in fcr_types){
-    for(diet_type in diet_types){
-          
-# diet_type = "plant-dominant"
-# fcr_type = "regular"
-# allocation_type = "economic"
-# raw_mat = "Rapeseed"
-
-          if(length(list.files(file.path(glue(impact_maps_dir, "/impact_maps_across_taxon_by_material/{diet_type}/{fcr_type}")), pattern = glue("{allocation_type}_{raw_mat}_mean_prop.tif"), full.names = TRUE)) > 0 ){
-        
-            files <- c(list.files(file.path(glue(impact_maps_dir, "/impact_maps_across_taxon_by_material/{diet_type}/{fcr_type}")), pattern = glue("{allocation_type}_{raw_mat}_mean_prop.tif"), full.names = TRUE), list.files(file.path(glue(impact_maps_dir, "/impact_maps_across_taxon_by_material/{diet_type}/{fcr_type}")), pattern = glue("{allocation_type}_{raw_mat}_nspp.tif"), full.names = TRUE))
-            
-        
-        map_df <- rast(files) %>%
-          as.data.frame(., xy = TRUE) %>%
-          mutate(raw_material = raw_mat) %>%
-          group_by(raw_material) %>%
-          summarise(mean_prop_weighted = weighted.mean(mean_prop, nspp, na.rm = TRUE),
-                    mean_prop = mean(mean_prop, na.rm = TRUE),
-                    sum_prop = sum(mean_prop, na.rm = TRUE)) %>%
-          mutate(allocation = allocation_type, 
-                 diet = diet_type, 
-                 fcr = fcr_type, 
-                 raw_material = raw_mat) %>%
-          ungroup()
-        
-        
-        qsave(map_df, file.path(glue(impact_maps_dir, "/csvs/by_material_global_summary/mean_impacts_{allocation_type}_{diet_type}_{fcr_type}_{raw_mat}.qs")))
-        
-          }else{
-            next()
-          }
-        
-        }
-      }
-    }
-  }
-
-stopCluster(cl)
-
-# now lets join all of those together into one dataframe and save 
-
-csv_files <- list.files(file.path(impact_maps_dir, "csvs/by_material_global_summary"), pattern = ".qs", full.names = TRUE)
-
-list_of_dfs <- lapply(csv_files, qread) 
-
-combined_impact_df <- do.call(rbind, list_of_dfs) %>%
-  mutate(raw_material = str_to_sentence(raw_material), 
-         allocation = str_to_sentence(allocation),
-         diet = str_to_sentence(diet),
-         fcr = str_to_sentence(fcr))  %>%
- mutate(raw_material = ifelse(raw_material == "Cropsnes", "Other crops", raw_material))
-
-material_stats_1 <- combined_impact_df %>%
-    filter(allocation == "Economic") %>%
-  filter(fcr == "Regular")
-
-material_stats_1$raw_material <- with(material_stats_1, reorder(raw_material, mean_prop_weighted, FUN = function(x) sum(x)))
-
-ggplot(material_stats_1, aes(x = raw_material, y = mean_prop_weighted, fill = raw_material)) +
-    geom_bar(stat = "identity") +
-  facet_wrap(~diet) +
-  theme_minimal() + 
-  scale_fill_manual(values = pal_mats) + 
-  coord_flip()  + 
-  theme(panel.background = element_blank(),
-            axis.title.y = element_blank(),
-            axis.text.x = element_text(size = 7, angle = 45, hjust = 1),
-         axis.text.y = element_text(size = 7),
-        strip.text = element_text(size = 7),
-        axis.title = element_text(size = 7),
-        legend.text = element_text(size = 7),
-        text = element_text(family = "arial"),
-        legend.position = "none") + 
-    scale_y_continuous(expand = c(0,0)) + 
-    labs(x = "Raw material", y = "Average proportion of habitat area impacted", fill = NULL)
-
-
-ggsave(here(this_dir, "SI_plots/average_raw_mat_impact.png"), bg = "white", width = 178.9, height = 100.92 , units = "mm")
-
-```
 
 **Plot showing diet percentages**
  - We didn't end up using this. 
@@ -919,7 +874,120 @@ ggplot(data = both_diets,
   labs(x = "Feed scenario", y = "Proportion")+
   guides(fill = guide_legend(byrow=TRUE, reverse = FALSE, ncol = 1))
 
-ggsave(filename = here(this_dir, "SI_plots/feed_composition.jpg"), dpi = 600, width = 10, height = 9, units = "cm")
+ggsave(filename = here(this_dir, "SI_plots/extra_plots/feed_composition.jpg"), dpi = 600, width = 10, height = 9, units = "cm")
 
 
 ```
+
+
+Now make the same plot, but keep 0 impact species, for SI:
+
+```{r}
+
+summary_df_spp <- all_overlap_df %>%
+  group_by(sciname, diet, fcr, allocation, taxon) %>%
+  summarise(impact_total = sum(impact_total, na.rm = TRUE)) %>%
+  ungroup() %>%
+  left_join(spp_assessed_plot_df) %>%
+  left_join(spp_total_hab %>% dplyr::select(-spp_type, -id)) %>%
+  mutate(prop_impact = impact_total/total_hab_area)  %>%
+  group_by(taxon, diet, fcr) %>%
+  mutate(mean_prop = mean(prop_impact,na.rm=TRUE),
+         median_prop = median(prop_impact,na.rm=TRUE)) %>%
+  ungroup()
+
+quant_95 <- quantile(summary_df_spp$prop_impact, 0.95)
+
+summary_df_spp_out <- summary_df_spp %>%
+  filter(prop_impact >= quant_95) %>%
+  group_by(diet, fcr, allocation, taxon) %>%
+  mutate(spp_outliers = n_distinct(sciname)) %>%
+  ungroup() 
+
+join_df <- summary_df_spp_out %>%
+  distinct(taxon, diet, fcr, allocation, spp_outliers)
+
+summary_df_spp_reg <- summary_df_spp %>%
+  filter(prop_impact > quant_95) %>%
+  left_join(join_df) %>%
+  mutate(spp_impacted = spp_count_assessed - spp_outliers) 
+
+spp_assessed_reg_outlier <- distinct(summary_df_spp_reg, taxon, spp_outliers, spp_impacted) %>%
+  group_by(taxon) %>%
+  slice(1) %>%
+  mutate(total_spp = format(spp_outliers + spp_impacted, big.mark = ",")) %>%
+    mutate(spp_impacted_str = glue("n = {spp_impacted}"),
+           spp_outliers_str = glue("n = {spp_outliers}"),
+           spp_count_assessed = glue("n = {total_spp}"))
+
+# Set the levels of the taxon variable in summary_df_test
+summary_df_spp$taxon <- with(summary_df_spp, reorder(taxon, prop_impact, FUN = function(x) mean(x)))
+
+diet_cols = c("Fish-dominant" = "#0D6EB5", "Plant-dominant" = "#7BD67F")
+
+## make boxplot of prop impacted
+
+plot1 <- ggplot(summary_df_spp, aes(x = prop_impact)) +
+  geom_point(aes(y = taxon, color = diet), alpha = 0.2, position = position_jitterdodge(dodge.width = -0.9)) + 
+  geom_vline(xintercept = 0, color = "black") +
+  geom_point(data = summary_df_spp, aes(x = mean_prop, y = taxon, group = diet),
+             position = position_dodge(width = -0.9),
+             shape = 21, color = "black", fill = "orange", size = 4) +
+     geom_boxplot(aes(y = taxon, fill = diet), outlier.fill = NA, outlier.color = NA, position = position_dodge(width = -0.9), alpha = 0, colour = "orange") +
+   geom_boxplot(aes(y = taxon, fill = diet), outlier.fill = NA, outlier.color = NA, position = position_dodge(width = -0.9), alpha = 0, fatten = NULL) +
+  theme_ohara() +
+      labs(x = "Proportion of global habitat area impacted", fill = 'Diet', color = 'Diet') +
+  scale_x_continuous(expand = c(0,0), limits = c(0, quant_95)) +
+  scale_color_manual(values = diet_cols, breaks = names(diet_cols), guide = guide_legend(reverse = FALSE)) +
+  theme(panel.background = element_blank(),
+            axis.title.y = element_blank(),
+            axis.text.x = element_text(size = 16, angle = 45, hjust = 1),
+         axis.text.y = element_text(size = 16),
+        strip.text = element_text(size = 16),
+        axis.title = element_text(size = 16),
+        legend.position = "none", 
+        text = element_text(family = "Arial"))
+
+# get legend
+
+plot2 <- ggplot(summary_df_spp %>% filter(prop_impact > quant_95), aes(x = prop_impact)) +
+  geom_point(aes(y = taxon, color = diet), alpha = 0.4, position = position_jitterdodge(dodge.width = -0.9)) + 
+  geom_vline(xintercept = quant_95, color = "black") +
+  theme_ohara() +
+      labs(x = "", y = "") +
+  scale_x_continuous(expand = c(0,0), limits = c(quant_95, 0.018), breaks = c(quant_95, seq(0.003, 0.012, by = 0.003)), labels = c("0.000041", "0.003", "0.006", "0.009", "0.012")) +
+  scale_color_manual(values = diet_cols, breaks = names(diet_cols), guide = guide_legend(reverse = FALSE)) +
+  theme(panel.background = element_blank(),
+            axis.title.y = element_blank(),
+            axis.text.x = element_text(size = 16, angle = 45, hjust = 1),
+         axis.text.y = element_blank(),
+        strip.text = element_text(size = 16),
+        axis.title = element_text(size = 16),
+        legend.position = "none", 
+        text = element_text(family = "arial")) +
+      geom_text(data = spp_assessed_reg_outlier, aes(label = spp_count_assessed, y = taxon),
+                x = 0.008, hjust = 0, color = 'black',
+                family = 'arial',
+                size = 6)
+
+plot1_legend <- get_legend(ggplot(summary_df_spp, aes(x = mean_prop)) +
+  geom_boxplot(aes(y = taxon, fill = diet, color = diet), 
+               width = 0.3, position = position_dodge(width = -0.7),
+               size = 0.3, outlier.size = 0.3) + 
+  theme_ohara() + 
+    theme(panel.background = element_blank(),
+            legend.text = element_text(size = 16),
+            legend.title = element_text(size = 16),
+            legend.key.size = unit(.20, 'cm'),
+            legend.background = element_blank()) + 
+    scale_fill_manual(values = diet_cols, breaks = names(diet_cols), guide = guide_legend(reverse = FALSE)) + 
+  scale_color_manual(values = diet_cols, breaks = names(diet_cols), guide = guide_legend(reverse = FALSE)) + 
+    labs(x = "Proportion of habitat area impacted", fill = 'Diet', color = 'Diet'))
+
+
+# draw plots together 
+p <- ggdraw() + draw_plot((plot1 + plot2 +  plot_layout(widths = c(3, 1)))) + draw_plot(plot1_legend,  x = .63, y = 0.15, height = .10, width = .15) 
+
+ggsave(here(this_dir, "SI_plots/extra_plots/SIfig_economic_boxplot_prop.png"), width = 16, height = 9, units = "in", bg = "white", plot = p, dpi = 300) # technically for nature food the max width is 180 mm, however, I'm saving like this and adjusting save in post production because doing it here messing things up...
+```
+

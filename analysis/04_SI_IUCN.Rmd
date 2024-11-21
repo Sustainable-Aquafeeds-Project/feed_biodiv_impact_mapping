@@ -6,7 +6,7 @@ editor_options:
 ---
 ##  Summary
 
-In this script we create supplementary figure 6. In this figure, we split impacts by taxon and species IUCN risk category:
+In this script we create supplementary figure 4. In this figure, we split impacts by taxon and species IUCN risk category:
 
 > Number of species within each impact quantile and taxon, split by current IUCN status and feed formulation scenario. Percentage wheels show the percentage of species from each assessed taxonomic group that are impacted, and thus, shown in the plot. It is well established that the IUCN has major data deficiencies, particularly in marine species 1, and we find that approximately 33% of the species we assessed lack adequate evaluation (data deficient or not evaluated), the majority of which (~83%) are marine (Figure 4). Least concern (LC) species predominate in both dietary scenarios and across all impact categories for all taxa except molluscs, arthropods, and other marine species, which are majority data deficient or not evaluated. The amphibian taxon has a high percentage of species falling into categories that are of a high threat level (i.e., above that of Least Concern). For example, under the plant-dominant diet, 43% of amphibian species represented in the 75-94th impact quantile are at-risk of extinction. However, most often critically endangered and endangered species are in the 25-49th impact category for both fish- and plant-dominant dietary scenarios. Evaluating these impacts against IUCN categories can guide conservation efforts by identifying at-risk taxa which could benefit most from adjusting production areas or raw material types used in feeds. 
 
@@ -178,18 +178,7 @@ unique(spp_cats$category) #  [1] "NE" "LC" "DD" "VU" "NT" "EN" "CR" "EX" "EW"
   ## EW = extinct in the wild
   ## NE = not evaluated
 
-test <- spp_cats %>%
-  filter(!is.na(category))
 
-test <- spp_cats %>% 
-  filter(is.na(category)) %>%
-  group_by(taxon) %>%
-  summarise(n_distinct(sciname))
-
-unique(test$taxon) ## cool none are empty
-
-test <- spp_cats %>% filter(category == "NE") %>%   group_by(taxon) %>%
-  summarise(n_distinct(sciname))
 
 
 ```
@@ -412,7 +401,7 @@ legend_pattern <-  get_legend(ggplot() + geom_col_pattern(plot_df_new,
 
 p <- ggdraw() + draw_plot(iucn_plot) + draw_plot(legend_iucn, x = 0.1, y = 0.005, width = 0.5, height = 0.15) + draw_plot(legend_pattern, x = 0.6, y = 0.005, width = 0.5, height = 0.118)
 
-ggsave(here("analysis/SI_plots/SI_iucn_plot_no_props.png"), units = "mm", width = 180, height = 180)
+ggsave(here("analysis/SI_plots/SI_Fig_4_iucn_plot_no_props.png"), units = "mm", width = 180, height = 180)
 
 ## ok, now we will add the proportions created above in post processing, using inkscape; https://inkscape.org/
 
@@ -501,7 +490,7 @@ legend_pattern <-  get_legend(ggplot() + geom_col_pattern(plot_df_new,
 
 p <- ggdraw() + draw_plot(iucn_plot) + draw_plot(legend_iucn, x = 0.1, y = 0.005, width = 0.5, height = 0.15) + draw_plot(legend_pattern, x = 0.6, y = 0.005, width = 0.5, height = 0.118)
 
-ggsave(here("analysis/SI_plots/SI_iucn_plot_zeros.png"), units = "mm", width = 180, height = 180)
+ggsave(here("analysis/SI_plots/extra_plots/SI_iucn_plot_zeros.png"), units = "mm", width = 180, height = 180)
 
 
 ```

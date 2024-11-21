@@ -161,8 +161,6 @@ spp_assessed %>% filter(taxon %in% c("Amphibians", "Reptiles", "Terrestrial mamm
 
 "the mean proportion of species’ habitat impacted falls below 0.006% for 95% of cells "
 
-"For instance, the highest impact occurs in a terrestrial cell in Norway, where the feed production activities (primarily wheat) for the plant-dominant scenario displace 11% of the habitat area on average for impacted species (e.g., Boreal owl, Moose)."
-
 ```{r}
 ## read in plant-dominant, economic, regular
  filepath <- glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_ingredient/economic_mean_prop.qs"))
@@ -244,7 +242,7 @@ ocean_impacts <- all_df %>%
 
 Comparing diets and impacts on land and ocean
 
-"Intuitively, the fish-dominant diet exhibits larger impacts across all ocean pixels, most notably in high forage fish harvest regions such as the North Atlantic, Humboldt region, and east China Sea (Figure 1b)."
+"Intuitively, the fish-dominant diet exhibits larger impacts across all ocean pixels, most notably in high forage fish harvest regions such as the North Atlantic, Humboldt, and East China Sea (Figure 1b)."
 
 "Similarly, the plant-dominant diet generally has larger land impacts, particularly in Argentina, Brazil, Chile, Russia, and Canada (Fig. 1b)."
 
@@ -753,31 +751,6 @@ summary_df_stats <- summary_df_barcharts %>%
 #  - Wheat is 16% of the feed and 11% of the impacts
 #  - Pulses are 12% of the feed and 11% of the impacts
 #  - Rapeseed is 18% of the feed and 10% of the impact
-
-## test out a plot 
-pal_mats <- c("Soybean" = "#328C41",
-              "Trimmings fish" = "#8FBAED",
-              "Sunflower" = "#4277A9",
-              "Wheat" = "#FFE96D",
-              "Rapeseed" = "#AC9900",
-              "Pulses" = "#79E0DA",
-              "Forage fish" = "#3DB1AB",
-              "Maize" = "#0A6B66",
-              "Other crops" = "#BC94C6")
-
-ggplot(summary_df_stats, aes(x = prop_attributed, y = total_diet_contribution, color = raw_material)) +
-  geom_point(size = 3) +
-  facet_wrap(~ diet) +
-  labs(color = "",
-       x = "Impact Contribution",
-       y = "Diet Contribution") +
-  theme_bw() +
-  theme(legend.position = "bottom") +
-  geom_abline() +
-  scale_color_manual(values = pal_mats)
-
-ggsave(here("analysis/SI_plots/SI_fig_efficiency.png"), width = 178.9, height =100.92 , units = "mm", bg = "white")
-
 
 ## lets look at average impacts contributions
 

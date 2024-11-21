@@ -247,7 +247,7 @@ all_df_quant$new_category <- factor(all_df_quant$new_category, levels = c("0-\n0
      draw_label("Quantiles", y = 0.4, x = 0.508, size = 8, fontfamily = "Arial")
    
 
-  ggsave(glue(here(this_dir, "SI_plots/economic_mean_prop_quantiles.png")), plot = quantile_prop_si, width = 8, height = 8, bg = "white")
+  ggsave(glue(here(this_dir, "SI_plots/extra_plots/economic_mean_prop_quantiles.png")), plot = quantile_prop_si, width = 8, height = 8, bg = "white")
     
     
 ## Delta plot 
@@ -450,7 +450,7 @@ delta_plot <-  ggplot() +
                 width = 190, height = 180, bg = "white", units = "mm")
               
       
-    ggsave(glue(here(this_dir, "SI_plots/economic_mean_prop_delta_plot.png")),
+    ggsave(glue(here(this_dir, "SI_plots/extra_plots/economic_mean_prop_delta_plot.png")),
                 plot = full_plot_si, 
                 width = 180, height = 180, bg = "white", units = "mm")
         
@@ -482,9 +482,9 @@ hist_plot_plant <- ggplot(data = all_df_quant %>% filter(diet == "plant-dominant
     theme(legend.position = "none")
 
   
-  ggsave(glue(here(this_dir, "SI_plots/economic_mean_prop_quantiles_hist_plant.png")), plot = plot_grid(hist_plot_plant , nrow = 1), width = 8, height = 8, bg = "white") 
+  ggsave(glue(here(this_dir, "SI_plots/extra_plots/economic_mean_prop_quantiles_hist_plant.png")), plot = plot_grid(hist_plot_plant , nrow = 1), width = 8, height = 8, bg = "white") 
   
-    ggsave(glue(here(this_dir, "SI_plots/economic_mean_prop_quantiles_hist_fish.png")), plot = plot_grid(hist_plot_fish, nrow = 1), width = 8, height = 8, bg = "white") 
+    ggsave(glue(here(this_dir, "SI_plots/extra_plots/economic_mean_prop_quantiles_hist_fish.png")), plot = plot_grid(hist_plot_fish, nrow = 1), width = 8, height = 8, bg = "white") 
     
 ```
 
@@ -542,7 +542,7 @@ quantile_value <- quantile(loop_loop_df$value, probs = 0.99, na.rm = TRUE)
 
   } 
 
-ggsave(glue(here(this_dir, "SI_plots/economic_mean_prop.png")), plot = plot_grid(plotlist = plot_list, nrow = 1), width = 10, height = 4, bg = "white")
+ggsave(glue(here(this_dir, "SI_plots/extra_plots/economic_mean_prop.png")), plot = plot_grid(plotlist = plot_list, nrow = 1), width = 10, height = 4, bg = "white")
 ```
 
 
