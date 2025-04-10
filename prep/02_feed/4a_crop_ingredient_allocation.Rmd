@@ -21,6 +21,7 @@ library(knitr)
 library(strex)
 library(readxl)
 library(terra)
+library(tidyterra) 
 
 source(here("src/fxns.R"))
 source(here("src/directories.R"))
@@ -466,6 +467,61 @@ ggplot(data = tmp %>%
 
 ```
 
+Check if there are spatial differences between ingredients... I don't think there are? Obviously there are value differences. But in terms of the actual ingredient, I think we group the trade data by product code, which are usually the same. So Julia might need to report results at the raw material level rather than ingredient level. 
 
+```{r}
+## try soy protein concentrate and soy oil 
+spc <- rast(here("prep/02_feed/output/plant-dominant/regular/Soybean_soy protein concentrate_economic_P.tif")) %>%
+  filter(coef > 0)
+soy_oil <- rast(here("prep/02_feed/output/plant-dominant/regular/Soybean_soy oil_economic_P.tif")) %>%
+  filter(coef > 0)
+
+spc
+soy_oil
+
+plot(spc)
+plot(soy_oil)
+
+spc_df <- spc %>% as.data.frame(., xy = TRUE)
+soy_oil_df <- soy_oil %>% as.data.frame(., xy = TRUE)
+
+```
+
+```{r}
+wheat_pd <-  rast(here("prep/02_feed/output/plant-dominant/regular/Wheat_wheat_economic_P.tif")) %>%
+  filter(coef > 0)
+
+wheat_fd <-  rast(here("prep/02_feed/output/fish-dominant/regular/Wheat_wheat_economic_P.tif")) %>%
+  filter(coef > 0)
+
+diff <- wheat_fd-wheat_pd 
+
+diff[diff <=1] <- NA
+
+plot(diff, col  = "red")
+
+corn_pd <-  rast(here("prep/02_feed/output/plant-dominant/regular/Maize_corn gluten meal_economic_P.tif")) %>%
+  filter(coef > 0)
+
+corn_fd <-  rast(here("prep/02_feed/output/fish-dominant/regular/Maize_corn gluten meal_economic_P.tif")) %>%
+  filter(coef > 0)
+
+diff <- corn_fd-corn_pd 
+
+diff[diff <=1] <- NA
+
+plot(diff, col  = "red")
+
+
+soy_pd <-  rast(here("prep/02_feed/output/plant-dominant/regular/Soybean_soy protein concentrate_economic_P.tif")) %>%
+  filter(coef > 0)
+
+soy_fd <-  rast(here("prep/02_feed/output/fish-dominant/regular/Soybean_soybean meal_economic_P.tif")) %>%
+  filter(coef > 0)
+
+diff <- soy_fd-soy_pd
+
+plot(diff)
+```
 
 

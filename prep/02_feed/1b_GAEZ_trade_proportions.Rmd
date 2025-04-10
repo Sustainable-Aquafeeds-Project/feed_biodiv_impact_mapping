@@ -150,7 +150,7 @@ missing2 # this is fine, because we don't include these feed items in our diet s
 fbs <- fbs %>%
   filter(FAO_Item_Code_NFB %in% feed_products$FAO_Item_Code_NFB) %>%
   left_join(feed_products, by = "FAO_Item_Code_NFB") %>%
-  group_by(consuming_area_code, consuming_country, GAEZ_category, element) %>%
+  group_by(consuming_area_code, consuming_country, FAO_Item_Code_NFB, GAEZ_category, element) %>%
   summarize(value = sum(value, na.rm=TRUE)) %>%
   ungroup() 
 
@@ -167,7 +167,7 @@ local_prod <- fbs %>%
   mutate(external_crop_prod_per = ifelse(supply2 == 0, 0, imports/supply2)) %>%
   mutate(external_crop_prod_per = ifelse(external_crop_prod_per < 0, 0, external_crop_prod_per)) %>%
       mutate(external_crop_prod_per = ifelse(external_crop_prod_per > 1, 1, external_crop_prod_per)) %>%
-  dplyr::select(consuming_area_code, consuming_country, GAEZ_category, local_crop_prod_per, external_crop_prod_per)
+  dplyr::select(consuming_area_code, consuming_country, FAO_Item_Code_NFB, GAEZ_category, local_crop_prod_per, external_crop_prod_per)
 
 summary(local_prod)
 filter(local_prod, consuming_country == "Sudan" & GAEZ_category == "Maize")
@@ -300,7 +300,7 @@ test <- import_data %>%
 imports <- imports %>%
   filter(FAO_Item_Code %in% feed_products$FAO_Item_Code) %>%
   left_join(feed_products, by = "FAO_Item_Code") %>%
-  dplyr::group_by(consuming_area_code, consuming_country, producing_area_code, producing_country, GAEZ_category) %>%
+  dplyr::group_by(consuming_area_code, consuming_country, producing_area_code, producing_country, GAEZ_category, FAO_Item_Code) %>%
   summarize(Value = sum(Value)) %>%
   ungroup()
 

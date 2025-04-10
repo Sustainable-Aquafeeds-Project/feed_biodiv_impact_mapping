@@ -7,11 +7,31 @@ editor_options:
 
 ## Summary
 
-In this script we summarize the impact rasters created in 03b, 06a and 06b by finding the impact mean, standard deviation (pooled variance), and number of species:
+In this script we summarize the impact rasters created in 03b, 06a and 06b by finding the impact mean, standard deviation (pooled variance), number of species, total km2, and average rarity weighted affected habitat (expressed as proportion and km2):
 
  - Across all taxon and ingredients
  - Across all ingredients per each taxon
  - Across all taxon per raw material
+ 
+
+The total rarity weighted affected habitat calculations are as follows: 
+
+For each species:
+
+Get the proportion of its habitat impacted (e.g., 0.4 = 40%) OR the km2 of habitat in each cell (e.g., 40 km2)
+
+Get its rarity weight — often defined as 1 / total habitat area or 1 / range size, so rarer species get a higher weight.
+
+rarity_weighted_impact = rarity_weight × habitat_impacted # this will be per cell impact? 
+
+total_rarity_weighted_impact = ∑ (rarity_weight × habitat_impacted) # this will be a total impact per species? 
+
+We will calculate two metrics: 
+
+1. Total rarity-weighted habitat area lost (km² × rarity);  Includes both rarity and the absolute scale of habitat impact, which could be more appropriate for estimating ecosystem-wide loss or degradation. However, Can overemphasize common species that happen to have a lot of habitat in impacted areas and may obscure cases where rare species are disproportionately affected in relative terms.
+
+2. Average rarity-weighted proportional loss (proportion × rarity); This is useful when you're more concerned with ecological risk per species, e.g., extinction risk or local population collapse.e.
+
 
 
 ## Setup
@@ -50,6 +70,12 @@ biodiv_dir <- file.path(rdsi_dir, "biodiversity_impacts")
 
 impact_maps_dir <- file.path(biodiv_dir, "output")
 
+## need total habitat area per species dataframe
+
+total_hab_terr_spp <- read.csv(here("prep/03_prep_spp_habitats/int/terrestrial_habitat_areas.csv"))
+
+total_hab_marine_spp <- read.csv(here("prep/03_prep_spp_habitats/int/marine_habitat_areas.csv"))
+
 ```
 
 ## Impacts across taxa and ingredients
@@ -59,6 +85,7 @@ Below we create maps of species level proportion of habitat and extinction risk 
 ### Aggregate terrestrial impacts 
  - Take mean prop impacted, sd prop impacted, mean extinction risk, and nspp impacted across taxon and ingredient for terrestrial species
  - NOTE: This takes ~2 hours to run all scenarios
+  - NOTE: April 10, 2025; RERUN THESE BECAUSE THE TOTAL IMPACT FILES DIDN'T SAVE
 
 ```{r}
 
@@ -75,7 +102,7 @@ for(diet in diet_types){
       # fcr = "regular"
       # allocation = "economic"
 
-      if(file.exists(glue(file.path(biodiv_dir, "int/terrestrial_aggregation/impact_maps_across_taxon_ingredient/{diet}/{fcr}/{allocation}_mean_prop.tif")))){
+      if(file.exists(glue(file.path(biodiv_dir, "int/terrestrial_aggregation/impact_maps_across_taxon_ingredient/{diet}/{fcr}/{allocation}_rarity_mean_prop.tif")))){
         message("raster exists... skipping")
         next()
       }
@@ -86,16 +113,20 @@ for(diet in diet_types){
       all_files <- all_files[-to_remove]
 
 
-      all_files_list <- lapply(all_files, qread)
+     all_files_list <- lapply(all_files, qread) # ok this takes forever.. any way to speed this up? mclapply?
+        
+      all_impact_df <- data.frame(cell_id = NA, prop_mean = NA, prop_sd = NA, prop_nspp = NA, prop_ext_risk = NA, rarity_prop_mean = NA,
+                                  rarity_km2_mean = NA, total_km2 = NA)
 
-      all_impact_df <- data.frame(cell_id = NA, prop_mean = NA, prop_sd = NA, prop_nspp = NA, prop_ext_risk = NA)
-
-      for(i in 1:14){ # 14 because there are 14 difference indices in the list
+    for(i in 1:14){ # 14 because there are 14 difference indices in the list; maybe foreach here? Would have to save each "combined_dataframe" and read back in with a foreach loop. 
+      
+      
               # i = 1
 
 
         i_dfs <- lapply(all_files_list, function(x) x[[i]])
-
+   
+        # i_dfs <- all_files_list[[1]] # test one out
 
  combined_dataframe <- bind_rows(i_dfs) %>%
     filter(!is.na(cell_id)) %>%
@@ -105,19 +136,27 @@ for(diet in diet_types){
   ungroup() %>%
   mutate(prop_impact = impact_km2/100,
          ext_risk = 1 - ((100 - impact_km2)/100)^0.25) %>%
+   left_join(., total_hab_terr_spp, by = c("species_full" = "sciname")) %>% # join to get total habitat area for a species
+   mutate(rarity_prop_impact = prop_impact*(1/total_hab_area),
+          rarity_km2_impact = impact_km2*(1/total_hab_area)) %>%
   group_by(cell_id) %>%
   summarise(prop_mean = mean(prop_impact,na.rm=TRUE),
             prop_sd = sd(prop_impact, na.rm = TRUE),
             prop_nspp = n_distinct(species_full),
-            prop_ext_risk = mean(ext_risk, na.rm = TRUE)) %>%
+            prop_ext_risk = mean(ext_risk, na.rm = TRUE),
+            rarity_prop_mean = mean(rarity_prop_impact, na.rm = TRUE),
+            rarity_km2_mean = mean(rarity_km2_impact, na.rm = TRUE),
+            total_km2 = sum(impact_km2, na.rm = TRUE)) %>%
   ungroup() %>%
   as.data.frame()
 
 
 
-        all_impact_df <- rbind(all_impact_df, combined_dataframe)
+
+      all_impact_df <- rbind(all_impact_df, combined_dataframe)
 
       }
+      
 
       ## save rasters
       rast_impact <- all_impact_df %>%
@@ -157,6 +196,35 @@ for(diet in diet_types){
             rast(., type = "xyz", crs = moll_template)
 
                   writeRaster(rast_impact_nspp, glue(file.path(biodiv_dir, "int/terrestrial_aggregation/impact_maps_across_taxon_ingredient/{diet}/{fcr}/{allocation}_nspp.tif")), overwrite = TRUE)
+                  
+    rast_impact_rarity_prop <- all_impact_df %>%
+        dplyr::select(cell_id, rarity_prop_mean) %>%
+        filter(!is.na(cell_id)) %>%
+                left_join(moll_template_xy) %>%
+            dplyr::select(x, y, rarity_prop_mean) %>%
+            rast(., type = "xyz", crs = moll_template)
+
+                  writeRaster(rast_impact_rarity_prop, glue(file.path(biodiv_dir, "int/terrestrial_aggregation/impact_maps_across_taxon_ingredient/{diet}/{fcr}/{allocation}_rarity_mean_prop.tif")), overwrite = TRUE)
+                  
+                  
+ rast_impact_rarity_km2 <- all_impact_df %>%
+        dplyr::select(cell_id, rarity_km2_mean) %>%
+        filter(!is.na(cell_id)) %>%
+                left_join(moll_template_xy) %>%
+            dplyr::select(x, y, rarity_km2_mean) %>%
+            rast(., type = "xyz", crs = moll_template)
+
+                  writeRaster(rast_impact_rarity_km2, glue(file.path(biodiv_dir, "int/terrestrial_aggregation/impact_maps_across_taxon_ingredient/{diet}/{fcr}/{allocation}_rarity_mean_km2.tif")), overwrite = TRUE)
+                
+      rast_impact_total_km2 <- all_impact_df %>%
+        dplyr::select(cell_id, total_km2) %>%
+        filter(!is.na(cell_id)) %>%
+                left_join(moll_template_xy) %>%
+            dplyr::select(x, y, total_km2) %>%
+            rast(., type = "xyz", crs = moll_template)
+      
+                        writeRaster(rast_impact_total_km2, glue(file.path(biodiv_dir, "int/terrestrial_aggregation/impact_maps_across_taxon_ingredient/{diet}/{fcr}/{allocation}_total_km2.tif")), overwrite = TRUE)
+
 
 
     }
@@ -253,7 +321,7 @@ for(diet in diet_types){
   for(fcr in fcr_types){
     for(allocation in allocation_types){
       
-        all_impact_df <- data.frame(cell_id = NA, prop_mean = NA, prop_sd = NA, prop_nspp = NA, prop_ext_risk = NA)
+        all_impact_df <- data.frame(cell_id = NA, prop_mean = NA, prop_sd = NA, prop_nspp = NA, prop_ext_risk = NA, rarity_prop_mean = NA, rarity_km2_mean = NA, total_km2 = NA)
       
       for(chunk_id in 1:13){
         
@@ -270,14 +338,21 @@ for(diet in diet_types){
   ungroup() %>%
   mutate(prop_impact = impact_km2/100,
          ext_risk = 1 - ((100 - impact_km2)/100)^0.25) %>%
-  mutate(prop_impact = ifelse(prop_impact > 1, 1, prop_impact)) %>% # cap at 1
+  mutate(prop_impact = ifelse(prop_impact > 1, 1, prop_impact)) %>% # cap at 1 since it is not possible to displace more habitat than is available
+   left_join(., total_hab_marine_spp, by = "species") %>% # join to get total habitat area for a species
+   mutate(rarity_prop_impact = prop_impact*(1/total_hab_area),
+          rarity_km2_impact = impact_km2*(1/total_hab_area)) %>%
   group_by(cell_id) %>%
   summarise(prop_mean = mean(prop_impact,na.rm=TRUE),
             prop_sd = sd(prop_impact, na.rm = TRUE),
             prop_nspp = n_distinct(species),
-            prop_ext_risk = mean(ext_risk, na.rm = TRUE)) %>%
+            prop_ext_risk = mean(ext_risk, na.rm = TRUE),
+            rarity_prop_mean = mean(rarity_prop_impact, na.rm = TRUE),
+            rarity_km2_mean = mean(rarity_km2_impact, na.rm = TRUE),
+            total_km2 = sum(impact_km2, na.rm = TRUE)) %>%
   ungroup() %>%
   as.data.frame()
+
 
         
                 all_impact_df <- rbind(all_impact_df, impacts_chunk)
@@ -321,6 +396,35 @@ for(diet in diet_types){
       
       writeRaster(rast_ext, glue(file.path(biodiv_dir, "int/marine_aggregation/impact_maps_across_taxon_ingredient/{diet}/{fcr}/{allocation}_mean_ext_risk.tif")), overwrite = TRUE)
 
+                        
+    rast_impact_rarity_prop <- all_impact_df %>%
+        dplyr::select(cell_id, rarity_prop_mean) %>%
+        filter(!is.na(cell_id)) %>%
+                left_join(moll_template_xy) %>%
+            dplyr::select(x, y, rarity_prop_mean) %>%
+            rast(., type = "xyz", crs = moll_template)
+
+                  writeRaster(rast_impact_rarity_prop, glue(file.path(biodiv_dir, "int/marine_aggregation/impact_maps_across_taxon_ingredient/{diet}/{fcr}/{allocation}_rarity_mean_prop.tif")), overwrite = TRUE)
+                  
+                  
+ rast_impact_rarity_km2 <- all_impact_df %>%
+        dplyr::select(cell_id, rarity_km2_mean) %>%
+        filter(!is.na(cell_id)) %>%
+                left_join(moll_template_xy) %>%
+            dplyr::select(x, y, rarity_km2_mean) %>%
+            rast(., type = "xyz", crs = moll_template)
+
+                  writeRaster(rast_impact_rarity_km2, glue(file.path(biodiv_dir, "int/marine_aggregation/impact_maps_across_taxon_ingredient/{diet}/{fcr}/{allocation}_rarity_mean_km2.tif")), overwrite = TRUE)
+                
+      rast_impact_total_km2 <- all_impact_df %>%
+        dplyr::select(cell_id, total_km2) %>%
+        filter(!is.na(cell_id)) %>%
+                left_join(moll_template_xy) %>%
+            dplyr::select(x, y, total_km2) %>%
+            rast(., type = "xyz", crs = moll_template)
+      
+                        writeRaster(rast_impact_total_km2, glue(file.path(biodiv_dir, "int/marine_aggregation/impact_maps_across_taxon_ingredient/{diet}/{fcr}/{allocation}_total_km2.tif")), overwrite = TRUE)
+      
             
     }
   }
