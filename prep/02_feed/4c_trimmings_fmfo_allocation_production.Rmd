@@ -593,10 +593,10 @@ diets <- unique(trim_props$diet)
 allocations <- unique(trim_props$allocation_type)
 ingredients <- unique(trim_props$ingredient)
 depth_positions <- c("benthic", "pelagic")
-fcrs <- unique(trim_props$fcr_type)
+# fcrs <- unique(trim_props$fcr_type) # we are only running regular FCRs now
 
 for(diet_type in diets){
-  for(fcr in fcrs){
+  for(fcr in c("regular")){
   for(allocation in allocations){
     for(ingredient_type in ingredients){
       for(pos in depth_positions){
