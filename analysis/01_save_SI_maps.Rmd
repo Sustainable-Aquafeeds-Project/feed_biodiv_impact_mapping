@@ -76,15 +76,11 @@ jv_pal <- c(l_yellow, yellow, green, l_brown, m_brown, d_brown)
 
 continuous_pal <-  colorRampPalette(jv_pal, space="Lab", bias = 3.5)(10000)
 continuous_pal_red <- c(continuous_pal, "#B90000")
-image(volcano, asp=1, col=continuous_pal_red)
 
 light_gray <- "#F8F9FA"
 final_palette <- c(light_gray, continuous_pal)
-image(volcano, asp=1, col=final_palette)
 
 palette_red <- c(final_palette, "#B90000")
-image(volcano, asp=1, col=palette_red)
-
 
 countries_shp <- ne_countries(scale = 110, returnclass = "sf") |> 
   st_transform(crs(moll_template)) # read in countries shapefile
@@ -140,7 +136,7 @@ Global impact maps across ingredients and taxon
 ## make plots showing impacts for each scenario 
 
 allocation_types <- c("mass", "economic", "ge")  
-calc_types <- c("mean_prop", "nspp", "sd_prop", "mean_ext_risk")
+calc_types <- c("mean_prop", "nspp", "sd_prop", "mean_ext_risk", "rarity_mean_prop", "total_km2")
 types_df <- expand.grid(allocation_types, calc_types) %>%
   unite(new_var, Var1:Var2, sep = "_") %>%
   pull(new_var) %>%
@@ -157,7 +153,7 @@ registerDoParallel(cl)
 foreach(type = types_df,
         .packages = c('stringr', 'qs', 'tidyverse', 'tools', 'strex', 'glue', 'cowplot', 'here')) %dopar% {
   
-  # type = "economic_mean_prop"
+  # type = "economic_total_km2"
   
  filepath <- glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_ingredient/{type}.qs"))
 
@@ -165,19 +161,25 @@ loop_df <-  qs::qread(filepath)
 
 if(str_detect(type, "mean")){
   
-  if(str_detect(type, "mean_prop")){
-  fill_name = "Proportion\nhabitat\nimpacted"
+  if(str_detect(type, "mean_ext_risk")){
+        fill_name = "Average extinction\nRisk"
+        
+  }else if(str_detect(type, "rarity_mean_prop")){
+  fill_name = "Average rarity\nweighted\nproportion\nhabitat\nimpacted"
+
   }else{
-    fill_name = "Extinction\nRisk"
+    
+      fill_name = "Average proportion\nhabitat\nimpacted"
+
   }
   
   plot_list <- list()
   
   for(diet_type in diets){
     for(fcr in fcrs){
-
-      # diet_type = "plant-dominant"
-      # fcr = "regular"
+ 
+# diet_type = "plant-dominant"
+# fcr = "regular"
       
   loop_loop_df <- loop_df %>%
     filter(diet == diet_type, 
@@ -185,8 +187,8 @@ if(str_detect(type, "mean")){
   
 quantile_value <- quantile(loop_loop_df$value, probs = 0.99, na.rm = TRUE)
   
-max_val =  round(max(loop_loop_df$value, na.rm = TRUE), 5)
-quant_val = round(quantile_value, 5)
+max_val =  formatC(max(loop_loop_df$value, na.rm = TRUE), format = "e",  digits = 2)
+quant_val = formatC(quantile_value, format = "e", digits = 2)
 
   loop_loop_df <- loop_loop_df %>% 
     mutate(value_new = ifelse(value > quantile_value, quantile_value, value))
@@ -195,7 +197,7 @@ quant_val = round(quantile_value, 5)
       geom_tile(data = loop_loop_df, aes(x = long, y = lat, fill = value_new, color = value_new)) +
      geom_tile(fill = ifelse(loop_loop_df$value_new < quantile_value, "#B90000", NA)) + 
             geom_sf(data = countries_shp, fill = NA, colour = "grey") + 
-       scale_fill_gradientn(colors = continuous_pal_red, na.value = "white") +
+       scale_fill_gradientn(colors = continuous_pal_red, na.value = "white", labels = scales::label_scientific()) +
             scale_color_gradientn(colors = continuous_pal_red, na.value = "white") +
             geom_sf(data = globe_border,
             fill = NA, color = 'grey70', 
@@ -226,8 +228,11 @@ ggsave(glue(here(this_dir, "SI_plots/across_taxon_ingredient/{type}_plot.png")),
   
  if(str_detect(type, "nspp")){
     fill_name = "Number of\nspecies\nimpacted"
-  }else{
-    fill_name = "sdev"
+  }else if(str_detect(type, "total_km2")){
+
+fill_name <- expression("Total km"^2)  
+  }else {
+       fill_name = "sdev"
   }
   
     plot_list <- list()
@@ -283,7 +288,7 @@ diets <- c("fish-dominant", "plant-dominant")
 fcrs <- c("regular") # only include regular now
 allocations <- c("economic", "ge", "mass")
 taxon <- unique(all_overlap$spp_type)
-calc_types <- c("mean_prop", "mean_ext_risk", "sd_prop", "nspp")
+calc_types <- c("mean_prop", "mean_ext_risk", "sd_prop", "nspp", "total_km2", "rarity_mean_prop")
      
   
 # make and save plots across ingredients per taxon  
@@ -292,23 +297,29 @@ cl <- makeCluster(num_cores)
 registerDoParallel(cl)
 
 foreach(allocation_type = allocations,
-        .packages = c('stringr', 'qs', 'tidyverse', 'tools', 'strex', 'glue', 'cowplot', 'here')) %dopar% {
+        .packages = c('stringr', 'qs', 'tidyverse', 'tools', 'strex', 'glue', 'cowplot', 'here', 'scales')) %dopar% {
     for(taxa_type in taxon){
       for(type in calc_types){
 
 # allocation_type = "economic"
 # taxa_type = "Bird"
-# type = "mean_prop"
+# type = "rarity_mean_prop"
 
         loop_df <- qread(glue(file.path(impact_maps_dir, "csvs/impact_maps_by_taxon_across_ingredient/{allocation_type}_{taxa_type}_{type}.qs"))) %>%
           filter(!is.na(value))
 
 if(str_detect(type, "mean")){
   
-  if(str_detect(type, "_prop")){
-  fill_name = "Proportion\nhabitat\nimpacted"
+  if(str_detect(type, "mean_ext_risk")){
+        fill_name = "Average extinction\nRisk"
+        
+  }else if(str_detect(type, "rarity_mean_prop")){
+  fill_name = "Average rarity\nweighted\nproportion\nhabitat\nimpacted"
+
   }else{
-    fill_name = "Extinction\nRisk"
+    
+      fill_name = "Average proportion\nhabitat\nimpacted"
+
   }
   
   plot_list <- list()
@@ -317,7 +328,7 @@ if(str_detect(type, "mean")){
     for(fcr in fcrs){
 
       # diet_type = "plant-dominant"
-      # fcr = "efficient"
+      # fcr = "regular"
       
   loop_loop_df <- loop_df %>%
     filter(diet == diet_type, 
@@ -325,8 +336,8 @@ if(str_detect(type, "mean")){
   
 quantile_value <- quantile(loop_loop_df$value, probs = 0.99, na.rm = TRUE)
 
-max_val =  round(max(loop_loop_df$value), 5)
-quant_val = round(quantile_value, 5)
+max_val =  formatC(max(loop_loop_df$value), format = "e", digits = 2)
+quant_val = formatC(quantile_value, format = "e", digits = 2)
   
   loop_loop_df <- loop_loop_df %>% 
     mutate(value_new = ifelse(value > quantile_value, quantile_value, value))
@@ -335,7 +346,7 @@ quant_val = round(quantile_value, 5)
       geom_tile(data = loop_loop_df, aes(x = long, y = lat, fill = value_new, color = value_new)) +
      geom_tile(fill = ifelse(loop_loop_df$value_new < quantile_value, "#B90000", NA)) + 
             geom_sf(data = countries_shp, fill = NA, colour = "grey") + 
-       scale_fill_gradientn(colors = continuous_pal_red, na.value = "white") +
+       scale_fill_gradientn(colors = continuous_pal_red, na.value = "white", labels = scales::label_scientific()) +
             scale_color_gradientn(colors = continuous_pal_red, na.value = "white") +
             geom_sf(data = globe_border,
             fill = NA, color = 'grey70', 
@@ -362,15 +373,17 @@ ggsave(glue(here(this_dir, "SI_plots/by_taxa/{allocation_type}_{taxa_type}_{type
 
 }else{
   
- # type = "ge_sd_prop"
+ # type = "ge_total_km2"
   
  if(str_detect(type, "nspp")){
     fill_name = "Number of\nspecies\nimpacted"
-  }else if(str_detect(type, "sd_prop")){
-    fill_name = "sdev proportion\nhabitat\nimpacted"
-  }else(
-    fill_name = "sdev extinction\nrisk"
-  )
+  }else if(str_detect(type, "total_km2")){
+
+fill_name <- expression("Total km"^2)  
+  }else {
+       fill_name = "sdev"
+  }
+  
   
     plot_list <- list()
   
@@ -422,7 +435,7 @@ Global maps by raw material across taxon
 ```{r}
 
 allocations <- c("economic", "ge", "mass")
-calc_types <- c("mean_ext_risk", "nspp", "sd_prop", "mean_prop")
+calc_types <- c("mean_ext_risk", "nspp", "sd_prop", "mean_prop", "total_km2", "rarity_mean_prop")
 
 raw_mats <- c("Soybean", "Wheat", "Sunflower", "CropsNES", "Rapeseed", "Maize", "forage fish", "trimmings fish", "Pulses")
 
@@ -446,10 +459,16 @@ diets <- unique(loop_df$diet)
 
 if(str_detect(type, "mean")){
   
-  if(str_detect(type, "_prop")){
-  fill_name = "Proportion\nhabitat\nimpacted"
+  if(str_detect(type, "mean_ext_risk")){
+        fill_name = "Average extinction\nRisk"
+        
+  }else if(str_detect(type, "rarity_mean_prop")){
+  fill_name = "Average rarity\nweighted\nproportion\nhabitat\nimpacted"
+
   }else{
-    fill_name = "Extinction\nRisk"
+    
+      fill_name = "Average proportion\nhabitat\nimpacted"
+
   }
   
   plot_list <- list()
@@ -466,8 +485,8 @@ if(str_detect(type, "mean")){
   
 quantile_value <- quantile(loop_loop_df$value, probs = 0.99, na.rm = TRUE)
   
-max_val =  round(max(loop_loop_df$value), 5)
-quant_val = round(quantile_value, 5)
+max_val =  formatC(max(loop_loop_df$value), digits = 2, format = "e")
+quant_val = formatC(quantile_value, digits = 2, format = "e")
 
   loop_loop_df <- loop_loop_df %>% 
     mutate(value_new = ifelse(value > quantile_value, quantile_value, value))
@@ -476,7 +495,7 @@ quant_val = round(quantile_value, 5)
       geom_tile(data = loop_loop_df, aes(x = long, y = lat, fill = value_new, color = value_new)) +
      geom_tile(fill = ifelse(loop_loop_df$value_new < quantile_value, "#B90000", NA)) + 
             geom_sf(data = countries_shp, fill = NA, colour = "grey") + 
-       scale_fill_gradientn(colors = continuous_pal_red, na.value = "white") +
+       scale_fill_gradientn(colors = continuous_pal_red, na.value = "white", labels = scales::label_scientific()) +
             scale_color_gradientn(colors = continuous_pal_red, na.value = "white") +
             geom_sf(data = globe_border,
             fill = NA, color = 'grey70', 
@@ -506,9 +525,14 @@ ggsave(glue(here(this_dir, "SI_plots/by_material/{allocation_type}_{raw_mat}_{ty
  # type = "ge_sd_prop"
   
  if(str_detect(type, "nspp")){
+   
     fill_name = "Number of\nspecies\nimpacted"
-  }else{
-    fill_name = "sdev proportion\nhabitat\nimpacted"
+  }else if(str_detect(type, "total_km2")){
+    
+fill_name <- expression("Total km"^2)  
+  }else {
+    
+       fill_name = "sdev"
   }
   
     plot_list <- list()

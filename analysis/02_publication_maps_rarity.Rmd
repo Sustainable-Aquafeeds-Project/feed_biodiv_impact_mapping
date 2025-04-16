@@ -1,0 +1,574 @@
+---
+title: "Summary plots: maps"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+## Summary
+
+The code here produces Figure 1:  
+> (A) Map of mean proportion of habitat area impacted (expressed as %) for sensitive species. Impacts are split by quantile group and aquafeed formulation. (B) Map of differences in mean impact (%) between the feed formulation scenarios. The magnitude of the difference is split into quantile groups, where darker shades indicate larger differences.
+
+Additionally, we save some supplementary information plots of the values in histograms and maps of the actual impact values (rather than split by quantile groups).
+
+## Setup
+
+Load libraries
+
+```{r setup, include=FALSE}
+
+library(tidyverse)
+library(here)
+library(rnaturalearth)
+library(strex)
+library(sf)
+library(patchwork)
+library(cowplot)
+library(glue)
+library(RColorBrewer)
+library(ggpubr)
+library(smoothr)
+library(ggtext)
+library(ggnewscale)
+library(qs)
+library(showtext)
+showtext_auto()
+
+source(here("src/directories.R"))
+
+source(here("src/spatial.R"))
+
+setwd(dirname(rstudioapi::getSourceEditorContext()$path)) # set working directory to where this script is located
+this_dir <- getwd()
+
+biodiv_dir <- file.path(rdsi_dir, "biodiversity_impacts")
+
+impact_maps_dir <- file.path(biodiv_dir, "output")
+
+globe_bbox <- rbind(c(-180, -90), c(-180, 90), 
+                      c(180, 90), c(180, -90), c(-180, -90)) 
+
+globe_border <- st_polygon(list(globe_bbox)) %>%
+  st_sfc(crs = 4326) %>%
+  st_sf(data.frame(rgn = 'globe', geom = .)) %>%
+  smoothr::densify(max_distance = 0.5) %>%
+  st_transform(crs = crs(moll_template))
+
+
+```
+
+```{r establish color palettes and themes}
+
+## establish color palette from food footprint project
+d_brown <- "#515256"
+m_brown <- "#B27B54"
+l_brown <- "#BC995F"
+green <- "#A8B072"
+yellow<- "#EFCE71"
+l_yellow <- "#F7F6C1"
+
+jv_pal <- c(l_yellow, yellow, green, l_brown, m_brown, d_brown)
+
+continuous_pal <-  colorRampPalette(jv_pal, space="Lab", bias = 3.5)(10000)
+
+light_gray <- "#F8F9FA"
+final_palette <- c(light_gray, continuous_pal)
+image(volcano, asp=1, col=final_palette)
+
+palette_red <- c(final_palette, "#B90000")
+image(volcano, asp=1, col=palette_red)
+
+
+countries_shp <- ne_countries(scale = 110, returnclass = "sf") |> 
+  st_transform(crs(moll_template)) # read in countries shapefile
+
+theme_ohara <- function(base_size = 9) {
+  theme(axis.ticks = element_blank(),
+        text             = element_text(family = 'Helvetica',
+                                        color = 'gray30', size = base_size),
+        plot.title       = element_text(size = rel(1.25), hjust = 0, face = 'bold'),
+        panel.background = element_blank(),
+        legend.position  = 'right',
+        panel.border     = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.grid.major = element_line(colour = 'grey90', size = .25),
+        legend.key       = element_rect(colour = NA, fill = NA),
+        axis.line        = element_blank())
+}
+
+
+```
+
+Make map split by quantiles in each cell
+ - regular quantiles up to 95th 
+ - Then 95-99th
+ - then >= 99th
+ 
+Additionally, make a delta map, and color either fish dominant or plant dominant. Have the legend colors be the same as the green and blue we use for the boxplot, but split by quantile of delta (same as regular impact quantiles above).
+ 
+ - For main text
+ 
+```{r}
+
+# make publication ready mean extinction risk plots with all feed scenarios, economic allocation
+ filepath <- glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_ingredient/economic_rarity_mean_prop.qs"))
+
+quantile_pal <- c(
+    "0-24" = "#D4F7F0", 
+    "25-49" = "#538AC6", 
+    "50-74" = "#1E438F", 
+    "75-94" = "#F8D422", 
+    "95-99" = "#E95D08", 
+    "≥99" = "#781211"
+)
+
+all_df <-  qread(filepath) %>%
+  filter(fcr_type == "regular") %>%
+    filter(!is.na(value)) %>%
+    mutate(diet_cap = str_to_sentence(diet))
+
+q25 <- quantile(all_df$value, 0.25)
+q50 <- quantile(all_df$value, 0.50)
+q75 <- quantile(all_df$value, 0.75)
+q95 <- quantile(all_df$value, 0.95)
+q99 <- quantile(all_df$value, 0.99)
+
+
+quantile_labels <- formatC(c(q25, q50, q75, q95, q99), format = "e", digits = 0)
+
+formatC(max(all_df$value), digits = 1, format = "e")
+
+all_df_quant <- all_df %>%
+    mutate(category = case_when(
+    value < q25 ~ "0-24",
+    value >= q25 & value < q50 ~ "25-49",
+    value >= q50 & value < q75 ~ "50-74",
+    value >= q75 & value < q95 ~ "75-94",
+    value >= q95 & value < q99 ~ "95-99",
+    value >= q99 ~ "≥99"
+  )) 
+
+land_eez_rgns <- read.csv(file.path(biodiv_dir, "spatial/rgns_xy_all.csv"))
+
+large_impact_cells <- all_df_quant %>%
+  filter(category %in% c("95-99", "≥99")) %>%
+  left_join(moll_template_xy, by = c("long" = "x", "lat" = "y")) %>%
+  left_join(land_eez_rgns, by = c("long" = "x", "lat" = "y")) %>%
+  filter(iso3c %in% c("NOR", "CAN", "ARG", "CHL", "AUS")) %>%
+  distinct(cell_id) %>%
+  pull() # ok down to 36k cells maybe thats small enough
+
+saveRDS(large_impact_cells, here("analysis/int/large_impact_cells_rarity.rds"))
+
+
+all_df_quant$category <- factor(all_df_quant$category, levels = c("0-24", "25-49", "50-74", "75-94", "95-99", "≥99"))
+
+quantile_plot <-  ggplot() + 
+      geom_tile(data = all_df_quant, aes(x = long, y = lat, fill = category, color = category)) +
+                 geom_sf(data = countries_shp, fill = NA, colour = "grey", alpha = 0.2)  +
+                 geom_sf(data = globe_border, fill = NA, colour = "grey") + 
+    scale_x_continuous(expand = c(0, 0)) +
+    scale_y_continuous(expand = c(0, 0)) +
+    theme_minimal() + 
+  theme(
+        axis.title.y = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        legend.margin = margin(b = 0, t = 0), 
+        legend.position = "bottom",
+        text = element_text(family = "sans", colour = "black"),
+        legend.key.spacing.x = unit(-0.1, "pt"),
+        strip.text.x = element_text(size = 22, family = "sans", colour = "black"),
+        legend.key.width = unit(26, "mm"),
+        legend.key.height = unit(0.3, "cm"),
+        legend.box = "vertical",  # Stack legends vertically
+        legend.box.just = "top",
+        legend.spacing.y = unit(-1, "pt"),
+        legend.text = element_text(margin = margin(t = 6))
+      ) +
+  guides(
+    color = "none",
+    fill = guide_legend(
+      nrow = 1, 
+      byrow = TRUE,
+      label = FALSE
+    )
+    ) + 
+    facet_wrap(~diet_cap) + 
+    scale_fill_manual(values = quantile_pal) +
+  scale_colour_manual(values = quantile_pal) + 
+        labs(color = "",
+             fill = "",
+             x = "")
+  
+   quantile_prop_si <- ggdraw(quantile_plot) +
+     draw_label("Average rarity weighted proportion of habitat impacted", y = 0.3, x = 0.50, size = 22, fontfamily = "sans") +
+     draw_label("Quantiles", y = 0.36, x = 0.50, size = 22, fontfamily = "sans") + 
+     draw_label(expression('0–' * 7.6 %*% 10^-18), y = 0.32, x = 0.185, size = 22) +
+     draw_label(expression(8 %*% 10^-18 * "–" * 6 %*% 10^-16), y = 0.32, x = 0.31, size = 22) +
+     draw_label(expression(6 %*% 10^-16 * "–" * 2 %*% 10^-13), y = 0.32, x = 0.44, size = 22) +
+     draw_label(expression(2 %*% 10^-13 * "–" * 5 %*% 10^-11), y = 0.32, x = 0.57, size = 22) +
+     draw_label(expression(5 %*% 10^-11 * "–" * 6 %*% 10^-10), y = 0.32, x = 0.7, size = 22) +
+     draw_label(expression(6 %*% 10^-10 * "–" * 1 %*% 10^-5), y = 0.32, x = 0.83, size = 22) +
+     draw_label("0–24", y = 0.35, x = 0.185, size = 22) +
+     draw_label("25–49", y = 0.35, x = 0.31, size = 22) +
+     draw_label("50–74", y = 0.35, x = 0.44, size = 22) +
+     draw_label("75–94", y = 0.35, x = 0.57, size = 22) +
+     draw_label("95–99", y = 0.35, x = 0.7, size = 22) +
+     draw_label("≥99", y = 0.35, x = 0.83, size = 22) 
+   
+  ggsave(glue(here(this_dir, "SI_plots/extra_plots/economic_rarity_mean_prop_quantiles.png")), plot = quantile_prop_si, width = 8, height = 8, bg = "white")
+    
+    
+## Now make the delta plot 
+filepath <- glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_ingredient/delta/economic_rarity_mean_prop.qs"))
+
+delta_df <-  qread(filepath) %>%
+  filter(fcr_type == "regular", 
+         delta_cat != "No difference") # there are only a few pixels where there is no difference... so just filter out.
+
+delta_df_quant <- delta_df %>%
+  mutate(delta_abs = abs(delta)) %>%
+  mutate(q25 = quantile(delta_abs, 0.25),
+            q50 = quantile(delta_abs, 0.50),
+            q75 = quantile(delta_abs, 0.75),
+            q95 = quantile(delta_abs, 0.95),
+            q99 = quantile(delta_abs, 0.99)) %>%
+  ungroup() %>%
+  mutate(category = case_when(
+    abs(delta) < abs(q25) ~ "0-24",
+    abs(delta) >= abs(q25) & abs(delta) < abs(q50) ~ "25-49",
+    abs(delta) >= abs(q50) & abs(delta) < abs(q75) ~ "50-74",
+    abs(delta) >= abs(q75) & abs(delta) < abs(q95) ~ "75-94",
+    abs(delta) >= abs(q95) & abs(delta) < abs(q99) ~ "95-99",
+    abs(delta) >= abs(q99) ~ "≥99"
+  ))
+
+# establish palettes for delta map 
+plant_pal <- c(
+      "0-24" = "#DBF1D5", 
+    "25-49" = "#ADDEA7", 
+    "50-74" = "#74C476", 
+    "75-94" = "#37A055", 
+    "95-99" = "#0B7734", 
+    "≥99" = "#00441B"
+)
+
+fish_pal <- c(
+      "0-24" = "#D6E5F4", 
+    "25-49" = "#ABCFE5", 
+    "50-74" = "#6BAED6", 
+    "75-94" = "#3787C0", 
+    "95-99" = "#105BA4", 
+    "≥99" = "#08306B"
+)
+
+delta_df_quant_fis <- delta_df_quant %>% filter(delta_cat == "Fish-dominant")
+delta_df_quant_fis$category <- factor(delta_df_quant_fis$category, levels = c("0-24", "25-49", "50-74", "75-94", "95-99", "≥99"))
+
+
+delta_df_quant_plant <- delta_df_quant %>% filter(delta_cat == "Plant-dominant")
+delta_df_quant_plant$category <- factor(delta_df_quant_plant$category, levels = c("0-24", "25-49", "50-74", "75-94", "95-99", "≥99"))
+
+
+delta_plot <-  ggplot() + 
+      geom_tile(data = delta_df_quant_plant, aes(x = long, y = lat, fill = category, color = category)) +
+        scale_fill_manual(values = plant_pal) +
+    scale_colour_manual(values = plant_pal) +
+    scale_x_continuous(expand = c(0, 0)) +
+    scale_y_continuous(expand = c(0, 0)) +
+     theme_ohara() + 
+  guides(color = "none") +
+  theme(legend.position = "none") + 
+     new_scale_color() +
+     new_scale_fill() + 
+           geom_tile(data = delta_df_quant_fis, aes(x = long, y = lat, fill = category, color = category)) +
+             scale_fill_manual(values = fish_pal) +
+                 geom_sf(data = countries_shp, fill = NA, colour = "grey", alpha = 0.2)  +
+                 geom_sf(data = globe_border, fill = NA, colour = "grey") + 
+    scale_colour_manual(values = fish_pal) +
+       labs(x = "", y = "") +
+  guides(color = "none") + 
+     theme(legend.position = "none", 
+           axis.text.y = element_blank(), 
+           axis.text.x = element_blank(),
+           plot.margin = margin(t = 10, r = 10, b = 70, l = 10, unit = "pt"))
+   
+  fish_legend <- get_legend(ggplot() + 
+      geom_tile(data = delta_df_quant_fis, aes(x = long, y = lat, fill = category, color = category)) +
+             scale_fill_manual(values = fish_pal) +
+              scale_colour_manual(values = fish_pal) +
+                  labs(fill = "Fish-dominant") +
+ theme(
+       legend.margin = margin(b = 0, t = 0), 
+        legend.position = "bottom",
+        text = element_text(family = "Arial", colour = "black"),
+        legend.title = element_text(size = 22, margin = margin(b = 3, t = 3, r = 3)),
+        legend.key.width = unit(26, "mm"),
+        legend.key.height = unit(0.3, "cm"),
+        legend.box = "vertical",  # Stack legends vertically
+        legend.box.just = "top",
+        legend.spacing.y = unit(0, "pt"),
+        legend.text = element_text(margin = margin(t = 3)),
+        legend.background = element_rect(fill = "transparent"),
+       legend.key.spacing.x = unit(-1, "pt")
+      ) +
+  guides(
+    color = "none",
+    fill = guide_legend(
+      title.position = "left",  
+      title.hjust = 1, 
+      title.vjust = -0.2,
+      nrow = 1, 
+      label.position = "top",  
+      label.hjust = 0.5,
+      label.vjust = 0.5,
+     label.theme = element_text(size = 20),
+      byrow = TRUE
+    )
+    ) 
+   )
+   
+   quant_val_labels <- c(
+     unique(delta_df_quant$q25),
+     unique(delta_df_quant$q50),
+      unique(delta_df_quant$q75),
+      unique(delta_df_quant$q95),
+      (unique(delta_df_quant$q99)),
+            (max(delta_df_quant$delta_abs))
+   )
+   
+   quant_val_labels <- formatC(quant_val_labels, digits = 0, format = "e")
+
+   
+plant_legend <- get_legend(ggplot() + 
+      geom_tile(data = delta_df_quant_plant, aes(x = long, y = lat, fill = category, color = category)) +
+             scale_fill_manual(values = plant_pal) +
+              scale_colour_manual(values = plant_pal) +
+              labs(fill = "Plant-dominant") +
+ theme(
+        legend.margin = margin(b = 0, t = 0), 
+        legend.position = "bottom",
+        text = element_text(family = "Arial", colour = "black"),
+        legend.title = element_text(size = 22, margin = margin(b = 3, t = 3, r = 3)),
+        legend.key.width = unit(26, "mm"),
+        legend.key.height = unit(0.3, "cm"),
+        legend.box = "vertical",  # Stack legends vertically
+        legend.box.just = "top",
+        legend.spacing.y = unit(0, "pt"),
+        legend.text = element_text(margin = margin(t = 3)),
+        legend.background = element_rect(fill = "transparent"),
+        legend.key.spacing.x = unit(-1, "pt")
+      ) +
+  guides(
+    color = "none",
+    fill = guide_legend(
+      title.position = "left",  
+      title.hjust = 1, 
+      title.vjust = 1,
+      nrow = 1, 
+      byrow = TRUE,
+     label = FALSE
+    )
+    ) 
+   )
+     
+   quantile_labels # these are hte ranges for the regular quantiles
+   
+  quantile_prop_ms <- ggdraw(quantile_plot) +
+     draw_label("Average rarity weighted proportion of habitat impacted", y = 0.07, x = 0.50, size = 22, fontfamily = "sans") +
+     draw_label("Quantiles", y = 0.21, x = 0.50, size = 22, fontfamily = "sans") + 
+     draw_label(expression('0 – ' * 8 %*% 10^-18), y = 0.11, x = 0.17, size = 22) +
+     draw_label(expression(8 %*% 10^-18 * " – " * 6 %*% 10^-16), y = 0.11, x = 0.295, size = 22) +
+     draw_label(expression(6 %*% 10^-16 * " – " * 2 %*% 10^-13), y = 0.11, x = 0.43, size = 22) +
+     draw_label(expression(2 %*% 10^-13 * " – " * 5 %*% 10^-11), y = 0.11, x = 0.57, size = 22) +
+     draw_label(expression(5 %*% 10^-11 * " – " * 6 %*% 10^-10), y = 0.11, x = 0.71, size = 22) +
+     draw_label(expression(6 %*% 10^-10 * " – " * 1 %*% 10^-5), y = 0.11, x = 0.85, size = 22) +
+     draw_label("0–24", y = 0.19, x = 0.175, size = 21) +
+     draw_label("25–49", y = 0.19, x = 0.3, size = 21) +
+     draw_label("50–74", y = 0.19, x = 0.43, size = 21) +
+     draw_label("75–94", y = 0.19, x = 0.57, size = 21) +
+     draw_label("95–99", y = 0.19, x = 0.71, size = 21) +
+     draw_label("≥99", y = 0.19, x = 0.84, size = 21) 
+   
+   quant_val_labels # these are the ranges for the delta
+   
+      full_plot_ms <- ggdraw(delta_plot) +
+                draw_plot(plant_legend, height = 0.235, width = 0.86) +
+                        draw_plot(fish_legend, height = 0.375, width = 0.868) +
+     draw_label("Difference of average rarity weighted proportion of habitat impacted", y = 0.05, x = 0.50, size = 22, fontfamily = "Arial") +
+     draw_label("Quantiles", y = 0.22, x = 0.50, size = 22, fontfamily = "Arial") +
+     draw_label(expression('0 – ' * 9 %*% 10^-18), y = 0.09, x = 0.17, size = 22) +
+     draw_label(expression(9 %*% 10^-18 * " – " * 7 %*% 10^-16), y = 0.09, x = 0.3, size = 22) +
+     draw_label(expression(7 %*% 10^-16 * " – " * 3 %*% 10^-13), y = 0.09, x = 0.43, size = 22) +
+     draw_label(expression(3 %*% 10^-13 * " – " * 4 %*% 10^-11), y = 0.09, x = 0.57, size = 22) +
+     draw_label(expression(4 %*% 10^-11 * " – " *5 %*% 10^-10), y = 0.09, x = 0.705, size = 22) +
+     draw_label(expression(5 %*% 10^-10 * " – " * 9 %*% 10^-6), y = 0.09, x = 0.84, size = 22)
+
+  
+      
+   ## saving two separately because I can
+   
+        ggsave(glue(here(this_dir, "MS_plots/fig1_economic_rarity_mean_prop_quantiles_delta.png")),
+                plot = plot_grid(quantile_prop_ms, full_plot_ms, nrow = 2, labels = c("A", "B"), label_fontfamily = "Arial", label_fontface = "bold", label_size = 22), 
+                width = 190, height = 180, bg = "white", units = "mm")
+          
+        
+           full_plot_si <- ggdraw(delta_plot) +
+                draw_plot(plant_legend, height = 0.3, width = 0.9) +
+                        draw_plot(fish_legend, height = 0.375, width = 0.908) +
+     draw_label("Difference of average rarity weighted proportion of habitat impacted", y = 0.12, x = 0.50, size = 22, fontfamily = "Arial") +
+     draw_label("Quantiles", y = 0.22, x = 0.50, size = 22, fontfamily = "Arial") +
+     draw_label(expression('0 – ' * 9 %*% 10^-18), y = 0.14, x = 0.17, size = 22) +
+     draw_label(expression(9 %*% 10^-18 * " – " * 7 %*% 10^-16), y = 0.14, x = 0.3, size = 22) +
+     draw_label(expression(7 %*% 10^-16 * " – " * 3 %*% 10^-13), y = 0.14, x = 0.43, size = 22) +
+     draw_label(expression(3 %*% 10^-13 * " – " * 4 %*% 10^-11), y = 0.14, x = 0.57, size = 22) +
+     draw_label(expression(4 %*% 10^-11 * " – " *5 %*% 10^-10), y = 0.14, x = 0.705, size = 22) +
+     draw_label(expression(5 %*% 10^-10 * " – " * 9 %*% 10^-6), y = 0.14, x = 0.84, size = 22)
+      
+    ggsave(glue(here(this_dir, "SI_plots/extra_plots/economic_rarity_mean_prop_delta_plot.png")),
+                plot = full_plot_si, 
+                width = 180, height = 180, bg = "white", units = "mm")
+        
+```
+
+
+
+Histogram of impact values by quantile group 
+ - SI
+
+```{r}
+
+hist_plot_fish <- ggplot(data = all_df_quant %>% filter(diet == "fish-dominant")) + 
+    geom_histogram(aes(value, fill = category)) +
+    facet_wrap(~category, scales = "free", ncol = 2) +
+    theme_ohara() +
+    labs(x = "Average rarity weighted proportion of habitat impacted", y = "Number of cells", title = "Fish-dominant") +
+    scale_fill_manual(values = quantile_pal) +
+  theme(legend.position = "none")
+
+hist_plot_plant <- ggplot(data = all_df_quant %>% filter(diet == "plant-dominant")) + 
+    geom_histogram(aes(value, fill = category)) +
+    facet_wrap(~category, scales = "free", ncol = 2) +
+    theme_ohara() +
+    labs(x = "Average rarity weighted proportion of habitat impacted", y = "Number of cells", title = "Plant-dominant") +
+    scale_fill_manual(values = quantile_pal) + 
+    theme(legend.position = "none")
+
+  
+  ggsave(glue(here(this_dir, "SI_plots/extra_plots/economic_rarity_mean_prop_quantiles_hist_plant.png")), plot = plot_grid(hist_plot_plant , nrow = 1), width = 8, height = 8, bg = "white") 
+  
+    ggsave(glue(here(this_dir, "SI_plots/extra_plots/economic_rarity_mean_prop_quantiles_hist_fish.png")), plot = plot_grid(hist_plot_fish, nrow = 1), width = 8, height = 8, bg = "white") 
+    
+```
+
+
+Make map showing actual values
+ - SI
+ 
+```{r}
+allocation_types <- c("mass", "economic", "ge")
+
+ for(allocation in allocation_types){
+   #allocation = "mass"
+   # make publication ready mean extinction risk plots with all feed scenarios, economic allocation
+ filepath <- glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_ingredient/{allocation}_rarity_mean_prop.qs"))
+
+all_df <-  qread(filepath) %>%
+  filter(fcr_type == "regular")
+
+ plot_list <- list()
+  
+ diets <- unique(all_df$diet)
+ 
+ for(diet_type in diets){
+
+      # diet_type = "plant-dominant"
+      
+  loop_loop_df <- all_df %>%
+    filter(diet == diet_type)
+  
+quantile_value <- quantile(loop_loop_df$value, probs = 0.99, na.rm = TRUE)
+  
+  loop_loop_df <- loop_loop_df %>% 
+    mutate(value_new = ifelse(value > quantile_value, quantile_value, value))
+  
+  loop_plot <-  ggplot() + 
+      geom_tile(data = loop_loop_df, aes(x = long, y = lat, fill = value_new, color = value_new)) +
+     geom_tile(fill = ifelse(loop_loop_df$value_new < quantile_value, "#B90000", NA)) + 
+            geom_sf(data = countries_shp, fill = NA, colour = "grey") + 
+       scale_fill_gradientn(colors = palette_red, na.value = "white", labels = scales::label_scientific()) +
+            scale_color_gradientn(colors = palette_red, na.value = "white") +
+            geom_sf(data = globe_border,
+            fill = NA, color = 'grey70', 
+            size = .1) +
+    scale_x_continuous(expand = c(0, 0)) +
+      scale_y_continuous(expand = c(0, 0)) + 
+    theme_void() +
+      theme(plot.title = element_text(hjust = 0.5), 
+          axis.title = element_blank(),
+          axis.text = element_blank(),
+          axis.ticks = element_blank(),
+          legend.margin = margin(r = 10)) + # add a margin to legend text so it isn't cut off when saving 
+  labs(fill = "Average rarity\nweighted proportion of\nhabitat\nimpacted") + 
+     guides(color = "none") + 
+    facet_wrap(~diet)
+  
+        
+      plot_list[[length(plot_list) + 1]] <- loop_plot
+
+ }
+ 
+ggsave(glue(here(this_dir, "SI_plots/extra_plots/{allocation}_rarity_mean_prop.png")), plot = plot_grid(plotlist = plot_list, nrow = 1), width = 10, height = 4, bg = "white")
+ }
+
+```
+
+Map stats!
+
+Compare diet types and ncells impacted
+
+```{r}
+test <- all_df %>%
+  group_by(diet, fcr_type) %>%
+  summarise(prop_mean = mean(value, na.rm = TRUE)) %>%
+  ungroup()
+
+scenario_summary <- all_df %>% 
+  filter(value > 0) %>%
+  group_by(diet, fcr_type) %>%
+  summarise(cells_impacted = n()) %>%
+  ungroup()
+
+moll_land <- readRDS(here("prep/03_prep_spp_habitats/data/spatial/moll_template_land_xy.rds"))
+
+all_df_land <- all_df %>%
+  left_join(moll_land, by = c("long" = "x", "lat" = "y")) %>%
+  filter(!is.na(cell_id)) %>%
+  filter(value > 0) %>%
+    group_by(diet, fcr_type) %>%
+  summarise(cells_impacted = n()) %>%
+  ungroup() %>%
+   mutate(land_cells_total = 2876998) %>%
+  mutate(prop = cells_impacted/land_cells_total)
+
+moll_ocean <- readRDS(here("prep/03_prep_spp_habitats/data/spatial/moll_template_ocean_xy.rds"))
+
+all_df_ocean <- all_df %>%
+  left_join(moll_ocean, by = c("long" = "x", "lat" = "y")) %>%
+  filter(!is.na(cell_id)) %>%
+    filter(value > 0) %>%
+    group_by(diet, fcr_type) %>%
+  summarise(cells_impacted = n()) %>%
+  ungroup() %>%
+  mutate(ocean_cells_total = 3684240) %>%
+  mutate(prop = cells_impacted/ocean_cells_total)
+
+# Comparing the fish-dominant and plant-dominant feed scenarios, under the regular FCR scenario, we see that the plant-dominant diet has 81,352 more pixels impacted (there are ~6.5 million pixels on a 10km by 10 km Mollweide grid). This difference is almost exclusively due to the difference in terrestrial crop impacts, with the plant-dominant diet having 80,789 more terrestrial pixels impacted than that of the fish-dominant diet. Overall, ocean pixels are impacted over a larger area: ~42% of ocean pixels are impacted, regardless of feed scenario. In comparison, 23%-26% of land pixels are impacted, depending on the scenario. 
+
+```
+
+
+
+

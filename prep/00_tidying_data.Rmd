@@ -151,6 +151,11 @@ test <- aquaculture_prod %>%
 
 test %>% filter(species == "Atlantic salmon") %>% pull(value) %>% sum() # 2721876
 
+test %>% filter(species == "Atlantic salmon", country == "Norway") %>% pull(value) %>% sum() # 1388434
+
+1388434/2721876
+
+
 test %>% pull(value) %>% sum() # 122579080
 2721876/122579080 # salmon aquaculture is ~2% of ALL production
 
