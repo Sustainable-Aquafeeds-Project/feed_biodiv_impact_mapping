@@ -646,10 +646,11 @@ ggsave(here("analysis/MS_plots/fig4_base_map.png"), plot = map_plot, dpi = 300, 
 
 test <- iucn_plot_df %>% 
   filter(max_iucn_rank == 1)
-193/346 # 0.5578035 of cells are not threatened
+nrow(test)/(nrow(iucn_plot_df)) # 0.5578035 of cells are not threatened
+
 test <- iucn_plot_df %>% 
   filter(max_iucn_rank == 2, prop_at_risk_impacted == 1)
-8/346
+nrow(test)/nrow(iucn_plot_df)
 
 summary_distinct <- distinct(summary, cell_id, avg_impact)
 
@@ -854,7 +855,7 @@ panel.border = element_rect(colour = "grey69", fill=NA, size=3, linetype = "long
     keywidth = unit(1.5, "cm")
   ))
 
-ggsave(here("analysis/MS_plots/SI_hotspot_CAN_quantile.png"), dpi = 300, bg = "white", height = 16, width = 16, units = "cm")
+ggsave(here("analysis/SI_plots/SI_hotspot_CAN_quantile.png"), dpi = 300, bg = "white", height = 16, width = 16, units = "cm")
 
 
 
@@ -924,7 +925,7 @@ panel.border = element_rect(colour = "grey69", fill=NA, size=3, linetype = "long
     barheight = 1
   ))
 
-ggsave(here("analysis/MS_plots/SI_hotspot_CAN_iucn_new.png"), dpi = 300, bg = "white",  height = 16, width = 16, units = "cm")
+ggsave(here("analysis/SI_plots/SI_hotspot_CAN_iucn_new.png"), dpi = 300, bg = "white",  height = 16, width = 16, units = "cm")
 
 
 ## Now save reference plot: 
@@ -953,7 +954,7 @@ map_plot <- ggplot() +
    )
 
 
-ggsave(here("analysis/MS_plots/fig4_base_map.png"), plot = map_plot, dpi = 300, bg = "white", height = 16, width = 16, units = "cm")
+ggsave(here("analysis/SI_plots/SI_CAN_base_map.png"), plot = map_plot, dpi = 300, bg = "white", height = 16, width = 16, units = "cm")
 
 ```
 
@@ -963,34 +964,34 @@ ggsave(here("analysis/MS_plots/fig4_base_map.png"), plot = map_plot, dpi = 300, 
 
 test <- iucn_plot_df %>% 
   filter(max_iucn_rank == 1)
-193/346 # 0.5578035 of cells are not threatened
+7/975 # 0.7% of cells are not threatened
 test <- iucn_plot_df %>% 
   filter(max_iucn_rank == 2, prop_at_risk_impacted == 1)
-8/346
+344/975 # 35% of cells are at risk and all species in those cells are at risk 
 
 summary_distinct <- distinct(summary, cell_id, avg_impact)
 
-sum(summary_distinct$avg_impact) # 1.720966
+sum(summary_distinct$avg_impact) # 2.905138
 
 chl_marine <- max_impact_iso3c_marine %>%
-  filter(iso3c == "CHL", diet == "plant-dominant")
-sum(chl_marine$impact_km2) # 548.1677
+  filter(iso3c == "CAN", diet == "plant-dominant")
+sum(chl_marine$impact_km2) # 117.7947
 
 chl_terr <- max_impact_iso3c_terr %>%
-  filter(iso3c == "CHL", diet == "plant-dominant")
-sum(chl_terr$impact_km2) # 5225.716
+  filter(iso3c == "CAN", diet == "plant-dominant")
+sum(chl_terr$impact_km2) # 46936.8
 
 max_impact <- max_impact_iso3c_terr %>%
-  filter(iso3c == "CHL") %>% # lets check out Chile
-  rbind(max_impact_iso3c_marine %>% filter(iso3c == "CHL")) %>%
-  filter(y > -4250000) %>%
-  filter(y < -3900000) %>%
-  filter(x< -6000000) 
+  filter(iso3c == "CAN") %>% # lets check out Chile
+  rbind(max_impact_iso3c_marine %>% filter(iso3c == "CAN")) %>%
+  filter(x < -6000000) %>%
+  filter(x > -7000000,
+         y < 5500000)
 
-sum(max_impact$impact_km2)/(sum(chl_terr$impact_km2) + sum(chl_marine$impact_km2)) # 0.4014775 - this hotspot represents 40% of all aquafeed impacts in Chile's land area and EEZ. 
+sum(max_impact$impact_km2)/(sum(chl_terr$impact_km2) + sum(chl_marine$impact_km2)) # 16% - this hotspot represents 16% of all aquafeed impacts in Canada's land area and EEZ. 
 
-346*100 # 34600 km2; Chile land and eez area is 2743128 km2 (wikipedia)
-# 34600/2743128
+975*100 # 97500 km2; Canada land and eez area is 9900000 + 5599077 km2 (wikipedia)
+# 97500/15499077 # 0.6%
 
 
 raw_mat_totals <- raw_mat_summary %>%
@@ -998,25 +999,8 @@ raw_mat_totals <- raw_mat_summary %>%
   summarise(n_cells = n()) %>%
   ungroup()
 
-145/346 # 0.4473008 of the cells are dominated by rapeseed impacts
-
-test <- iucn_plot_df %>% 
-  filter(max_iucn_rank == 2) %>%
-  left_join(raw_mat_summary) %>%
-  filter(dom_raw_material == "Forage fish")
-
-mean(test$prop_at_risk_impacted, na.rm = TRUE) # 0.06974141 forage fish - of the forage fish cells, only ~6.9% of species in the cells are at-risk
-
-test <- iucn_plot_df %>% 
-  filter(max_iucn_rank == 2) 
-
-
-test <- iucn_plot_df %>% 
-  filter(max_iucn_rank == 2) %>%
-  left_join(raw_mat_summary) %>%
-  group_by(dom_raw_material) %>%
-  summarise(n()) %>%
-  mutate(prop = `n()`/153)
+# 836/975
+# [1] 0.8574359 # soy bean
 
 ```
 
