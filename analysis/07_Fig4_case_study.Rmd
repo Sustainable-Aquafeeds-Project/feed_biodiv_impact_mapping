@@ -48,6 +48,9 @@ this_dir <- here("analysis/")
 countries_shp <- ne_countries(scale = 10, returnclass = "sf") |> 
   st_transform(crs(moll_template)) # read in countries shapefile
 
+borders_shp <- ne_countries(scale = 110, returnclass = "sf") |> 
+  st_transform(crs(moll_template)) # read in countries shapefile
+
 globe_bbox <- rbind(c(-180, -90), c(-180, 90), 
                       c(180, 90), c(180, -90), c(-180, -90)) 
 
@@ -323,9 +326,9 @@ length(unique(max_impact_cell_spp$species_full)) # 39
 Ok, let's pull the "hotspot" areas for some examples:
 
  - Chile (coastal)
+ - Canada
  - Norway
  - Argentina
- - Canada
  - Australia
 
 
@@ -700,6 +703,323 @@ test <- iucn_plot_df %>%
 
 ```
 
+
+Now look at a hotspot in Canada
+
+```{r}
+# Now Canada
+
+max_impact <- max_impact_iso3c_terr %>%
+  filter(iso3c %in% c("CAN")) %>% # lets check out CAN
+  rbind(max_impact_iso3c_marine %>% filter(iso3c %in% c("CAN"))) %>%
+  filter(x < -6000000) %>%
+  filter(x > -7000000,
+         y < 5500000)
+## this region is called the Ontario Peninsula or Golden Horseshoe. It is one of the countries' leading soybean areas. Ontario accoutns for ~50-60% of soybean production in Canada and msot of it is from this area of Ontario.
+
+impact_rast <- max_impact %>%
+  group_by(x, y) %>%
+  summarise(impact_km2 = sum(impact_km2, na.rm = TRUE)) %>%
+  ungroup() %>%
+  rast(., crs = moll_template)
+
+plot(impact_rast) # ok this is looking good now...
+
+
+summary <- max_impact %>% 
+  group_by(x, y, cell_id, species, raw_material) %>%
+  summarise(impact_km2 = sum(impact_km2)) %>%
+  ungroup() %>%
+  group_by(x, y, cell_id, species) %>%
+  mutate(total_spp_impact = sum(impact_km2, na.rm = TRUE)) %>%
+  mutate(prop_total_spp_impact = total_spp_impact/100) %>%
+  ungroup() %>%
+  mutate(prop_raw_material_impact = impact_km2/total_spp_impact) %>%
+  group_by(x, y, cell_id) %>%
+  mutate(avg_impact = mean(prop_total_spp_impact, na.rm = TRUE)) %>%
+  ungroup() %>%
+  left_join(iucn_cats, by = c("species" = "sciname"))
+
+raw_mat_summary <- summary %>% 
+  group_by(x, y, cell_id) %>%
+  filter(prop_raw_material_impact == max(prop_raw_material_impact)) %>%
+  dplyr::select(x, y, cell_id, dom_raw_material = raw_material) %>%
+  ungroup() %>%
+  distinct(x, y, cell_id, dom_raw_material)
+
+
+summary_fin <- max_impact %>%
+  group_by(x, y, cell_id, species) %>%
+  summarise(impact_km2 = sum(impact_km2, na.rm = TRUE)) %>%
+  ungroup() %>%
+  mutate(prop_impact = impact_km2/100) %>%
+  group_by(x, y, cell_id) %>%
+  summarise(prop_impact_mean = mean(prop_impact, na.rm = TRUE)) %>%
+  ungroup() %>%
+  left_join(raw_mat_summary) %>%
+    mutate(imp_category = case_when(
+   prop_impact_mean < 0.0006 ~ "95-99",
+    prop_impact_mean >= 0.0006 ~ "≥99"
+  ))
+
+summary_iucn <- summary %>% 
+  filter(cell_id %in% unique(summary_fin$cell_id))
+  
+iucn <- summary %>% 
+  filter(cell_id %in% unique(summary_fin$cell_id)) %>%
+  filter(!(category %in% c("NE", "DD", "LC")))
+
+perc_threatened_impacts <- round((sum(iucn$impact_km2)/sum(summary_iucn$impact_km2))*100,1) # 9% of impacts shown are on threatened species? 
+
+
+limits <- summary_fin %>%
+  dplyr::select(x, y, prop_impact_mean) %>%
+  rast(., crs = moll_template)
+
+## now lets try plotting this:
+country_sf <- countries_shp %>%
+                          filter(sov_a3 == "CAN") %>%
+   st_crop(., st_bbox(limits))
+
+# Filter USA and Canada geometries
+can_usa <- countries_shp %>%
+  filter(sov_a3 %in% c("CAN", "US1"))
+
+# Find the shared border (intersection of boundaries)
+border_us_can <- st_intersection(
+  st_boundary(can_usa[can_usa$sov_a3 == "CAN", ]),
+  st_boundary(can_usa[can_usa$sov_a3 == "US1", ])
+) %>%
+  st_crop(., st_bbox(limits))
+
+summary_fin <- summary_fin %>%
+  mutate(dom_raw_material = ifelse(dom_raw_material == "Cropsnes", "Other crops", dom_raw_material))
+
+# summary_fin$dom_raw_material <- factor(summary_fin$dom_raw_material, levels = c("Rapeseed", "Forage fish", "Wheat", "Pulses"))
+ggplot(border_us_can) +
+  geom_sf(color = "black")
+
+ggplot() +
+  geom_tile(data = summary_fin, aes(x = x, y = y, fill = dom_raw_material)) + 
+  geom_sf(data = border_us_can, color = "black", lwd = 0.3) +
+  theme_minimal() +
+      theme(legend.position = "bottom", ## put legend on bottom
+        axis.title.x = element_blank(), 
+        axis.title.y = element_blank(),
+        legend.key = element_rect(fill = NA),
+        axis.text.x = element_text(angle = 60, hjust = 1),
+        text=element_text(family="Arial"),
+  panel.border = element_rect(colour = "grey69", fill=NA, size=3, linetype = "longdash")) +
+  scale_fill_manual(values = pal_mats) +
+    labs(fill = "Highest impact raw material", 
+         x = "", y = "",
+                  tag = bquote(bold("B"))) +
+    guides(fill = guide_legend(
+    title.position = "top", 
+    title.hjust = 0.5, 
+    barheight = 1,
+    label.position = "bottom",
+    label.hjust = 0.5,
+    label.vjust = 1,
+    keywidth = unit(1.5, "cm")
+  )) 
+
+ggsave(here("analysis/SI_plots/SI_hotspot_CAN_raw_material.png"), dpi = 300, bg = "white",  height = 16, width = 16, units = "cm")
+
+
+summary_fin$imp_category <- factor(summary_fin$imp_category, levels = c("0-24", "25-49", "50-74", "75-94", "95-99", "≥99"))
+
+ggplot() +
+  geom_tile(data = summary_fin, aes(x = x, y = y, fill = imp_category)) + 
+       geom_sf(data = border_us_can, fill = NA,  colour = "black", lwd = 0.3)  +
+  theme_minimal() +
+      theme(legend.position = "bottom", ## put legend on bottom
+        axis.title.x = element_blank(), 
+        axis.title.y = element_blank(),
+        legend.key = element_rect(fill = NA),
+        axis.text.x = element_text(angle = 60, hjust = 1),
+        text=element_text(family="Arial"),
+panel.border = element_rect(colour = "grey69", fill=NA, size=3, linetype = "longdash")) +
+  scale_fill_manual(values = quantile_pal) + 
+    labs(fill = "Proportion of habitat impacted \nQuantiles",
+         x = "", y = "",
+                  tag = bquote(bold("A"))) + 
+      guides(fill = guide_legend(
+    title.position = "top", 
+    title.hjust = 0.5, 
+    barheight = 1,
+    label.position = "bottom",
+    label.hjust = 0.5,
+    label.vjust = 1,
+    keywidth = unit(1.5, "cm")
+  ))
+
+ggsave(here("analysis/MS_plots/SI_hotspot_CAN_quantile.png"), dpi = 300, bg = "white", height = 16, width = 16, units = "cm")
+
+
+
+## it would be nice to see the proportion of species impacted in the worst category out of the total species in that cell: so number of impacted species in the worst category in the cell / total number of species assessed - so in this case we don't care about the category of the non-impacted species, right? Lets try that out..
+
+iucn_plot_df <- summary_iucn %>%
+  mutate(iucn_rank = case_when(category %in% c("NE") ~ 0,
+                               category == "DD" ~ 1, 
+                               category == "LC" ~ 2,
+                               category == "NT" ~ 3,
+                               category == "VU" ~ 4,
+                               category == 'EN' ~ 5,
+                               category == "CR" ~ 6)) %>%
+  mutate(category_large = case_when(category %in% c("NE", "DD", "LC") ~ "Not threatened or data deficient",
+                                    TRUE ~ "At-risk"),
+         new_rank = case_when(category %in% c("NE", "DD", "LC") ~ 1,
+                                    TRUE ~ 2)) %>%
+  left_join(all_richness, by = "cell_id") %>%
+  rename(sum_spp_assessed = sum_spp) %>%
+  group_by(x, y, cell_id, category_large) %>%
+  mutate(nspp_cats = n_distinct(species)) %>%
+  ungroup() %>%
+  group_by(x, y, cell_id) %>%
+  mutate(total_spp_impacted = n_distinct(species),
+         max_iucn_rank = max(new_rank, na.rm = TRUE)) %>%
+  ungroup() %>%
+  mutate(prop_spp_worst_iucn = nspp_cats/total_spp_impacted,
+             prop_spp_worst_iucn_assessed = nspp_cats/sum_spp_assessed) %>%
+  group_by(x, y, cell_id) %>%
+  filter(new_rank == max_iucn_rank) %>%
+  summarise(max_iucn_rank = max(new_rank, na.rm = TRUE), 
+            prop_at_risk_impacted = mean(prop_spp_worst_iucn, na.rm = TRUE),
+            prop_at_risk_assessed = mean(prop_spp_worst_iucn_assessed, na.rm = TRUE)) %>% 
+  ungroup() %>%
+  mutate(max_iucn_cat = case_when(max_iucn_rank == 1 ~ "Not threatened or data deficient",
+                                    TRUE ~ "At-risk")) %>%
+  mutate(prop_at_risk_impacted = ifelse(max_iucn_rank == 1, 0, prop_at_risk_impacted))
+
+
+## this shows the worst IUCN rank of the IMPACTED species, with the shading showing the proportion of species which are impacted in that worst category out of the total species impacted
+
+## so for example, one of the cells is CR with a value of 0.14. This means that 14% of the species in the cell are impacted and CR, while the remainder are not impacted
+
+ggplot() +
+  geom_tile(data = iucn_plot_df, aes(x = x, y = y, fill = prop_at_risk_impacted)) + 
+  geom_sf(data = border_us_can, fill = NA,  colour = "black", lwd = 0.3)  +
+  theme_minimal() +
+      theme(legend.position = "bottom", ## put legend on bottom
+        axis.title.x = element_blank(), 
+        axis.title.y = element_blank(),
+        legend.key = element_rect(fill = NA),
+        axis.text.x = element_text(angle = 60, hjust = 1),
+        text=element_text(family="Arial"),
+panel.border = element_rect(colour = "grey69", fill=NA, size=3, linetype = "longdash")) +
+     scale_fill_gradientn(
+    colors = c("#46A440", "#F8D422", "#781211"),
+    values = c(0, 0.04, 1),  # Adjusting the values to handle the 0 case
+    na.value = "#46A440"  # In case of any NAs, but your data summary doesn't show NAs
+  ) +
+    labs(fill = "Proportion of impacted species at-risk", 
+         x = "", y = "", 
+         tag = bquote(bold("C"))) +
+  guides(fill = guide_colorbar(
+    title.position = "top", 
+    title.hjust = 0.5,
+    barwidth = unit(6.244166667, "cm"),
+    barheight = 1
+  ))
+
+ggsave(here("analysis/MS_plots/SI_hotspot_CAN_iucn_new.png"), dpi = 300, bg = "white",  height = 16, width = 16, units = "cm")
+
+
+## Now save reference plot: 
+
+map_plot <- ggplot() +
+      geom_sf(data = border_us_can, fill = NA,  colour = "black", lwd = 0.3) +
+   annotation_map_tile(type = "cartolight", zoom = 8) +
+        geom_sf(data = border_us_can, fill = NA,  colour = "black", lwd = 0.3) +
+   theme_minimal() +
+   theme(
+      legend.position = "left",
+      legend.title = element_blank(),
+      axis.title.x = element_blank(),
+      axis.title.y = element_blank(),
+      legend.key = element_rect(fill = NA),
+      axis.text.x = element_text(angle = 60, hjust = 1),
+      text = element_text(family = "Arial"),
+      panel.border = element_rect(colour = "grey69", fill = NA, size = 3, linetype = "longdash")
+   ) +
+   labs(
+      x = "", y = "",
+      tag = bquote(bold("D"))
+   )      +
+     theme(
+      plot.margin = margin(t = 0, r = 0, b = 70, l = 0)  # Adjust margins to align with the map
+   )
+
+
+ggsave(here("analysis/MS_plots/fig4_base_map.png"), plot = map_plot, dpi = 300, bg = "white", height = 16, width = 16, units = "cm")
+
+```
+
+
+```{r}
+#### Calculate some stats about this area
+
+test <- iucn_plot_df %>% 
+  filter(max_iucn_rank == 1)
+193/346 # 0.5578035 of cells are not threatened
+test <- iucn_plot_df %>% 
+  filter(max_iucn_rank == 2, prop_at_risk_impacted == 1)
+8/346
+
+summary_distinct <- distinct(summary, cell_id, avg_impact)
+
+sum(summary_distinct$avg_impact) # 1.720966
+
+chl_marine <- max_impact_iso3c_marine %>%
+  filter(iso3c == "CHL", diet == "plant-dominant")
+sum(chl_marine$impact_km2) # 548.1677
+
+chl_terr <- max_impact_iso3c_terr %>%
+  filter(iso3c == "CHL", diet == "plant-dominant")
+sum(chl_terr$impact_km2) # 5225.716
+
+max_impact <- max_impact_iso3c_terr %>%
+  filter(iso3c == "CHL") %>% # lets check out Chile
+  rbind(max_impact_iso3c_marine %>% filter(iso3c == "CHL")) %>%
+  filter(y > -4250000) %>%
+  filter(y < -3900000) %>%
+  filter(x< -6000000) 
+
+sum(max_impact$impact_km2)/(sum(chl_terr$impact_km2) + sum(chl_marine$impact_km2)) # 0.4014775 - this hotspot represents 40% of all aquafeed impacts in Chile's land area and EEZ. 
+
+346*100 # 34600 km2; Chile land and eez area is 2743128 km2 (wikipedia)
+# 34600/2743128
+
+
+raw_mat_totals <- raw_mat_summary %>%
+  group_by(dom_raw_material) %>% 
+  summarise(n_cells = n()) %>%
+  ungroup()
+
+145/346 # 0.4473008 of the cells are dominated by rapeseed impacts
+
+test <- iucn_plot_df %>% 
+  filter(max_iucn_rank == 2) %>%
+  left_join(raw_mat_summary) %>%
+  filter(dom_raw_material == "Forage fish")
+
+mean(test$prop_at_risk_impacted, na.rm = TRUE) # 0.06974141 forage fish - of the forage fish cells, only ~6.9% of species in the cells are at-risk
+
+test <- iucn_plot_df %>% 
+  filter(max_iucn_rank == 2) 
+
+
+test <- iucn_plot_df %>% 
+  filter(max_iucn_rank == 2) %>%
+  left_join(raw_mat_summary) %>%
+  group_by(dom_raw_material) %>%
+  summarise(n()) %>%
+  mutate(prop = `n()`/153)
+
+```
+
 Do the same thing, but for Norway, and save it as a supplementary plot
 
 ```{r}
@@ -933,470 +1253,3 @@ ggsave(here("analysis/SI_plots/extra_plots/NOR_basemap.png"), plot = map_plot, d
 
 
 ```
-
-ARCHIVE BUT COULD BE USEFUL TO MAP OTHER COUNTRIES HOTSPOTS:
-
-```{r}
-# now do canada
-max_impact <- max_impact_iso3c_terr %>%
-  filter(iso3c == "CAN") %>% # lets check out norway.. cool only 100k cells
-  rbind(max_impact_iso3c_marine %>% filter(iso3c == "CAN")) %>% 
-  filter(x < -7000000) %>%
-  filter(x > -9000000)
-
-impact_rast <- max_impact %>%
-  # filter(raw_material == "forage fish") %>%
-  group_by(x, y) %>%
-  summarise(impact_km2 = sum(impact_km2, na.rm = TRUE)) %>%
-  ungroup() %>%
-  rast(., crs = moll_template)
-
-plot(impact_rast) # ok this is looking good now...
-
-
-summary <- max_impact %>% 
-  group_by(x, y, cell_id, species, raw_material) %>%
-  summarise(impact_km2 = sum(impact_km2)) %>%
-  ungroup() %>%
-  group_by(x, y,cell_id, species) %>%
-  mutate(total_spp_impact = sum(impact_km2, na.rm = TRUE)) %>%
-  mutate(prop_total_spp_impact = total_spp_impact/100) %>%
-  ungroup() %>%
-  mutate(prop_raw_material_impact = impact_km2/total_spp_impact) %>%
-  group_by(x, y, cell_id) %>%
-  mutate(avg_impact = mean(prop_total_spp_impact, na.rm = TRUE)) %>%
-  ungroup() %>%
-  left_join(iucn_cats, by = c("species" = "sciname"))
-
-raw_mat_summary <- summary %>% 
-  group_by(x, y, cell_id) %>%
-  filter(prop_raw_material_impact == max(prop_raw_material_impact)) %>%
-  dplyr::select(x, y, cell_id, dom_raw_material = raw_material) %>%
-  ungroup() %>%
-  distinct(x, y, cell_id, dom_raw_material)
-
-summary_fin <- max_impact %>%
-  group_by(x, y, cell_id, species) %>%
-  summarise(impact_km2 = sum(impact_km2, na.rm = TRUE)) %>%
-  ungroup() %>%
-  mutate(prop_impact = impact_km2/100) %>%
-  group_by(x, y, cell_id) %>%
-  summarise(prop_impact_mean = mean(prop_impact, na.rm = TRUE)) %>%
-  ungroup() %>%
-  left_join(raw_mat_summary) %>%
-    mutate(imp_category = case_when(
-   prop_impact_mean < 0.0005 ~ "95-99",
-    prop_impact_mean >= 0.0005 ~ "≥99"
-  ))
-
-# %>%
-  #filter(prop_impact_mean >= q95) 
-
-
-summary_iucn <- summary %>% 
-  filter(cell_id %in% unique(summary_fin$cell_id))
-  
-iucn <- summary %>% 
-  filter(cell_id %in% unique(summary_fin$cell_id)) %>%
-  filter(!(category %in% c("NE", "DD", "LC")))
-
-perc_threatened_impacts <- round((sum(iucn$impact_km2)/sum(summary_iucn$impact_km2))*100,1) # 6.8%
-
-
-limits <- summary_fin %>%
-  dplyr::select(x, y, prop_impact_mean) %>%
-  rast(., crs = moll_template)
-
-## now lets try plotting this:
-country_sf <- countries_shp %>%
-                          filter(sov_a3 == "CAN") %>%
-  st_crop(., st_bbox(limits))
-
-ggplot() +
-   annotation_map_tile(data = country_sf, type = "osm") + 
-  geom_tile(data = summary_fin, aes(x = x, y = y, fill = dom_raw_material)) + 
-                 geom_sf(data = country_sf, fill = NA, colour = "grey")  +
-  theme_minimal() +
-      theme(legend.position = "left", ## put legend on bottom
-        legend.title=element_blank(), 
-        axis.title.x = element_blank(), 
-        axis.title.y = element_blank(),
-        legend.key = element_rect(fill = NA),
-        axis.text.x = element_text(angle = 60, hjust = 1),
-        text=element_text(family="Times New Roman"),
-panel.border = element_rect(colour = "grey69", fill=NA, size=3, linetype = "longdash")) +
-  scale_fill_manual(values = pal_mats) + 
-    labs( # caption = glue("{perc_threatened_impacts}% of total impacts (km²) shown are on a threatened species"),
-         x = "", y = "")
-
-summary_fin$imp_category <- factor(summary_fin$imp_category, levels = c("0-24", "25-49", "50-74", "75-94", "95-99", "≥99"))
-
-ggplot() +
-  annotation_map_tile(data = country_sf, type = "osm", zoomin = 0) + 
-  geom_tile(data = summary_fin, aes(x = x, y = y, fill = imp_category)) + 
-  geom_sf(data = country_sf, fill = NA, colour = "grey")  +
-  theme_minimal() +
-      theme(legend.position = "left", ## put legend on bottom
-        legend.title=element_blank(), 
-        axis.title.x = element_blank(), 
-        axis.title.y = element_blank(),
-        legend.key = element_rect(fill = NA),
-        axis.text.x = element_text(angle = 60, hjust = 1),
-        text=element_text(family="Times New Roman"),
-panel.border = element_rect(colour = "grey69", fill=NA, size=3, linetype = "longdash")) +
-  scale_fill_manual(values = quantile_pal) + 
-    labs( #caption = glue("{perc_threatened_impacts}% of total impacts (km²) shown are on a threatened species"),
-         x = "", y = "")
-
-
-
-iucn_plot_df <- summary_iucn %>%
-  mutate(iucn_rank = case_when(category %in% c("NE") ~ 0,
-                               category == "DD" ~ 1, 
-                               category == "LC" ~ 2,
-                               category == "NT" ~ 3,
-                               category == "VU" ~ 4,
-                               category == 'EN' ~ 5,
-                               category == "CR" ~ 6)) %>%
-  group_by(x, y, cell_id) %>%
-  summarise(max_iucn_rank = max(iucn_rank, na.rm = TRUE)) %>% 
-  ungroup() %>%
-  mutate(max_iucn_cat = case_when(max_iucn_rank == 0 ~ "NE",
-                               max_iucn_rank == 1 ~ "DD", 
-                               max_iucn_rank == 2 ~ "LC",
-                               max_iucn_rank == 3 ~ "NT",
-                               max_iucn_rank == 4 ~ "VU",
-                               max_iucn_rank == 5 ~ "EN",
-                               max_iucn_rank == 6 ~ "CR"))
-
-iucn_plot_df$max_iucn_cat <- factor(iucn_plot_df$max_iucn_cat, levels = c("NE", "DD", "LC", "NT", "VU", "EN", "CR"))
-
-
-
-ggplot() +
-  annotation_map_tile(data = country_sf, type = "osm", zoomin = 0, cachedir = system.file("rosm.cache", package = "ggspatial")) + 
-  geom_tile(data = iucn_plot_df, aes(x = x, y = y, fill = max_iucn_cat)) + 
-  geom_sf(data = country_sf, fill = NA, colour = "grey")  +
-  theme_minimal() +
-      theme(legend.position = "left", ## put legend on bottom
-        legend.title=element_blank(), 
-        axis.title.x = element_blank(), 
-        axis.title.y = element_blank(),
-        legend.key = element_rect(fill = NA),
-        axis.text.x = element_text(angle = 60, hjust = 1),
-        text=element_text(family="Times New Roman"),
-panel.border = element_rect(colour = "grey69", fill=NA, size=3, linetype = "longdash")) +
-    scale_fill_manual(values = iucn_pal) + 
-    labs( #caption = glue("{perc_threatened_impacts}% of total impacts (km²) shown are on a threatened species"),
-         x = "", y = "")
-
-```
-
-```{r}
-# now australia
-max_impact <- max_impact_iso3c_terr %>%
-  filter(iso3c == "AUS") %>% # lets check out norway.. cool only 100k cells
-  rbind(max_impact_iso3c_marine %>% filter(iso3c == "AUS")) 
-
-impact_rast <- max_impact %>%
-  # filter(raw_material == "forage fish") %>%
-  group_by(x, y) %>%
-  summarise(impact_km2 = sum(impact_km2, na.rm = TRUE)) %>%
-  ungroup() %>%
-  rast(., crs = moll_template)
-
-plot(impact_rast) # ok this is looking good now...
-
-
-summary <- max_impact %>% 
-  group_by(x, y, cell_id, species, raw_material) %>%
-  summarise(impact_km2 = sum(impact_km2)) %>%
-  ungroup() %>%
-  group_by(x, y,cell_id, species) %>%
-  mutate(total_spp_impact = sum(impact_km2, na.rm = TRUE)) %>%
-  mutate(prop_total_spp_impact = total_spp_impact/100) %>%
-  ungroup() %>%
-  mutate(prop_raw_material_impact = impact_km2/total_spp_impact) %>%
-  group_by(x, y, cell_id) %>%
-  mutate(avg_impact = mean(prop_total_spp_impact, na.rm = TRUE)) %>%
-  ungroup() %>%
-  left_join(iucn_cats, by = c("species" = "sciname"))
-
-raw_mat_summary <- summary %>% 
-  group_by(x, y, cell_id) %>%
-  filter(prop_raw_material_impact == max(prop_raw_material_impact)) %>%
-  dplyr::select(x, y, cell_id, dom_raw_material = raw_material) %>%
-  ungroup() %>%
-  distinct(x, y, cell_id, dom_raw_material)
-
-summary_fin <- max_impact %>%
-  group_by(x, y, cell_id, species) %>%
-  summarise(impact_km2 = sum(impact_km2, na.rm = TRUE)) %>%
-  ungroup() %>%
-  mutate(prop_impact = impact_km2/100) %>%
-  group_by(x, y, cell_id) %>%
-  summarise(prop_impact_mean = mean(prop_impact, na.rm = TRUE)) %>%
-  ungroup() %>%
-  left_join(raw_mat_summary) %>%
-    mutate(imp_category = case_when(
-   prop_impact_mean < 0.0005 ~ "95-99",
-    prop_impact_mean >= 0.0005 ~ "≥99"
-  ))
-
-# %>%
-  #filter(prop_impact_mean >= q95) 
-
-
-summary_iucn <- summary %>% 
-  filter(cell_id %in% unique(summary_fin$cell_id))
-  
-iucn <- summary %>% 
-  filter(cell_id %in% unique(summary_fin$cell_id)) %>%
-  filter(!(category %in% c("NE", "DD", "LC")))
-
-perc_threatened_impacts <- round((sum(iucn$impact_km2)/sum(summary_iucn$impact_km2))*100,1) # 6.8%
-
-
-limits <- summary_fin %>%
-  dplyr::select(x, y, prop_impact_mean) %>%
-  rast(., crs = moll_template)
-
-## now lets try plotting this:
-country_sf <- countries_shp %>%
-                          filter(sov_a3 == "AU1") %>%
-  st_crop(., st_bbox(limits))
-
-ggplot() +
-   annotation_map_tile(data = country_sf, type = "osm") + 
-  geom_tile(data = summary_fin, aes(x = x, y = y, fill = dom_raw_material)) + 
-                 geom_sf(data = country_sf, fill = NA, colour = "grey")  +
-  theme_minimal() +
-      theme(legend.position = "left", ## put legend on bottom
-        legend.title=element_blank(), 
-        axis.title.x = element_blank(), 
-        axis.title.y = element_blank(),
-        legend.key = element_rect(fill = NA),
-        axis.text.x = element_text(angle = 60, hjust = 1),
-        text=element_text(family="Times New Roman"),
-panel.border = element_rect(colour = "grey69", fill=NA, size=3, linetype = "longdash")) +
-  scale_fill_manual(values = pal_mats) + 
-    labs( # caption = glue("{perc_threatened_impacts}% of total impacts (km²) shown are on a threatened species"),
-         x = "", y = "")
-
-summary_fin$imp_category <- factor(summary_fin$imp_category, levels = c("0-24", "25-49", "50-74", "75-94", "95-99", "≥99"))
-
-ggplot() +
-  annotation_map_tile(data = country_sf, type = "osm", zoomin = 0) + 
-  geom_tile(data = summary_fin, aes(x = x, y = y, fill = imp_category)) + 
-  geom_sf(data = country_sf, fill = NA, colour = "grey")  +
-  theme_minimal() +
-      theme(legend.position = "left", ## put legend on bottom
-        legend.title=element_blank(), 
-        axis.title.x = element_blank(), 
-        axis.title.y = element_blank(),
-        legend.key = element_rect(fill = NA),
-        axis.text.x = element_text(angle = 60, hjust = 1),
-        text=element_text(family="Times New Roman"),
-panel.border = element_rect(colour = "grey69", fill=NA, size=3, linetype = "longdash")) +
-  scale_fill_manual(values = quantile_pal) + 
-    labs( #caption = glue("{perc_threatened_impacts}% of total impacts (km²) shown are on a threatened species"),
-         x = "", y = "")
-
-
-
-iucn_plot_df <- summary_iucn %>%
-  mutate(iucn_rank = case_when(category %in% c("NE") ~ 0,
-                               category == "DD" ~ 1, 
-                               category == "LC" ~ 2,
-                               category == "NT" ~ 3,
-                               category == "VU" ~ 4,
-                               category == 'EN' ~ 5,
-                               category == "CR" ~ 6)) %>%
-  group_by(x, y, cell_id) %>%
-  summarise(max_iucn_rank = max(iucn_rank, na.rm = TRUE)) %>% 
-  ungroup() %>%
-  mutate(max_iucn_cat = case_when(max_iucn_rank == 0 ~ "NE",
-                               max_iucn_rank == 1 ~ "DD", 
-                               max_iucn_rank == 2 ~ "LC",
-                               max_iucn_rank == 3 ~ "NT",
-                               max_iucn_rank == 4 ~ "VU",
-                               max_iucn_rank == 5 ~ "EN",
-                               max_iucn_rank == 6 ~ "CR"))
-
-iucn_plot_df$max_iucn_cat <- factor(iucn_plot_df$max_iucn_cat, levels = c("NE", "DD", "LC", "NT", "VU", "EN", "CR"))
-
-
-
-ggplot() +
-  annotation_map_tile(data = country_sf, type = "osm", zoomin = 0, cachedir = system.file("rosm.cache", package = "ggspatial")) + 
-  geom_tile(data = iucn_plot_df, aes(x = x, y = y, fill = max_iucn_cat)) + 
-  geom_sf(data = country_sf, fill = NA, colour = "grey")  +
-  theme_minimal() +
-      theme(legend.position = "left", ## put legend on bottom
-        legend.title=element_blank(), 
-        axis.title.x = element_blank(), 
-        axis.title.y = element_blank(),
-        legend.key = element_rect(fill = NA),
-        axis.text.x = element_text(angle = 60, hjust = 1),
-        text=element_text(family="Times New Roman"),
-panel.border = element_rect(colour = "grey69", fill=NA, size=3, linetype = "longdash")) +
-    scale_fill_manual(values = iucn_pal) + 
-    labs( #caption = glue("{perc_threatened_impacts}% of total impacts (km²) shown are on a threatened species"),
-         x = "", y = "")
-```
-
-```{r}
-# Now argentina
-
-max_impact <- max_impact_iso3c_terr %>%
-  filter(iso3c == "ARG") %>% # lets check out norway.. cool only 100k cells
-  rbind(max_impact_iso3c_marine %>% filter(iso3c == "ARG")) 
-impact_rast <- max_impact %>%
-  # filter(raw_material == "forage fish") %>%
-  group_by(x, y) %>%
-  summarise(impact_km2 = sum(impact_km2, na.rm = TRUE)) %>%
-  ungroup() %>%
-  rast(., crs = moll_template)
-
-plot(impact_rast) # ok this is looking good now...
-
-
-summary <- max_impact %>% 
-  group_by(x, y, cell_id, species, raw_material) %>%
-  summarise(impact_km2 = sum(impact_km2)) %>%
-  ungroup() %>%
-  group_by(x, y,cell_id, species) %>%
-  mutate(total_spp_impact = sum(impact_km2, na.rm = TRUE)) %>%
-  mutate(prop_total_spp_impact = total_spp_impact/100) %>%
-  ungroup() %>%
-  mutate(prop_raw_material_impact = impact_km2/total_spp_impact) %>%
-  group_by(x, y, cell_id) %>%
-  mutate(avg_impact = mean(prop_total_spp_impact, na.rm = TRUE)) %>%
-  ungroup() %>%
-  left_join(iucn_cats, by = c("species" = "sciname"))
-
-raw_mat_summary <- summary %>% 
-  group_by(x, y, cell_id) %>%
-  filter(prop_raw_material_impact == max(prop_raw_material_impact)) %>%
-  dplyr::select(x, y, cell_id, dom_raw_material = raw_material) %>%
-  ungroup() %>%
-  distinct(x, y, cell_id, dom_raw_material)
-
-summary_fin <- max_impact %>%
-  group_by(x, y, cell_id, species) %>%
-  summarise(impact_km2 = sum(impact_km2, na.rm = TRUE)) %>%
-  ungroup() %>%
-  mutate(prop_impact = impact_km2/100) %>%
-  group_by(x, y, cell_id) %>%
-  summarise(prop_impact_mean = mean(prop_impact, na.rm = TRUE)) %>%
-  ungroup() %>%
-  left_join(raw_mat_summary) %>%
-    mutate(imp_category = case_when(
-   prop_impact_mean < 0.0005 ~ "95-99",
-    prop_impact_mean >= 0.0005 ~ "≥99"
-  ))
-
-# %>%
-  #filter(prop_impact_mean >= q95) 
-
-
-summary_iucn <- summary %>% 
-  filter(cell_id %in% unique(summary_fin$cell_id))
-  
-iucn <- summary %>% 
-  filter(cell_id %in% unique(summary_fin$cell_id)) %>%
-  filter(!(category %in% c("NE", "DD", "LC")))
-
-perc_threatened_impacts <- round((sum(iucn$impact_km2)/sum(summary_iucn$impact_km2))*100,1) # 6.8%
-
-
-limits <- summary_fin %>%
-  dplyr::select(x, y, prop_impact_mean) %>%
-  rast(., crs = moll_template)
-
-## now lets try plotting this:
-country_sf <- countries_shp %>%
-                          filter(sov_a3 == "ARG") %>%
-  st_crop(., st_bbox(limits))
-
-ggplot() +
-   annotation_map_tile(data = country_sf, type = "osm") + 
-  geom_tile(data = summary_fin, aes(x = x, y = y, fill = dom_raw_material)) + 
-                 geom_sf(data = country_sf, fill = NA, colour = "grey")  +
-  theme_minimal() +
-      theme(legend.position = "left", ## put legend on bottom
-        legend.title=element_blank(), 
-        axis.title.x = element_blank(), 
-        axis.title.y = element_blank(),
-        legend.key = element_rect(fill = NA),
-        axis.text.x = element_text(angle = 60, hjust = 1),
-        text=element_text(family="Times New Roman"),
-panel.border = element_rect(colour = "grey69", fill=NA, size=3, linetype = "longdash")) +
-  scale_fill_manual(values = pal_mats) + 
-    labs( # caption = glue("{perc_threatened_impacts}% of total impacts (km²) shown are on a threatened species"),
-         x = "", y = "")
-
-summary_fin$imp_category <- factor(summary_fin$imp_category, levels = c("0-24", "25-49", "50-74", "75-94", "95-99", "≥99"))
-
-ggplot() +
-  annotation_map_tile(data = country_sf, type = "osm", zoomin = 0) + 
-  geom_tile(data = summary_fin, aes(x = x, y = y, fill = imp_category)) + 
-  geom_sf(data = country_sf, fill = NA, colour = "grey")  +
-  theme_minimal() +
-      theme(legend.position = "left", ## put legend on bottom
-        legend.title=element_blank(), 
-        axis.title.x = element_blank(), 
-        axis.title.y = element_blank(),
-        legend.key = element_rect(fill = NA),
-        axis.text.x = element_text(angle = 60, hjust = 1),
-        text=element_text(family="Times New Roman"),
-panel.border = element_rect(colour = "grey69", fill=NA, size=3, linetype = "longdash")) +
-  scale_fill_manual(values = quantile_pal) + 
-    labs( #caption = glue("{perc_threatened_impacts}% of total impacts (km²) shown are on a threatened species"),
-         x = "", y = "")
-
-
-
-iucn_plot_df <- summary_iucn %>%
-  mutate(iucn_rank = case_when(category %in% c("NE") ~ 0,
-                               category == "DD" ~ 1, 
-                               category == "LC" ~ 2,
-                               category == "NT" ~ 3,
-                               category == "VU" ~ 4,
-                               category == 'EN' ~ 5,
-                               category == "CR" ~ 6)) %>%
-  group_by(x, y, cell_id) %>%
-  summarise(max_iucn_rank = max(iucn_rank, na.rm = TRUE)) %>% 
-  ungroup() %>%
-  mutate(max_iucn_cat = case_when(max_iucn_rank == 0 ~ "NE",
-                               max_iucn_rank == 1 ~ "DD", 
-                               max_iucn_rank == 2 ~ "LC",
-                               max_iucn_rank == 3 ~ "NT",
-                               max_iucn_rank == 4 ~ "VU",
-                               max_iucn_rank == 5 ~ "EN",
-                               max_iucn_rank == 6 ~ "CR"))
-
-iucn_plot_df$max_iucn_cat <- factor(iucn_plot_df$max_iucn_cat, levels = c("NE", "DD", "LC", "NT", "VU", "EN", "CR"))
-
-
-
-ggplot() +
-  annotation_map_tile(data = country_sf, type = "osm", zoomin = 0, cachedir = system.file("rosm.cache", package = "ggspatial")) + 
-  geom_tile(data = iucn_plot_df, aes(x = x, y = y, fill = max_iucn_cat)) + 
-  geom_sf(data = country_sf, fill = NA, colour = "grey")  +
-  theme_minimal() +
-      theme(legend.position = "left", ## put legend on bottom
-        legend.title=element_blank(), 
-        axis.title.x = element_blank(), 
-        axis.title.y = element_blank(),
-        legend.key = element_rect(fill = NA),
-        axis.text.x = element_text(angle = 60, hjust = 1),
-        text=element_text(family="Times New Roman"),
-panel.border = element_rect(colour = "grey69", fill=NA, size=3, linetype = "longdash")) +
-    scale_fill_manual(values = iucn_pal) + 
-    labs( #caption = glue("{perc_threatened_impacts}% of total impacts (km²) shown are on a threatened species"),
-         x = "", y = "")
-```
-
-
-

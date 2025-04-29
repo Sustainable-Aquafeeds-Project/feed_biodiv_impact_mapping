@@ -137,6 +137,7 @@ Global impact maps across ingredients and taxon
 
 allocation_types <- c("mass", "economic", "ge")  
 calc_types <- c("mean_prop", "nspp", "sd_prop", "mean_ext_risk", "rarity_mean_prop", "total_km2")
+calc_types <- c("nspp", "total_km2")
 types_df <- expand.grid(allocation_types, calc_types) %>%
   unite(new_var, Var1:Var2, sep = "_") %>%
   pull(new_var) %>%
@@ -262,14 +263,14 @@ loop_loop_df <- loop_df %>%
           axis.ticks = element_blank(),
           legend.margin = margin(r = 10)) + 
   labs(fill = fill_name,
-       title = glue("{diet_type}, {fcr}")) + 
+       title = glue("{diet_type}")) + 
      guides(color = "none")
         
       plot_list[[length(plot_list) + 1]] <- loop_plot
     }
     }
   
-ggsave(glue(here(this_dir, "SI_plots/across_taxon_ingredient/{type}_plot.png")), plot = plot_grid(plotlist = plot_list, nrow = 2), width = 10, height = 8, bg = "white")
+ggsave(glue(here(this_dir, "SI_plots/across_taxon_ingredient/{type}_plot.png")), plot = plot_grid(plotlist = plot_list, nrow = 1, ncol = 2), width = 10, height = 8, bg = "white")
 
 }
 
