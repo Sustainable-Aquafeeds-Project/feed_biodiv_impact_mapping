@@ -198,7 +198,7 @@ for(diet in diet_types){
 # diet = "plant-dominant"
 # fcr = "regular"
 
-all_files <- list.files(file.path(biodiv_dir, "output/impact_maps_by_spp_ingredient_lists"), pattern = glue(".*_{diet}_{fcr}_.*_{allocation}"), full.names = TRUE)
+all_files <- list.files(file.path(biodiv_dir, "output/impact_maps_by_spp_ingredient_lists"), pattern = glue(".*_{diet}_{fcr}_original_.*_{allocation}"), full.names = TRUE)
 
 to_remove <- grep("fish oil|fish meal", all_files)
 all_files <- all_files[-to_remove]
@@ -261,7 +261,7 @@ for(chunk_id in 1:13){
         
        # chunk_id = 4
         
-        files <- list.files(file.path(biodiv_dir, "int/marine_aggregation/sub_chunk_dfs/"), pattern = glue(".*_{diet}_{fcr}_.*_{allocation}_chunk_{chunk_id}.qs"), full.names = TRUE)
+        files <- list.files(file.path(biodiv_dir, "int/marine_aggregation/sub_chunk_dfs/"), pattern = glue(".*_{diet}_{fcr}_original_.*_{allocation}_chunk_{chunk_id}.qs"), full.names = TRUE)
         
         impacts_chunk <- lapply(files, qread) %>%
           bind_rows() %>%

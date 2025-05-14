@@ -87,12 +87,13 @@ Read in marine and terrestrial dfs and combine
 
 ```{r}
 marine_overlap <- readRDS(here("prep/03_prep_spp_habitats/output/aoh_marine_impact.rds")) %>%
+    filter(sensitivity_scenario == "original") %>%
     dplyr::select(sciname, spp_type, diet, fcr_type, allocation, ingredient, vulnerability, impact_total, total_hab_area)
 
 length(unique(marine_overlap$sciname)) # 23029
 
 terrestrial_overlap <- readRDS(here("prep/03_prep_spp_habitats/output/aoh_terrestrial_impact.rds")) %>% 
-  dplyr::select(-suitability) %>%
+    filter(sensitivity_scenario == "original") %>%
       dplyr::select(sciname, spp_type, diet, fcr_type, allocation, ingredient, vulnerability, impact_total, total_hab_area)
 
 length(unique(terrestrial_overlap$sciname)) # 31596
@@ -286,8 +287,8 @@ plot1 <- ggplot(summary_df_spp %>% filter(prop_impact > 0), aes(x = prop_impact)
   geom_vline(xintercept = 0, color = "black") +
   geom_point(data = summary_df_spp, aes(x = mean_prop, y = taxon, group = diet),
              position = position_dodge(width = -0.9),
-             shape = 21, color = "black", fill = "orange", size = 4) +
-     geom_boxplot(aes(y = taxon, fill = diet), outlier.fill = NA, outlier.color = NA, position = position_dodge(width = -0.9), alpha = 0, colour = "orange") +
+             shape = 21, color = "red", fill = "orange", size = 7) +
+     geom_boxplot(aes(y = taxon, fill = diet), outlier.fill = NA, outlier.color = NA, position = position_dodge(width = -0.9), alpha = 0, colour = "orange", fatten = 5) +
    geom_boxplot(aes(y = taxon, fill = diet), outlier.fill = NA, outlier.color = NA, position = position_dodge(width = -0.9), alpha = 0, fatten = NULL) +
   theme_ohara() +
       labs(x = "Proportion of global habitat area impacted", fill = 'Diet', color = 'Diet') +
@@ -353,7 +354,6 @@ ggsave(plot = p, here(this_dir, "MS_plots/fig2_economic_boxplot_prop_orange.png"
 
 **Figure 3: Proportion of taxa global habitat area impacted**
 > Figure 3. Proportion of each taxon’s global habitat area which is impacted by raw material for each aquafeed scenario. To see proportions including species with zero impact, refer to Supplementary Fig. 4. 
-
 
 ```{r}
 

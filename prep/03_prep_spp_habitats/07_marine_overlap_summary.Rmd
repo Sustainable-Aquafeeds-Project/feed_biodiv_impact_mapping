@@ -42,8 +42,13 @@ vuln_taxa <- readRDS(file.path(rdsi_dir, "biodiversity_impacts/int/spp_vuln_dept
     ingredient == "trimmings fish_fish meal" ~ "trimmings fish_fish meal, cut offs",
     ingredient == "trimmings fish_fish oil" ~ "trimmings fish_fish oil, cut offs",
     TRUE ~ ingredient
+  )) %>%
+    pivot_longer(cols = c(vuln_quartile, vuln_quartile_plus, vuln_quartile_minus), names_to = "sensitivity_scenario", values_to = "vulnerability") %>%
+  mutate(sensitivity_scenario = case_when(
+    sensitivity_scenario == "vuln_quartile" ~ "original",
+    sensitivity_scenario == "vuln_quartile_plus" ~ "plus-10",
+    sensitivity_scenario == "vuln_quartile_minus" ~ "minus-10",
   ))
-
 
 ```
 
@@ -59,6 +64,12 @@ impact_df <- purrr::map_df(list.files(file.path(biodiv_dir, "int/aoh_impacts_mar
               unite(Genus, Species, sep = " ", col = "species") %>%
               mutate(species = tolower(species))
               ) 
+
+test <- impact_df %>% 
+  filter(allocation == "economic") %>%
+  group_by(diet, sensitivity_scenario) %>%
+  summarise(total_impact = sum(impact_total, na.rm = TRUE)) %>%
+  ungroup()
 
 length(unique(impact_df$SpeciesID)) # 23029 missing some spp missing.. but they are all polychaetes 
 
@@ -79,12 +90,13 @@ spp_habs_area <- impact_df %>%
 write.csv(spp_habs_area, here("prep/03_prep_spp_habitats/int/marine_habitat_areas.csv"), row.names = FALSE)
 
 impact_vuln <- impact_df %>%
-  dplyr::group_by(species, diet, fcr_type, allocation, ingredient) %>%
+  mutate(sensitivity_scenario = ifelse(is.na(sensitivity_scenario), "original", sensitivity_scenario)) %>%
+  dplyr::group_by(species, diet, fcr_type, allocation, ingredient, sensitivity_scenario) %>%
   summarise(impact_total = sum(impact_total, na.rm = TRUE)) %>%
   ungroup() %>% 
   left_join(vuln_taxa) %>%
   left_join(spp_habs_area) %>%
-  dplyr::select(sciname= species, diet, fcr_type, allocation, ingredient, impact_total, vulnerability = vuln_quartile, spp_type = taxon, impact_total, total_hab_area)
+  dplyr::select(sciname= species, diet, fcr_type, allocation, ingredient, sensitivity_scenario, impact_total, vulnerability, spp_type = taxon, impact_total, total_hab_area)
   
 summary(impact_vuln) # no Nas in impact
 
@@ -92,30 +104,5 @@ saveRDS(impact_vuln, here("prep/03_prep_spp_habitats/output/aoh_marine_impact.rd
 
 ```
 
-Data checking
-
-```{r}
-## take al look at some stuff
-terrestrial_overlap <- readRDS(here("prep/03_prep_spp_habitats/output/aoh_terrestrial_impact.rds"))
-colnames(terrestrial_overlap)
-
-
-test_terr <- terrestrial_overlap %>%
-  filter(diet == "plant-dominant",
-         allocation == "mass",
-         fcr_type == "regular")
-
-sum(test_terr$impact_total, na.rm = TRUE) # 309348.5
-mean(test_terr$impact_total, na.rm = TRUE) # 0.8525683
-
-test_marine <- impact_vuln %>%
-    filter(diet == "plant-dominant",
-         allocation == "mass",
-         fcr_type == "regular")
-
-sum(test_marine$impact_total, na.rm = TRUE) # 138520.3
-mean(test_marine$impact_total, na.rm = TRUE) # 1.50376
-
-```
 
 

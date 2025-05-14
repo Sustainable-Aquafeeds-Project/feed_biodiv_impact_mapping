@@ -42,7 +42,8 @@ First, save habitat ares for each species. Additionally, find the habitat areas 
 ```{r}
 
 impact_df <-  purrr::map_df(list.files(file.path(biodiv_dir, "int/aoh_impacts_terrestrial/"), full.names = TRUE), readRDS) %>%
-  rename(sciname = species_full)
+  rename(sciname = species_full) %>%
+  mutate(sensitivity_scenario = ifelse(is.na(sensitivity_scenario), "original", sensitivity_scenario))
 
 length(unique(impact_df$sciname)) # 27911 - missing some bc no exposure
 
@@ -50,6 +51,9 @@ spp_habs_df <- impact_df %>%
   distinct(sciname, total_hab_area = hab_area)
 
   
+## get sensitivity info dataframe
+spp_types <- readRDS(file.path(here("prep/03_prep_spp_habitats"), "int/terrestrial_spp_habitat_suitability.rds")) %>%
+  dplyr::distinct(sciname = species, spp_type)
 
 # now lets clean up the data a bit 
 
@@ -123,13 +127,14 @@ diets <- unique(impact_df$diet)
 fcr_types <- unique(impact_df$fcr_type)
 allocations <- unique(impact_df$allocation)
 crop_ingredients <- unique(impact_df$crop_ingredient)
+sensitivity_scenarios <- unique(impact_df$sensitivity_scenario)
 
-expand_df <- expand_grid(missing_spp_fin, diet = diets, fcr_type = fcr_types, allocation = allocations, crop_ingredient = crop_ingredients) %>%
+expand_df <- expand_grid(missing_spp_fin, diet = diets, fcr_type = fcr_types, allocation = allocations, crop_ingredient = crop_ingredients, sensitivity_scenario = sensitivity_scenarios) %>%
   mutate(impact_total = 0) %>%
   dplyr::select(-total_hab_area)
 
 impact_df_tidy <- impact_df %>%
-    group_by(sciname, diet, fcr_type, allocation, crop_ingredient) %>%
+    group_by(sciname, diet, fcr_type, allocation, crop_ingredient, sensitivity_scenario) %>%
   summarise(impact_total = sum(impact_total, na.rm = TRUE)) %>%
   ungroup() %>%
   rbind(., expand_df) %>%
@@ -169,17 +174,38 @@ test <- impact_df_tidy %>%
 Bind species' sensitivities to the full aoh impacted dataframe. 
 
 ```{r}
-ag_suitability <- readRDS(here("prep/03_prep_spp_habitats/int/terrestrial_spp_habitat_suitability.rds"))
+
+## get sensitivity info dataframe
+ag_suitability <- readRDS(file.path(here("prep/03_prep_spp_habitats"), "int/terrestrial_spp_habitat_suitability.rds")) %>%
+  mutate(cropland_sensitivity = 1 - cropland_suitability) %>%
+  mutate(cropland_sensitivity_plus = case_when(cropland_sensitivity == 0 ~ 0.1,
+                                               cropland_sensitivity == 0.5 ~ 0.6, 
+                                               cropland_sensitivity == 1 ~ 1,
+                                               TRUE ~ cropland_sensitivity)) %>%
+  mutate(cropland_sensitivity_minus = case_when(cropland_sensitivity == 0 ~ 0,
+                                                cropland_sensitivity == 0.5 ~ 0.4, 
+                                                cropland_sensitivity == 1 ~ 0.9,
+                                               TRUE ~ cropland_sensitivity)) %>%
+  pivot_longer(cols = c(cropland_sensitivity, cropland_sensitivity_plus, cropland_sensitivity_minus), names_to = "sensitivity_scenario", values_to = "vulnerability") %>%
+  mutate(sensitivity_scenario = case_when(
+    sensitivity_scenario == "cropland_sensitivity" ~ "original",
+    sensitivity_scenario == "cropland_sensitivity_plus" ~ "plus-10",
+    sensitivity_scenario == "cropland_sensitivity_minus" ~ "minus-10",
+  )) %>%
+  dplyr::select(-spp_type, -cropland_suitability)
 
 test <- ag_suitability %>%
   filter(species %in% missing_spp) 
 
-aoh_df <- impact_df_tidy %>%
-  left_join(., ag_suitability, by = c("sciname" = "species")) %>%
-  rename(suitability = cropland_suitability) %>%
-  mutate(vulnerability = 1 - suitability)  # should probably rename this as sensitivity... oh well 
+test <- ag_suitability %>%
+  filter(vulnerability > 0) %>%
+  group_by(sensitivity_scenario) %>% 
+  summarise(count = n()) %>% 
+  ungroup()
 
-## need to create a dataframe with non overlapping spps (~4k of them)
+aoh_df <- impact_df_tidy %>%
+  left_join(., ag_suitability, by = c("sciname" = "species", "sensitivity_scenario")) %>%
+  left_join(spp_types)
 
 saveRDS(aoh_df, here("prep/03_prep_spp_habitats/output/aoh_terrestrial_impact.rds")) # save as rds to save space
 
@@ -192,20 +218,16 @@ length(unique(all_spp_list$sciname)) # 31596
 length(unique(aoh_df$sciname)) # 31596
 # perfect
 
-test_ag <- ag_suitability %>% 
-  group_by(spp_type, cropland_suitability) %>%
-  summarise(n_distinct(species))
-
 
 ## paper reports: 
 
 length(unique(ag_suitability$species)) # 31596
-ag_suitability %>% filter(cropland_suitability != 1) %>% pull(species) %>% unique() %>% length() # 26413
+ag_suitability %>% filter(vulnerability != 0, sensitivity_scenario == "original") %>% pull(species) %>% unique() %>% length() # 26413
 
 ## filter for our missing spp and see their suitability
 
 test_ag <- ag_suitability %>% 
-  filter(species %in% c(missing_spp)) # ok... majority of them should theoretically be impacted... does this just mean there was literally no overlap at all? Yes, or they are not sensitive.
+  filter(species %in% c(missing_spp)) # ok... majority of them should theoretically be impacted... does this just mean there was literally no overlap at all? Yes
 
 
 all_spp_list <- readRDS(here("prep/03_prep_spp_habitats/data/iucn/eyres_iucn_spp.rds")) %>%
@@ -233,7 +255,7 @@ soybean_imps <- aoh_df %>%
   filter(fcr_type == "regular",
          str_detect(ingredient, "Soybean"),
          allocation == "economic") %>%
-  group_by(diet, fcr_type, allocation, ingredient) %>%
+  group_by(diet, fcr_type, allocation, ingredient, sensitivity_scenario) %>%
   summarise(total_impact = sum(impact_total, na.rm = TRUE)) %>%
   ungroup()
 

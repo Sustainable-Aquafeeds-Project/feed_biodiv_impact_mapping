@@ -90,21 +90,23 @@ Below we create maps of species level proportion of habitat and extinction risk 
 diet_types <- c("fish-dominant", "plant-dominant")
 fcr_types <- c("regular") # we no longer include the efficient fcr scenario 
 allocation_types <- c("economic", "mass", "ge")
+allocation_types <- c("economic")
 
 for(diet in diet_types){
   for(fcr in fcr_types){
     for(allocation in allocation_types){
 
-      # diet = "plant-dominant"
-      # fcr = "regular"
-      # allocation = "economic"
+# diet = "plant-dominant"
+# fcr = "regular"
+# allocation = "economic"
+# sens_type <- "minus-10"
 
-      # if(file.exists(glue(file.path(biodiv_dir, "int/terrestrial_aggregation/impact_maps_across_taxon_ingredient/{diet}/{fcr}/{allocation}_rarity_mean_prop.tif")))){
-      #   message("raster exists... skipping")
-      #   next()
-      # }
+      if(file.exists(glue(file.path(biodiv_dir, "int/terrestrial_aggregation/impact_maps_across_taxon_ingredient/{diet}/{fcr}/{allocation}_mean_prop.tif")))){
+        message("raster exists... skipping")
+        next()
+      }
 
-      all_files <- list.files(file.path(biodiv_dir, "output/impact_maps_by_spp_ingredient_lists"), pattern = glue(".*_{diet}_{fcr}_.*_{allocation}"), full.names = TRUE)
+      all_files <- list.files(file.path(biodiv_dir, "output/impact_maps_by_spp_ingredient_lists"), pattern = glue(".*_{diet}_{fcr}_original_.*_{allocation}"), full.names = TRUE)
 
       to_remove <- grep("fish oil|fish meal", all_files)
       all_files <- all_files[-to_remove]
@@ -115,8 +117,7 @@ for(diet in diet_types){
       all_impact_df <- data.frame(cell_id = NA, prop_mean = NA, prop_sd = NA, prop_nspp = NA, prop_ext_risk = NA, rarity_prop_mean = NA,
                                   rarity_km2_mean = NA, total_km2 = NA)
 
-    for(i in 1:14){ # 14 because there are 14 difference indices in the list; maybe foreach here? Would have to save each "combined_dataframe" and read back in with a foreach loop. 
-      
+    for(i in 1:14){ # 14 because there are 14 difference indices in the list
       
               # i = 1
 
@@ -224,7 +225,8 @@ for(diet in diet_types){
 
 
 
-    }
+  
+   }
   }
 }
 
@@ -241,7 +243,8 @@ for(diet in diet_types){
 ```{r}
 diet_types <- c("fish-dominant", "plant-dominant")
 fcr_types <- c("regular") # we only include regular scenario now
-allocation_types <- c("ge", "mass")
+allocation_types <- c("ge", "mass", "economic")
+allocation_types <- c("economic")
 
 
 for(diet in diet_types){
@@ -250,9 +253,9 @@ for(diet in diet_types){
 
 # diet = "fish-dominant"
 # fcr = "regular"
-# allocation = "ge"
+# allocation = "economic"
 
-pattern <- glue(".*_{diet}_{fcr}_.*_{allocation}_chunk_.*.qs")
+pattern <- glue(".*_{diet}_{fcr}_original_.*_{allocation}_chunk_.*.qs")
 
 ## comment this out if you don't want to skip things while rerunning
 if(
@@ -263,7 +266,7 @@ any(file.exists(list.files(file.path(biodiv_dir, "int/marine_aggregation/sub_chu
         next()
       }
       
-      all_files <- list.files(file.path(biodiv_dir, "output/impact_maps_by_spp_ingredient_lists"), pattern = glue(".*_{diet}_{fcr}_.*_{allocation}"), full.names = TRUE)
+      all_files <- list.files(file.path(biodiv_dir, "output/impact_maps_by_spp_ingredient_lists"), pattern = glue(".*_{diet}_{fcr}_original_.*_{allocation}"), full.names = TRUE)
     
       to_keep <- grep("fish oil|fish meal", all_files)
       all_files <- all_files[to_keep]
@@ -293,15 +296,16 @@ any(file.exists(list.files(file.path(biodiv_dir, "int/marine_aggregation/sub_chu
   fs_type <- unique(combined_dataframe$fish_type)
   ingredient_type <- unique(combined_dataframe$ingredient)
   
-  qsave(combined_dataframe, glue(file.path(biodiv_dir, "int/marine_aggregation/sub_chunk_dfs/{taxa}_{diet}_{fcr}_{fs_type}_{ingredient_type}_{allocation}_chunk_{i}.qs")))
+  qsave(combined_dataframe, glue(file.path(biodiv_dir, "int/marine_aggregation/sub_chunk_dfs/{taxa}_{diet}_{fcr}_original_{fs_type}_{ingredient_type}_{allocation}_chunk_{i}.qs")))
           
         }
          
       }
 
+     }
     }
   }
-}
+
       
 ```
 
@@ -313,20 +317,32 @@ Next we need to read in the files we saved, by chunk (500k cells), summarise per
 diet_types <- c("fish-dominant", "plant-dominant")
 fcr_types <- c("regular")
 allocation_types <- c("mass", "ge", "economic")
-allocation_types <- c("ge")
-diet_types <- c("plant-dominant")
+allocation_types <- c("economic")
 
 for(diet in diet_types){
   for(fcr in fcr_types){
     for(allocation in allocation_types){
-      
+      for(sens_type in sensitivity_types){
+        
+        # diet = "plant-dominant"
+        # fcr = "regular"
+        # allocation = "economic"
+        # sens_type = "plus-10"
+        
+        
+      if(file.exists(glue(file.path(biodiv_dir, "int/marine_aggregation/impact_maps_across_taxon_ingredient/{diet}/{fcr}/{allocation}_mean_prop.tif")))){
+        message("rasters exist... skipping")
+        next()
+      }
+
+        
         all_impact_df <- data.frame(cell_id = NA, prop_mean = NA, prop_sd = NA, prop_nspp = NA, prop_ext_risk = NA, rarity_prop_mean = NA, rarity_km2_mean = NA, total_km2 = NA)
       
       for(chunk_id in 1:13){
         
        # chunk_id = 1
         
-        files <- list.files(file.path(biodiv_dir, "int/marine_aggregation/sub_chunk_dfs/"), pattern = glue(".*_{diet}_{fcr}_.*_{allocation}_chunk_{chunk_id}.qs"), full.names = TRUE)
+        files <- list.files(file.path(biodiv_dir, "int/marine_aggregation/sub_chunk_dfs/"), pattern = glue(".*_{diet}_{fcr}_original_.*_{allocation}_chunk_{chunk_id}.qs"), full.names = TRUE)
         
         impacts_chunk <- lapply(files, qread) %>%
           bind_rows() %>%
@@ -426,8 +442,9 @@ for(diet in diet_types){
       
             
     }
-  }
-}      
+   }
+  } 
+}
 
 ```
 
@@ -447,11 +464,12 @@ for(diet in diet_types){
   for(fcr in fcr_types){
     for(allocation in allocation_types){
       for(calc_type in calc_types){
-      
+
      
         # diet = "plant-dominant"
         # fcr = "regular"
         # allocation = "economic"
+        # sens_type = "original"
         # calc_type <- "total_km2"
       
         ## read in terrestrial raster 
@@ -469,10 +487,12 @@ for(diet in diet_types){
       writeRaster(total_rast, glue(file.path(biodiv_dir, "output/impact_maps_across_taxon_ingredient/{diet}/{fcr}/{allocation}_{calc_type}.tif")), overwrite = TRUE)
             
             
-      }
+      
     }
+   }
   }
 }
+
 ```
 
 Additionally, we will save them as dataframes. We will also save dataframes for the delta impacts. This is done for ease of use in creating publication-ready maps. 

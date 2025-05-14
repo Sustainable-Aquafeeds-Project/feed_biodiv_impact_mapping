@@ -76,11 +76,12 @@ Read in marine and terrestrial dfs and combine
 
 ```{r}
 marine_overlap <- readRDS(here("prep/03_prep_spp_habitats/output/aoh_marine_impact.rds")) %>%
+     filter(sensitivity_scenario == "original") %>%
     dplyr::select(sciname, spp_type, diet, fcr_type, allocation, ingredient, vulnerability, impact_total, total_hab_area)
 
 
 terrestrial_overlap <- readRDS(here("prep/03_prep_spp_habitats/output/aoh_terrestrial_impact.rds")) %>% 
-  dplyr::select(-suitability) %>%
+   filter(sensitivity_scenario == "original") %>%
       dplyr::select(sciname, spp_type, diet, fcr_type, allocation, ingredient, vulnerability, impact_total, total_hab_area)
 
 all_overlap <- rbind(marine_overlap, terrestrial_overlap) %>%

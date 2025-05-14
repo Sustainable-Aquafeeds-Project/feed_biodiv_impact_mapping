@@ -41,10 +41,10 @@ Reproject and aggregate the ingredient crop rasters. It runs quick since they ar
 ```{r}
 
 for(diet in c("fish-dominant", "plant-dominant")){
-  for(fcr in c("efficient", "regular")){
+  for(fcr in c("regular")){
   
   # diet = "fish-dominant"
-  #   fcr = "efficient"
+  #   fcr = "regular"
 directory <- sprintf("prep/02_feed/output/%s/%s", diet, fcr)
 
 files <- list.files(here(directory), full.names = TRUE)
@@ -86,16 +86,16 @@ Reproject and disaggregate the ingredient fish rasters to 10km res.
 ```{r}
 
 for(diet in c("fish-dominant", "plant-dominant")){
-  for(fcr in c("efficient", "regular")){
+  for(fcr in c("regular")){
   
   # diet = "fish-dominant"
   #  fcr = "regular"
 directory <- sprintf("prep/02_feed/output/%s/%s", diet, fcr)
 
-files <- list.files(directory, full.names = TRUE)
+files <- list.files(here(directory), full.names = TRUE)
 
 filtered_files <- files[grepl("fish oil|fish meal", files)]
-filtered_files <- filtered_files[grepl("forage", filtered_files)]
+filtered_files <- filtered_files[grepl("trimmings|forage fish", filtered_files)]
 # filtered_files <- filtered_files[grepl("economic", filtered_files)]
 # filtered_files <- filtered_files[grepl("_A", filtered_files)]
 

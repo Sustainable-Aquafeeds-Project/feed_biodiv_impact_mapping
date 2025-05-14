@@ -78,7 +78,16 @@ spp_fp <- data.frame(filepath = list.files(file.path(terrestrial_dir, "reproject
 ## get sensitivity info dataframe
 spp_info_df <- readRDS(file.path(this_dir, "int/terrestrial_spp_habitat_suitability.rds")) %>%
   inner_join(spp_fp, by = c("species" = "species_full", "spp_type")) %>% # change this to left join ? 
-  rename(species_full = species)
+  rename(species_full = species) %>%
+  mutate(cropland_sensitivity = 1 - cropland_suitability) %>%
+  mutate(cropland_sensitivity_plus = case_when(cropland_sensitivity == 0 ~ 0.1,
+                                               cropland_sensitivity == 0.5 ~ 0.6, 
+                                               cropland_sensitivity == 1 ~ 1,
+                                               TRUE ~ cropland_sensitivity)) %>%
+  mutate(cropland_sensitivity_minus = case_when(cropland_sensitivity == 0 ~ 0,
+                                                cropland_sensitivity == 0.5 ~ 0.4, 
+                                                cropland_sensitivity == 1 ~ 0.9,
+                                               TRUE ~ cropland_sensitivity))
 
 ## how many species are we running through?
 spp_info_df %>% 
@@ -94,21 +103,48 @@ spp_info_df %>%
 # 4 Terrestrial mammal  5501
 
 ## get disturbance raster categories which we will run through
-crop_ingredient_cats <- read.csv(here("prep/02_feed/output/proportion_feed_per_country_system_diet_10-02-2024.csv")) %>%
+crop_ingredient_cats_1 <- read.csv(here("prep/02_feed/output/proportion_feed_per_country_system_diet_10-02-2024.csv")) %>%
   filter(fcr_type != "efficient") %>% # remove fcr scenarios because we no longer include those in the analysis!
   dplyr::select(diet, fcr_type, source_ingredient, GAEZ_category) %>%
   distinct() %>%
   mutate(diet_fcr = paste(diet, fcr_type, sep = "/")) %>%
-  mutate(diet_fcr_crop_ingredient = paste(diet_fcr, GAEZ_category, sep = "/")) %>%
+  mutate(sensitivity_scen = "original") %>%
+  mutate(diet_fcr_crop_ingredient = paste(diet_fcr, sensitivity_scen, sep = "/")) %>%
+  mutate(diet_fcr_crop_ingredient = paste(diet_fcr_crop_ingredient, GAEZ_category, sep = "/")) %>%
+  mutate(diet_fcr_crop_ingredient = paste(diet_fcr_crop_ingredient, source_ingredient, sep = "_")) ## filter here if you only want to do regular or efficient scenario
+  
+crop_ingredient_cats_2 <- read.csv(here("prep/02_feed/output/proportion_feed_per_country_system_diet_10-02-2024.csv")) %>%
+  filter(fcr_type != "efficient") %>% # remove fcr scenarios because we no longer include those in the analysis!
+  dplyr::select(diet, fcr_type, source_ingredient, GAEZ_category) %>%
+  distinct() %>%
+  mutate(diet_fcr = paste(diet, fcr_type, sep = "/")) %>%
+  mutate(sensitivity_scen = "plus-10") %>%
+  mutate(diet_fcr_crop_ingredient = paste(diet_fcr, sensitivity_scen, sep = "/")) %>%
+  mutate(diet_fcr_crop_ingredient = paste(diet_fcr_crop_ingredient, GAEZ_category, sep = "/")) %>%
   mutate(diet_fcr_crop_ingredient = paste(diet_fcr_crop_ingredient, source_ingredient, sep = "_")) ## filter here if you only want to do regular or efficient scenario
 
-allocations <- c("economic", "mass", "ge")
+crop_ingredient_cats_3 <- read.csv(here("prep/02_feed/output/proportion_feed_per_country_system_diet_10-02-2024.csv")) %>%
+  filter(fcr_type != "efficient") %>% # remove fcr scenarios because we no longer include those in the analysis!
+  dplyr::select(diet, fcr_type, source_ingredient, GAEZ_category) %>%
+  distinct() %>%
+  mutate(diet_fcr = paste(diet, fcr_type, sep = "/")) %>%
+  mutate(sensitivity_scen = "minus-10") %>%
+  mutate(diet_fcr_crop_ingredient = paste(diet_fcr, sensitivity_scen, sep = "/")) %>%
+  mutate(diet_fcr_crop_ingredient = paste(diet_fcr_crop_ingredient, GAEZ_category, sep = "/")) %>%
+  mutate(diet_fcr_crop_ingredient = paste(diet_fcr_crop_ingredient, source_ingredient, sep = "_")) ## filter here if you only want to do regular or efficient scenario
+
+  
+crop_ingredient_cats <- rbind(crop_ingredient_cats_1, crop_ingredient_cats_2, crop_ingredient_cats_3) %>%
+  filter(sensitivity_scen != "original") # this is already done! 
+
+
+allocations <- c("economic")
 spp_types <- unique(spp_info_df$spp_type) # we'll loop through based on larger taxanomic groupings
 diet_fcr_crop_ingredients <- unique(crop_ingredient_cats$diet_fcr_crop_ingredient)
 
 for(tx_type in spp_types){
   
- # tx_type = "Terrestrial mammal"
+ # tx_type = "Reptiles"
   
   tx_vuln_df <- spp_info_df %>%
     filter(spp_type == tx_type)
@@ -130,13 +166,13 @@ for(allocation_type in allocations){
     for(diet_fcr_crop_ingredient_type in diet_fcr_crop_ingredients){
 
 # allocation_type = "economic"
-# diet_fcr_crop_ingredient_type = "plant-dominant/regular/Soybean_soy protein concentrate"
+# diet_fcr_crop_ingredient_type = "fish-dominant/regular/plus-10/Wheat_wheat gluten"
 
           diet_type = str_before_first(diet_fcr_crop_ingredient_type, "/")
-          ingredient_type = str_after_first(diet_fcr_crop_ingredient_type, "_")
-          crop_type = str_after_nth(str_before_first(diet_fcr_crop_ingredient_type, "_"), "/", 2)
           fcr <- str_before_first(str_after_first(diet_fcr_crop_ingredient_type, "/"), "/")
-
+          sensitivity_type <- str_before_first(str_after_nth(diet_fcr_crop_ingredient_type, "/", 2), "/")
+          ingredient_type = str_after_first(str_after_nth(diet_fcr_crop_ingredient_type, "/", 3), "_")
+          crop_type =  str_before_first(str_after_nth(diet_fcr_crop_ingredient_type, "/", 3), "_")
           
 
           ## Read in harvest pressure maps, and create a dataframe of the results.  
@@ -154,17 +190,28 @@ for(allocation_type in allocations){
           ## Calculate mean impacts per species grouping 
           # Loop over each taxon; pull all AOH maps for that taxon. For each species in the taxon, multiply harvest pressure map by the spp vulnerability to identify impact map for that species. Summarize across the entire taxon to mean, sd, and nspp.
 
-          outf_mean_df <- glue(file.path(this_dir, "int/aoh_impacts_terrestrial/{tx_type}_{diet_type}_{fcr}_{crop_type}_{ingredient_type}_{allocation_type}.rds"))
-
           ## comment this out if you want to rerun things
-          if(file.exists(glue(file.path(biodiv_dir, "output/impact_maps_by_spp_ingredient_lists/{tx_type}_{diet_type}_{fcr}_{crop_type}_{ingredient_type}_{allocation_type}.rds")))) {
+          if(file.exists(glue(file.path(biodiv_dir, "output/impact_maps_by_spp_ingredient_lists/{tx_type}_{diet_type}_{fcr}_{sensitivity_type}_{crop_type}_{ingredient_type}_{allocation_type}.qs")))) {
             message('Data exist for taxon ', tx_type, crop_type, ingredient_type, diet_type, allocation_type, fcr, ' for harvest stressor... skipping!')
             next()
           }
 
           
+          # grab appropriate vuln_df column 
+          if(sensitivity_type == "original"){
+            tx_vuln_df_new <- tx_vuln_df %>%
+              dplyr::select(species_full, cropland_sensitivity, spp_type, filepath, species_id)
+          }else if(sensitivity_type == "plus-10"){
+            tx_vuln_df_new <- tx_vuln_df %>%
+              dplyr::select(species_full, cropland_sensitivity = cropland_sensitivity_plus, spp_type, filepath, species_id)
+          }else {
+            tx_vuln_df_new <- tx_vuln_df %>%
+              dplyr::select(species_full, cropland_sensitivity = cropland_sensitivity_minus, spp_type, filepath, species_id)
+          }
+          
           message('Processing impact by species in taxon ', tx_type, 
-                  ' to harvest pressure for ', allocation_type, diet_type, fcr, crop_type, ingredient_type)
+                  ' to harvest pressure for ', allocation_type, diet_type, fcr, sensitivity_type, crop_type, ingredient_type)
+          
           
           ### because failures might occur with summarizing a huge dataset,
           ### let's break this into chunks by cell_id - there are 6.6e+06 cells total
@@ -186,13 +233,13 @@ for(allocation_type in allocations){
                                               
                                               chunk_sum_spp <- tx_maps %>%
                                                 filter(between(cell_id, cell_id_min, cell_id_max)) %>% # filter for chunked cells
-                                                left_join(tx_vuln_df, by = c('species_full')) %>% # join to sensitivity df
+                                                left_join(tx_vuln_df_new, by = c('species_full')) %>% # join to sensitivity df
                                                 left_join(harvest_cells_df, 
                                                           by = c('cell_id')) %>% # join to pressure cells
                                                 as.data.table() %>%
                                                 .[ , harvest := ifelse(is.na(harvest), 0, harvest)] %>% # if no pressure present then its 0 (obvi)
                                                 .[ , hab_area := 100] %>% # the cell size is approx 100km2
-                                                .[ , impact_km2  := (1-cropland_suitability)*harvest] # calculate impact (1-suitability) = sensitivity
+                                                .[ , impact_km2  := cropland_sensitivity*harvest] # calculate impact (1-suitability) = sensitivity
                                             
                                                 chunk_sum_spp_hab <- chunk_sum_spp %>%
                                                   .[, .(species_full, cell_id, hab_area)] %>%
@@ -227,16 +274,17 @@ for(allocation_type in allocations){
             summarise(impact_total = sum(impact_total, na.rm = TRUE),
                       hab_area = sum(hab_area, na.rm = TRUE)) %>%
             mutate(allocation = allocation_type, diet_fcr_crop_ingredient = diet_fcr_crop_ingredient_type) %>%
-            mutate(diet = str_before_first(diet_fcr_crop_ingredient, "\\/")) %>%
-            mutate(fcr_type = str_before_first(str_after_first(diet_fcr_crop_ingredient, "\\/"), "\\/")) %>%
-            mutate(crop_ingredient = str_after_nth(diet_fcr_crop_ingredient, "\\/", 2)) %>%
+            mutate(diet = diet_type) %>%
+            mutate(fcr_type = fcr) %>%
+            mutate(crop_ingredient = paste0(crop_type, "_", ingredient_type)) %>%
+            mutate(sensitivity_scenario = sensitivity_type) %>%
             ungroup() # save a global df for each spp and crop impact
           
-          diet_type = unique(global_df$diet)
-          fcr <- unique(global_df$fcr_type)
+          # diet_type = unique(global_df$diet)
+          # fcr <- unique(global_df$fcr_type)
           crop_ingredient_type <- unique(global_df$crop_ingredient)
 
-          write_rds(global_df, glue(file.path(biodiv_dir, "int/aoh_impacts_terrestrial/{tx_type}_{diet_type}_{fcr}_{crop_ingredient_type}_{allocation_type}.rds")))
+          write_rds(global_df, glue(file.path(biodiv_dir, "int/aoh_impacts_terrestrial/{tx_type}_{diet_type}_{fcr}_{sensitivity_type}_{crop_ingredient_type}_{allocation_type}.rds")))
   
 
           spp_list <- lapply(result_list, function(x) {
@@ -248,7 +296,7 @@ for(allocation_type in allocations){
           })
           
           # we are saving these datasets as .qs files are they are great at compacting data... some of these are VERY LARGE datasets
-          qsave(spp_list, glue(file.path(biodiv_dir, "output/impact_maps_by_spp_ingredient_lists/{tx_type}_{diet_type}_{fcr}_{crop_ingredient_type}_{allocation_type}.qs")))
+          qsave(spp_list, glue(file.path(biodiv_dir, "output/impact_maps_by_spp_ingredient_lists/{tx_type}_{diet_type}_{fcr}_{sensitivity_type}_{crop_ingredient_type}_{allocation_type}.qs")))
 
           }
       }

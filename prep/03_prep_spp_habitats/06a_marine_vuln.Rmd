@@ -264,7 +264,20 @@ overlay_vuln <- info_df %>%
   dplyr::select(-genus, -source, -DepthPrefMin, -bycatch_gf, -biomass_removal_gf, -FBname, -SpecCode, -vuln) %>%
   mutate(taxon = ifelse(species == "cystophora retroflexa", "Marine plant", taxon))
 
-write_rds(overlay_vuln, file.path(rdsi_dir, "biodiversity_impacts/int/spp_vuln_depth_info.rds"))
+# write_rds(overlay_vuln, file.path(rdsi_dir, "biodiversity_impacts/int/spp_vuln_depth_info.rds"))
+
+
+overlay_vuln_new <-overlay_vuln %>%
+    mutate(vuln_quartile_plus = case_when(vuln_quartile == 0 ~ 0.1,
+                                               vuln_quartile == 0.5 ~ 0.6, 
+                                               vuln_quartile == 1 ~ 1,
+                                               TRUE ~ vuln_quartile)) %>%
+  mutate(vuln_quartile_minus = case_when(vuln_quartile == 0 ~ 0,
+                                                vuln_quartile == 0.5 ~ 0.4, 
+                                                vuln_quartile == 1 ~ 0.9,
+                                               TRUE ~ vuln_quartile))
+
+write_rds(overlay_vuln_new, file.path(rdsi_dir, "biodiversity_impacts/int/spp_vuln_depth_info.rds"))
 
 
 

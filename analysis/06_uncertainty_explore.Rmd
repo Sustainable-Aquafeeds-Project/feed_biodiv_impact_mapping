@@ -54,74 +54,290 @@ impact_maps_dir <- file.path(biodiv_dir, "output")
 ```{r}
 ## load in some data for categories and general exploration
 marine_overlap <- readRDS(here("prep/03_prep_spp_habitats/output/aoh_marine_impact.rds")) %>%
-    dplyr::select(sciname, spp_type, diet, fcr_type, allocation, ingredient, vulnerability, impact_total, total_hab_area)
+    dplyr::select(sciname, diet, fcr_type, allocation, ingredient, vulnerability, sensitivity_scenario, impact_total, total_hab_area)
 
 terrestrial_overlap <- readRDS(here("prep/03_prep_spp_habitats/output/aoh_terrestrial_impact.rds")) %>% 
-  dplyr::select(-suitability) %>%
-      dplyr::select(sciname, spp_type, diet, fcr_type, allocation, ingredient, vulnerability, impact_total, total_hab_area)
+      dplyr::select(sciname, diet, fcr_type, allocation, ingredient, vulnerability, sensitivity_scenario, impact_total, total_hab_area)
 
-all_overlap <- rbind(marine_overlap, terrestrial_overlap) %>%
-    mutate(taxon = str_to_sentence(spp_type)) %>%
-  mutate(taxon = case_when(
-    taxon == "Terrestrial mammal" ~ "Terrestrial mammals",
-    taxon == "Bird" ~ "Birds",
-    taxon == "Fish" ~ "Finfish", 
-    taxon == "Marine mammal" ~ "Marine mammals",
-    taxon == "Marine plant" ~ "Marine plants",
-    TRUE ~ taxon))
+all_overlap <- rbind(marine_overlap, terrestrial_overlap) 
+
+
+test <- terrestrial_overlap %>% 
+  filter(allocation == "economic") %>%
+  group_by(diet, sensitivity_scenario) %>%
+  summarise(total_impact = sum(impact_total, na.rm = TRUE)) %>%
+  ungroup()
+
+test <- marine_overlap %>% 
+  filter(allocation == "economic") %>%
+  group_by(diet, sensitivity_scenario) %>%
+  summarise(total_impact = sum(impact_total, na.rm = TRUE)) %>%
+  ungroup()
 
 ```
 
-Lets see if the standard deviation generally scales with the mean; if it does, we should probably report coefficient of variation instead. 
- - these plots take a while to save - like 10 mins each.
+Lets take a look at our species sensitivity scenarios: 
+
+Plots to make/things to explore: 
+ - Violin or boxplot of total impact per species across sensitivity scenarios 
+   - Facet by feed scenario (fish or plant) to show how uncertainty compares across diets 
+ - For each species or other grouping
+   - Compute difference in mean impact between two feed scenarios under original sensitivity
+   - Compute the range (or sd) of impact across ±0.1 sensitivity scenarios 
+   - Then make a signal-noise ratio where signal = mean_impact_plant - mean_impact_fish and noise = SD or range across sensitivity scenarios 
+ - Are there any species where the rankings of the two feed scenarios flips depending on the sensitivity assumption? For example, does the fish based feed have higher impact under one sensitivity  but lower under another? 
+
+
 ```{r}
-## read in mean rast for plant-dominant regular FCR
+# read in data frames 
+all_impacts <- all_overlap %>%
+  filter(allocation == "economic") %>% # filter for economic
+  mutate(diet = ifelse(diet == "plant-dominant", "plant", "fish")) # rename for easier column manipulation
 
-## read in sd rast for plant-dominant regular FCR
+all_impacts_grouped <- all_impacts %>%
+  group_by(sciname, diet, sensitivity_scenario) %>%
+  summarise(total_impact = sum(impact_total, na.rm = TRUE),
+            mean_impact = mean(impact_total, na.rm = TRUE)) %>%
+  ungroup()
 
-## calculate some sort of scaling plot
 
-allocations <- c("ecomomic", "mass", "ge")
+## lets look at overall trends 
+# Filter to economic allocation (or adjust as needed)
+impacts_filtered <- all_impacts %>%
+  filter(allocation == "economic") %>%
+  mutate(sensitivity_scenario = str_remove(sensitivity_scenario, "-"))
 
-for(allocation_type in allocations){
+# Summarize total and mean impact per diet and sensitivity
+impacts_summary <- impacts_filtered %>%
+  group_by(diet, sensitivity_scenario) %>%
+  summarise(
+    total_impact = sum(impact_total, na.rm = TRUE),
+    mean_impact = mean(impact_total, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+# Reshape to wide to compare other scenarios to original
+impacts_wide <- impacts_summary %>%
+  pivot_wider(
+    names_from = sensitivity_scenario,
+    values_from = c(total_impact, mean_impact),
+    names_glue = "{.value}_{sensitivity_scenario}"
+  )
+
+# Compute percent and absolute differences vs original
+impacts_change <- impacts_wide %>%
+  mutate(
+    abs_diff_total_plus10 = total_impact_plus10 - total_impact_original,
+    pct_diff_total_plus10 = 100 * abs_diff_total_plus10 / total_impact_original,
+
+    abs_diff_total_minus10 = total_impact_minus10 - total_impact_original,
+    pct_diff_total_minus10 = 100 * abs_diff_total_minus10 / total_impact_original,
+
+    abs_diff_mean_plus10 = mean_impact_plus10 - mean_impact_original,
+    pct_diff_mean_plus10 = 100 * abs_diff_mean_plus10 / mean_impact_original,
+
+    abs_diff_mean_minus10 = mean_impact_minus10 - mean_impact_original,
+    pct_diff_mean_minus10 = 100 * abs_diff_mean_minus10 / mean_impact_original
+  ) %>%
+  dplyr::select(diet, pct_diff_total_plus10, pct_diff_total_minus10, pct_diff_mean_plus10, pct_diff_mean_minus10)
+
+## lets look at species level trends and see if any changes in imapct are unexpected 
+# Filter to economic allocation (or adjust as needed)
+impacts_filtered <- all_impacts %>%
+  filter(allocation == "economic") %>%
+  mutate(sensitivity_scenario = str_remove(sensitivity_scenario, "-")) 
+#%>%
+ # filter(impact_total > 0)
+
+# Summarize total and mean impact per diet and sensitivity
+impacts_summary <- impacts_filtered %>%
+  group_by(diet, sciname, sensitivity_scenario) %>%
+  summarise(
+    total_impact = sum(impact_total, na.rm = TRUE),
+    mean_impact = mean(impact_total, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+# Reshape to wide to compare other scenarios to original
+impacts_wide <- impacts_summary %>%
+  pivot_wider(
+    names_from = sensitivity_scenario,
+    values_from = c(total_impact, mean_impact),
+    names_glue = "{.value}_{sensitivity_scenario}"
+  )
+
+# Compute percent and absolute differences vs original
+impacts_change <- impacts_wide %>%
+  mutate(
+    abs_diff_total_plus10 = total_impact_plus10 - total_impact_original,
+    pct_diff_total_plus10 = 100 * abs_diff_total_plus10 / total_impact_original,
+
+    abs_diff_total_minus10 = total_impact_minus10 - total_impact_original,
+    pct_diff_total_minus10 = 100 * abs_diff_total_minus10 / total_impact_original,
+
+    abs_diff_mean_plus10 = mean_impact_plus10 - mean_impact_original,
+    pct_diff_mean_plus10 = 100 * abs_diff_mean_plus10 / mean_impact_original,
+
+    abs_diff_mean_minus10 = mean_impact_minus10 - mean_impact_original,
+    pct_diff_mean_minus10 = 100 * abs_diff_mean_minus10 / mean_impact_original
+  ) %>%
+  dplyr::select(diet, sciname, pct_diff_total_plus10, pct_diff_total_minus10, pct_diff_mean_plus10, pct_diff_mean_minus10, total_impact_original, mean_impact_original, total_impact_plus10)
+
+impacts_test <- impacts_change %>%
+  filter(pct_diff_total_plus10 == "Inf") %>%
+  filter(diet == "fish")
+
+impacts_test_2 <- all_impacts %>% 
+  filter(vulnerability == 0.1) %>%
+  group_by(diet) %>%
+  summarise(total_impact = sum(impact_total, na.rm = TRUE)) %>%
+  ungroup()
+
+# # A tibble: 2 × 2
+#   diet  total_impact
+#   <chr>        <dbl>
+# 1 fish        31887.
+# 2 plant       70914.
+
+impacts_all <- impacts_filtered %>%
+  group_by(diet, sensitivity_scenario) %>%
+  summarise(
+    total_impact = sum(impact_total, na.rm = TRUE),
+    mean_impact = mean(impact_total, na.rm = TRUE),
+    .groups = "drop"
+  )
   
-# allocation_type = "economic"
-  
-# Read data
- filepath_mean <- glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_ingredient/{allocation_type}_mean_prop.qs"))
+# total original plant diet impacts : 552924.0
+70913.39/552924.0 # 0.1282516 - 13%
+# total original fish diet impacts: 515164.5
+31886.5/515164.5 # 6%
+
+# compared to plus-10 scenario
+31887/605338.5 # 5%
+70914/650006.6 # 11%
+
+
+# 6. Optional: identify reversals in scenario ranking across sensitivity
+ranking_check <- all_impacts %>%
+  filter(allocation == "economic") %>%
+  group_by(sciname, diet, sensitivity_scenario) %>%
+  summarise(total_impact = sum(impact_total, na.rm = TRUE)) %>%
+  pivot_wider(names_from = diet, values_from = total_impact, names_prefix = "diet_") %>%
+  mutate(winner = ifelse(diet_fish > diet_plant, "fish", "plant"))  ## need to look at how many of the species have a different "winner" in any of the three scenarios. When there is a different winner, is it always when we added a new species to be sensitive? 
+
+ranking_pivot <- ranking_check %>%
+  dplyr::select(sciname, sensitivity_scenario, winner) %>%
+  pivot_wider(names_from = sensitivity_scenario, values_from = winner) 
+
+inconsistent_rows <- ranking_pivot[
+  !(ranking_pivot$`minus-10` == ranking_pivot$original & 
+    ranking_pivot$original == ranking_pivot$`plus-10`), ] %>%
+  filter(`minus-10` == original) # ok so for these species 2374 flip to fish domninant having more impacts under the plus 10 scenario. 
+
+2374/54625 # no species flip from original to minus-10. 4% of species (n=2374) flip from plant-dominant to fish-dominant having more impacts going from original to plus-10. What % of impacts do these flipped species represent of the original impacts? 
+
+flipped_spp <- inconsistent_rows %>%
+  distinct(sciname) %>%
+  pull(sciname)
+
+impacts_test_2 <- all_impacts %>% 
+  filter(sciname %in% flipped_spp) %>%
+  group_by(diet, sensitivity_scenario) %>%
+  summarise(total_impact = sum(impact_total, na.rm = TRUE)) %>%
+  ungroup()
+
+impacts_test_spp <- all_impacts %>% 
+  filter(sciname %in% flipped_spp) %>%
+  distinct(sciname, ingredient) %>%
+  mutate(type = ifelse(ingredient %in% c("trimmings fish_fish meal, cut offs", "trimmings fish_fish oil, cut offs", "forage fish_fish meal", "forage fish_fish oil"), "marine", "terrestrial")) %>%
+  distinct(sciname, type) # only 23 of the 2374 species which "flipped" the impacts are terrestrial, which explains why the fish-dominant is higher, because more marine species were sensitive and exposed under the new scenario.
  
-  filepath_sd <- glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_ingredient/{allocation_type}_sd_prop.qs"))
+impacts_test_spp <- all_impacts %>% 
+  filter(vulnerability == 0.1) %>%
+  pull(sciname) %>%
+  unique() # so there were 7534 new species could be impacted
 
-loop_df_mean <-  qs::qread(filepath_mean) %>%
-  dplyr::select(-calc_type) %>%
-  rename(mean_prop = value)
+impacts_test_spp <- all_impacts %>% 
+  filter(vulnerability == 0.1,
+         impact_total > 0) %>%
+  pull(sciname) %>%
+  unique() # so there were 7202 new species with actual impacts 
 
-loop_df_sd <-  qs::qread(filepath_sd) %>%
-    dplyr::select(-calc_type) %>%
-  rename(sd_prop = value) 
+impacts_test_spp <- all_impacts %>% 
+  filter(sciname %in% flipped_spp) %>%
+  distinct(sciname, ingredient) %>%
+  mutate(type = ifelse(ingredient %in% c("trimmings fish_fish meal, cut offs", "trimmings fish_fish oil, cut offs", "forage fish_fish meal", "forage fish_fish oil"), "marine", "terrestrial")) %>%
+  distinct(sciname, type) %>%
+  pull(sciname) %>%
+  unique()
 
-loop_df_all <- loop_df_mean %>%
-  left_join(loop_df_sd) %>%
-  mutate(cv = sd_prop/mean_prop) %>%
-  filter(!is.na(sd_prop))
-
-loop_df_all$fcr_type = factor(loop_df_all$fcr_type, levels=c("regular", "efficient"))
-
-
-p <- ggplot(data = loop_df_all, aes(x = mean_prop, y = sd_prop)) +
-  geom_point() +
-  geom_smooth(se = FALSE, formula = y~x) +
-  geom_abline() +
-  labs(caption = glue("{allocation_type}")) + 
-  facet_grid(diet~fcr_type, scales = "free") 
-
-ggsave(filename = glue(here("analysis/uncertainty/sd_explore/mean_sd_scaling_{allocation_type}.png")), plot = p)
+impacts_test_flipped_spp_impact <- all_impacts %>% 
+  filter(sciname %in% impacts_test_spp) %>% 
+  group_by(diet, sensitivity_scenario) %>%
+  summarise(total_impacts = sum(impact_total, na.rm = TRUE)) %>%
+  ungroup()
 
 
-}
-
+# fish flipped impacts
+4195.089/605338.5
+# plant flipped spp impacts
+1729.887/650006.6
 ```
 
+
+```{r}
+# 1. Calculate scenario difference under original sensitivity
+impact_diff_by_species <- all_impacts %>%
+  filter(sensitivity_scenario == "original") %>%
+  group_by(sciname, diet) %>%
+  summarise(total_impact = sum(impact_total, na.rm = TRUE)) %>%
+  pivot_wider(names_from = diet, values_from = total_impact, names_prefix = "diet_") %>%
+  mutate(diff_original = abs(diet_fish - diet_plant)) %>%
+  ungroup()
+
+# 2. Compute variability across sensitivity scenarios per species & diet
+sensitivity_variation <- all_impacts %>%
+  group_by(sciname, diet, sensitivity_scenario) %>%
+  summarise(total_impact = sum(impact_total, na.rm = TRUE)) %>%
+  group_by(sciname, diet) %>%
+  summarise(range_impact = max(total_impact) - min(total_impact),
+            sd_impact = sd(total_impact, na.rm = TRUE)) %>%
+  ungroup()
+
+# 3. Merge difference and uncertainty
+sensitivity_analysis <- impact_diff_by_species %>%
+  inner_join(sensitivity_variation, by = "sciname") %>%
+  mutate(signal_to_range = diff_original / range_impact,
+         uncertainty_dominates = diff_original < range_impact)
+
+# 4. Plot: signal vs uncertainty
+ggplot(sensitivity_analysis, aes(x = diff_original, y = range_impact, color = diet)) +
+  geom_point(alpha = 0.6) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "red") +
+  labs(x = "Impact difference between feed types (original)",
+       y = "Impact range due to sensitivity",
+       title = "Feed Scenario Signal vs Sensitivity Uncertainty") +
+  theme_minimal()
+
+plot_df <- all_impacts %>%
+  group_by(sensitivity_scenario, diet) %>%
+  summarise(impact_total = sum(impact_total, na.rm = TRUE)) %>%
+  ungroup()
+
+# 5. Violin plot of impact by sensitivity for one feed type (e.g., plant)
+ggplot(plot_df,
+       aes(x = sensitivity_scenario, y = impact_total, fill = diet)) +
+  geom_col(position = "dodge") + 
+  #geom_violin(fill = "#86b8e0", alpha = 0.7) +
+ # facet_grid(~diet, scales = "free_y") +
+  theme_minimal() +
+  labs(
+       x = "Sensitivity Scenario",
+       y = "Total Impact")
+
+
+
+```
 
 Lets map how each scenario agrees (or not) with one another on high vs low impact areas:
   	  - most impacted cells (>95 quantile?) in 1, 2, 3 scenarios (different colors); least impacted cells (<25th quantile) in 1, 2, 3 scenarios (different colors); this will tell us the places that for sure have high or low impacts 
@@ -211,4 +427,52 @@ where.max(test)
 
 ```
 
+Lets see if the standard deviation generally scales with the mean; if it does, we should probably report coefficient of variation instead. 
+ - these plots take a while to save - like 10 mins each.
+```{r}
+## read in mean rast for plant-dominant regular FCR
 
+## read in sd rast for plant-dominant regular FCR
+
+## calculate some sort of scaling plot
+
+allocations <- c("ecomomic", "mass", "ge")
+
+for(allocation_type in allocations){
+  
+# allocation_type = "economic"
+  
+# Read data
+ filepath_mean <- glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_ingredient/{allocation_type}_mean_prop.qs"))
+ 
+  filepath_sd <- glue(file.path(impact_maps_dir, "csvs/impact_maps_across_taxon_ingredient/{allocation_type}_sd_prop.qs"))
+
+loop_df_mean <-  qs::qread(filepath_mean) %>%
+  dplyr::select(-calc_type) %>%
+  rename(mean_prop = value)
+
+loop_df_sd <-  qs::qread(filepath_sd) %>%
+    dplyr::select(-calc_type) %>%
+  rename(sd_prop = value) 
+
+loop_df_all <- loop_df_mean %>%
+  left_join(loop_df_sd) %>%
+  mutate(cv = sd_prop/mean_prop) %>%
+  filter(!is.na(sd_prop))
+
+loop_df_all$fcr_type = factor(loop_df_all$fcr_type, levels=c("regular", "efficient"))
+
+
+p <- ggplot(data = loop_df_all, aes(x = mean_prop, y = sd_prop)) +
+  geom_point() +
+  geom_smooth(se = FALSE, formula = y~x) +
+  geom_abline() +
+  labs(caption = glue("{allocation_type}")) + 
+  facet_grid(diet~fcr_type, scales = "free") 
+
+ggsave(filename = glue(here("analysis/uncertainty/sd_explore/mean_sd_scaling_{allocation_type}.png")), plot = p)
+
+
+}
+
+```

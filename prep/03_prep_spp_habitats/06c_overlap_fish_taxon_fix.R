@@ -110,11 +110,13 @@ spp_info_df_fish %>%
 ## perfect
 
 allocations <- unique(spp_info_df_fish$allocation)
+allocations <- c("economic")
 diets <- unique(spp_info_df_fish$diet)
 ingredients <- unique(spp_info_df_fish$ingredient)
 fish_types <- unique(spp_info_df_fish$fish_type)
 spp_types <- unique(spp_info_df_fish$taxon)
-fcrs <- c("regular", "efficient")
+fcrs <- c("regular")
+sensitivity_types <- c("plus-10", "minus-10")
 
 for(tx_type in spp_types){
 
@@ -137,12 +139,15 @@ for(tx_type in spp_types){
      for(fcr in fcrs){
     for(ingredient_type in ingredients){
       for(fs_type in fish_types){
-
+        for(sensitivity_type in sensitivity_types){
+          
 
           # allocation_type = "economic"
           # diet_type = "plant-dominant"
           # ingredient_type = "fish oil, cut offs"
           # fs_type = "trimmings fish"
+          # sensitivity_type = "original"
+          # fcr = "regular"
 
           if(fs_type == "trimmings fish" & ingredient_type == "fish meal" |fs_type == "trimmings fish" & ingredient_type == "fish oil" |
              fs_type == "forage fish" & ingredient_type == "fish meal, cut offs"| fs_type == "forage fish" & ingredient_type == "fish oil, cut offs") {
@@ -150,10 +155,8 @@ for(tx_type in spp_types){
             next()
           }
 
-          outf_mean_df <- glue(file.path(biodiv_dir, "int/aoh_impacts_marine/{tx_type}_{diet_type}_{fcr}_{fs_type}_{ingredient_type}_{allocation_type}.rds"))
-
-          if(file.exists(glue(file.path(biodiv_dir, "output/impact_maps_by_spp_ingredient_lists/{tx_type}_{diet_type}_{fcr}_{fs_type}_{ingredient_type}_{allocation_type}.qs")))) {
-            message('Rasters exist for taxon ', tx_type, ' for pressure... skipping!')
+          if(file.exists(glue(file.path(biodiv_dir, "output/impact_maps_by_spp_ingredient_lists/{tx_type}_{diet_type}_{fcr}_{sensitivity_type}_{fs_type}_{ingredient_type}_{allocation_type}.qs")))) {
+            message('Rasters exist for taxon ', tx_type, sensitivity_type, ' for pressure... skipping!')
             next()
           }
 
@@ -164,6 +167,21 @@ for(tx_type in spp_types){
                    fish_type == fs_type,
                    ingredient == ingredient_type)
 
+          # grab appropriate vuln_df column 
+          if(sensitivity_type == "original"){
+            tx_vuln_df <- tx_vuln_df %>%
+              dplyr::select(-vuln_quartile_plus, -vuln_quartile_minus)
+            
+          }else if(sensitivity_type == "plus-10"){
+            tx_vuln_df <- tx_vuln_df %>%
+              dplyr::select(allocation, diet, ingredient, fish_type, SpeciesID, species, spp_type, taxon, depth_position, DepthPrefMax, trim_spp, for_spp, 
+                            catch_type, filepath, wcol, vuln_quartile = vuln_quartile_plus)
+          }else {
+            tx_vuln_df <- tx_vuln_df %>%
+              dplyr::select(allocation, diet, ingredient, fish_type, SpeciesID, species, spp_type, taxon, depth_position, DepthPrefMax, trim_spp, for_spp, 
+                            catch_type, filepath, wcol, vuln_quartile = vuln_quartile_minus)
+          }    
+          
 
           ## Read in bycatch and catch stressor maps, and create a dataframe of the results.  Assign species to one of three bins based on water column position trait.  Benthopelagic and reef associated spp will take an average of the two bycatch stressor maps.
           benth_catch_rast <- rast(sprintf(file.path(feed_rast_dir, "%s/%s/%s_%s_%s_benthic_catch_A.tif"), diet_type, fcr, fs_type, ingredient_type, allocation_type))
@@ -194,7 +212,7 @@ for(tx_type in spp_types){
           # For each species in the taxon, multiply bycatch or catch stressor map by the spp vulnerability to identify impact map for that species. Summarize across the entire taxon to mean, sd, and nspp.
 
 
-          message('Processing mean/sd vulnerability by species in taxon ', tx_type, allocation_type, fs_type, ingredient_type, diet_type,
+          message('Processing mean/sd vulnerability by species in taxon ', tx_type, allocation_type, fs_type, ingredient_type, diet_type, sensitivity_type,
                   ' to bycatch/catch stressor...')
 
           ### because failures might occur with summarizing a huge dataset,
@@ -254,18 +272,19 @@ for(tx_type in spp_types){
           }
 
 
-          message(glue('Creating and saving global df for taxon {tx_type} {allocation_type} {ingredient_type} {fs_type} {diet_type} {fcr}'))
+          message(glue('Creating and saving global df for taxon {tx_type} {allocation_type} {ingredient_type} {fs_type} {diet_type} {fcr} {sensitivity_type}'))
 
           global_df <- rbindlist(lapply(result_list, function(x) x$chunk_sum_spp_global)) %>%
             as.data.frame() %>%
             group_by(species) %>%
             summarise(impact_total = sum(impact_total, na.rm = TRUE),
                       hab_area = sum(hab_area, na.rm = TRUE)) %>%
-            mutate(allocation = allocation_type, diet = diet_type, fcr_type = fcr, ingredient = glue("{fs_type}_{ingredient_type}"))
+            mutate(allocation = allocation_type, diet = diet_type, fcr_type = fcr, ingredient = glue("{fs_type}_{ingredient_type}"),
+                   sensitivity_scenario = sens_type)
 
           fish_ingredient_type = unique(global_df$ingredient)
 
-          write_rds(global_df, glue(file.path(biodiv_dir, "int/aoh_impacts_marine/{tx_type}_{diet_type}_{fcr}_{fish_ingredient_type}_{allocation_type}.rds")))
+          write_rds(global_df, glue(file.path(biodiv_dir, "int/aoh_impacts_marine/{tx_type}_{diet_type}_{fcr}_{sensitivity_type}_{fish_ingredient_type}_{allocation_type}.rds")))
 
           result_list %>%
             lapply(function(x) {
@@ -275,13 +294,14 @@ for(tx_type in spp_types){
                 return(NA)  # Return NA or an empty dataframe if 'chunk_sum_spp' is not found
               }
             }) %>%
-            qsave(file = glue(file.path(biodiv_dir, "output/impact_maps_by_spp_ingredient_lists/{tx_type}_{diet_type}_{fcr}_{fish_ingredient_type}_{allocation_type}.qs")))
+            qsave(file = glue(file.path(biodiv_dir, "output/impact_maps_by_spp_ingredient_lists/{tx_type}_{diet_type}_{fcr}_{sensitivity_type}_{fish_ingredient_type}_{allocation_type}.qs")))
 
           rm(result_list)
           rm(global_df)
           
           
-          }
+        }
+      }
       }
     }
    }
