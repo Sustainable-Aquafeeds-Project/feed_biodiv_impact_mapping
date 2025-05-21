@@ -284,6 +284,26 @@ stopCluster(cl)
 
 ```
 
+Now save SI fig 2 and 4
+
+> SI Figure 2. The number of species impacted in each cell for each feed formulation scenario. White areas represent areas with no impacted habitat or production of materials. Related to Figures 1 and 2. 
+
+> SI Figure 4. The total km2 of impacted habitat in each cell. White areas represent areas with no impacted habitat or production of materials. Related to Figure 1. 
+
+```{r}
+file.copy(
+  from = here::here("analysis/SI_plots/across_taxon_ingredient/economic_total_km2_plot.png"),
+  to   = here::here("analysis/SI_plots/SI_Fig_4_total_km2.png"),
+  overwrite = TRUE
+)
+
+file.copy(
+  from = here::here("analysis/SI_plots/across_taxon_ingredient/economic_nspp_plot.png"),
+  to   = here::here("analysis/SI_plots/SI_Fig_2_nspp_impacted.png"),
+  overwrite = TRUE
+)
+```
+
 Global maps across ingredients per taxon 
 
 ```{r}
@@ -440,7 +460,6 @@ Global maps by raw material across taxon
 
 allocations <- c("economic", "ge", "mass")
 calc_types <- c("mean_ext_risk", "nspp", "sd_prop", "mean_prop", "total_km2", "rarity_mean_prop")
-
 raw_mats <- c("Soybean", "Wheat", "Sunflower", "CropsNES", "Rapeseed", "Maize", "forage fish", "trimmings fish", "Pulses")
 
 num_cores <- 3

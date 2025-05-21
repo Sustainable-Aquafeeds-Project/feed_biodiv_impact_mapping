@@ -61,41 +61,29 @@ terrestrial_overlap <- readRDS(here("prep/03_prep_spp_habitats/output/aoh_terres
 
 all_overlap <- rbind(marine_overlap, terrestrial_overlap) 
 
-
-test <- terrestrial_overlap %>% 
-  filter(allocation == "economic") %>%
-  group_by(diet, sensitivity_scenario) %>%
-  summarise(total_impact = sum(impact_total, na.rm = TRUE)) %>%
-  ungroup()
-
-test <- marine_overlap %>% 
-  filter(allocation == "economic") %>%
-  group_by(diet, sensitivity_scenario) %>%
-  summarise(total_impact = sum(impact_total, na.rm = TRUE)) %>%
-  ungroup()
-
 ```
 
 Lets take a look at our species sensitivity scenarios: 
 
 Plots to make/things to explore: 
- - Violin or boxplot of total impact per species across sensitivity scenarios 
-   - Facet by feed scenario (fish or plant) to show how uncertainty compares across diets 
  - For each species or other grouping
    - Compute difference in mean impact between two feed scenarios under original sensitivity
    - Compute the range (or sd) of impact across ±0.1 sensitivity scenarios 
    - Then make a signal-noise ratio where signal = mean_impact_plant - mean_impact_fish and noise = SD or range across sensitivity scenarios 
  - Are there any species where the rankings of the two feed scenarios flips depending on the sensitivity assumption? For example, does the fish based feed have higher impact under one sensitivity  but lower under another? 
+ 
+ 
+  - make a bar chart showing total impacts for each sensitivity scenario and for each allocation scenario (original sensitivity)
 
 
 ```{r}
 # read in data frames 
 all_impacts <- all_overlap %>%
-  filter(allocation == "economic") %>% # filter for economic
+  # filter(allocation == "economic") %>% # filter for economic
   mutate(diet = ifelse(diet == "plant-dominant", "plant", "fish")) # rename for easier column manipulation
 
 all_impacts_grouped <- all_impacts %>%
-  group_by(sciname, diet, sensitivity_scenario) %>%
+  group_by(sciname, diet, allocation, sensitivity_scenario) %>%
   summarise(total_impact = sum(impact_total, na.rm = TRUE),
             mean_impact = mean(impact_total, na.rm = TRUE)) %>%
   ungroup()
@@ -320,21 +308,51 @@ ggplot(sensitivity_analysis, aes(x = diff_original, y = range_impact, color = di
   theme_minimal()
 
 plot_df <- all_impacts %>%
-  group_by(sensitivity_scenario, diet) %>%
-  summarise(impact_total = sum(impact_total, na.rm = TRUE)) %>%
-  ungroup()
+  mutate(sensitivity_scenario_new = 
+           case_when(
+             allocation %in% c("ge", "mass") ~ allocation,
+             TRUE ~ sensitivity_scenario
+  ))
 
-# 5. Violin plot of impact by sensitivity for one feed type (e.g., plant)
-ggplot(plot_df,
-       aes(x = sensitivity_scenario, y = impact_total, fill = diet)) +
+dup_economic <- all_impacts %>%
+  filter(allocation == "economic",
+         sensitivity_scenario == "original") %>%
+  mutate(sensitivity_scenario_new = "economic")
+  
+plot_df_2 <- plot_df %>%
+  rbind(., dup_economic) %>%
+group_by(sensitivity_scenario_new, diet) %>%
+  summarise(impact_total = sum(impact_total, na.rm = TRUE)) %>%
+  ungroup() %>%
+  mutate(facet_cat = ifelse(sensitivity_scenario_new %in% c("ge", "mass", "economic"), "Allocation scenario (original sensitivity)", "Sensitivty scenario (economic allocation)")) %>%
+  mutate(diet = ifelse(diet == "plant", "Plant-dominant", "Fish-dominant")) %>%
+  mutate(sensitivity_scenario_new = str_to_sentence(sensitivity_scenario_new)) %>%
+  mutate(sensitivity_scenario_new = case_when(
+    sensitivity_scenario_new == "Ge" ~ "Energetic",
+    sensitivity_scenario_new == "Minus-10" ~ "Minus 0.1",
+        sensitivity_scenario_new == "Plus-10" ~ "Plus 0.1",
+    TRUE ~ sensitivity_scenario_new
+  ))
+
+diet_cols = c("Fish-dominant" = "#3787C0", "Plant-dominant" = "#37A055")
+
+plot_df_2 <- plot_df_2 %>%
+  arrange(impact_total) %>%
+  mutate(sensitivity_scenario_new = fct_reorder(sensitivity_scenario_new, impact_total))
+
+ggplot(plot_df_2,
+       aes(x = sensitivity_scenario_new, y = impact_total, fill = diet)) +
   geom_col(position = "dodge") + 
-  #geom_violin(fill = "#86b8e0", alpha = 0.7) +
- # facet_grid(~diet, scales = "free_y") +
+  facet_wrap(vars(facet_cat), scales = "free_x") +
+  scale_fill_manual(values = diet_cols, breaks = names(diet_cols), guide = guide_legend(reverse = FALSE)) +
   theme_minimal() +
   labs(
-       x = "Sensitivity Scenario",
-       y = "Total Impact")
+       x = "Scenario",
+       y = "Total Impact",
+       fill = "Diet") +
+  theme( text = element_text(family = "arial", size = 8))
 
+ggsave(here("analysis/SI_plots/SI_Fig_12_sensitivity_analysis.png"),  bg = "white", width = 178.9, height = 100.92 , units = "mm")
 
 
 ```

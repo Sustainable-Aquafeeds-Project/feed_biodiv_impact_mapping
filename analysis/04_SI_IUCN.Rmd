@@ -402,7 +402,7 @@ legend_pattern <-  get_legend(ggplot() + geom_col_pattern(plot_df_new,
 
 p <- ggdraw() + draw_plot(iucn_plot) + draw_plot(legend_iucn, x = 0.1, y = 0.005, width = 0.5, height = 0.15) + draw_plot(legend_pattern, x = 0.6, y = 0.005, width = 0.5, height = 0.118)
 
-ggsave(here("analysis/SI_plots/SI_Fig_4_iucn_plot_no_props.png"), units = "mm", width = 180, height = 180)
+ggsave(here("analysis/SI_plots/SI_Fig_8_iucn_plot_no_props.png"), units = "mm", width = 180, height = 180)
 
 ## ok, now we will add the proportions created above in post processing, using inkscape; https://inkscape.org/
 

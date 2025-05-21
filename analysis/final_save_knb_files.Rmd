@@ -1,0 +1,151 @@
+---
+title: "Save files for KNB"
+output: html_document
+date: "2025-05-21"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(dplyr)
+library(terra)
+library(here)
+library(glue)
+library(zip)
+
+source(here("src/directories.R"))
+
+output_dir <- file.path(rdsi_dir, "biodiversity_impacts/output")
+
+# create directory to put knb files into
+dir.create(glue("{output_dir}/knb_files"))
+```
+
+## Summary
+Here we save format and save files for KNB which is an open data repository. We will save all into a new folder on RDSI (and then upload to knb): 
+
+ - Global maps of habitat impacts (mean, sd, rarity weight, nspp impacted, total_km2) for each diet formulation and allocation method across raw material and taxa, across taxa by material, and by taxa across material.
+ - Csv file of total habitat impacts per species and raw material (per diet, allocation, and sensitivity scenario)
+
+```{r}
+## lets re-save all of the files in the "output" folder to the "knb_files" folder, removing the "regular" fcr folder. 
+
+file_types <- c("impact_maps_across_taxon_ingredient", "impact_maps_by_taxon_across_ingredient", "impact_maps_across_taxon_by_material")
+diet_types <- c("fish-dominant", "plant-dominant")
+
+for(file_type in file_types){
+  for(diet in diet_types){
+    
+    # diet = "plant-dominant"
+    # file_type = "impact_maps_across_taxon_by_material"
+    source_dir <- glue("/mnt/rdsi/biodiversity_impacts/output/{file_type}/{diet}/regular")
+    target_base <- "/mnt/rdsi/biodiversity_impacts/output/knb_files"
+    
+    files <- grep(list.files(source_dir, recursive = TRUE, full.names = TRUE), pattern = "_ext_risk|rarity_mean_km2", invert = TRUE, value = TRUE)
+    
+    relative_paths <- basename(files)
+
+    dest_paths <- file.path(target_base, glue("{file_type}/{diet}"), relative_paths)
+    dest_paths <- gsub("ingredient", "material", dest_paths)
+
+
+    dir.create(unique(dirname(dest_paths)), recursive = TRUE, showWarnings = FALSE)
+
+    file.copy(from = files, to = dest_paths, overwrite = TRUE)
+
+    
+  }
+}
+
+## now save all those files as a zip file for each "file_type"
+file_types <- c("impact_maps_across_taxon_material", "impact_maps_by_taxon_across_material", "impact_maps_across_taxon_by_material")
+
+for(diet in diet_types){
+for(file_type in file_types){
+ # diet = "fish-dominant"
+ # file_type <- "impact_maps_by_taxon_across_material"
+  
+  source_dir_fish <- glue("/mnt/rdsi/biodiversity_impacts/output/knb_files/{file_type}/{diet}")
+
+  files <- list.files(source_dir_fish, recursive = TRUE, full.names = TRUE)
+  
+    setwd("/mnt/rdsi/biodiversity_impacts/output/knb_files")
+   zipfile <- glue("/mnt/rdsi/biodiversity_impacts/output/knb_files/{file_type}_{diet}.zip")
+   
+  zip::zip(zipfile = zipfile, files = files, compression_level = 9, include_directories = TRUE, mode = "cherry-pick")
+  
+# zip_list(zipfile)
+
+
+  }
+}
+```
+
+Now save the dataframe with total impacts per species 
+
+```{r}
+biodiv_dir <- file.path(rdsi_dir, "biodiversity_impacts")
+
+impact_maps_dir <- file.path(biodiv_dir, "output")
+
+
+aquamaps_dir <- file.path(rdsi_raw_data_dir, "aquamaps")
+
+comm_names_1 <- read.csv(file.path(aquamaps_dir, "GTE10_SPECIESOCCURSUM/speciesoccursum_gte10.csv")) %>%
+  mutate(sciname = tolower(paste(Genus, Species))) %>%
+  dplyr::select(sciname, common_name = FBname) %>%
+  mutate(common_name = tolower(common_name)) %>%
+  distinct(sciname, common_name)
+  
+marine_overlap <- readRDS(here("prep/03_prep_spp_habitats/output/aoh_marine_impact.rds")) %>%
+    dplyr::select(sciname, diet, allocation, ingredient, sensitivity = vulnerability, sensitivity_scenario, impact_total_km2 = impact_total, total_habitat_area = total_hab_area) %>%
+  left_join(comm_names_1)
+
+length(unique(marine_overlap$sciname)) # 23029
+
+comm_names_2 <- readRDS(here("prep/03_prep_spp_habitats/data/iucn/all_iucn_spp.rds")) %>%
+  dplyr::select(sciname = scientific_name, common_name = main_common_name) %>%
+  mutate(sciname = tolower(sciname), common_name = tolower(common_name)) %>%
+  distinct(sciname, common_name)
+
+fix_names <- comm_names_2 %>%
+  group_by(sciname) %>%
+  filter(n() > 1) %>%
+  filter(!is.na(common_name)) %>%
+  mutate(name_id = paste0("common_name", row_number())) %>%
+  pivot_wider(values_from = common_name, names_from = name_id) %>%
+  mutate(common_name2 = ifelse(is.na(common_name2), "", common_name2)) %>%
+  mutate(common_name3 = ifelse(is.na(common_name3), "", common_name3)) %>%
+  mutate(common_name = paste(common_name1, common_name2, common_name3, sep = ",")) %>%
+  dplyr::select(sciname, common_name)
+
+comm_names_3 <- comm_names_2 %>%
+  filter(!(sciname %in% unique(fix_names$sciname))) %>%
+  rbind(fix_names)
+
+terrestrial_overlap <- readRDS(here("prep/03_prep_spp_habitats/output/aoh_terrestrial_impact.rds")) %>% 
+      dplyr::select(sciname, diet, allocation, ingredient, sensitivity = vulnerability, sensitivity_scenario, impact_total_km2 = impact_total, total_habitat_area = total_hab_area) %>%
+  mutate(sciname = tolower(sciname)) %>%
+  left_join(comm_names_3)
+
+all_overlap <- rbind(marine_overlap, terrestrial_overlap) 
+length(unique(all_overlap$sciname))
+
+hab_areas <- readRDS(here("analysis/int/all_spp_hab_areas.rds")) %>%
+  mutate(sciname = tolower(sciname)) %>%
+  dplyr::select(-total_hab_area) %>%
+  rename(taxa = spp_type) %>%
+  distinct(sciname, taxa)
+
+
+all_overlap <- all_overlap %>%
+  left_join(hab_areas) %>%
+  mutate(ingredient = str_replace(ingredient, "CropsNES", "Other crops")) 
+
+write.csv(all_overlap, file.path(impact_maps_dir, "knb_files/all_species_impacts_km2.csv"), row.names = FALSE)
+
+```
+
+
+

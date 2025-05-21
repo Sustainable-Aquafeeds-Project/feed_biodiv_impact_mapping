@@ -9,7 +9,7 @@ editor_options:
 
 This script has code which produces our example case study figure, Figure 4: 
 
-> Figure 4. Impact hotspot map of central Chile, under the plant-dominant feed scenario. (A) Cells with average impacts greater than or equal to the 95th quantile. (B) The raw material which contributes most to the impact in each hotspot cell. (C) The proportion of impacted species in each cell which is at-risk of extinction (i.e., the IUCN Red List category is worse than “Least Concern”). (D) Reference map to show location, using the Open Street Map (https://www.openstreetmap.org/).
+> Figure 4. Impact hotspot map of central Chile, under the plant-dominant feed scenario. (A) Cells with average impacts greater than or equal to the 95th quantile. (B) The raw material which contributes most to the impact in each hotspot cell. (C) The proportion of impacted species in each cell which is at-risk of extinction. (D) Reference map, using Open Street Map (https://www.openstreetmap.org/). 
 
 For reference, I had to combine each of the panels in an image editor (I used Inkscape to combine), because I could not get it to look good in R. 
 
@@ -368,7 +368,7 @@ q95 <- 0.00006466858 # taken from the publication mapping script
 ```
 
 **Figure 4. Impact hotspot map of central Chile, under the plant-dominant feed scenario.**
- > (A) Cells with average impacts greater than or equal to the 95th quantile. (B) The raw material which contributes most to the impact in each hotspot cell. (C) The proportion of impacted species in each cell which is at-risk of extinction (i.e., the IUCN Red List category is worse than “Least Concern”). (D) Reference map to show location, using the Open Street Map (https://www.openstreetmap.org/). 
+ > Figure 4. Impact hotspot map of central Chile, under the plant-dominant feed scenario. (A) Cells with average impacts greater than or equal to the 95th quantile. (B) The raw material which contributes most to the impact in each hotspot cell. (C) The proportion of impacted species in each cell which is at-risk of extinction. (D) Reference map, using Open Street Map (https://www.openstreetmap.org/). 
 
 ```{r}
 # Now Chile
@@ -459,24 +459,6 @@ summary_fin <- summary_fin %>%
 
 summary_fin$dom_raw_material <- factor(summary_fin$dom_raw_material, levels = c("Rapeseed", "Forage fish", "Wheat", "Pulses", "Other crops"))
 
-# test <- summary_fin %>%
-#   dplyr::select(x, y, dom_raw_material) %>%
-#   mutate(dom_raw_material = as.character(dom_raw_material)) %>%
-#   mutate(dom_raw_material = case_when(
-#     dom_raw_material == "Forage fish" ~ 1,
-#     dom_raw_material == "Rapeseed" ~ 2,
-#     dom_raw_material == "Other crops" ~ 3,
-#     dom_raw_material == "Pulses" ~ 4,
-#     dom_raw_material == "Wheat" ~ 5
-#   )) %>%
-#   rast(., type = "xyz", crs = moll_template) %>%
-#   project(., "EPSG:4326", method = "near") %>%
-#   aggregate(., fact = 3, na.rm = TRUE) %>%
-#   disagg(., fact = 2)
-#   as.data.frame(., xy = TRUE)
-
-
-
 ggplot() +
   geom_tile(data = summary_fin, aes(x = x, y = y, fill = dom_raw_material)) + 
   #   geom_sf(data = summary_fin_sf, aes(fill = dom_raw_material)) + 
@@ -503,8 +485,7 @@ panel.border = element_rect(colour = "grey69", fill=NA, size=3, linetype = "long
     label.vjust = 1,
     keywidth = unit(1.5, "cm")
   )) 
-#+
- # coord_sf(crs = "EPSG:4326")
+
 
 ggsave(here("analysis/MS_plots/fig4_raw_material.png"), dpi = 300, bg = "white",  height = 16, width = 16, units = "cm")
 

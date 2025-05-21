@@ -53,8 +53,6 @@ spp_fp <- data.frame(filepath = list.files(file.path("/mnt/rdsi/raw_data/AOH_eyr
     spp_type == "reptiles" ~ "Reptiles",
     spp_type == "amphibians" ~ "Amphibians"
   ))
-
-
 tx_maps <- collect_spp_rangemaps_terrestrial(spp_fp$species_full, spp_fp$filepath)
 
  all_spp_map <- tx_maps %>%

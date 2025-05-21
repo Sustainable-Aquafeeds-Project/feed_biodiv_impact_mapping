@@ -48,7 +48,7 @@ vuln_taxa <- readRDS(file.path(rdsi_dir, "biodiversity_impacts/int/spp_vuln_dept
     sensitivity_scenario == "vuln_quartile" ~ "original",
     sensitivity_scenario == "vuln_quartile_plus" ~ "plus-10",
     sensitivity_scenario == "vuln_quartile_minus" ~ "minus-10",
-  ))
+  )) # include sensitivity scenarios
 
 ```
 

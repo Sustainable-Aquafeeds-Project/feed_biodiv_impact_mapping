@@ -10,15 +10,11 @@ editor_options:
 This code produces figures 2 and 3, as well as some supplementary plots:
 
 Figure 2: 
-> Figure 2. Distribution of proportion of global habitat area impacted for species. Each point represents an individual species. Only impacted species are shown in the plot (i.e., species are exposed to and vulnerable to harvest pressure). To see distributions including species with zero impact, refer to Supplementary Fig. 3. Light blue points indicate mean across all species in marine taxon and dark green points indicate mean across species in terrestrial taxon. Orange points indicate mean across all species within the taxon and scenario and orange lines indicate the median. Boxes represent the interquartile range (IQR, quartile Q1 to Q3); whiskers indicate observations 1.5x IQR below (above) Q1 (Q3) the box. The panel on the right shows points >95th percentile, and total number of assessed species per taxon. 
+> Figure 2. Distribution of proportion of global habitat area impacted for species. Each point is a species. Only impacted species are shown in the plot. Orange points indicate mean across species within the taxa and scenario and orange lines indicate the median. Boxes represent the interquartile range (IQR, quartile Q1 to Q3); whiskers indicate observations 1.5x IQR below (above) Q1 (Q3) the box. The panel on the right shows points >95th percentile, and total number of assessed species per taxa. 
 
 
 Figure 3: 
-> Proportion of each taxon’s global habitat area which is impacted by raw material for each aquafeed scenario. To see proportions including species with zero impact, refer to Supplementary Fig. 4. 
-
-
-SI Figure 2: 
-> Supplementary Figure 2. Top 25 average proportion of habitat area impacted in cells within country and EEZ boundaries, by raw materials, ranked by country (iso3c code). 
+> Figure 3. Proportion of each taxa’s global habitat area which is impacted by raw material for each aquafeed scenario.
 
 
 ## Setup
@@ -40,6 +36,7 @@ library(ggpubr)
 library(qs)
 library(parallel)
 library(doParallel)
+library(janitor)
 
 source(here("src/directories.R"))
 
@@ -96,11 +93,6 @@ terrestrial_overlap <- readRDS(here("prep/03_prep_spp_habitats/output/aoh_terres
     filter(sensitivity_scenario == "original") %>%
       dplyr::select(sciname, spp_type, diet, fcr_type, allocation, ingredient, vulnerability, impact_total, total_hab_area)
 
-length(unique(terrestrial_overlap$sciname)) # 31596
-
-23029 + 31596 # 54625 - perfect
-
-
 all_overlap <- rbind(marine_overlap, terrestrial_overlap) %>%
     mutate(taxon = str_to_sentence(spp_type)) %>%
   mutate(taxon = case_when(
@@ -113,7 +105,6 @@ all_overlap <- rbind(marine_overlap, terrestrial_overlap) %>%
   mutate(ingredient = str_replace(ingredient, "CropsNES", "Other crops"))
 
 length(unique(all_overlap$sciname)) # 54625
-unique(all_overlap$ingredient)
 
 ```
 
@@ -170,18 +161,11 @@ spp_total_hab <- all_overlap %>%
   distinct(sciname, spp_type, total_hab_area) %>%
   mutate(id = row_number())
 
-test <- data.frame(dups = duplicated(spp_total_hab$sciname)) %>%
-  mutate(id = row_number()) %>%
-  filter(dups == TRUE)
-  
-test2 <- spp_total_hab %>%
-  filter(id %in% c(test$id)) ## good no dupes
-
 ```
 
 **Figure 2: Mean proportion impacted**
 
- > Figure 2. Distribution of proportion of global habitat area impacted for species. Each point represents an individual species. Only impacted species are shown in the plot (i.e., species are exposed to and vulnerable to harvest pressure). To see distributions including species with zero impact, refer to Supplementary Fig. 3. Light blue points indicate mean across all species in marine taxon and dark green points indicate mean across species in terrestrial taxon. Orange points indicate mean across all species within the taxon and scenario and orange lines indicate the median. Boxes represent the interquartile range (IQR, quartile Q1 to Q3); whiskers indicate observations 1.5x IQR below (above) Q1 (Q3) the box. The panel on the right shows points >95th percentile, and total number of assessed species per taxon. 
+ > Figure 2. Distribution of proportion of global habitat area impacted for species. Each point is a species. Only impacted species are shown in the plot. Orange points indicate mean across species within the taxa and scenario and orange lines indicate the median. Boxes represent the interquartile range (IQR, quartile Q1 to Q3); whiskers indicate observations 1.5x IQR below (above) Q1 (Q3) the box. The panel on the right shows points >95th percentile, and total number of assessed species per taxa. 
 
  - Look at ranges of values
  - Split into two plots, like in global food paper; 1 is <95th quantile, 1 is >95th quantile 
@@ -202,8 +186,6 @@ all_overlap_df <- all_overlap %>%
          fcr = str_to_sentence(fcr)) %>%
     filter(allocation == "Economic",
            fcr == "Regular")
-
-length(unique(all_overlap_df$sciname)) # 54625
 
 summary_df_spp <- all_overlap_df %>%
   group_by(sciname, diet, fcr, allocation, taxon) %>%
@@ -347,13 +329,13 @@ plot1_legend <- get_legend(ggplot(summary_df_spp, aes(x = mean_prop)) +
 # draw plots together 
 p <- ggdraw() + draw_plot((plot1 + plot2 +  plot_layout(widths = c(3, 1)))) + draw_plot(plot1_legend,  x = .63, y = 0.15, height = .10, width = .15) 
 
-ggsave(plot = p, here(this_dir, "MS_plots/fig2_economic_boxplot_prop_orange.png"), width = 16, height = 9, units = "in", bg = "white") # technically for nature food the max width is 180 mm, however, I'm saving like this and adjusting save in post production because doing it here messing things up...
+ggsave(plot = p, here(this_dir, "MS_plots/fig2_economic_boxplot_prop_orange.png"), width = 16, height = 9, units = "in", bg = "white")
 
 ```
  
 
 **Figure 3: Proportion of taxa global habitat area impacted**
-> Figure 3. Proportion of each taxon’s global habitat area which is impacted by raw material for each aquafeed scenario. To see proportions including species with zero impact, refer to Supplementary Fig. 4. 
+> Figure 3. Proportion of each taxa’s global habitat area which is impacted by raw material for each aquafeed scenario.
 
 ```{r}
 
@@ -379,13 +361,6 @@ summary_df_barcharts <- all_overlap_df %>%
   left_join(taxon_hab_area) %>%
   mutate(prop_impact = impact_total/total_hab_area) %>%
     mutate(prop_impact_mirror = ifelse(diet == "Fish-dominant", -prop_impact, prop_impact))
-
-# test <- summary_df_barcharts %>%
-#   group_by(diet, fcr, raw_material, allocation) %>%
-#   summarise(impact_total = sum(impact_total, na.rm = TRUE),
-#             total_hab_area = sum(total_hab_area, na.rm = TRUE)) %>%
-#   ungroup() %>%
-#   mutate(prop_impact = impact_total/total_hab_area)
 
 ## switch the raw materials and species in that plot
 
@@ -480,12 +455,13 @@ ggsave(here(this_dir, "/MS_plots/fig3_economic_barchart.png"), width = 178.9, he
 ```
 
 
-**SI Figure 2: Global average proportion of habitat area impacted in cells by raw material and diet**
+SI Figure 5. Global average proportion of habitat area impacted in cells by raw material and diet. Related to Figure 3. 
+
+SI Figure 6. Average proportion of habitat area impacted per 100% inclusion of each raw material. Values are normalised to reflect the habitat displacement that would occur if each material made up 100% of the formulation. This assumes a linear relationship with raw material inclusion. Related to Figure 3. 
 
 ```{r}
 
 raw_materials <- c("Soybean", "Wheat", "Sunflower", "CropsNES", "Rapeseed", "Maize", "forage fish", "trimmings fish", "Pulses")
-
 
 num_cores <- 9
 cl <- makeCluster(num_cores)
@@ -536,7 +512,7 @@ for(allocation_type in c("economic", "mass", "ge")){
 stopCluster(cl)
 
 # now lets join all of those together into one dataframe and save 
-library(janitor)
+
 formulations <- read.csv(here("analysis/int/ingredient_raw_mats_formulation.csv")) %>%
   clean_names() %>%
   group_by(raw_material) %>%
@@ -651,7 +627,7 @@ ggdraw(total_plot) +
        draw_label("0", y = 0.085, x = 0.56, size = 8, fontfamily = "arial", color = "grey30") +
   draw_label("Average proportion of habitat area impacted", y = 0.03, x = 0.55, size = 8, fontfamily = "arial", color = "black") 
 
-ggsave(here(this_dir, "SI_plots/SI_Fig_2_average_raw_mat_impact.png"), bg = "white", width = 178.9, height = 100.92 , units = "mm")
+ggsave(here(this_dir, "SI_plots/SI_Fig_5_average_raw_mat_impact.png"), bg = "white", width = 178.9, height = 100.92 , units = "mm")
 
 # Find the maximum absolute value
 max_val <- max(abs(material_stats_1$impact_per_formulation), na.rm = TRUE)
@@ -739,11 +715,12 @@ ggdraw(total_plot) +
        draw_label("0", y = 0.085, x = 0.57, size = 8, fontfamily = "arial", color = "grey30") +
   draw_label("Average proportional habitat area impact per 100% material inclusion", y = 0.03, x = 0.6, size = 8, fontfamily = "arial", color = "black") 
 
-ggsave(here(this_dir, "SI_plots/SI_Fig_3_material_normalized.png"), bg = "white", width = 178.9, height = 100.92 , units = "mm")
+ggsave(here(this_dir, "SI_plots/SI_Fig_6_material_normalized.png"), bg = "white", width = 178.9, height = 100.92 , units = "mm")
 
 ```
 
-**SI Figure 4: Comparison of raw material contribution to diet formulation vs. total impacts**
+SI Figure 7. Comparison of raw material contribution to diet formulation vs. total impacts. Related to T
+Table 1 and Figure 3. 
 
 ```{r}
 codes <- read.csv(here("prep/02_feed/data/ingredient_spam_fao_codes.csv")) %>%
@@ -813,33 +790,7 @@ ggplot(summary_df_stats, aes(x = prop_total_km2, y = total_diet_contribution, co
   geom_abline() +
   scale_color_manual(values = pal_mats)
 
-ggsave(here("analysis/SI_plots/SI_Fig_4_efficiency.png"), width = 178.9, height =100.92 , units = "mm", bg = "white")
-
-summary_df_stats_plot <- summary_df_stats %>%
-  arrange((km2_per_formulation)) %>%
-  mutate(raw_material = factor(raw_material, levels = raw_material)) 
-
-# Plot
-ggplot(summary_df_stats_plot, aes(y = raw_material, x = km2_per_formulation, fill = raw_material)) +
-  geom_col() +
-  labs(
-    x = "Raw Material",
-    y = "Habitat Area Impacted (km²) per 100% Inclusion") +
-  theme_minimal(base_size = 14) +
-  theme(
-    axis.text.x = element_text(angle = 45, hjust = 1),
-    plot.title = element_text(face = "bold")
-  ) +
-  facet_wrap(~diet)
-
-
-
-
-
-
-
-
-
+ggsave(here("analysis/SI_plots/SI_Fig_7_efficiency.png"), width = 178.9, height =100.92 , units = "mm", bg = "white")
 
 ```
 

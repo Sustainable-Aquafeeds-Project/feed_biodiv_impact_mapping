@@ -1,14 +1,13 @@
 ## takes ~ 3 hours to complete! 
 
-# In this script we overlap [terrestrial area of habitat maps](https://www.researchgate.net/publication/376637364_LIFE_A_metric_for_quantitively_mapping_the_impact_of_land-cover_change_on_global_extinctions) with our disturbance pressure maps created in the `02_feed` folder, and multiply by their vulnerability value. The goal of this script is to create impact maps, that is, the area of likely suitable habitat for each species that is exposured AND impacted to harvest of feed ingredients in salmon aquaculture. To do this, we: 
+# In this script we overlap [terrestrial area of habitat maps](https://www.researchgate.net/publication/376637364_LIFE_A_metric_for_quantitively_mapping_the_impact_of_land-cover_change_on_global_extinctions) with our disturbance pressure maps created in the `02_feed` folder, and multiply by their vulnerability value. The goal of this script is to create impact maps, that is, the area of likely suitable habitat for each species that is exposed AND impacted to harvest of feed ingredients in salmon aquaculture. To do this, we: 
 #   
 # - We have created maps of disturbance (km2) of harvest of crop aquafeed ingredients. They have these categories: 
 #   - Ingredient type; faba beans, guar meal, soybean meal, wheat meal, etc.
 #   - Allocation type; mass, energetic, or economic
 #   - Diet type; feed formulation; plant-dominant or fish-dominant
 #   - crop type; pulses, soybeans, wheat, etc. 
-#   - fcr type; regular (we no longer calculate an "efficient" scenario)
- 
+#   - sensitivity scenario; vary sensitivitiy values +- 0.1
 
 # - Overlap re-projected and AOH species suitable habitat maps with the appropriate disturbance rasters. This will provide a km2 estimate of the amount of suitable habitat that is EXPOSED to harvest of aquafeed ingredients.  
 # - multiply by each species sensitivity values (downloaded in script 3a) to get IMPACT (km2) and save

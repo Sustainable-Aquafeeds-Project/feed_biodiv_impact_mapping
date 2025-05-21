@@ -7,8 +7,8 @@ editor_options:
 
 ## Summary
 
-The code here produces Figure 1:  
-> (A) Map of mean proportion of habitat area impacted (expressed as %) for sensitive species. Impacts are split by quantile group and aquafeed formulation. (B) Map of differences in mean impact (%) between the feed formulation scenarios. The magnitude of the difference is split into quantile groups, where darker shades indicate larger differences.
+The code here produces SI Figure 3:  
+> SI Figure 3. (A) Map of mean rarity weighted proportion of habitat area impacted across species. Impacts are split by quantile group and aquafeed formulation. (B) Map of differences in mean rarity weighted impact between the feed formulation scenarios. The magnitude of the difference is split into quantile groups, where darker shades indicate larger differences. Related to Figure 1. 
 
 Additionally, we save some supplementary information plots of the values in histograms and maps of the actual impact values (rather than split by quantile groups).
 
@@ -410,7 +410,7 @@ plant_legend <- get_legend(ggplot() +
       
    ## saving two separately because I can
    
-        ggsave(glue(here(this_dir, "MS_plots/fig1_economic_rarity_mean_prop_quantiles_delta.png")),
+        ggsave(glue(here(this_dir, "SI_plots/SI_Fig_3_economic_rarity_mean_prop_quantiles_delta.png")),
                 plot = plot_grid(quantile_prop_ms, full_plot_ms, nrow = 2, labels = c("A", "B"), label_fontfamily = "Arial", label_fontface = "bold", label_size = 22), 
                 width = 190, height = 180, bg = "white", units = "mm")
           
@@ -431,36 +431,6 @@ plant_legend <- get_legend(ggplot() +
                 plot = full_plot_si, 
                 width = 180, height = 180, bg = "white", units = "mm")
         
-```
-
-
-
-Histogram of impact values by quantile group 
- - SI
-
-```{r}
-
-hist_plot_fish <- ggplot(data = all_df_quant %>% filter(diet == "fish-dominant")) + 
-    geom_histogram(aes(value, fill = category)) +
-    facet_wrap(~category, scales = "free", ncol = 2) +
-    theme_ohara() +
-    labs(x = "Average rarity weighted proportion of habitat impacted", y = "Number of cells", title = "Fish-dominant") +
-    scale_fill_manual(values = quantile_pal) +
-  theme(legend.position = "none")
-
-hist_plot_plant <- ggplot(data = all_df_quant %>% filter(diet == "plant-dominant")) + 
-    geom_histogram(aes(value, fill = category)) +
-    facet_wrap(~category, scales = "free", ncol = 2) +
-    theme_ohara() +
-    labs(x = "Average rarity weighted proportion of habitat impacted", y = "Number of cells", title = "Plant-dominant") +
-    scale_fill_manual(values = quantile_pal) + 
-    theme(legend.position = "none")
-
-  
-  ggsave(glue(here(this_dir, "SI_plots/extra_plots/economic_rarity_mean_prop_quantiles_hist_plant.png")), plot = plot_grid(hist_plot_plant , nrow = 1), width = 8, height = 8, bg = "white") 
-  
-    ggsave(glue(here(this_dir, "SI_plots/extra_plots/economic_rarity_mean_prop_quantiles_hist_fish.png")), plot = plot_grid(hist_plot_fish, nrow = 1), width = 8, height = 8, bg = "white") 
-    
 ```
 
 
@@ -524,51 +494,3 @@ ggsave(glue(here(this_dir, "SI_plots/extra_plots/{allocation}_rarity_mean_prop.p
  }
 
 ```
-
-Map stats!
-
-Compare diet types and ncells impacted
-
-```{r}
-test <- all_df %>%
-  group_by(diet, fcr_type) %>%
-  summarise(prop_mean = mean(value, na.rm = TRUE)) %>%
-  ungroup()
-
-scenario_summary <- all_df %>% 
-  filter(value > 0) %>%
-  group_by(diet, fcr_type) %>%
-  summarise(cells_impacted = n()) %>%
-  ungroup()
-
-moll_land <- readRDS(here("prep/03_prep_spp_habitats/data/spatial/moll_template_land_xy.rds"))
-
-all_df_land <- all_df %>%
-  left_join(moll_land, by = c("long" = "x", "lat" = "y")) %>%
-  filter(!is.na(cell_id)) %>%
-  filter(value > 0) %>%
-    group_by(diet, fcr_type) %>%
-  summarise(cells_impacted = n()) %>%
-  ungroup() %>%
-   mutate(land_cells_total = 2876998) %>%
-  mutate(prop = cells_impacted/land_cells_total)
-
-moll_ocean <- readRDS(here("prep/03_prep_spp_habitats/data/spatial/moll_template_ocean_xy.rds"))
-
-all_df_ocean <- all_df %>%
-  left_join(moll_ocean, by = c("long" = "x", "lat" = "y")) %>%
-  filter(!is.na(cell_id)) %>%
-    filter(value > 0) %>%
-    group_by(diet, fcr_type) %>%
-  summarise(cells_impacted = n()) %>%
-  ungroup() %>%
-  mutate(ocean_cells_total = 3684240) %>%
-  mutate(prop = cells_impacted/ocean_cells_total)
-
-# Comparing the fish-dominant and plant-dominant feed scenarios, under the regular FCR scenario, we see that the plant-dominant diet has 81,352 more pixels impacted (there are ~6.5 million pixels on a 10km by 10 km Mollweide grid). This difference is almost exclusively due to the difference in terrestrial crop impacts, with the plant-dominant diet having 80,789 more terrestrial pixels impacted than that of the fish-dominant diet. Overall, ocean pixels are impacted over a larger area: ~42% of ocean pixels are impacted, regardless of feed scenario. In comparison, 23%-26% of land pixels are impacted, depending on the scenario. 
-
-```
-
-
-
-
