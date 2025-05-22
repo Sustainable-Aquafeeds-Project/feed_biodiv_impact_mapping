@@ -79,7 +79,6 @@ Plots to make/things to explore:
 ```{r}
 # read in data frames 
 all_impacts <- all_overlap %>%
-  # filter(allocation == "economic") %>% # filter for economic
   mutate(diet = ifelse(diet == "plant-dominant", "plant", "fish")) # rename for easier column manipulation
 
 all_impacts_grouped <- all_impacts %>%
@@ -134,8 +133,7 @@ impacts_change <- impacts_wide %>%
 impacts_filtered <- all_impacts %>%
   filter(allocation == "economic") %>%
   mutate(sensitivity_scenario = str_remove(sensitivity_scenario, "-")) 
-#%>%
- # filter(impact_total > 0)
+
 
 # Summarize total and mean impact per diet and sensitivity
 impacts_summary <- impacts_filtered %>%
@@ -352,8 +350,42 @@ ggplot(plot_df_2,
        fill = "Diet") +
   theme( text = element_text(family = "arial", size = 8))
 
-ggsave(here("analysis/SI_plots/SI_Fig_12_sensitivity_analysis.png"),  bg = "white", width = 178.9, height = 100.92 , units = "mm")
+ggsave(here("analysis/SI_plots/extra_plots/old_SI_Fig_12_sensitivity_analysis.png"),  bg = "white", width = 178.9, height = 100.92 , units = "mm")
 
+
+plot_df <- all_impacts %>%
+  filter(allocation == "economic")
+  
+plot_df_2 <- plot_df %>%
+group_by(sensitivity_scenario, diet) %>%
+  summarise(impact_total = sum(impact_total, na.rm = TRUE)) %>%
+  ungroup() %>%
+  mutate(diet = ifelse(diet == "plant", "Plant-dominant", "Fish-dominant")) %>%
+  mutate(sensitivity_scenario = str_to_sentence(sensitivity_scenario)) %>%
+  mutate(sensitivity_scenario = case_when(
+    sensitivity_scenario == "Minus-10" ~ "Minus 0.1",
+        sensitivity_scenario == "Plus-10" ~ "Plus 0.1",
+    TRUE ~ sensitivity_scenario
+  ))
+
+diet_cols = c("Fish-dominant" = "#3787C0", "Plant-dominant" = "#37A055")
+
+plot_df_2 <- plot_df_2 %>%
+  arrange(impact_total) %>%
+  mutate(sensitivity_scenario = fct_reorder(sensitivity_scenario, impact_total))
+
+ggplot(plot_df_2,
+       aes(x = sensitivity_scenario, y = impact_total, fill = diet)) +
+  geom_col(position = "dodge") + 
+  scale_fill_manual(values = diet_cols, breaks = names(diet_cols), guide = guide_legend(reverse = FALSE)) +
+  theme_minimal() +
+  labs(
+       x = "Scenario",
+       y = "Total Impact",
+       fill = "Diet") +
+  theme( text = element_text(family = "arial", size = 8))
+
+ggsave(here("analysis/SI_plots/SI_Fig_12_sensitivity_analysis.png"),  bg = "white", width = 178.9, height = 100.92 , units = "mm")
 
 ```
 
