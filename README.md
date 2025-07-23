@@ -5,7 +5,8 @@ Please read this file before trying to reproduce the output from this research p
 
 ## Link to associated publication
 
-Not yet available
+Clawson, G., Blanchard, J.L., Cormery, M., Fulton, E.A., Halpern, B.S., Hamilton, H.A., O’Hara, C.C., and Cottrell, R.S. (2025). Continued transitions from fish meal and oil in aquafeeds require close attention to habitat impact trade-offs. Cell Reports Sustainability, 100457. https://doi.org/10.1016/j.crsus.2025.100457.
+
 
 ## Contact
 
